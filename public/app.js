@@ -2,6 +2,7 @@ import { TAGS, splitGroup, effectiveTag, statsByCourse, computeStats } from './s
 import * as hw from './homework-ui.js';
 import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
+import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 
 const $app = document.getElementById('app');
 const $tabs = document.getElementById('tabs');
@@ -97,15 +98,31 @@ async function renderLogin() {
   $tabs.hidden = true;
   $account.innerHTML = '';
   const cfg = await api('/auth/config');
+  const pk = cfg.passkeys && passkeysSupported();
   $app.innerHTML = `
     <section class="hero">
       <h1>Stay above <em>80%</em>.</h1>
       <p>Upload your university calendar (.ics), tick off each session as attended or missed,
         tag the ones you can't skip, and see exactly how many absences you have left per course.</p>
-      ${cfg.google ? `<a class="btn primary big" href="/auth/google">${googleIcon()} Sign in with Google</a>`
-        : '<p class="muted">Google sign-in is not configured on this server (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET).</p>'}
-      ${cfg.dev ? '<p><a class="btn" href="/auth/dev">Dev login (local only)</a></p>' : ''}
+      <div class="signin">
+        ${pk ? `<button class="btn primary big" data-action="pk-login">${keyIcon()} Sign in with a passkey</button>` : ''}
+        ${cfg.google ? `<a class="btn big" href="/auth/google">${googleIcon()} Continue with Google</a>` : ''}
+        ${pk && cfg.signup ? `
+          <div class="divider"><span>New here?</span></div>
+          <form id="pk-signup" class="signup-row">
+            <input name="name" required maxlength="60" placeholder="Your name" autocomplete="name" aria-label="Your name">
+            <button class="btn big" type="submit">Create account</button>
+          </form>
+          <p class="muted small">No password and no Google account needed: a passkey uses your device's Face ID,
+            fingerprint or PIN. Passkeys saved in iCloud Keychain, Google Password Manager or 1Password work on all your devices.</p>` : ''}
+        ${!pk && cfg.passkeys ? '<p class="muted small">This browser doesn\'t support passkeys. Update it, or use Google.</p>' : ''}
+        ${cfg.dev ? '<p><a class="btn" href="/auth/dev">Dev login (local only)</a></p>' : ''}
+      </div>
     </section>`;
+}
+
+function keyIcon() {
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14.5 8.5l2 2"/></svg>';
 }
 
 function googleIcon() {
@@ -119,10 +136,10 @@ function render() {
   $account.innerHTML = `
     <button class="btn small" data-action="upload" title="Upload or re-import an .ics file">Import .ics</button>
     ${user.picture ? `<img class="avatar" src="${esc(user.picture)}" alt="" referrerpolicy="no-referrer">` : ''}
-    <span class="email">${esc(user.email)}</span>
+    <span class="email">${esc(user.email || user.name || '')}</span>
     <button class="btn small ghost" data-action="logout">Sign out</button>`;
 
-  if (!state.data.events.length) {
+  if (!state.data.events.length && state.tab !== 'settings') {
     $tabs.hidden = true;
     return renderEmpty();
   }
@@ -138,7 +155,9 @@ function renderEmpty() {
       <h2>Import your calendar</h2>
       <p>Drop your <code>.ics</code> file here, or click to choose it.</p>
       <p class="muted small">You can re-import an updated file later; your attendance marks are kept.</p>
-    </section>`;
+    </section>
+    ${state.data.account.google || state.data.account.passkeys.length > 1 ? '' : `
+    <p class="muted small center">Tip: <a href="#settings" data-goto="settings">add a passkey on a second device</a> so you can always sign in.</p>`}`;
 }
 
 function groupBanner() {
@@ -397,12 +416,47 @@ function renderSettings() {
       <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.</p>
       <button class="btn" data-action="upload">Import .ics</button>
     </section>
+    ${signInMethodsPanel()}
     ${hw.integrationsPanel()}
     <section class="panel narrow danger-zone">
       <h3>Delete data</h3>
       <p>Remove all imported sessions, courses and attendance marks from your account. Homework is kept.</p>
       <button class="btn danger" data-action="wipe">Delete all my data</button>
     </section>`;
+}
+
+function signInMethodsPanel() {
+  const { account, user } = state.data;
+  const fmt = (ms) => new Date(ms).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+  return `
+    <section class="panel narrow">
+      <h3>Sign-in methods</h3>
+      <div class="list">
+        ${account.google ? `<div class="method"><span>${googleIcon()}</span><div><b>Google</b><div class="muted small">${esc(user.email || '')}</div></div></div>` : ''}
+        ${account.passkeys.map((p) => `
+          <div class="method">
+            <span>${keyIcon()}</span>
+            <div><b>${esc(p.name || 'Passkey')}</b>${p.backed_up ? ' <span class="chip">synced</span>' : ''}
+              <div class="muted small">Added ${fmt(p.created_at)}${p.last_used_at ? ` · last used ${fmt(p.last_used_at)}` : ''}</div></div>
+            <button class="btn small ghost" data-remove-passkey="${esc(p.id)}">Remove</button>
+          </div>`).join('')}
+      </div>
+      ${passkeysSupported() ? `<button class="btn" data-action="pk-add">${keyIcon()} Add a passkey${account.passkeys.length ? ' on another device' : ''}</button>` : ''}
+      <p class="muted small">${account.google
+        ? 'Add a passkey to sign in with Face ID, fingerprint or PIN instead of Google.'
+        : 'Add a passkey on a second device (or use a synced one) so you can always get back in.'}</p>
+    </section>`;
+}
+
+async function passkeyAction(fn, okMsg) {
+  try {
+    await fn();
+    if (okMsg) toast(okMsg);
+    return true;
+  } catch (err) {
+    toast(err.message, true);
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------- mutations
@@ -495,6 +549,20 @@ document.addEventListener('click', async (e) => {
   const row = t.closest('[data-event]');
 
   if (action === 'upload') return $file.click();
+  if (action === 'pk-login') {
+    if (await passkeyAction(signInWithPasskey)) location.href = '/';
+    return;
+  }
+  if (action === 'pk-add') {
+    if (await passkeyAction(() => registerPasskey(), 'Passkey added.')) { await reload(); render(); }
+    return;
+  }
+  const rmPk = t.closest('[data-remove-passkey]');
+  if (rmPk) {
+    if (!confirm('Remove this passkey? You won\'t be able to sign in with it any more.')) return;
+    if (await passkeyAction(() => api(`/api/passkeys/${rmPk.dataset.removePasskey}`, { method: 'DELETE' }), 'Passkey removed.')) { await reload(); render(); }
+    return;
+  }
   if (action === 'logout') {
     await api('/auth/logout', { method: 'POST' });
     location.href = '/';
@@ -586,6 +654,12 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('submit', async (e) => {
   if (hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e)) return;
+  if (e.target.id === 'pk-signup') {
+    e.preventDefault();
+    const name = new FormData(e.target).get('name');
+    if (await passkeyAction(() => registerPasskey(name))) location.href = '/';
+    return;
+  }
   if (e.target.id !== 'settings-form') return;
   e.preventDefault();
   const fd = new FormData(e.target);

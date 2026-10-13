@@ -10,6 +10,7 @@ Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudf
 
 | | |
 |---|---|
+| 🔑 **Sign in without Google** | Create an account with a **passkey** (Face ID, fingerprint, PIN, or a passkey synced via iCloud, Google Password Manager or 1Password). No password, and no Google approval needed. Google sign-in stays available, and Google users can add a passkey too. |
 | 📅 **Calendar import** | Upload the school `.ics`. Re-import whenever it changes: sessions are matched by UID, so your marks are kept. Group-split courses (`GR1 – …`, `GR12 – …`) are hidden until you pick your group. |
 | ✅ **Attendance** | Mark each session ✓ attended, ✗ absent (on a future session this means a *planned* skip) or **E** excused. Each course shows its projected %, absences used, and how many sessions you can still skip. |
 | 🏷 **Tags** | Normal / Mandatory / Exam / Optional, per course or per session. Skipping an exam or mandatory session is flagged; Optional sessions never count. |
@@ -80,7 +81,7 @@ npm test
    ```
    In `wrangler.jsonc`, set `routes` / `CANONICAL_HOST` to your domain, or remove them to use `*.workers.dev`.
 
-2. **Google OAuth client** ([Cloud Console](https://console.cloud.google.com/auth/clients))
+2. **Google OAuth client** (optional: passkeys work without it) ([Cloud Console](https://console.cloud.google.com/auth/clients))
    - Create a *Web application* client. Its **Authorized redirect URIs** must list every address the app is served from:
      `https://<your-domain>/auth/google/callback` and `http://localhost:8787/auth/google/callback`
    - For calendar sync: enable the **Google Calendar API** and add the scope

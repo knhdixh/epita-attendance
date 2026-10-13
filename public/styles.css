@@ -104,7 +104,6 @@ main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 80px; }
 .hero h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.02em; }
 .hero h1 em { color: var(--accent); font-style: normal; }
 .hero p { color: var(--muted); font-size: 1.05rem; margin-bottom: 28px; }
-.hero .btn.primary { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--shadow); }
 .dropzone {
   max-width: 560px; margin: 8vh auto; padding: 48px 24px; text-align: center; cursor: pointer;
   border: 2px dashed var(--border); border-radius: 16px; background: var(--surface);
@@ -366,3 +365,16 @@ table.sim { margin-bottom: 12px; }
 .cal-icon { font-size: .95rem; font-weight: 700; line-height: 1.1; }
 .cal-meta { font-size: .65rem; color: var(--muted); min-height: .8em; }
 @media (max-width: 520px) { .cal-meta { display: none; } .cal-day { min-height: 46px; } }
+
+/* ---------- sign-in */
+.signin { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 420px; margin: 0 auto; }
+.signin > .btn { width: 100%; justify-content: center; }
+.divider { width: 100%; display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .85rem; margin-top: 8px; }
+.divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+.signup-row { display: flex; gap: 8px; width: 100%; }
+.signup-row input { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.signin p { margin: 0; text-align: center; }
+.method { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.method > div { flex: 1; min-width: 0; }
+.panel .list + .btn { margin-top: 10px; }
+.center { text-align: center; }

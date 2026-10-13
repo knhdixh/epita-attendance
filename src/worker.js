@@ -6,6 +6,7 @@ import { HttpError } from './http.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
 import { chat, usage as aiUsage } from './assistant.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
+import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
 
 const SESSION_COOKIE = 'sid';
 const STATE_COOKIE = 'oauth_state';
@@ -57,11 +58,16 @@ async function signIn(env, profile, secure) {
     VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (google_sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture
     RETURNING id`).bind(profile.sub, profile.email ?? null, profile.name ?? null, profile.picture ?? null, Date.now()).first();
+  return startSession(env, user.id, secure);
+}
+
+// Creates a session for a user and returns its Set-Cookie header.
+async function startSession(env, userId, secure) {
   const sid = randomToken();
   await env.DB.batch([
-    env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND expires_at < ?').bind(user.id, Date.now()),
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND expires_at < ?').bind(userId, Date.now()),
     env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
-      .bind(sid, user.id, Date.now() + SESSION_TTL_MS),
+      .bind(sid, userId, Date.now() + SESSION_TTL_MS),
   ]);
   return cookie(SESSION_COOKIE, sid, SESSION_TTL_MS, secure);
 }
@@ -74,7 +80,11 @@ async function handleAuth(request, env, url) {
   const redirectUri = `${url.origin}/auth/google/callback`;
 
   if (url.pathname === '/auth/config') {
-    return json({ google: googleEnabled(env), dev: devLoginEnabled(env) });
+    return json({ google: googleEnabled(env), dev: devLoginEnabled(env), passkeys: true, signup: !(env.ALLOWED_DOMAIN || '').trim() });
+  }
+
+  if (url.pathname.startsWith('/auth/passkey/')) {
+    return handlePasskeyAuth(request, env, url, { secure, cookie, parseCookies, randomToken, currentUser, startSession });
   }
 
   // Both sign-in and "connect Google Calendar" use this flow; the state cookie records which.
@@ -287,6 +297,7 @@ async function handleApi(request, env, url, user) {
     const gcal = link.results[0];
     return json({
       user: { email: user.email, name: user.name, picture: user.picture, threshold: user.threshold, unit: user.unit },
+      account: { google: !isPasskeyOnly(user), passkeys: await listPasskeys(env, user) },
       courses: courses.results,
       events: events.results,
       homework: homework.results,
@@ -302,6 +313,10 @@ async function handleApi(request, env, url, user) {
 
   if (path === '/api/assistant/chat' && method === 'POST') {
     return json(await chat(env, user, await readJson(request, 128 * 1024), url.origin));
+  }
+
+  if ((m = path.match(/^\/api\/passkeys\/([A-Za-z0-9_-]{8,})$/)) && method === 'DELETE') {
+    return json(await deletePasskey(env, user, m[1]));
   }
 
   if (path === '/api/breaks' && method === 'POST') {

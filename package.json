@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler d1 migrations apply DB --local && wrangler dev",
+    "dev": "wrangler d1 migrations apply DB --local && wrangler dev --local-upstream localhost:8787",
     "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
     "test": "node --test test/"
   },
@@ -12,6 +12,10 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
-    "workerd@1.20261006.1": true
+    "workerd@1.20261006.1": true,
+    "fsevents": false
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^14.0.3"
   }
 }
