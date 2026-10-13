@@ -118,6 +118,7 @@ async function renderLogin() {
         ${!pk && cfg.passkeys ? '<p class="muted small">This browser doesn\'t support passkeys. Update it, or use Google.</p>' : ''}
         ${cfg.dev ? '<p><a class="btn" href="/auth/dev">Dev login (local only)</a></p>' : ''}
       </div>
+      <p class="guide-link">📅 You'll need your timetable as an .ics file. <a href="/ics-guide">How to export it from Zeus</a></p>
     </section>`;
 }
 
@@ -134,7 +135,7 @@ function googleIcon() {
 function render() {
   const { user } = state.data;
   $account.innerHTML = `
-    <button class="btn small" data-action="upload" title="Upload or re-import an .ics file">Import .ics</button>
+    <span class="import-group"><button class="btn small" data-action="upload" title="Upload or re-import an .ics file">Import .ics</button><a class="help-dot" href="/ics-guide" title="Where do I get my .ics file?" aria-label="How to get your .ics file">?</a></span>
     ${user.picture ? `<img class="avatar" src="${esc(user.picture)}" alt="" referrerpolicy="no-referrer">` : ''}
     <span class="email">${esc(user.email || user.name || '')}</span>
     <button class="btn small ghost" data-action="logout">Sign out</button>`;
@@ -156,6 +157,7 @@ function renderEmpty() {
       <p>Drop your <code>.ics</code> file here, or click to choose it.</p>
       <p class="muted small">You can re-import an updated file later; your attendance marks are kept.</p>
     </section>
+    <p class="center"><a href="/ics-guide">Don't have the file yet? Export it from Zeus in 1 minute →</a></p>
     ${state.data.account.google || state.data.account.passkeys.length > 1 ? '' : `
     <p class="muted small center">Tip: <a href="#settings" data-goto="settings">add a passkey on a second device</a> so you can always sign in.</p>`}`;
 }
@@ -413,7 +415,8 @@ function renderSettings() {
     </section>
     <section class="panel narrow">
       <h3>Calendar</h3>
-      <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.</p>
+      <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
+        <a href="/ics-guide">How to export it from Zeus</a>.</p>
       <button class="btn" data-action="upload">Import .ics</button>
     </section>
     ${signInMethodsPanel()}

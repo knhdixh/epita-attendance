@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get your calendar · Attendance80</title>
+  <meta name="description" content="How to export your EPITA timetable from Zeus as an .ics file for Attendance80.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .guide { max-width: 720px; margin: 0 auto; }
+    .guide h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -.02em; margin: 8px 0 6px; }
+    .guide .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 24px; }
+    .steps { list-style: none; padding: 0; margin: 0; counter-reset: step; display: grid; gap: 14px; }
+    .steps > li { counter-increment: step; position: relative; padding: 16px 18px 16px 62px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius); }
+    .steps > li::before { content: counter(step); position: absolute; left: 16px; top: 14px; width: 30px; height: 30px;
+      display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; }
+    .steps h2 { font-size: 1.05rem; margin: 3px 0 8px; }
+    .steps p { margin: 0 0 10px; }
+    .steps p:last-child { margin-bottom: 0; }
+    .shot { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; margin: 6px 0 4px; background: #fff; }
+    .shot.button { width: 168px; }
+    .shot.form { width: 420px; }
+    .fields { margin: 8px 0 10px; padding-left: 1.2em; }
+    .fields li { margin: 4px 0; }
+    .why { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: .92rem; }
+    .tips { margin-top: 24px; }
+    .tips ul { margin: 6px 0 0; padding-left: 1.2em; }
+    .tips li { margin: 6px 0; }
+    .back { display: inline-block; margin-bottom: 10px; text-decoration: none; }
+    kbd { font: inherit; font-weight: 600; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 0 6px; }
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" style="text-decoration:none;color:inherit">Attendance<span>80</span></a></header>
+  <main class="guide">
+    <a class="back small" href="/">← Back to Attendance80</a>
+    <h1>Get your calendar (.ics)</h1>
+    <p class="lead">Attendance80 reads your timetable from an <code>.ics</code> file that you export from Zeus, EPITA's
+      scheduling site. It takes about a minute.</p>
+
+    <ol class="steps">
+      <li>
+        <h2>Open Zeus</h2>
+        <p>Go to <a href="https://zeus.ionis-it.com/home" target="_blank" rel="noopener">zeus.ionis-it.com/home</a> and sign in
+          with your school account.</p>
+      </li>
+      <li>
+        <h2>Click “Generate an ICS”</h2>
+        <img class="shot button" src="/img/zeus-generate-ics.jpg" width="336" height="110" alt="The blue “Generate an ICS” button on Zeus">
+      </li>
+      <li>
+        <h2>Choose your group and include past classes</h2>
+        <ul class="fields">
+          <li><b>Generate an ICS for a:</b> <kbd>Group</kbd></li>
+          <li><b>Search a group:</b> type or expand the list (e.g. <kbd>EPITA</kbd> ▸ …) and select your class or promotion.</li>
+          <li>Turn on <b>Get reservations from the past</b>.</li>
+          <li><b>From:</b> the <b>first day of this semester</b>.</li>
+          <li>Click <b>Download ICS</b>. “Generate my link” isn't needed: Attendance80 imports the file.</li>
+        </ul>
+        <img class="shot form" src="/img/zeus-ics-options.jpg" width="840" height="1078" loading="lazy"
+          alt="Zeus “Generate an ICS” form: Group, group search, “Get reservations from the past” switched on, and the From date">
+        <p class="why"><b>Why from the start of the semester?</b> Your attendance rate counts every class of the semester,
+          including the ones already past. Without them, Attendance80 only sees upcoming classes and can't tell you how many
+          absences you have left.</p>
+      </li>
+      <li>
+        <h2>Import it</h2>
+        <p>Open <a href="/">Attendance80</a>, sign in, and drop the downloaded file on the page (or click <b>Import .ics</b>).
+          Then pick your group under <b>Courses</b>, and mark the classes you've already been to (<b>Sessions → Needs marking</b>).</p>
+      </li>
+    </ol>
+
+    <section class="tips panel">
+      <h3>Good to know</h3>
+      <ul>
+        <li><b>Timetable changed?</b> Download a fresh file the same way and import it again. Your attendance marks, tags and
+          notes are kept.</li>
+        <li>The file contains every sub-group (GR1, GR2, …). Choosing yours under <b>Courses</b> hides the others, so they don't
+          count toward your attendance.</li>
+        <li>Holidays (“Vacances”) are detected automatically and never count as missed classes.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
