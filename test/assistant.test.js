@@ -100,7 +100,7 @@ test('chat loop: tool call, then final answer; usage limit enforced', async () =
   assert.equal(r.actions[0].type, 'attendance');
   assert.ok(calls[0].tools && calls[0].messages[0].content.includes('CONTEXT:'));
   assert.equal(calls[1].messages.at(-1).role, 'tool');
-  assert.deepEqual(r.usage, { used: 1, limit: 2 });
+  assert.deepEqual(r.usage, { used: 1, limit: 2, owner: false });
   await chat(env, user, { messages: [{ role: 'user', content: 'again' }] }, 'https://app');
   await assert.rejects(chat(env, user, { messages: [{ role: 'user', content: 'third' }] }, 'https://app'), /used today's 2/);
   assert.equal(env.DB.raw.prepare('SELECT neurons FROM ai_usage').get().neurons, 10);
@@ -160,4 +160,35 @@ test('find_break and skippable_weeks return readable results', async () => {
   const w = await runTool('skippable_weeks', { weeks: 3 }, ctx);
   assert.equal(w.weeks.length, 2);   // calendar ends 2026-10-21: weeks past it aren't listed
   assert.match(w.weeks[0], /^2026-10-12 to 2026-10-18: /);
+});
+
+test('limits: owner gets the higher allowance and bypasses the shared budget; others share it', async () => {
+  const { usage, isOwner } = await import('../src/assistant.js');
+  const db = env.DB.raw;
+  db.exec(`UPDATE users SET email = 'owner@example.com' WHERE id = 1;
+    INSERT INTO users (id, google_sub, email, created_at) VALUES (2, 'g2', 'student@example.com', 0), (3, 'passkey:x', NULL, 0);`);
+  const owner = db.prepare('SELECT * FROM users WHERE id = 1').get();
+  const student = db.prepare('SELECT * FROM users WHERE id = 2').get();
+  const passkeyUser = db.prepare('SELECT * FROM users WHERE id = 3').get();
+  env.AI_OWNER_EMAILS = 'Owner@Example.com, someone@else.com';
+  env.AI_SHARED_DAILY_NEURONS = '100';
+  env.AI = { run: async () => ({ choices: [{ message: { content: 'hi' } }], usage: { neurons: 60 } }) };
+  const ask = (u) => chat(env, u, { messages: [{ role: 'user', content: 'hi' }] }, 'https://app');
+
+  assert.ok(isOwner(env, owner));
+  assert.ok(!isOwner(env, student));
+  assert.ok(!isOwner(env, passkeyUser));       // no email: not an owner unless listed by id
+  assert.deepEqual(await usage(env, owner), { used: 0, limit: 100, owner: true });
+  assert.deepEqual(await usage(env, student), { used: 0, limit: 10, owner: false });
+
+  await ask(student);                           // 60 shared neurons
+  await ask(passkeyUser);                       // 120 >= 100: shared budget now used up
+  await assert.rejects(ask(student), /shared limit for all users/);
+  await ask(owner);                             // owners are exempt
+  await ask(owner);
+  assert.equal((await usage(env, owner)).used, 2);
+
+  env.AI_OWNER_USER_IDS = '3';                  // passkey-only owner by id
+  assert.ok(isOwner(env, passkeyUser));
+  await ask(passkeyUser);
 });

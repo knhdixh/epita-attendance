@@ -9,7 +9,11 @@ import { simulateBreak, findBreakWindows, weekOverview, addDays, weekdayOf, isDa
 import { planningModel, saveBreak } from './breaks-store.js';
 
 const DEFAULT_MODEL = '@cf/google/gemma-4-26b-a4b-it';
-const DEFAULT_DAILY_LIMIT = 40;   // messages per user per day
+const DEFAULT_DAILY_LIMIT = 10;   // messages per user per day (AI_DAILY_LIMIT)
+const DEFAULT_OWNER_LIMIT = 100;  // messages per day for owners (AI_OWNER_DAILY_LIMIT)
+// Workers AI's free allocation is 10,000 neurons/day for the whole account. Everyone except the owners
+// shares this part of it (AI_SHARED_DAILY_NEURONS); the rest stays in reserve for the owners.
+const DEFAULT_SHARED_NEURONS = 7000;
 const MAX_STEPS = 5;              // model calls per user message (tool loop)
 const HISTORY = 12;               // previous chat turns sent to the model
 const MAX_MESSAGE_CHARS = 4000;
@@ -436,10 +440,25 @@ async function callModel(env, model, messages, withTools) {
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
+// Owners are listed by sign-in email (AI_OWNER_EMAILS, a secret) or user id (AI_OWNER_USER_IDS).
+export function isOwner(env, user) {
+  const list = (v) => String(v || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
+  return (user.email && list(env.AI_OWNER_EMAILS).includes(user.email.toLowerCase()))
+    || list(env.AI_OWNER_USER_IDS).includes(String(user.id));
+}
+
 export async function usage(env, user) {
-  const limit = Number(env.AI_DAILY_LIMIT) || DEFAULT_DAILY_LIMIT;
+  const owner = isOwner(env, user);
+  const limit = owner ? Number(env.AI_OWNER_DAILY_LIMIT) || DEFAULT_OWNER_LIMIT : Number(env.AI_DAILY_LIMIT) || DEFAULT_DAILY_LIMIT;
   const row = await env.DB.prepare('SELECT messages FROM ai_usage WHERE user_id = ? AND day = ?').bind(user.id, today()).first();
-  return { used: row?.messages ?? 0, limit };
+  return { used: row?.messages ?? 0, limit, owner };
+}
+
+// Neurons used today by everyone who isn't an owner.
+async function sharedNeuronsToday(env) {
+  const rows = (await env.DB.prepare('SELECT a.neurons, u.id, u.email FROM ai_usage a JOIN users u ON u.id = a.user_id WHERE a.day = ?')
+    .bind(today()).all()).results;
+  return rows.filter((r) => !isOwner(env, r)).reduce((sum, r) => sum + r.neurons, 0);
 }
 
 export async function chat(env, user, body, origin) {
@@ -452,8 +471,11 @@ export async function chat(env, user, body, origin) {
   }
   const tz = isValidTimeZone(body.tz) ? body.tz : 'Europe/Paris';
 
-  const { used, limit } = await usage(env, user);
+  const { used, limit, owner } = await usage(env, user);
   if (used >= limit) throw new HttpError(429, `You've used today's ${limit} assistant messages. The limit resets at 00:00 UTC.`);
+  if (!owner && await sharedNeuronsToday(env) >= (Number(env.AI_SHARED_DAILY_NEURONS) || DEFAULT_SHARED_NEURONS)) {
+    throw new HttpError(429, "The assistant has reached today's shared limit for all users. It resets at 00:00 UTC.");
+  }
   await env.DB.prepare(`INSERT INTO ai_usage (user_id, day, messages) VALUES (?, ?, 1)
     ON CONFLICT (user_id, day) DO UPDATE SET messages = messages + 1`).bind(user.id, today()).run();
 
@@ -485,7 +507,7 @@ export async function chat(env, user, body, origin) {
   if (!reply) reply = ctx.actions.length ? 'Done.' : 'Sorry, I could not come up with an answer. Please rephrase.';
 
   await env.DB.prepare('UPDATE ai_usage SET neurons = neurons + ? WHERE user_id = ? AND day = ?').bind(neurons, user.id, today()).run();
-  return { reply, actions: ctx.actions, usage: { used: used + 1, limit } };
+  return { reply, actions: ctx.actions, usage: { used: used + 1, limit, owner } };
 }
 
 // Exported for tests.

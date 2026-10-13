@@ -25,8 +25,12 @@
   // Workers AI powers the assistant (free daily allocation; prompts are not used for training).
   "ai": { "binding": "AI" },
   "vars": {
-    // Assistant: messages per user per day, and the Workers AI model.
-    "AI_DAILY_LIMIT": "40",
+    // Assistant limits. Per user per day; owners (AI_OWNER_EMAILS secret) get AI_OWNER_DAILY_LIMIT and are
+    // exempt from the shared budget: everyone else together stops at AI_SHARED_DAILY_NEURONS of the
+    // 10,000 free daily neurons, so the rest stays available to owners.
+    "AI_DAILY_LIMIT": "10",
+    "AI_OWNER_DAILY_LIMIT": "100",
+    "AI_SHARED_DAILY_NEURONS": "7000",
     "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
     // Optional: restrict sign-in to one email domain, e.g. "epita.fr". Empty = any Google account.
     "ALLOWED_DOMAIN": "",
