@@ -192,3 +192,28 @@ export function weekOverview(m, weeks = 12) {
     };
   });
 }
+
+// Calendar of possible start days: for each day from this week's Monday to the end of the
+// calendar, the verdict for a break of `days` days starting that day.
+export function startDayGrid(m, days) {
+  const monday = addDays(m.today, -((weekdayOf(m.today) + 6) % 7));
+  const weeks = [];
+  for (let start = monday; start <= m.lastDay; start = addDays(start, 7)) {
+    weeks.push(Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(start, i);
+      if (date < m.today) return { date, past: true };
+      if (date > m.lastDay) return { date, beyond: true };
+      const sim = simulateBreak(m, date, addDays(date, days - 1));
+      return {
+        date, to: sim.to, holiday: m.holidays.has(date),
+        level: sim.sessions.length || sim.conflicts.length ? sim.level : 'free',
+        sessions: sim.sessions.length,
+        blockers: [
+          ...sim.conflicts.map((e) => `${effectiveTag(e, m.byId[e.course_id])}: ${m.byId[e.course_id].name}`),
+          ...sim.courses.filter((c) => c.level === 'fail').map((c) => `below minimum: ${c.course.name}`),
+        ],
+      };
+    }));
+  }
+  return weeks;
+}

@@ -344,3 +344,25 @@ details.hw-group summary { cursor: pointer; list-style-position: outside; }
 table.sim { margin-bottom: 12px; }
 .window { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-left: 4px solid var(--ok); border-radius: 8px; background: var(--surface); }
 .window.risk { border-left-color: var(--risk); }
+.grid-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.grid-head h3 { margin: 0; }
+.len-pick { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+.len-pick select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 10px 0 8px; }
+.cal-dow { text-align: center; font-size: .75rem; color: var(--muted); font-weight: 600; padding-bottom: 2px; }
+.cal-day {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 58px; padding: 4px 2px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer;
+}
+.cal-day:hover { border-color: var(--accent); }
+.cal-day.off { opacity: .35; cursor: default; background: transparent; }
+.cal-day.ok { background: var(--ok-soft); } .cal-day.ok .cal-icon { color: var(--ok); }
+.cal-day.risk { background: var(--risk-soft); } .cal-day.risk .cal-icon { color: var(--risk); }
+.cal-day.fail { background: var(--bad-soft); } .cal-day.fail .cal-icon { color: var(--bad); }
+.cal-day.free { background: var(--accent-soft); }
+.cal-day.holiday { box-shadow: inset 0 -3px 0 var(--accent); }
+.cal-day.picked { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cal-num { font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.cal-icon { font-size: .95rem; font-weight: 700; line-height: 1.1; }
+.cal-meta { font-size: .65rem; color: var(--muted); min-height: .8em; }
+@media (max-width: 520px) { .cal-meta { display: none; } .cal-day { min-height: 46px; } }

@@ -1,6 +1,6 @@
 // Breaks tab: week-by-week overview, break planner with live preview, best-window finder, saved breaks.
 import { state, esc, api, toast, render, reload } from './app.js';
-import { breakModel, simulateBreak, findBreakWindows, weekOverview, addDays } from './breaks.js';
+import { breakModel, simulateBreak, findBreakWindows, startDayGrid, addDays } from './breaks.js';
 
 const $app = document.getElementById('app');
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -11,7 +11,21 @@ const dayLabel = (d, opts = { weekday: 'short', day: 'numeric', month: 'short' }
 const LEVEL = {
   free: ['No classes', 'free'], ok: ['Safe', 'ok'], risk: ['Possible, no spare skips left', 'risk'], fail: ['Not possible', 'fail'],
 };
-const LENGTHS = [[3, 'Long weekend (3 days)'], [4, '4 days'], [5, '5 days'], [7, 'A week'], [9, '9 days (week + 2 weekends)'], [14, 'Two weeks']];
+const GRID_LENGTHS = [[1, '1 day'], [2, '2 days'], [3, '3 days (long weekend)'], [4, '4 days'], [5, '5 days'], [7, '1 week'], [9, '9 days'], [14, '2 weeks']];
+const ICON = { free: '🌴', ok: '✓', risk: '!', fail: '✗' };
+
+function calCell(c, i) {
+  const d = new Date(c.date + 'T12:00:00Z');
+  const first = i === 0 || d.getUTCDate() === 1;
+  const num = first ? dayLabel(c.date, { day: 'numeric', month: 'short' }) : String(d.getUTCDate());
+  if (c.past || c.beyond) return `<div class="cal-day off" title="${c.past ? 'Past' : 'After the end of your calendar'}"><span class="cal-num">${esc(num)}</span></div>`;
+  const title = [`${dayLabel(c.date)} – ${dayLabel(c.to)}: ${LEVEL[c.level][0]}`, c.sessions ? `${c.sessions} sessions missed` : '', ...c.blockers].filter(Boolean).join('\n');
+  return `<button class="cal-day ${LEVEL[c.level][1]}${c.holiday ? ' holiday' : ''}${c.date === state.breaks.from ? ' picked' : ''}" data-start="${c.date}" title="${esc(title)}">
+    <span class="cal-num">${esc(num)}</span><span class="cal-icon">${ICON[c.level]}</span>
+    <span class="cal-meta">${c.sessions ? `${c.sessions} missed` : ''}</span></button>`;
+}
+
+const LENGTHS = [[1, '1 day'], [2, '2 days'], [3, 'Long weekend (3 days)'], [4, '4 days'], [5, '5 days'], [7, 'A week'], [9, '9 days (week + 2 weekends)'], [14, 'Two weeks']];
 
 function model() {
   const { courses, events, user } = state.data;
@@ -20,7 +34,7 @@ function model() {
 
 function ui() {
   if (!state.breaks) {
-    state.breaks = { from: '', to: '', label: '', days: 7, within: '', result: null };
+    state.breaks = { from: '', to: '', label: '', days: 7, within: '', result: null, len: 7 };
   }
   return state.breaks;
 }
@@ -54,24 +68,26 @@ export function renderBreaks() {
   const s = ui();
   const m = model();
   const unit = state.data.user.unit;
-  const weeks = weekOverview(m, 12);
+  const grid = startDayGrid(m, s.len);
   const sim = s.from && s.to && s.to >= s.from ? simulateBreak(m, s.from, s.to) : null;
   const saved = state.data.breaks || [];
 
   $app.innerHTML = `
     <section class="panel">
-      <h3>Week by week <span class="muted small">— could you skip the whole week?</span></h3>
-      <div class="weeks">
-        ${weeks.map((w) => `
-          <button class="week ${LEVEL[w.level][1]}" data-week="${w.from}" title="${esc([LEVEL[w.level][0], ...w.blockers].join('\n'))}">
-            <span class="wk-date">${esc(dayLabel(w.from, { day: 'numeric', month: 'short' }))}</span>
-            <span class="wk-status">${{ free: '🌴', ok: '✓', risk: '!', fail: '✗' }[w.level]}</span>
-            <span class="wk-meta">${w.level === 'free' ? 'no classes' : `${w.sessions} sessions`}</span>
-          </button>`).join('')}
+      <div class="grid-head">
+        <h3>When could you take a break?</h3>
+        <label class="len-pick">Length
+          <select id="break-len">${GRID_LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.len ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        </label>
+      </div>
+      <p class="muted small">Each day shows what happens if a ${s.len}-day break <b>starts</b> that day.</p>
+      <div class="cal">
+        ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div class="cal-dow">${d}</div>`).join('')}
+        ${grid.flat().map((c, i) => calCell(c, i)).join('')}
       </div>
       ${m.noSkip.length ? `<p class="note warn">No spare absences at all in: ${m.noSkip.map((c) => `<b>${esc(c.name)}</b>`).join(', ')}.
         Any break over one of their sessions would drop that course below ${pct(state.data.user.threshold)}, so plan breaks around them (or check if a session can be excused).</p>` : ''}
-      <p class="muted small">✓ safe · ! possible but leaves no spare skips · ✗ would drop a course below ${pct(state.data.user.threshold)} or miss an exam · 🌴 no classes. Click a week to check it.</p>
+      <p class="muted small">✓ safe · ! possible but leaves no spare skips · ✗ would drop a course below ${pct(state.data.user.threshold)} or miss an exam · 🌴 no classes missed. Click a day to check that break.</p>
     </section>
 
     <div class="breaks-layout">
@@ -138,11 +154,10 @@ function findView(r) {
 export function onClick(e) {
   const t = e.target;
   const s = ui();
-  const week = t.closest('[data-week]');
-  if (week) {
-    const from = week.dataset.week;
-    s.from = from < model().today ? model().today : from;
-    s.to = addDays(from, 6);
+  const start = t.closest('[data-start]');
+  if (start) {
+    s.from = start.dataset.start;
+    s.to = addDays(s.from, s.len - 1);
     render();
     document.getElementById('break-form')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     return true;
@@ -161,6 +176,14 @@ export function onClick(e) {
 }
 
 export function onChange(e) {
+  if (e.target.id === 'break-len') {
+    const s = ui();
+    s.len = Number(e.target.value);
+    if (LENGTHS.some(([d]) => d === s.len)) { s.days = s.len; s.result = null; } // keep "Find the best time" in step
+    if (s.from) s.to = addDays(s.from, s.len - 1);   // keep the planned break in sync
+    render();
+    return true;
+  }
   const form = e.target.closest('#break-form');
   if (!form) return false;
   const s = ui();

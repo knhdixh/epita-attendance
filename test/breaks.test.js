@@ -76,3 +76,28 @@ test('weekOverview: holiday week is free, normal weeks risky but possible', () =
   assert.equal(weeks[2].holidayDays, 7);
   assert.equal(weeks[1].level, 'risk');
 });
+
+test('startDayGrid: verdict per start day for the chosen length', async () => {
+  const { startDayGrid } = await import('../public/breaks.js');
+  const m = model(calendar());
+  const grid = startDayGrid(m, 3);
+  assert.equal(grid[0][0].date, '2026-10-12');     // Monday of the current week
+  assert.ok(grid[0][0].past);                      // before today (Tue 13)
+  const fri = grid[0][4];                          // Fri 16 -> Sun 18: Fri has no class
+  assert.equal(fri.date, '2026-10-16');
+  assert.equal(fri.to, '2026-10-18');
+  assert.equal(fri.level, 'free');
+  const wedHoliday = grid[2][2];                   // Wed 28 Oct, school holiday week
+  assert.ok(wedHoliday.holiday);
+  assert.equal(wedHoliday.level, 'free');
+  // Last class is Thu 3 Dec: the days after it are outside the calendar, not "free".
+  assert.equal(grid.at(-1)[3].date, '2026-12-03');
+  assert.ok(!grid.at(-1)[3].beyond);
+  assert.ok(grid.at(-1)[4].beyond);
+  // Every in-range cell agrees with simulateBreak.
+  for (const week of grid) for (const c of week) {
+    if (c.past || c.beyond) continue;
+    const sim = simulateBreak(m, c.date, addDays(c.date, 2));
+    assert.equal(c.sessions, sim.sessions.length);
+  }
+});
