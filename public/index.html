@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attendance Tracker</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Attendance<span>80</span></div>
+    <nav id="tabs" class="tabs" hidden>
+      <button data-tab="overview">Overview</button>
+      <button data-tab="sessions">Sessions</button>
+      <button data-tab="homework">Homework</button>
+      <button data-tab="breaks">Breaks</button>
+      <button data-tab="assistant">Assistant</button>
+      <button data-tab="courses">Courses</button>
+      <button data-tab="settings">Settings</button>
+    </nav>
+    <div id="account" class="account"></div>
+  </header>
+  <main id="app"><div class="loading">Loading…</div></main>
+  <input type="file" id="file-input" accept=".ics,text/calendar" hidden>
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

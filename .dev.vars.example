@@ -1,0 +1,5 @@
+# Local-only settings for `wrangler dev`. Copy to .dev.vars.
+DEV_LOGIN=1
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+# TOKEN_KEY=  (openssl rand -base64 32) encrypts Google Calendar tokens

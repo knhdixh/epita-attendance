@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "epita-attendance",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  // Custom domain (DNS managed on Cloudflare). The workers.dev address redirects here.
+  "routes": [{ "pattern": "epita.knhdixh.com", "custom_domain": true }],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // API and auth routes go to the Worker; everything else is served as static files.
+    "run_worker_first": ["/api/*", "/auth/*", "/feed/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "epita-attendance",
+      "database_id": "5144fc5e-ac2b-43bd-b15a-4adc7d28c71a",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Workers AI powers the assistant (free daily allocation; prompts are not used for training).
+  "ai": { "binding": "AI" },
+  "vars": {
+    // Assistant: messages per user per day, and the Workers AI model.
+    "AI_DAILY_LIMIT": "40",
+    "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+    // Optional: restrict sign-in to one email domain, e.g. "epita.fr". Empty = any Google account.
+    "ALLOWED_DOMAIN": "",
+    // Requests to any other host (e.g. *.workers.dev) are redirected to this one. Empty = no redirect.
+    "CANONICAL_HOST": "epita.knhdixh.com"
+  }
+  // Secrets (set with `npx wrangler secret put <NAME>`, or in .dev.vars locally):
+  //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+  //   TOKEN_KEY  base64 32-byte key encrypting Google Calendar refresh tokens (openssl rand -base64 32)
+  // Local only: DEV_LOGIN=1 in .dev.vars enables a passwordless /auth/dev login.
+}
