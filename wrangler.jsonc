@@ -29,8 +29,8 @@
     // exempt from the shared budget: everyone else together stops at AI_SHARED_DAILY_NEURONS of the
     // 10,000 free daily neurons, so the rest stays available to owners.
     "AI_DAILY_LIMIT": "10",
-    "AI_OWNER_DAILY_LIMIT": "100",
-    "AI_SHARED_DAILY_NEURONS": "7000",
+    "AI_OWNER_DAILY_LIMIT": "15",
+    "AI_SHARED_DAILY_NEURONS": "8500",
     "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
     // Optional: restrict sign-in to one email domain, e.g. "epita.fr". Empty = any Google account.
     "ALLOWED_DOMAIN": "",
