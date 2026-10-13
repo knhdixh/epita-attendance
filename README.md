@@ -95,6 +95,19 @@ npm test
    npm run deploy                                # applies D1 migrations, then deploys
    ```
 
+### Continuous deployment
+
+Pushes to `main` deploy automatically through **Workers Builds** (Cloudflare dashboard → *epita-attendance → Settings → Builds*):
+
+| Setting | Value |
+|---|---|
+| Repository / branch | `knhdixh/epita-attendance` / `main` |
+| Build command | *(empty)* |
+| Deploy command | `npm run deploy` (applies new D1 migrations, then `wrangler deploy`) |
+| API token | the build token, with **D1 → Edit** added so migrations can run |
+
+Runtime secrets (`GOOGLE_*`, `TOKEN_KEY`) stay on the Worker and are not part of the build.
+
 Settings in `wrangler.jsonc`:
 
 | Variable | Default | |
