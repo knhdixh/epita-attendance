@@ -6,6 +6,7 @@ import { HttpError } from './http.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
 import { chat, usage as aiUsage } from './assistant.js';
 import { saveAiKey, deleteAiKey } from './llm.js';
+import { deleteAccount } from './account.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
 
@@ -441,6 +442,15 @@ async function handleApi(request, env, url, user) {
     if (!['sessions', 'hours'].includes(body.unit)) throw new HttpError(400, 'Invalid unit.');
     await DB.prepare('UPDATE users SET threshold = ?, unit = ? WHERE id = ?').bind(threshold, body.unit, user.id).run();
     return json({ ok: true });
+  }
+
+  if (path === '/api/account' && method === 'DELETE') {
+    const body = await readJson(request);
+    if (body.confirm !== 'DELETE') throw new HttpError(400, 'Type DELETE to confirm.');
+    await deleteAccount(env, user);
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie(SESSION_COOKIE, '', 0, url.protocol === 'https:') },
+    });
   }
 
   if (path === '/api/data' && method === 'DELETE') {

@@ -120,6 +120,7 @@ async function renderLogin() {
         ${cfg.dev ? '<p><a class="btn" href="/auth/dev">Dev login (local only)</a></p>' : ''}
       </div>
       <p class="guide-link">📅 You'll need your timetable as an .ics file. <a href="/ics-guide">How to export it from Zeus</a></p>
+      <p class="muted small legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>
     </section>`;
 }
 
@@ -427,7 +428,13 @@ function renderSettings() {
       <h3>Delete data</h3>
       <p>Remove all imported sessions, courses and attendance marks from your account. Homework is kept.</p>
       <button class="btn danger" data-action="wipe">Delete all my data</button>
-    </section>`;
+      <h3 class="danger-title">Delete my account</h3>
+      <p>Permanently delete your account and everything in it: calendar, attendance, homework, breaks, passkeys,
+        AI key and Google Calendar connection (access is revoked; the "Homework (Attendance80)" calendar stays in your
+        Google account for you to delete).</p>
+      <button class="btn danger" data-action="delete-account">Delete my account</button>
+    </section>
+    <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
 }
 
 function signInMethodsPanel() {
@@ -577,6 +584,17 @@ document.addEventListener('click', async (e) => {
     return bulkStatus(trackedEvents().filter((x) => x.start_at <= Date.now() && !x.status).map((x) => x.id), 'present');
   }
   if (action === 'mark-shown-present') return bulkStatus(state.shownIds, 'present');
+  if (action === 'delete-account') {
+    const typed = prompt('This permanently deletes your account and all its data. It cannot be undone.\n\nType DELETE to confirm.');
+    if (typed === null) return;
+    if (typed.trim() !== 'DELETE') return toast('Account not deleted: you need to type DELETE.', true);
+    try {
+      await api('/api/account', { method: 'DELETE', body: { confirm: 'DELETE' } });
+      try { localStorage.clear(); } catch { /* storage unavailable */ }
+      location.href = '/';
+    } catch (err) { toast(err.message, true); }
+    return;
+  }
   if (action === 'wipe') {
     if (!confirm('Delete all your sessions and attendance marks? This cannot be undone.')) return;
     await api('/api/data', { method: 'DELETE' });

@@ -400,3 +400,6 @@ table.sim { margin-bottom: 12px; }
 .byok-form input, .byok-form select { width: 100%; min-width: 0; }
 .byok-meta { margin: -6px 0 0; }
 .msg .btn { align-self: flex-start; }
+.danger-title { margin-top: 18px; }
+.legal-links { margin-top: 18px; }
+.legal-links a { color: var(--muted); }

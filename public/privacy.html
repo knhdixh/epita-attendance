@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy · Attendance80</title>
+  <meta name="description" content="How Attendance80 collects, uses and protects your data.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/legal.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/">Attendance<span>80</span></a></header>
+  <main class="legal">
+    <a class="back small" href="/">← Back to Attendance80</a>
+    <h1>Privacy policy</h1>
+    <p class="updated">Effective 13 October 2026</p>
+
+    <p>Attendance80 (<a href="https://epita.knhdixh.com">epita.knhdixh.com</a>, “the app”, “we”) helps students track class
+      attendance, homework and breaks from their timetable. It's an independent project, <b>not affiliated with EPITA,
+      IONIS or Zeus</b>. This policy explains what data the app handles, why, and the choices you have. Contact:
+      <a href="mailto:privacy@knhdixh.com">privacy@knhdixh.com</a>.</p>
+
+    <h2>Summary</h2>
+    <ul>
+      <li>We only collect what the app needs to work. No ads, no analytics, no tracking, and we never sell data.</li>
+      <li>Your data is stored with Cloudflare in Western Europe.</li>
+      <li>The AI assistant sends your question and the relevant parts of your schedule to an AI provider only when you use it.</li>
+      <li>You can delete your account and all its data at any time in Settings.</li>
+    </ul>
+
+    <h2>What we collect</h2>
+    <dl>
+      <dt>Account</dt>
+      <dd>The name you enter. If you sign in with Google: your name, email address, profile picture and Google account ID.
+        If you use a passkey: a public key that identifies the passkey. Your fingerprint, face or PIN never leaves your device
+        and is never sent to us.</dd>
+      <dt>Your timetable and attendance</dt>
+      <dd>The calendar (.ics) file you import (course names, times, rooms), your attendance marks, tags and notes,
+        your group choices and settings.</dd>
+      <dt>Homework and breaks</dt>
+      <dd>Homework you add (title, notes, due date, reminder) and breaks you save. If you use the homework calendar feed,
+        anyone with that private link can read your homework; you can reset the link in Settings at any time.</dd>
+      <dt>Assistant usage</dt>
+      <dd>How many assistant messages you send per day and how much of the AI allowance they use, to enforce fair-use limits.
+        <b>Conversations are kept only in your browser</b>, not on our servers.</dd>
+      <dt>Your own AI key (optional)</dt>
+      <dd>If you add one, the API key (and Cloudflare account ID), stored encrypted. It's never shown again or sent back
+        to your browser.</dd>
+      <dt>Google Calendar connection (optional)</dt>
+      <dd>If you connect it, an encrypted access token, the email of the connected Google account, and the ID of the
+        “Homework (Attendance80)” calendar the app creates.</dd>
+      <dt>Technical data</dt>
+      <dd>Session cookies that keep you signed in (see Cookies). Like any website, our host Cloudflare processes your IP
+        address and request details to deliver the site and protect it from abuse.</dd>
+    </dl>
+
+    <h2>How we use it</h2>
+    <p>Only to provide the app's features: showing your attendance and how many classes you can still miss, homework
+      reminders, break planning, the assistant, calendar sync and the homework calendar feed. The legal basis is
+      performing the service you asked for (GDPR Art. 6(1)(b)), and for optional features (Google Calendar, your own AI key),
+      your consent, which you can withdraw by disconnecting them.</p>
+
+    <h2>The AI assistant</h2>
+    <p>When you send a message, the app sends your message and the context needed to answer it to an AI model.
+      That context is your courses and attendance numbers, sessions for the coming weeks, homework, and saved breaks.</p>
+    <ul>
+      <li><b>Shared allowance:</b> processed by Cloudflare Workers AI. Cloudflare doesn't use it to train models.</li>
+      <li><b>Your own key:</b> processed by the provider you chose (Cloudflare, Groq or OpenRouter) under your account
+        with them and their privacy terms. Some free OpenRouter models may log or train on prompts; the
+        <a href="/byok-guide">guide</a> explains the differences.</li>
+    </ul>
+    <p>The assistant only acts on your own data, and every change it makes can be undone.</p>
+
+    <h2>Google user data</h2>
+    <p>If you sign in with Google, the app requests only your basic profile and email (<code>openid email profile</code>)
+      to create and identify your account. If you choose to connect Google Calendar, it also requests
+      <code>calendar.app.created</code>. This lets the app create one calendar, “Homework (Attendance80)”, and add,
+      update and remove your homework events in it. The app <b>can't see your other calendars or events</b>.</p>
+    <p>Attendance80's use and transfer of information received from Google APIs adheres to the
+      <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API
+      Services User Data Policy</a>, including the Limited Use requirements. Google user data is used only to provide the
+      features above. It isn't sold, isn't used for advertising, isn't used to train AI models, and isn't transferred to
+      others except as needed to provide the features or to comply with the law. Nobody reads it unless you ask for help,
+      it's needed for security, or the law requires it. You can disconnect Google Calendar in Settings (this revokes the
+      app's access) or at <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+    <h2>Who processes your data</h2>
+    <ul>
+      <li><b>Cloudflare</b>: hosting, database (stored in Western Europe) and the shared AI assistant.</li>
+      <li><b>Google</b>: only if you sign in with Google or connect Google Calendar.</li>
+      <li><b>Your chosen AI provider</b>: only if you add your own key.</li>
+    </ul>
+    <p>Some of these companies may process data outside the EU under the European Commission's standard contractual
+      clauses or adequacy decisions.</p>
+
+    <h2>How long we keep it</h2>
+    <p>As long as your account exists. Sign-in sessions expire after 30 days, and one-time sign-in challenges after 5 minutes.
+      When you delete your account, your data is removed from our database immediately. Cloudflare's database recovery
+      history may keep it for up to 30 days before it's overwritten.</p>
+
+    <h2>Cookies and browser storage</h2>
+    <p>We only use cookies that are strictly necessary: <code>sid</code> keeps you signed in, and short-lived cookies protect
+      Google and passkey sign-in. The app also saves your assistant conversation and a few display preferences in your
+      browser's storage. We use no advertising or analytics cookies, so there's no cookie banner.</p>
+
+    <h2>Your rights</h2>
+    <p>Under the GDPR you can access, correct, export or delete your data, and object to or restrict its processing.
+      You can do most of this yourself: edit or delete anything in the app, use <b>Settings → Delete all my data</b> for
+      your calendar data, or <b>Settings → Delete my account</b> to erase everything. For anything else, email
+      <a href="mailto:privacy@knhdixh.com">privacy@knhdixh.com</a>. You can also complain to your data protection
+      authority (in France, the <a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL</a>).</p>
+
+    <h2>Security</h2>
+    <p>All traffic uses HTTPS. API keys and Google tokens are encrypted (AES-GCM) before they're stored. Sign-in uses passkeys
+      or Google, so we never store passwords. Every request is checked so you can only access your own data.</p>
+
+    <h2>Age</h2>
+    <p>The app is meant for university students and isn't directed at children under 15. Some optional AI providers require
+      you to be 18 or older.</p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, we'll update the date above. Significant changes will be announced in the app.</p>
+
+    <p class="footer-links"><a href="/terms">Terms of service</a> · <a href="/">Attendance80</a></p>
+  </main>
+</body>
+</html>

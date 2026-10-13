@@ -1,0 +1,13 @@
+/* Privacy policy and terms pages. */
+.topbar .brand { text-decoration: none; color: inherit; }
+.legal { max-width: 720px; margin: 0 auto; line-height: 1.6; }
+.legal h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -.02em; margin: 8px 0 2px; }
+.legal h2 { font-size: 1.15rem; margin: 26px 0 6px; }
+.legal .updated { color: var(--muted); margin: 0 0 18px; }
+.legal .back { display: inline-block; margin-bottom: 10px; text-decoration: none; }
+.legal ul { padding-left: 1.2em; }
+.legal li { margin: 4px 0; }
+.legal dt { font-weight: 600; margin-top: 10px; }
+.legal dd { margin: 2px 0 0; color: var(--muted); }
+.legal code { font-size: .85em; }
+.legal .footer-links { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: .9rem; }
