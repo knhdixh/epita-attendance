@@ -2,6 +2,7 @@
 // and can act through a few tools. Attendance maths is always computed by the app (stats.js), never
 // by the model, so numbers it reports are exact.
 import { HttpError } from './http.js';
+import { callModel, getAiKey, keyConfig, describeKey } from './llm.js';
 import { TAGS, computeStats, effectiveTag } from '../public/stats.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
 import { REMIND_OPTIONS, isValidTimeZone } from './homework.js';
@@ -14,6 +15,8 @@ const DEFAULT_OWNER_LIMIT = 100;  // messages per day for owners (AI_OWNER_DAILY
 // Workers AI's free allocation is 10,000 neurons/day for the whole account. Everyone except the owners
 // shares this part of it (AI_SHARED_DAILY_NEURONS); the rest stays in reserve for the owners.
 const DEFAULT_SHARED_NEURONS = 7000;
+// With their own key, users spend their own provider quota; this only guards against runaway loops.
+const DEFAULT_BYOK_LIMIT = 300;
 const MAX_STEPS = 5;              // model calls per user message (tool loop)
 const HISTORY = 12;               // previous chat turns sent to the model
 const MAX_MESSAGE_CHARS = 4000;
@@ -420,24 +423,6 @@ async function runTool(name, args, ctx) {
 
 // ---------------------------------------------------------------- chat
 
-async function callModel(env, model, messages, withTools) {
-  const input = { messages, max_tokens: 1200, temperature: 0.3 };
-  if (withTools) input.tools = TOOLS;
-  // Reasoning makes Gemma ~4x slower (15 s vs 4 s per call) without better answers for this app.
-  if (env.AI_THINKING !== 'true') input.chat_template_kwargs = { enable_thinking: false };
-  try {
-    return await env.AI.run(model, input);
-  } catch (e) {
-    console.error('AI.run failed, retrying once', e);
-    try {
-      return await env.AI.run(model, input);
-    } catch (e2) {
-      console.error('AI.run failed', e2);
-      throw new HttpError(503, 'The AI service is unavailable right now, or today\'s free AI allowance is used up. Try again later.');
-    }
-  }
-}
-
 function today() { return new Date().toISOString().slice(0, 10); }
 
 // Owners are listed by sign-in email (AI_OWNER_EMAILS, a secret) or user id (AI_OWNER_USER_IDS).
@@ -447,11 +432,15 @@ export function isOwner(env, user) {
     || list(env.AI_OWNER_USER_IDS).includes(String(user.id));
 }
 
-export async function usage(env, user) {
+export async function usage(env, user, keyRow) {
+  keyRow ??= await getAiKey(env, user.id);
   const owner = isOwner(env, user);
+  const row = await env.DB.prepare('SELECT messages, byok_messages FROM ai_usage WHERE user_id = ? AND day = ?').bind(user.id, today()).first();
+  if (keyRow) {
+    return { used: row?.byok_messages ?? 0, limit: Number(env.AI_BYOK_DAILY_LIMIT) || DEFAULT_BYOK_LIMIT, owner, byok: describeKey(keyRow) };
+  }
   const limit = owner ? Number(env.AI_OWNER_DAILY_LIMIT) || DEFAULT_OWNER_LIMIT : Number(env.AI_DAILY_LIMIT) || DEFAULT_DAILY_LIMIT;
-  const row = await env.DB.prepare('SELECT messages FROM ai_usage WHERE user_id = ? AND day = ?').bind(user.id, today()).first();
-  return { used: row?.messages ?? 0, limit, owner };
+  return { used: row?.messages ?? 0, limit, owner, byok: null };
 }
 
 // Neurons used today by everyone who isn't an owner.
@@ -471,16 +460,22 @@ export async function chat(env, user, body, origin) {
   }
   const tz = isValidTimeZone(body.tz) ? body.tz : 'Europe/Paris';
 
-  const { used, limit, owner } = await usage(env, user);
-  if (used >= limit) throw new HttpError(429, `You've used today's ${limit} assistant messages. The limit resets at 00:00 UTC.`);
-  if (!owner && await sharedNeuronsToday(env) >= (Number(env.AI_SHARED_DAILY_NEURONS) || DEFAULT_SHARED_NEURONS)) {
-    throw new HttpError(429, "The assistant has reached today's shared limit for all users. It resets at 00:00 UTC.");
+  const keyRow = await getAiKey(env, user.id);
+  const cfg = await keyConfig(env, keyRow);
+  const { used, limit, owner, byok } = await usage(env, user, keyRow);
+  const tip = ' Tip: add your own free key in Settings → Assistant to keep going.';
+  if (used >= limit) {
+    throw new HttpError(429, `You've used today's ${limit} assistant messages. The limit resets at 00:00 UTC.${cfg ? '' : tip}`);
   }
-  await env.DB.prepare(`INSERT INTO ai_usage (user_id, day, messages) VALUES (?, ?, 1)
-    ON CONFLICT (user_id, day) DO UPDATE SET messages = messages + 1`).bind(user.id, today()).run();
+  if (!cfg && !owner && await sharedNeuronsToday(env) >= (Number(env.AI_SHARED_DAILY_NEURONS) || DEFAULT_SHARED_NEURONS)) {
+    throw new HttpError(429, `The assistant has reached today's shared limit for all users. It resets at 00:00 UTC.${tip}`);
+  }
+  const counter = cfg ? 'byok_messages' : 'messages';
+  await env.DB.prepare(`INSERT INTO ai_usage (user_id, day, ${counter}) VALUES (?, ?, 1)
+    ON CONFLICT (user_id, day) DO UPDATE SET ${counter} = ${counter} + 1`).bind(user.id, today()).run();
 
   const ctx = { env, user, tz, origin, actions: [], data: await loadData(env, user) };
-  const model = env.AI_MODEL || DEFAULT_MODEL;
+  const sharedModel = env.AI_MODEL || DEFAULT_MODEL;
   const messages = [
     { role: 'system', content: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${buildContext(ctx.data, user, tz, Date.now())}` },
     ...history.map((m) => ({ role: m.role, content: m.content })),
@@ -488,9 +483,17 @@ export async function chat(env, user, body, origin) {
 
   let reply = '', neurons = 0;
   for (let step = 0; step < MAX_STEPS; step++) {
-    const res = await callModel(env, model, messages, step < MAX_STEPS - 1);
-    neurons += res.usage?.neurons || 0;
-    const msg = res.choices?.[0]?.message || { content: res.response };
+    let res;
+    try {
+      res = await callModel(env, cfg, messages, { tools: step < MAX_STEPS - 1 ? TOOLS : undefined, sharedModel });
+    } catch (e) {
+      if (cfg && e instanceof HttpError) {
+        await env.DB.prepare('UPDATE ai_keys SET last_error = ? WHERE user_id = ?').bind(e.message, user.id).run();
+      }
+      throw e;
+    }
+    neurons += res.neurons;
+    const msg = res.message;
     const calls = msg.tool_calls || [];
     if (!calls.length) { reply = (msg.content || '').trim(); break; }
     messages.push({ role: 'assistant', content: msg.content || '', tool_calls: calls });
@@ -501,13 +504,17 @@ export async function chat(env, user, body, origin) {
       if (env.AI_DEBUG === 'true') console.log('tool call', call.function?.name ?? call.name, JSON.stringify(args));
       try { result = await runTool(call.function?.name ?? call.name, args, ctx); }
       catch (e) { console.error('tool failed', e); result = { error: 'The action failed.' }; }
-      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
+      messages.push({ role: 'tool', tool_call_id: call.id, tool_name: call.function?.name ?? call.name, content: JSON.stringify(result) });
     }
   }
   if (!reply) reply = ctx.actions.length ? 'Done.' : 'Sorry, I could not come up with an answer. Please rephrase.';
 
-  await env.DB.prepare('UPDATE ai_usage SET neurons = neurons + ? WHERE user_id = ? AND day = ?').bind(neurons, user.id, today()).run();
-  return { reply, actions: ctx.actions, usage: { used: used + 1, limit, owner } };
+  if (cfg) {
+    await env.DB.prepare('UPDATE ai_keys SET last_used_at = ?, last_error = NULL WHERE user_id = ?').bind(Date.now(), user.id).run();
+  } else {
+    await env.DB.prepare('UPDATE ai_usage SET neurons = neurons + ? WHERE user_id = ? AND day = ?').bind(neurons, user.id, today()).run();
+  }
+  return { reply, actions: ctx.actions, usage: { used: used + 1, limit, owner, byok } };
 }
 
 // Exported for tests.

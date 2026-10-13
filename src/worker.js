@@ -5,6 +5,7 @@ import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal
 import { HttpError } from './http.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
 import { chat, usage as aiUsage } from './assistant.js';
+import { saveAiKey, deleteAiKey } from './llm.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
 
@@ -309,6 +310,16 @@ async function handleApi(request, env, url, user) {
       },
       assistant: env.AI ? await aiUsage(env, user) : null,
     });
+  }
+
+  if (path === '/api/ai-key' && method === 'PUT') {
+    // Tests the key against the provider before saving it (encrypted).
+    return json({ key: await saveAiKey(env, user, await readJson(request)), usage: await aiUsage(env, user) });
+  }
+
+  if (path === '/api/ai-key' && method === 'DELETE') {
+    await deleteAiKey(env, user);
+    return json({ usage: await aiUsage(env, user) });
   }
 
   if (path === '/api/assistant/chat' && method === 'POST') {

@@ -23,7 +23,7 @@ export async function encrypt(env, text) {
   return btoa(String.fromCharCode(...all));
 }
 
-async function decrypt(env, b64) {
+export async function decrypt(env, b64) {
   const all = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: all.slice(0, 12) }, await aesKey(env), all.slice(12));
   return new TextDecoder().decode(pt);

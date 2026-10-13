@@ -100,7 +100,7 @@ test('chat loop: tool call, then final answer; usage limit enforced', async () =
   assert.equal(r.actions[0].type, 'attendance');
   assert.ok(calls[0].tools && calls[0].messages[0].content.includes('CONTEXT:'));
   assert.equal(calls[1].messages.at(-1).role, 'tool');
-  assert.deepEqual(r.usage, { used: 1, limit: 2, owner: false });
+  assert.deepEqual(r.usage, { used: 1, limit: 2, owner: false, byok: null });
   await chat(env, user, { messages: [{ role: 'user', content: 'again' }] }, 'https://app');
   await assert.rejects(chat(env, user, { messages: [{ role: 'user', content: 'third' }] }, 'https://app'), /used today's 2/);
   assert.equal(env.DB.raw.prepare('SELECT neurons FROM ai_usage').get().neurons, 10);
@@ -178,8 +178,8 @@ test('limits: owner gets the higher allowance and bypasses the shared budget; ot
   assert.ok(isOwner(env, owner));
   assert.ok(!isOwner(env, student));
   assert.ok(!isOwner(env, passkeyUser));       // no email: not an owner unless listed by id
-  assert.deepEqual(await usage(env, owner), { used: 0, limit: 100, owner: true });
-  assert.deepEqual(await usage(env, student), { used: 0, limit: 10, owner: false });
+  assert.deepEqual(await usage(env, owner), { used: 0, limit: 100, owner: true, byok: null });
+  assert.deepEqual(await usage(env, student), { used: 0, limit: 10, owner: false, byok: null });
 
   await ask(student);                           // 60 shared neurons
   await ask(passkeyUser);                       // 120 >= 100: shared budget now used up

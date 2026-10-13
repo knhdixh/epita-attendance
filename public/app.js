@@ -2,6 +2,7 @@ import { TAGS, splitGroup, effectiveTag, statsByCourse, computeStats } from './s
 import * as hw from './homework-ui.js';
 import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
+import * as byok from './byok-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 
 const $app = document.getElementById('app');
@@ -420,6 +421,7 @@ function renderSettings() {
       <button class="btn" data-action="upload">Import .ics</button>
     </section>
     ${signInMethodsPanel()}
+    ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
     <section class="panel narrow danger-zone">
       <h3>Delete data</h3>
@@ -546,7 +548,7 @@ $tabs.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', async (e) => {
-  if (await hw.onClick(e) || ai.onClick(e) || brk.onClick(e)) return;
+  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e)) return;
   const t = e.target;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
@@ -620,7 +622,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('change', (e) => {
-  if (hw.onChange(e) || brk.onChange(e)) return;
+  if (byok.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -656,7 +658,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');

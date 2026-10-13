@@ -387,3 +387,16 @@ table.sim { margin-bottom: 12px; }
   border: 1px solid var(--border); color: var(--muted); font-size: .78rem; font-weight: 700; text-decoration: none;
 }
 .help-dot:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- bring your own key */
+.byok-intro { margin-bottom: 12px; }
+.byok-options { display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; margin: 8px 0; }
+@media (max-width: 640px) { .byok-options { grid-template-columns: 1fr; } }
+.byok-option { border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.byok-option p { margin: 0; }
+.byok-option.recommended { border-color: var(--accent); background: var(--accent-soft); }
+.byok-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.byok-form { max-width: none; }
+.byok-form input, .byok-form select { width: 100%; min-width: 0; }
+.byok-meta { margin: -6px 0 0; }
+.msg .btn { align-self: flex-start; }

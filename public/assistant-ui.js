@@ -1,5 +1,6 @@
 // AI assistant tab: chat with the Workers AI assistant, with Undo for the changes it makes.
 import { state, esc, api, toast, render, reload } from './app.js';
+import { introCard, limitCta } from './byok-ui.js';
 
 const $app = document.getElementById('app');
 const STORE_KEY = () => `a80-chat-${state.data?.user?.email || ''}`;
@@ -100,9 +101,12 @@ export function renderAssistant() {
     <section class="chat">
       <header class="chat-head">
         <h3>Assistant</h3>
-        <span class="muted small">${info.used} / ${info.limit} messages today</span>
+        <span class="muted small">${info.byok
+          ? `Your ${esc(info.byok.label)} key · ${info.used} today`
+          : `Shared · ${info.used} / ${info.limit} today · <a href="#settings" data-byok="setup">use your own free key</a>`}</span>
         ${chat.messages.length ? '<button class="btn small ghost" data-action="chat-clear">Clear chat</button>' : ''}
       </header>
+      ${introCard()}
       <div class="chat-log" id="chat-log">
         ${chat.messages.length ? '' : `
           <div class="chat-empty">
@@ -113,6 +117,7 @@ export function renderAssistant() {
           <div class="msg ${m.role}${m.error ? ' error' : ''}">
             <div class="bubble">${m.role === 'assistant' ? markdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
             ${(m.actions || []).map((a, ai) => actionChip(a, mi, ai)).join('')}
+            ${m.error && /own free key|Settings → Assistant/.test(m.content) && mi === chat.messages.length - 1 ? limitCta() : ''}
           </div>`).join('')}
         ${chat.pending ? '<div class="msg assistant"><div class="bubble typing"><span></span><span></span><span></span></div></div>' : ''}
       </div>
@@ -121,7 +126,9 @@ export function renderAssistant() {
         <textarea name="message" rows="1" maxlength="4000" placeholder="e.g. I missed French today · Add TP4 due at the next Databases class" ${chat.pending ? 'disabled' : ''}>${esc(chat.draft)}</textarea>
         <button class="btn primary" type="submit" ${chat.pending ? 'disabled' : ''}>Send</button>
       </form>
-      <p class="muted small chat-note">Runs on Cloudflare Workers AI. Your messages and schedule are sent to the model but not used for training.
+      <p class="muted small chat-note">${info.byok
+        ? `Runs on your ${esc(info.byok.label)} account. Your messages and schedule are sent to ${esc(info.byok.label)}.`
+        : 'Runs on Cloudflare Workers AI. Your messages and schedule are sent to the model but not used for training.'}
         The AI can make mistakes; every change it makes shows above with Undo.</p>
     </section>`;
   const log = document.getElementById('chat-log');

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your own free AI key · Attendance80</title>
+  <meta name="description" content="Use the Attendance80 assistant with your own free AI key: Cloudflare Workers AI, Groq or OpenRouter.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .guide { max-width: 760px; margin: 0 auto; }
+    .guide h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -.02em; margin: 8px 0 6px; }
+    .guide h2 { font-size: 1.25rem; margin: 0 0 4px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 18px; }
+    .back { display: inline-block; margin-bottom: 10px; text-decoration: none; }
+    .why { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .why div { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: .92rem; }
+    .why b { display: block; margin-bottom: 2px; }
+    .compare { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .compare th, .compare td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .compare th { color: var(--muted); font-weight: 500; font-size: .82rem; }
+    .table-wrap { overflow-x: auto; }
+    .provider { scroll-margin-top: 70px; }
+    .provider header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+    .steps { margin: 10px 0 0; padding-left: 1.3em; }
+    .steps li { margin: 8px 0; }
+    .tag { font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+    .tag.warn { background: var(--risk-soft); color: var(--risk); }
+    .note { padding: 8px 12px; border-radius: 8px; font-size: .9rem; margin-top: 10px; }
+    .note.info { background: var(--accent-soft); }
+    .note.warn { background: var(--risk-soft); }
+    kbd { font: inherit; font-weight: 600; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 0 6px; }
+    .faq dt { font-weight: 600; margin-top: 12px; }
+    .faq dd { margin: 4px 0 0; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" style="text-decoration:none;color:inherit">Attendance<span>80</span></a></header>
+  <main class="guide">
+    <a class="back small" href="/">← Back to Attendance80</a>
+    <h1>Use the assistant with your own free key</h1>
+    <p class="lead">The assistant works right away on a <b>shared allowance</b>, 10 messages a day per student, and it
+      can run out when many people use it. With <b>your own free key</b> it uses your own quota instead. Setup takes
+      about 3 minutes and costs nothing.</p>
+
+    <div class="why">
+      <div><b>Free</b>All three options below have a free plan. You don't pay anything.</div>
+      <div><b>Your own quota</b>Nobody else can use it up, and the app's 10-a-day limit doesn't apply.</div>
+      <div><b>Private and revocable</b>Your key is stored encrypted, never shown again, and you can revoke it any time.</div>
+    </div>
+
+    <section class="panel">
+      <h2>Pick one</h2>
+      <div class="table-wrap">
+        <table class="compare">
+          <thead><tr><th>Provider</th><th>Free amount</th><th>Card needed</th><th>Your prompts</th><th>Age</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#cloudflare"><b>Cloudflare Workers AI</b></a> <span class="tag">recommended</span></td>
+              <td>~100 messages/day</td><td>No</td><td>Not used for training</td><td>–</td></tr>
+            <tr><td><a href="#groq"><b>Groq</b></a></td>
+              <td>~25 messages/day, very fast</td><td>Not stated</td><td>Not used for training (may be kept up to 30 days for abuse checks)</td><td>18+</td></tr>
+            <tr><td><a href="#openrouter"><b>OpenRouter</b></a> (free models)</td>
+              <td>~20 messages/day</td><td>No</td><td>Free models may log or train on them</td><td>18+</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small">Messages per day are estimates: each assistant message sends your schedule as context,
+        and some take several steps. Free plans are set by the providers and can change.</p>
+    </section>
+
+    <section class="panel provider" id="cloudflare">
+      <header><h2>Cloudflare Workers AI</h2><span class="tag">recommended</span></header>
+      <p class="muted">The same AI the shared allowance uses, but on your own free account: 10,000 "neurons" a day,
+        about 100 messages. Cloudflare doesn't use your prompts to train models.</p>
+      <ol class="steps">
+        <li>Create a free account at <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">dash.cloudflare.com/sign-up</a>.
+          No card is needed.</li>
+        <li>Open <a href="https://dash.cloudflare.com/?to=/:account/ai/workers-ai" target="_blank" rel="noopener">AI → Workers AI</a>
+          and click <kbd>Use REST API</kbd>.</li>
+        <li>Click <kbd>Create a Workers AI API Token</kbd>, check the details, click <kbd>Create API Token</kbd>, then
+          <kbd>Copy API Token</kbd>. This token can only use Workers AI, nothing else in your account.</li>
+        <li>On the same page, under <b>Get Account ID</b>, copy your <b>Account ID</b> (32 characters).</li>
+        <li>In Attendance80, open <a href="/#settings">Settings</a> → <b>Assistant</b>, choose <b>Cloudflare Workers AI</b>,
+          paste the Account ID and the token, and click <kbd>Test &amp; save</kbd>.</li>
+      </ol>
+      <p class="note info">When the 10,000 daily neurons run out, the assistant pauses until 00:00 UTC (02:00 in Paris in summer, 01:00 in winter).
+        On the free plan it can't cost anything.</p>
+    </section>
+
+    <section class="panel provider" id="groq">
+      <header><h2>Groq</h2><span class="tag warn">18+</span></header>
+      <p class="muted">One key, and very fast answers. The free plan allows 200,000 tokens a day, about 25 messages. Groq's
+        contract forbids training on your prompts.</p>
+      <ol class="steps">
+        <li>Sign up at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>.</li>
+        <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener">API Keys</a>, click <kbd>Create API Key</kbd>,
+          name it <i>Attendance80</i>, and copy it. It starts with <code>gsk_</code> and is shown only once.</li>
+        <li>In Attendance80, open <a href="/#settings">Settings</a> → <b>Assistant</b>, choose <b>Groq</b>, paste the key, and click
+          <kbd>Test &amp; save</kbd>.</li>
+      </ol>
+      <p class="note warn">Groq's terms require you to be 18 or older. Groq may keep requests for up to 30 days to check for abuse.</p>
+    </section>
+
+    <section class="panel provider" id="openrouter">
+      <header><h2>OpenRouter (free models)</h2><span class="tag warn">18+</span></header>
+      <p class="muted">One account gives access to many models. The free ones allow 50 requests a day, about 20 messages.
+        Free models are run by other companies under trial or research terms, so they <b>may log or train on your prompts</b>.
+        Pick Cloudflare or Groq if that matters to you.</p>
+      <ol class="steps">
+        <li>Sign up at <a href="https://openrouter.ai" target="_blank" rel="noopener">openrouter.ai</a>. No card is needed for free models.</li>
+        <li>Go to <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">Keys</a>, click <kbd>Create Key</kbd>,
+          set the credit limit to <b>0</b> so it can never spend money, and copy the key (<code>sk-or-…</code>).</li>
+        <li>In Attendance80, open <a href="/#settings">Settings</a> → <b>Assistant</b>, choose <b>OpenRouter</b>, paste the key, and click
+          <kbd>Test &amp; save</kbd>.</li>
+      </ol>
+      <p class="note warn">If saving fails with “No endpoints found matching your data policy”, your
+        <a href="https://openrouter.ai/settings/privacy" target="_blank" rel="noopener">privacy settings</a> block free models.
+        Allowing them means those providers may log or train on your prompts. OpenRouter requires you to be 18 or older.</p>
+    </section>
+
+    <section class="panel faq">
+      <h2>Questions</h2>
+      <dl>
+        <dt>What does the app do with my key?</dt>
+        <dd>It sends a tiny test message when you save, then stores the key encrypted. It's only used for your own assistant
+          messages, and it's never shown again or sent back to your browser. Remove it in Settings any time, and revoke it on the
+          provider's website if you want to be sure.</dd>
+        <dt>What gets sent to the provider?</dt>
+        <dd>Your message, plus the context the assistant needs to answer: your courses and attendance numbers, sessions for the
+          next few weeks, your homework and saved breaks.</dd>
+        <dt>It says my key was rejected.</dt>
+        <dd>Copy it again, with nothing extra at the start or end. For Cloudflare, check that the Account ID is the 32-character one
+          from the Workers AI page and that the token was made with the Workers AI template.</dd>
+        <dt>It says I hit a rate limit or daily quota.</dt>
+        <dd>Your free plan's daily amount is used up. It resets the next day, or you can switch provider in Settings.</dd>
+        <dt>Why not Gemini, Mistral or GitHub Models?</dt>
+        <dd>Google's free Gemini plan isn't allowed in apps used in the EU. Mistral's free API is currently limited to business use.
+          GitHub Models was shut down in 2026.</dd>
+      </dl>
+    </section>
+  </main>
+</body>
+</html>
