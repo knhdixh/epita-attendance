@@ -1,4 +1,4 @@
-/* Attendance80 on Puppertino (macOS/iOS components, /vendor/puppertino). This file only lays the app out and
+/* Attendance80 on Puppertino (macOS/iOS components, loaded from cdn.knhdixh.com). This file only lays the app out and
    styles the few app-specific pieces, using Puppertino's own variables so light and dark mode stay in step.
    Performance: one fixed, frosted window over a static photo (its blur is computed once, not per scroll),
    transform/opacity-only motion, system fonts. */
