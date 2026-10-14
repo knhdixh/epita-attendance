@@ -36,6 +36,33 @@
     "ALLOWED_DOMAIN": "",
     // Requests to any other host (e.g. *.workers.dev) are redirected to this one. Empty = no redirect.
     "CANONICAL_HOST": "epita.knhdixh.com"
+  },
+  "env": {
+    // Design sandbox: `npm run deploy:staging` deploys the Worker "epita-attendance-staging" to
+    // epita-staging.knhdixh.com with its own D1 database, so production data and the live site are untouched.
+    // routes, vars, d1_databases and ai are not inherited from the top level, so each is set here.
+    "staging": {
+      "routes": [{ "pattern": "epita-staging.knhdixh.com", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "epita-attendance-staging",
+          "database_id": "f85b96c6-a422-4c92-adad-b0ce396c43b7",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "ai": { "binding": "AI" },
+      "vars": {
+        // Workers AI neurons are shared across the whole Cloudflare account, and production can't see
+        // staging's usage, so staging keeps a small budget to leave production's free allocation alone.
+        "AI_DAILY_LIMIT": "5",
+        "AI_OWNER_DAILY_LIMIT": "10",
+        "AI_SHARED_DAILY_NEURONS": "500",
+        "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+        "ALLOWED_DOMAIN": "",
+        "CANONICAL_HOST": "epita-staging.knhdixh.com"
+      }
+    }
   }
   // Secrets (set with `npx wrangler secret put <NAME>`, or in .dev.vars locally):
   //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET

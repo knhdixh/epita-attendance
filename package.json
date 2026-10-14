@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "wrangler d1 migrations apply DB --local && wrangler dev --local-upstream localhost:8787",
     "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
-    "test": "node --test test/"
+    "test": "node --test test/",
+    "deploy:staging": "wrangler d1 migrations apply DB --remote --env staging && wrangler deploy --env staging"
   },
   "devDependencies": {
     "wrangler": "^4.149.0"

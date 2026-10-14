@@ -109,6 +109,16 @@ Pushes to `main` deploy automatically through **Workers Builds** (Cloudflare das
 
 Runtime secrets (`GOOGLE_*`, `TOKEN_KEY`) stay on the Worker and are not part of the build.
 
+### Staging
+
+A separate Worker, `epita-attendance-staging`, serves **[epita-staging.knhdixh.com](https://epita-staging.knhdixh.com)** for trying out designs. It has its own D1 database (`epita-attendance-staging`), secrets and passkeys, so nothing done there touches production. It is the `staging` environment in `wrangler.jsonc`.
+
+```bash
+npm run deploy:staging    # applies migrations to the staging DB, then deploys the staging Worker
+```
+
+Pushes to the `design` branch deploy it automatically through a second Workers Builds connection on the staging Worker (branch `design`, deploy command `npm run deploy:staging`). Staging's assistant budget is kept small because Workers AI's free neurons are shared across the account.
+
 Settings in `wrangler.jsonc`:
 
 | Variable | Default | |
