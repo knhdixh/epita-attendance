@@ -12,7 +12,7 @@ const LEVEL = {
   free: ['No classes', 'free'], ok: ['Safe', 'ok'], risk: ['Possible, no spare skips left', 'risk'], fail: ['Not possible', 'fail'],
 };
 const GRID_LENGTHS = [[1, '1 day'], [2, '2 days'], [3, '3 days (long weekend)'], [4, '4 days'], [5, '5 days'], [7, '1 week'], [9, '9 days'], [14, '2 weeks']];
-const ICON = { free: '🌴', ok: '✓', risk: '!', fail: '✗' };
+const ICON = { free: '~', ok: '✓', risk: '!', fail: '×' };
 
 function calCell(c, i) {
   const d = new Date(c.date + 'T12:00:00Z');
@@ -87,7 +87,7 @@ export function renderBreaks() {
       </div>
       ${m.noSkip.length ? `<p class="note warn">No spare absences at all in: ${m.noSkip.map((c) => `<b>${esc(c.name)}</b>`).join(', ')}.
         Any break over one of their sessions would drop that course below ${pct(state.data.user.threshold)}, so plan breaks around them (or check if a session can be excused).</p>` : ''}
-      <p class="muted small">✓ safe · ! possible but leaves no spare skips · ✗ would drop a course below ${pct(state.data.user.threshold)} or miss an exam · 🌴 no classes missed. Click a day to check that break.</p>
+      <p class="muted small">✓ safe · ! no spare skips left · × drops a course below ${pct(state.data.user.threshold)} or miss an exam · 🌴 no classes missed. Click a day to check that break.</p>
     </section>
 
     <div class="breaks-layout">
@@ -124,7 +124,7 @@ export function renderBreaks() {
       <h3>Saved breaks</h3>
       <div class="list">${saved.map((b) => `
         <div class="hw-item">
-          <span>🌴</span>
+          <span class="num">~</span>
           <div class="hw-main">
             <div class="hw-title">${esc(b.label || 'Break')}</div>
             <div class="hw-meta small">${esc(dayLabel(b.start_date))} – ${esc(dayLabel(b.end_date))} · ${b.sessions} session${b.sessions === 1 ? '' : 's'} marked absent</div>

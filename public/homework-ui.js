@@ -40,9 +40,9 @@ const BUCKETS = [['overdue', 'Overdue'], ['today', 'Today'], ['tomorrow', 'Tomor
 function syncIcon(hw) {
   const integ = state.data.integrations;
   if (!integ?.gcal) return '';
-  if (hw.sync_error) return `<span class="sync bad" title="Google Calendar: ${esc(hw.sync_error)}">⚠︎</span>`;
-  if (hw.gcal_event_id) return '<span class="sync ok" title="In Google Calendar">●</span>';
-  return '<span class="sync" title="Not synced yet">○</span>';
+  if (hw.sync_error) return `<span class="sync bad" title="Google Calendar: ${esc(hw.sync_error)}">not synced</span>`;
+  if (hw.gcal_event_id) return '<span class="sync ok" title="In Google Calendar">synced</span>';
+  return '<span class="sync" title="Not synced yet">syncing</span>';
 }
 
 function hwItem(hw, now = Date.now()) {
@@ -57,14 +57,14 @@ function hwItem(hw, now = Date.now()) {
         <div class="hw-meta small">
           <span class="${overdue ? 'bad' : ''}">${esc(dueLabel(hw))}</span>
           ${course ? `<span class="chip">${esc(course.name)}</span>` : ''}
-          ${hw.remind_minutes != null && !hw.done ? `<span class="muted" title="Reminder">🔔 ${esc(remind)}</span>` : ''}
+          ${hw.remind_minutes != null && !hw.done ? `<span class="muted" title="Reminder">reminder ${esc(remind)}</span>` : ''}
           ${syncIcon(hw)}
         </div>
         ${hw.notes ? `<div class="hw-notes muted small">${esc(hw.notes)}</div>` : ''}
       </div>
       <div class="hw-actions">
-        <button class="btn small ghost" data-hw-edit title="Edit">✎</button>
-        <button class="btn small ghost" data-hw-delete title="Delete">🗑</button>
+        <button class="btn small ghost" data-hw-edit title="Edit">edit</button>
+        <button class="btn small ghost" data-hw-delete title="Delete">delete</button>
       </div>
     </div>`;
 }
@@ -160,7 +160,7 @@ export function homeworkPanel() {
   if (!soon.length) return '';
   return `
     <section class="panel">
-      <h3>Homework due soon <a class="small" href="#homework" data-goto="homework">All homework (${open}) →</a></h3>
+      <h3><span>Homework</span><a href="#homework" data-goto="homework">all ${open} →</a></h3>
       <div class="list">${soon.map((hw) => hwItem(hw, now)).join('')}</div>
     </section>`;
 }

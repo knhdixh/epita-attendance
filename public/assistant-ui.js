@@ -73,18 +73,18 @@ function actionChip(a, mi, ai) {
   if (a.type === 'homework_added') {
     const h = a.homework;
     const due = new Date(h.due_at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', ...(h.due_time ? { hour: '2-digit', minute: '2-digit' } : {}) });
-    return `<div class="action">📚 Added homework <b>${esc(h.title)}</b>, due ${esc(due)}${h.gcal_event_id ? ' · in Google Calendar' : ''} ${undo}</div>`;
+    return `<div class="action">Added homework <b>${esc(h.title)}</b>, due ${esc(due)}${h.gcal_event_id ? ' · in Google Calendar' : ''} ${undo}</div>`;
   }
   if (a.type === 'homework_updated') {
-    return `<div class="action">${a.homework.done ? '✅ Marked done' : '↩︎ Marked not done'}: <b>${esc(a.homework.title)}</b> ${undo}</div>`;
+    return `<div class="action">${a.homework.done ? 'Marked done' : 'Marked not done'}: <b>${esc(a.homework.title)}</b> ${undo}</div>`;
   }
   if (a.type === 'break_saved') {
     const b = a.break;
-    return `<div class="action">🌴 Saved break <b>${esc(b.label || 'Break')}</b> ${esc(b.start_date)} – ${esc(b.end_date)}: ${a.sessions} session${a.sessions === 1 ? '' : 's'} marked as planned absences ${undo}</div>`;
+    return `<div class="action">Saved break <b>${esc(b.label || 'Break')}</b> ${esc(b.start_date)} – ${esc(b.end_date)}: ${a.sessions} session${a.sessions === 1 ? '' : 's'} marked as planned absences ${undo}</div>`;
   }
   if (a.type === 'attendance') {
     const label = { present: 'attended', absent: 'absent', excused: 'excused', null: 'unmarked' };
-    return `<div class="action">🗓 Marked ${a.changes.length} session${a.changes.length > 1 ? 's' : ''} ${label[a.changes[0].to]}:
+    return `<div class="action">Marked ${a.changes.length} session${a.changes.length > 1 ? 's' : ''} ${label[a.changes[0].to]}:
       ${a.changes.map((c) => esc(c.label)).join('; ')} ${undo}</div>`;
   }
   return '';
