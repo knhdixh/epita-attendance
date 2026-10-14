@@ -10,6 +10,8 @@ const $tabs = document.getElementById('tabs');
 const $account = document.getElementById('account');
 const $file = document.getElementById('file-input');
 const $toast = document.getElementById('toast');
+const $menuToggle = document.getElementById('menu-toggle');
+const $clock = document.getElementById('clock');
 
 const state = {
   data: null,           // { user, courses, events }
@@ -96,18 +98,26 @@ async function reload() {
 }
 
 async function renderLogin() {
+  document.body.classList.add('signed-out');
   $tabs.hidden = true;
   $account.innerHTML = '';
   const cfg = await api('/auth/config');
   const pk = cfg.passkeys && passkeysSupported();
   $app.innerHTML = `
     <section class="hero">
-      <h1>Stay above <em>80%</em>.</h1>
-      <p>Upload your university calendar (.ics), tick off each session as attended or missed,
-        tag the ones you can't skip, and see exactly how many absences you have left per course.</p>
+      <div class="hero-ghost" aria-hidden="true">80</div>
+      <div class="hero-meta">
+        <div>Import<b>.ics from Zeus</b></div>
+        <div>Sign in<b>Passkey${cfg.google ? ' or Google' : ''}</b></div>
+        <div>Price<b>Free, no ads</b></div>
+      </div>
+      <div class="hero-main">
+        <h1>Stay<br>above <em>80%</em></h1>
+        <p class="hero-lede">Import your timetable, tick off each session and always know how many classes
+          you can still miss in every course.</p>
       <div class="signin">
-        ${pk ? `<button class="btn primary big" data-action="pk-login">${keyIcon()} Sign in with a passkey</button>` : ''}
-        ${cfg.google ? `<a class="btn big" href="/auth/google">${googleIcon()} Continue with Google</a>` : ''}
+        ${pk ? `<button class="btn primary big" data-action="pk-login"><span>Sign in with a passkey</span>${keyIcon()}</button>` : ''}
+        ${cfg.google ? `<a class="btn big" href="/auth/google"><span>Continue with Google</span>${googleIcon()}</a>` : ''}
         ${pk && cfg.signup ? `
           <div class="divider"><span>New here?</span></div>
           <form id="pk-signup" class="signup-row">
@@ -119,8 +129,11 @@ async function renderLogin() {
         ${!pk && cfg.passkeys ? '<p class="muted small">This browser doesn\'t support passkeys. Update it, or use Google.</p>' : ''}
         ${cfg.dev ? '<p><a class="btn" href="/auth/dev">Dev login (local only)</a></p>' : ''}
       </div>
-      <p class="guide-link">📅 You'll need your timetable as an .ics file. <a href="/ics-guide">How to export it from Zeus</a></p>
-      <p class="muted small legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>
+      </div>
+      <footer class="hero-foot">
+        <p class="guide-link">You'll need your timetable as an .ics file. <a href="/ics-guide">How to export it from Zeus →</a></p>
+        <p class="muted legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>
+      </footer>
     </section>`;
 }
 
@@ -142,6 +155,13 @@ function render() {
     <span class="email">${esc(user.email || user.name || '')}</span>
     <button class="btn small ghost" data-action="logout">Sign out</button>`;
 
+  // Animate the page in only when the view changes, not on every re-render after a click.
+  const view = state.data.events.length || state.tab === 'settings' ? state.tab : 'empty';
+  $app.classList.toggle('enter', view !== lastView);
+  lastView = view;
+  $menuToggle.hidden = false;
+  setMenu(false);
+
   if (!state.data.events.length && state.tab !== 'settings') {
     $tabs.hidden = true;
     return renderEmpty();
@@ -149,13 +169,24 @@ function render() {
   $tabs.hidden = false;
   for (const b of $tabs.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === state.tab);
   ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+  if (!['overview', 'assistant'].includes(state.tab)) $app.insertAdjacentHTML('afterbegin', pageHead());
+}
+
+let lastView = null;
+const TAB_ORDER = ['overview', 'sessions', 'homework', 'breaks', 'assistant', 'courses', 'settings'];
+const pad2 = (n) => String(n).padStart(2, '0');
+
+function pageHead() {
+  const label = $tabs.querySelector(`[data-tab="${state.tab}"]`).textContent;
+  return `<header class="page-head"><h2>${label}</h2>
+    <span class="idx">${pad2(TAB_ORDER.indexOf(state.tab) + 1)} / ${pad2(TAB_ORDER.length)}</span></header>`;
 }
 
 function renderEmpty() {
   $app.innerHTML = `
     <section class="dropzone" data-action="upload" id="dropzone">
-      <div class="drop-icon">📅</div>
-      <h2>Import your calendar</h2>
+      <div class="drop-icon">Step 01 / 01</div>
+      <h2>Import your <em>calendar</em></h2>
       <p>Drop your <code>.ics</code> file here, or click to choose it.</p>
       <p class="muted small">You can re-import an updated file later; your attendance marks are kept.</p>
     </section>
@@ -188,25 +219,25 @@ function renderOverview() {
   const next = trackedEvents().find((e) => e.start_at > now);
   const unmarked = trackedEvents().filter((e) => e.start_at <= now && !e.status);
 
+  const [whole, decimals] = pct(overall.projectedRate).replace('%', '').split('.');
+  const closest = tracked[0];
   $app.innerHTML = `
     ${groupBanner()}
-    <section class="summary">
-      <div class="stat ${overall.level}">
-        <div class="label">Projected attendance</div>
-        <div class="value">${pct(overall.projectedRate)}</div>
-        <div class="sub">target ${pct(user.threshold)} · ${overall.currentRate == null ? 'nothing marked yet' : `${pct(overall.currentRate)} so far`}</div>
+    <section class="ov-hero ${overall.level}">
+      <div class="ov-figure">
+        <div class="ov-eyebrow"><span>Projected attendance</span><span>Target <b>${pct(user.threshold)}</b></span>
+          <span>So far <b>${overall.currentRate == null ? '—' : pct(overall.currentRate)}</b></span></div>
+        <div class="ov-num" data-count="${whole}">${whole}<small>${decimals ? `.${decimals}` : ''}%</small></div>
+        <div class="ov-level">${{ ok: 'On track', risk: 'Close to the limit', fail: 'Below the minimum' }[overall.level]}</div>
       </div>
-      <div class="stat">
-        <div class="label">Absences</div>
-        <div class="value">${fmtNum(overall.absent)}</div>
-        <div class="sub">${overall.plannedAbsent ? `${fmtNum(overall.plannedAbsent)} planned · ` : ''}of ${unitLabel(fmtNum(overall.total), user.unit)} counted</div>
-      </div>
-      <div class="stat">
-        <div class="label">Needs marking</div>
-        <div class="value">${unmarked.length}</div>
-        <div class="sub">${unmarked.length
-          ? `<button class="btn small" data-action="mark-all-present">Mark all as attended</button>`
-          : 'all past sessions marked'}</div>
+      <div>
+        <p class="ov-statement">${overviewStatement(overall, unmarked.length, closest)}</p>
+        <dl class="ov-facts">
+          <div><dt>Absences</dt><dd>${fmtNum(overall.absent)}<span>/ ${fmtNum(overall.total)}</span></dd></div>
+          <div><dt>Planned skips</dt><dd>${fmtNum(overall.plannedAbsent)}</dd></div>
+          <div><dt>Needs marking</dt><dd>${unmarked.length}</dd>
+            ${unmarked.length ? '<button class="btn small" data-action="mark-all-present">Mark all attended</button>' : ''}</div>
+        </dl>
       </div>
     </section>
 
@@ -219,16 +250,44 @@ function renderOverview() {
     ${hw.homeworkPanel()}
 
     <section>
-      <h3 class="section-title">Courses <span class="muted small">— at ${pct(user.threshold)} you can miss up to ${pct(1 - user.threshold)} of each course</span></h3>
+      <h3 class="section-title">Courses <sup>(${pad2(tracked.length)})</sup> <span class="muted">At ${pct(user.threshold)} you can miss up to ${pct(1 - user.threshold)} of each course</span></h3>
       <div class="cards">
-        ${tracked.map(({ course, stats }) => courseCard(course, stats)).join('') || '<p class="muted">No tracked courses. Enable some under Courses.</p>'}
+        ${tracked.map(({ course, stats }, i) => courseCard(course, stats, i)).join('') || '<p class="muted">No tracked courses. Enable some under Courses.</p>'}
       </div>
     </section>`;
+  countUp($app.querySelector('.ov-num'));
+}
+
+// The red headline: what matters most right now, in one or two sentences.
+function overviewStatement(overall, unmarked, closest) {
+  const { unit } = state.data.user;
+  const parts = [`${fmtNum(overall.absent)} absence${overall.absent === 1 ? '' : 's'} out of ${unitLabel(fmtNum(overall.total), unit)}.`];
+  if (closest) {
+    const s = closest.stats, name = esc(closest.course.name);
+    if (s.remaining < -1e-9) parts.push(`${name} is over the limit.`);
+    else if (s.level !== 'ok') parts.push(`${name} has ${unitLabel(fmtNum(s.remainingDisplay), unit)} left to skip.`);
+    else parts.push('Every course is on track.');
+  }
+  if (unmarked) parts.push(`${unmarked} past session${unmarked === 1 ? '' : 's'} still need${unmarked === 1 ? 's' : ''} marking.`);
+  return parts.join(' ');
+}
+
+// Counts the big figure up from zero when the overview first appears.
+function countUp(el) {
+  if (!el || !$app.classList.contains('enter') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const target = Number(el.dataset.count), node = el.firstChild, start = performance.now();
+  const tick = (t) => {
+    const p = Math.min(1, (t - start) / 1100);
+    node.textContent = Math.round(target * (1 - Math.pow(1 - p, 4)));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  node.textContent = '0';
+  requestAnimationFrame(tick);
 }
 
 const fmtNum = (n) => (Number.isInteger(n) ? n : Math.round(n * 10) / 10);
 
-function courseCard(course, s) {
+function courseCard(course, s, i) {
   const { user } = state.data;
   const thr = user.threshold * 100;
   const remaining = s.remainingDisplay;
@@ -238,6 +297,8 @@ function courseCard(course, s) {
   const attendedW = s.total ? ((s.total - s.absent) / s.total) * 100 : 100;
   return `
     <article class="card ${s.level}" data-course-open="${course.id}" tabindex="0">
+      <div class="card-idx">${pad2(i + 1)}</div>
+      <div class="card-body">
       <header>
         <h4>${esc(course.name)}</h4>
         ${course.tag !== 'normal' ? `<span class="chip tag-${course.tag}">${TAGS[course.tag].label}</span>` : ''}
@@ -254,6 +315,7 @@ function courseCard(course, s) {
       </div>
       ${s.unmarkedPast ? `<div class="note warn">${s.unmarkedPast} past session${s.unmarkedPast > 1 ? 's' : ''} not marked</div>` : ''}
       ${s.missedMustAttend.length ? `<div class="note bad">Missed ${s.missedMustAttend.length} exam/mandatory session${s.missedMustAttend.length > 1 ? 's' : ''}</div>` : ''}
+      </div>
     </article>`;
 }
 
@@ -545,6 +607,24 @@ async function importFile(file) {
 }
 
 // ---------------------------------------------------------------- events
+
+function setMenu(open) {
+  document.body.classList.toggle('menu-open', open);
+  $menuToggle.setAttribute('aria-expanded', String(open));
+}
+$menuToggle.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+
+function tickClock() {
+  const now = new Date();
+  $clock.innerHTML = `${esc(now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}
+    <b>${esc(Intl.DateTimeFormat().resolvedOptions().timeZone.split('/').pop().replace(/_/g, ' '))}, ${fmtTime(now)}</b>`;
+}
+tickClock();
+setInterval(tickClock, 30000);
+document.querySelector('.curtain')?.addEventListener('animationend', (e) => {
+  if (e.animationName === 'curtain-out') e.currentTarget.classList.add('gone');
+});
 
 $tabs.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-tab]');

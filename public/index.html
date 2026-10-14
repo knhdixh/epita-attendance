@@ -6,22 +6,33 @@
   <title>Attendance80: track your class attendance</title>
   <meta name="description" content="Attendance80 helps students track class attendance from their timetable, plan breaks and stay above the minimum.">
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23181818'/><text x='50' y='70' font-family='Arial' font-weight='700' font-size='52' text-anchor='middle' fill='%23FF4949'>80</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300..700&display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+  <div class="curtain" aria-hidden="true"><span>Attendance<b>80</b></span></div>
   <header class="topbar">
-    <div class="brand">Attendance<span>80</span></div>
-    <nav id="tabs" class="tabs" hidden>
-      <button data-tab="overview">Overview</button>
-      <button data-tab="sessions">Sessions</button>
-      <button data-tab="homework">Homework</button>
-      <button data-tab="breaks">Breaks</button>
-      <button data-tab="assistant">Assistant</button>
-      <button data-tab="courses">Courses</button>
-      <button data-tab="settings">Settings</button>
-    </nav>
-    <div id="account" class="account"></div>
+    <a class="brand" href="/" aria-label="Attendance80 home">Attendance<span>80</span><sup>©</sup></a>
+    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu" hidden><span></span><span></span><b>Menu</b></button>
+    <div class="menu" id="menu">
+      <div class="rail-label">Menu</div>
+      <nav id="tabs" class="tabs" hidden>
+        <button data-tab="overview">Overview</button>
+        <button data-tab="sessions">Sessions</button>
+        <button data-tab="homework">Homework</button>
+        <button data-tab="breaks">Breaks</button>
+        <button data-tab="assistant">Assistant</button>
+        <button data-tab="courses">Courses</button>
+        <button data-tab="settings">Settings</button>
+      </nav>
+      <div class="rail-foot">
+        <div class="clock" id="clock"></div>
+        <div id="account" class="account"></div>
+      </div>
+    </div>
   </header>
   <main id="app"><div class="loading">Loading…</div></main>
   <input type="file" id="file-input" accept=".ics,text/calendar" hidden>
