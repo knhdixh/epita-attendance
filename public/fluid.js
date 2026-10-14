@@ -312,7 +312,7 @@
     } else idle += dt;
     // Keep simulating for a few seconds after the last move, then rest the GPU.
     if (idle < 6) { step(dt); render(); }
-    requestAnimationFrame(loop);
+    if (canvas.isConnected) requestAnimationFrame(loop); // stops for good once the app removes the canvas after sign-in
   }
   requestAnimationFrame(loop);
 

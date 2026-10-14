@@ -107,7 +107,7 @@ async function renderLogin() {
   $app.innerHTML = `
     <section class="signin-card p-glass-lg">
       <div class="app-icon" aria-hidden="true">80</div>
-      <h1>Attendance80</h1>
+      <h1 aria-label="Attendance80"><span class="word" aria-hidden="true">${maskedWord('Attendance80')}</span></h1>
       <p class="lede">Know how many classes you can still miss, in every course.</p>
       <div class="signin">
         ${pk ? '<button class="btn p-button p-button-primary p-button-large" data-action="pk-login">Sign in with a passkey</button>' : ''}
@@ -123,7 +123,17 @@ async function renderLogin() {
       </div>
       <p class="links"><a href="/ics-guide">Get your .ics</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
     </section>`;
-  $app.classList.add('enter');
+  playEnter(true);
+  // Water cursor trail (knhdixh cookbook §5), only behind the sign-in card. Sign out reloads the page, so it loads once.
+  if (!reduced && matchMedia('(pointer: fine)').matches && !document.getElementById('fluid')) {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'fluid';
+    canvas.setAttribute('aria-hidden', 'true');
+    document.body.prepend(canvas);
+    const script = document.createElement('script');
+    script.src = '/fluid.js';
+    document.body.append(script);
+  }
 }
 
 // Sign-in buttons and methods are text only (knhdixh cookbook: no icons).
@@ -142,6 +152,7 @@ function render() {
       <button class="btn p-button p-button-borderless p-button-small" data-action="logout">Sign out</button>
     </div>`;
   document.body.classList.remove('signed-out');
+  document.getElementById('fluid')?.remove();
 
   // Entrance animation only when the view changes, never on the re-render after a click.
   const view = state.data.events.length || state.tab === 'settings' ? state.tab : 'empty';
@@ -162,16 +173,63 @@ function render() {
   }
   if (changed) {
     $scroller.scrollTop = 0;
-    $app.classList.remove('enter');
-    void $app.offsetWidth;
-    $app.classList.add('enter');
+    playEnter(first);
   }
+  first = false;
 }
 
 let lastView = null;
+let first = true;
 const pad2 = (n) => String(n).padStart(2, '0');
 const TITLES = { overview: 'Overview', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
-const pageHead = (label) => `<header class="page-head"><h2>${esc(label)}</h2></header>`;
+const pageHead = (label) => `<header class="page-head"><h2 aria-label="${esc(label)}"><span class="word" aria-hidden="true">${maskedWord(label)}</span></h2></header>`;
+
+// ---------------------------------------------------------------- motion (knhdixh.com recipes, Apple timing)
+// Only transform and opacity animate. The title's characters rise from a mask while cycling glyphs, then the cards
+// and their first rows rise in a short stagger. First load plays the full timing; tab changes are compressed.
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789';
+const randGlyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
+const ROWS = '.row, .hw-item, .method, .family, .window-row, .msg, .byok-option, .stat, .cal-day, .weeks > .week, table.courses tbody tr';
+
+function maskedWord(word) {
+  return [...word].map((c, i) => `<span class="mask"><span class="ch" style="--c:${i}" data-c="${esc(c)}">${esc(c)}</span></span>`).join('');
+}
+
+// Each character shows random glyphs from the moment it starts rising until it settles.
+function scrambleIn(word, base, step) {
+  for (const [i, ch] of [...word.querySelectorAll('.ch')].entries()) {
+    const final = ch.dataset.c;
+    if (final === ' ') continue;
+    const start = base + i * step, settle = start + 360 + i * 22, t0 = performance.now();
+    let lastSwap = 0;
+    (function frame(now) {
+      const t = now - t0;
+      if (t >= settle) { ch.textContent = final; return; }
+      if (t >= start && now - lastSwap > 45) { ch.textContent = randGlyph(); lastSwap = now; }
+      requestAnimationFrame(frame);
+    })(t0);
+  }
+}
+
+let enterTimer;
+function playEnter(full) {
+  clearTimeout(enterTimer);
+  $app.classList.remove('enter', 'full');
+  // Stagger only the first few cards and rows; anything further down is off screen and just appears.
+  [...$app.children].forEach((el, i) => el.style.setProperty('--i', Math.min(i, 6)));
+  $app.querySelectorAll('.rise').forEach((el) => el.classList.remove('rise'));
+  [...$app.querySelectorAll(ROWS)].slice(0, 14).forEach((el, i) => { el.classList.add('rise'); el.style.setProperty('--r', i); });
+  if (reduced) return;
+  void $app.offsetWidth;
+  $app.classList.add('enter');
+  $app.classList.toggle('full', full);
+  const word = $app.querySelector('.page-head .word, .signin-card .word');
+  if (word) scrambleIn(word, full ? 160 : 0, full ? 55 : 28);
+  // Drop the class once it has played, so re-renders after a click don't replay the entrance.
+  enterTimer = setTimeout(() => $app.classList.remove('enter', 'full'), full ? 1700 : 1000);
+}
 
 function renderEmpty() {
   $app.innerHTML = `
