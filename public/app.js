@@ -10,7 +10,7 @@ const $tabs = document.getElementById('tabs');
 const $account = document.getElementById('account');
 const $file = document.getElementById('file-input');
 const $toast = document.getElementById('toast');
-const $menuToggle = document.getElementById('menu-toggle');
+const $pill = $tabs.querySelector('.tab-pill');
 const $clock = document.getElementById('clock');
 
 const state = {
@@ -105,7 +105,6 @@ async function renderLogin() {
   const pk = cfg.passkeys && passkeysSupported();
   $app.innerHTML = `
     <section class="hero">
-      <div class="hero-ghost" aria-hidden="true">80</div>
       <div class="hero-meta">
         <div>Import<b>.ics from Zeus</b></div>
         <div>Sign in<b>Passkey${cfg.google ? ' or Google' : ''}</b></div>
@@ -116,8 +115,8 @@ async function renderLogin() {
         <p class="hero-lede">Import your timetable, tick off each session and always know how many classes
           you can still miss in every course.</p>
       <div class="signin">
-        ${pk ? `<button class="btn primary big" data-action="pk-login"><span>Sign in with a passkey</span>${keyIcon()}</button>` : ''}
-        ${cfg.google ? `<a class="btn big" href="/auth/google"><span>Continue with Google</span>${googleIcon()}</a>` : ''}
+        ${pk ? `<button class="btn primary big" data-action="pk-login">${keyIcon()} Sign in with a passkey</button>` : ''}
+        ${cfg.google ? `<a class="btn big" href="/auth/google">${googleIcon()} Continue with Google</a>` : ''}
         ${pk && cfg.signup ? `
           <div class="divider"><span>New here?</span></div>
           <form id="pk-signup" class="signup-row">
@@ -159,8 +158,7 @@ function render() {
   const view = state.data.events.length || state.tab === 'settings' ? state.tab : 'empty';
   $app.classList.toggle('enter', view !== lastView);
   lastView = view;
-  $menuToggle.hidden = false;
-  setMenu(false);
+  document.body.classList.remove('signed-out');
 
   if (!state.data.events.length && state.tab !== 'settings') {
     $tabs.hidden = true;
@@ -168,24 +166,23 @@ function render() {
   }
   $tabs.hidden = false;
   for (const b of $tabs.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === state.tab);
+  movePill();
   ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
   if (!['overview', 'assistant'].includes(state.tab)) $app.insertAdjacentHTML('afterbegin', pageHead());
 }
 
 let lastView = null;
-const TAB_ORDER = ['overview', 'sessions', 'homework', 'breaks', 'assistant', 'courses', 'settings'];
 const pad2 = (n) => String(n).padStart(2, '0');
 
 function pageHead() {
-  const label = $tabs.querySelector(`[data-tab="${state.tab}"]`).textContent;
-  return `<header class="page-head"><h2>${label}</h2>
-    <span class="idx">${pad2(TAB_ORDER.indexOf(state.tab) + 1)} / ${pad2(TAB_ORDER.length)}</span></header>`;
+  const label = $tabs.querySelector(`[data-tab="${state.tab}"]`).textContent.trim();
+  return `<header class="page-head"><h2>${label}</h2></header>`;
 }
 
 function renderEmpty() {
   $app.innerHTML = `
     <section class="dropzone" data-action="upload" id="dropzone">
-      <div class="drop-icon">Step 01 / 01</div>
+      <div class="drop-icon" aria-hidden="true"></div>
       <h2>Import your <em>calendar</em></h2>
       <p>Drop your <code>.ics</code> file here, or click to choose it.</p>
       <p class="muted small">You can re-import an updated file later; your attendance marks are kept.</p>
@@ -230,13 +227,13 @@ function renderOverview() {
         <div class="ov-num" data-count="${whole}">${whole}<small>${decimals ? `.${decimals}` : ''}%</small></div>
         <div class="ov-level">${{ ok: 'On track', risk: 'Close to the limit', fail: 'Below the minimum' }[overall.level]}</div>
       </div>
-      <div>
+      <div class="ov-side">
         <p class="ov-statement">${overviewStatement(overall, unmarked.length, closest)}</p>
         <dl class="ov-facts">
           <div><dt>Absences</dt><dd>${fmtNum(overall.absent)}<span>/ ${fmtNum(overall.total)}</span></dd></div>
           <div><dt>Planned skips</dt><dd>${fmtNum(overall.plannedAbsent)}</dd></div>
           <div><dt>Needs marking</dt><dd>${unmarked.length}</dd>
-            ${unmarked.length ? '<button class="btn small" data-action="mark-all-present">Mark all attended</button>' : ''}</div>
+            ${unmarked.length ? '<button class="btn small primary" data-action="mark-all-present">Mark all attended</button>' : ''}</div>
         </dl>
       </div>
     </section>
@@ -252,7 +249,7 @@ function renderOverview() {
     <section>
       <h3 class="section-title">Courses <sup>(${pad2(tracked.length)})</sup> <span class="muted">At ${pct(user.threshold)} you can miss up to ${pct(1 - user.threshold)} of each course</span></h3>
       <div class="cards">
-        ${tracked.map(({ course, stats }, i) => courseCard(course, stats, i)).join('') || '<p class="muted">No tracked courses. Enable some under Courses.</p>'}
+        ${tracked.map(({ course, stats }) => courseCard(course, stats)).join('') || '<p class="muted">No tracked courses. Enable some under Courses.</p>'}
       </div>
     </section>`;
   countUp($app.querySelector('.ov-num'));
@@ -287,7 +284,7 @@ function countUp(el) {
 
 const fmtNum = (n) => (Number.isInteger(n) ? n : Math.round(n * 10) / 10);
 
-function courseCard(course, s, i) {
+function courseCard(course, s) {
   const { user } = state.data;
   const thr = user.threshold * 100;
   const remaining = s.remainingDisplay;
@@ -297,8 +294,6 @@ function courseCard(course, s, i) {
   const attendedW = s.total ? ((s.total - s.absent) / s.total) * 100 : 100;
   return `
     <article class="card ${s.level}" data-course-open="${course.id}" tabindex="0">
-      <div class="card-idx">${pad2(i + 1)}</div>
-      <div class="card-body">
       <header>
         <h4>${esc(course.name)}</h4>
         ${course.tag !== 'normal' ? `<span class="chip tag-${course.tag}">${TAGS[course.tag].label}</span>` : ''}
@@ -315,7 +310,6 @@ function courseCard(course, s, i) {
       </div>
       ${s.unmarkedPast ? `<div class="note warn">${s.unmarkedPast} past session${s.unmarkedPast > 1 ? 's' : ''} not marked</div>` : ''}
       ${s.missedMustAttend.length ? `<div class="note bad">Missed ${s.missedMustAttend.length} exam/mandatory session${s.missedMustAttend.length > 1 ? 's' : ''}</div>` : ''}
-      </div>
     </article>`;
 }
 
@@ -608,23 +602,27 @@ async function importFile(file) {
 
 // ---------------------------------------------------------------- events
 
-function setMenu(open) {
-  document.body.classList.toggle('menu-open', open);
-  $menuToggle.setAttribute('aria-expanded', String(open));
-}
-$menuToggle.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-
+// Big time with the date under it, like a lock screen.
 function tickClock() {
   const now = new Date();
-  $clock.innerHTML = `${esc(now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}
-    <b>${esc(Intl.DateTimeFormat().resolvedOptions().timeZone.split('/').pop().replace(/_/g, ' '))}, ${fmtTime(now)}</b>`;
+  $clock.innerHTML = `<b>${fmtTime(now)}</b>${esc(now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}`;
 }
 tickClock();
 setInterval(tickClock, 30000);
-document.querySelector('.curtain')?.addEventListener('animationend', (e) => {
-  if (e.animationName === 'curtain-out') e.currentTarget.classList.add('gone');
-});
+
+// Slides the glass lens under the active tab. Only transform and size change, so it stays on the compositor.
+function movePill() {
+  const b = $tabs.querySelector('button.active');
+  if (!b || $tabs.hidden) return;
+  $pill.style.transform = `translate(${b.offsetLeft}px, ${b.offsetTop}px)`;
+  $pill.style.width = `${b.offsetWidth}px`;
+  $pill.style.height = `${b.offsetHeight}px`;
+  if (!$pill.classList.contains('ready')) requestAnimationFrame(() => $pill.classList.add('ready'));
+  if (b.offsetLeft + b.offsetWidth > $tabs.scrollLeft + $tabs.clientWidth || b.offsetLeft < $tabs.scrollLeft) {
+    b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }
+}
+addEventListener('resize', movePill);
 
 $tabs.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-tab]');
