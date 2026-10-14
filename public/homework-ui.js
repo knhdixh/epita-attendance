@@ -51,7 +51,7 @@ function hwItem(hw, now = Date.now()) {
   const remind = REMINDERS.find(([m]) => m === hw.remind_minutes)?.[1];
   return `
     <div class="hw-item ${hw.done ? 'done' : ''} ${overdue ? 'overdue' : ''}" data-hw="${hw.id}">
-      <input type="checkbox" class="hw-check" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done">
+      <label class="p-checkbox p-checkbox-large hw-check"><input type="checkbox" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done"><span></span></label>
       <div class="hw-main">
         <div class="hw-title">${esc(hw.title)}</div>
         <div class="hw-meta small">
@@ -63,8 +63,8 @@ function hwItem(hw, now = Date.now()) {
         ${hw.notes ? `<div class="hw-notes muted small">${esc(hw.notes)}</div>` : ''}
       </div>
       <div class="hw-actions">
-        <button class="btn small ghost" data-hw-edit title="Edit">edit</button>
-        <button class="btn small ghost" data-hw-delete title="Delete">delete</button>
+        <button class="btn p-button p-button-borderless p-button-small" data-hw-edit title="Edit">edit</button>
+        <button class="btn p-button p-button-borderless p-button-small" data-hw-delete title="Delete">delete</button>
       </div>
     </div>`;
 }
@@ -105,31 +105,31 @@ export function renderHomework() {
         <h3>${editing ? 'Edit homework' : 'Add homework'}</h3>
         <form id="hw-form" class="form hw-form" autocomplete="off">
           <label>What's due
-            <input name="title" required maxlength="200" placeholder="e.g. TP 3 – SQL joins" value="${esc(draft.title)}">
+            <input class="p-field" name="title" required maxlength="200" placeholder="e.g. TP 3 – SQL joins" value="${esc(draft.title)}">
           </label>
           <label>Course
-            <select name="course_id">
+            <div class="p-select"><select name="course_id">
               <option value="">No course</option>
               ${tracked.map((c) => `<option value="${c.id}" ${c.id === draft.course_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-            </select>
+            </select></div>
           </label>
           <label>Due at a session
-            <select name="due_session">${sessionOptions(draft.course_id)}</select>
+            <div class="p-select"><select name="due_session">${sessionOptions(draft.course_id)}</select></div>
           </label>
           <div class="form-row">
-            <label>Date <input type="date" name="due_date" required value="${esc(draft.due_date)}"></label>
-            <label>Time <input type="time" name="due_time" value="${esc(draft.due_time || '')}"></label>
+            <label>Date <input class="p-field" type="date" name="due_date" required value="${esc(draft.due_date)}"></label>
+            <label>Time <input class="p-field" type="time" name="due_time" value="${esc(draft.due_time || '')}"></label>
           </div>
           <p class="muted small hint">Leave the time empty for "due by end of day".</p>
           <label>Reminder
-            <select name="remind_minutes">
+            <div class="p-select"><select name="remind_minutes">
               ${REMINDERS.map(([m, l]) => `<option value="${m ?? ''}" ${m === draft.remind_minutes ? 'selected' : ''}>${l}</option>`).join('')}
-            </select>
+            </select></div>
           </label>
-          <label>Notes <textarea name="notes" rows="3" maxlength="4000" placeholder="Instructions, links…">${esc(draft.notes)}</textarea></label>
+          <label>Notes <textarea class="p-field" name="notes" rows="3" maxlength="4000" placeholder="Instructions, links…">${esc(draft.notes)}</textarea></label>
           <div class="form-row">
-            <button class="btn primary" type="submit">${editing ? 'Save' : 'Add homework'}</button>
-            ${editing ? '<button class="btn" type="button" data-hw-cancel>Cancel</button>' : ''}
+            <button class="btn p-button p-button-primary" type="submit">${editing ? 'Save' : 'Add homework'}</button>
+            ${editing ? '<button class="btn p-button p-button-default" type="button" data-hw-cancel>Cancel</button>' : ''}
           </div>
         </form>
         <p class="muted small">${integ?.gcal
@@ -183,26 +183,26 @@ export function integrationsPanel() {
           <b>Homework (Attendance80)</b>. Changes appear immediately, and each reminder is a Google Calendar notification.</p>
         ${g.error ? `<p class="note bad">${esc(g.error)}</p>` : ''}
         <div class="form-row">
-          ${g.error ? '<a class="btn primary" href="/auth/google/calendar">Reconnect</a>' : ''}
-          <button class="btn" data-action="gcal-resync">Sync now</button>
-          <button class="btn ghost" data-action="gcal-disconnect">Disconnect</button>
+          ${g.error ? '<a class="btn p-button p-button-primary" href="/auth/google/calendar">Reconnect</a>' : ''}
+          <button class="btn p-button p-button-default" data-action="gcal-resync">Sync now</button>
+          <button class="btn p-button p-button-borderless" data-action="gcal-disconnect">Disconnect</button>
         </div>` : `
         <p>Push homework into a dedicated calendar in your Google account, like Todoist does. Reminders then show up as
           Google Calendar notifications on your phone and computer. The app can only see the calendar it creates.</p>
-        <a class="btn primary" href="/auth/google/calendar">Connect Google Calendar</a>`}
+        <a class="btn p-button p-button-primary" href="/auth/google/calendar">Connect Google Calendar</a>`}
     </section>
     <section class="panel narrow">
       <h3>Calendar feed (any calendar app)</h3>
       <p class="muted small">A private link to your homework in iCalendar format. Apple Calendar and Outlook refresh it often;
         Google Calendar only every few hours, so use the sync above for Google.</p>
       <div class="copy-row">
-        <input id="feed-url" readonly value="${esc(feed)}" aria-label="Feed URL">
-        <button class="btn" data-action="copy-feed">Copy</button>
+        <input class="p-field" id="feed-url" readonly value="${esc(feed)}" aria-label="Feed URL">
+        <button class="btn p-button p-button-default" data-action="copy-feed">Copy</button>
       </div>
       <div class="form-row">
-        <a class="btn small" href="${esc(webcal)}">Open in Apple Calendar / Outlook</a>
-        <a class="btn small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
-        <button class="btn small ghost" data-action="rotate-feed" title="Old link stops working">Reset link</button>
+        <a class="btn p-button p-button-default p-button-small" href="${esc(webcal)}">Open in Apple Calendar / Outlook</a>
+        <a class="btn p-button p-button-default p-button-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
+        <button class="btn p-button p-button-borderless p-button-small" data-action="rotate-feed" title="Old link stops working">Reset link</button>
       </div>
     </section>`;
 }

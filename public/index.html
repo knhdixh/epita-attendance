@@ -5,17 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Attendance80: track your class attendance</title>
   <meta name="description" content="Attendance80 helps students track class attendance from their timetable, plan breaks and stay above the minimum.">
-  <meta name="theme-color" content="#ffffff">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='black'/><text x='50' y='66' font-family='Inter,Arial' font-weight='500' font-size='46' text-anchor='middle' fill='white' letter-spacing='-2'>80</text></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230088FF'/><text x='50' y='66' font-family='-apple-system,Helvetica,Arial' font-weight='700' font-size='46' text-anchor='middle' fill='white'>80</text></svg>">
   <link rel="preload" as="image" href="/img/bg-wide.avif" type="image/avif" media="(min-aspect-ratio: 1/1)">
   <link rel="preload" as="image" href="/img/bg-tall.avif" type="image/avif" media="(max-aspect-ratio: 1/1)">
+  <!-- Puppertino 2.0.0 (MIT), self-hosted: only the components this app uses, in one file. -->
+  <link rel="stylesheet" href="/vendor/puppertino/puppertino.min.css">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
-  <!-- Photo behind a fixed frosted pane. The pane never moves, so its blur is computed once, not on every scroll. -->
+<body class="p-auto-dark-mode">
   <div class="bg" aria-hidden="true" style="background-image:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QCARXhpZgAATU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAACigAwAEAAAAAQAAABkAAAAA/8IAEQgAGQAoAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAMCBAEFAAYHCAkKC//EAMMQAAEDAwIEAwQGBAcGBAgGcwECAAMRBBIhBTETIhAGQVEyFGFxIweBIJFCFaFSM7EkYjAWwXLRQ5I0ggjhU0AlYxc18JNzolBEsoPxJlQ2ZJR0wmDShKMYcOInRTdls1V1pJXDhfLTRnaA40dWZrQJChkaKCkqODk6SElKV1hZWmdoaWp3eHl6hoeIiYqQlpeYmZqgpaanqKmqsLW2t7i5usDExcbHyMnK0NTV1tfY2drg5OXm5+jp6vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAQIAAwQFBgcICQoL/8QAwxEAAgIBAwMDAgMFAgUCBASHAQACEQMQEiEEIDFBEwUwIjJRFEAGMyNhQhVxUjSBUCSRoUOxFgdiNVPw0SVgwUThcvEXgmM2cCZFVJInotIICQoYGRooKSo3ODk6RkdISUpVVldYWVpkZWZnaGlqc3R1dnd4eXqAg4SFhoeIiYqQk5SVlpeYmZqgo6SlpqeoqaqwsrO0tba3uLm6wMLDxMXGx8jJytDT1NXW19jZ2uDi4+Tl5ufo6ery8/T19vf4+fr/2wBDAAkJCQkJCRAJCRAWEBAQFh4WFhYWHiYeHh4eHiYuJiYmJiYmLi4uLi4uLi43Nzc3NzdBQUFBQUlJSUlJSUlJSUn/2wBDAQsMDBIREiARESBMMyozTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEz/2gAMAwEAAhEDEQAAAQ3PJrU3TOuXXVPeYDVH0la/35HHNdTyGexMltlv/9oACAEBAAEFAormVLTeRtV+qqbybJFwtTHAAB8stOj59EpzU4IEpclqlYKcS7drf5Ve0X//2gAIAQMRAT8B2tO0u7lxm9P/2gAIAQIRAT8B3O4O4NMxp//aAAgBAQAGPwKkhq6F9Io9exHfi+jtkp9BePYM/c//xAAzEAEAAwACAgICAgMBAQAAAgsBEQAhMUFRYXGBkaGxwfDREOHxIDBAUGBwgJCgsMDQ4P/aAAgBAQABPyHihN3msUOPF4IB1zN2EPyVmUpDzbiTLY9kiiEOPibCD/SpY1sZD9378xNmnye7KEfv/l/Je/xeT5vFv//aAAwDAQACEQMRAAAQw81hE0//xAAzEQEBAQADAAECBQUBAQABAQkBABEhMRBBUWEgcfCRgaGx0cHh8TBAUGBwgJCgsMDQ4P/aAAgBAxEBPxBm/BarNtt//9oACAECEQE/EMegHOLB8//aAAgBAQABPxBVITUInz3/ADeAAk8/piKzIDC0vbmfF7yXAR+SkRI8nEXeoiPSfNYIE6mGPFyDA6/20oJBlim1adof+rBq0QPq6zpsvB91QEKMEJ8c5djSwmg/FIgJHbj8Xl8m86FH+H7b/Iv/2Q==)">
     <picture>
       <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset="/img/bg-tall.avif">
@@ -24,24 +22,34 @@
       <img src="/img/bg-wide.webp" alt="" decoding="async" onload="this.closest('.bg').classList.add('loaded')">
     </picture>
   </div>
-  <div class="pane" aria-hidden="true"></div>
-  <canvas id="fluid" aria-hidden="true"></canvas>
-  <header class="topbar">
-    <div class="topbar-row">
-      <a class="brand" href="/">attendance80</a>
+  <!-- One fixed window: its blur sits on a static photo, so it is computed once rather than on every scroll. -->
+  <div class="window">
+    <aside class="window-sidebar">
+      <div class="brand">Attendance<span>80</span></div>
+      <nav id="tabs" class="p-sidebar" aria-label="Sections" hidden>
+        <button class="p-sidebar-row" data-tab="overview"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg></span>Overview</button>
+        <button class="p-sidebar-row" data-tab="sessions"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Sessions</button>
+        <button class="p-sidebar-row" data-tab="homework"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg></span>Homework</button>
+        <button class="p-sidebar-row" data-tab="breaks"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></span>Breaks</button>
+        <button class="p-sidebar-row" data-tab="assistant"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>Assistant</button>
+        <button class="p-sidebar-row" data-tab="courses"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 17l9 5 9-5"/></svg></span>Courses</button>
+        <button class="p-sidebar-row" data-tab="settings"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg></span>Settings</button>
+      </nav>
       <div id="account" class="account"></div>
+    </aside>
+    <div class="window-content" id="scroller">
+      <main id="app"><div class="loading">Loading…</div></main>
     </div>
-    <nav id="tabs" class="tabs" hidden>
-      <button data-tab="overview">overview</button>
-      <button data-tab="sessions">sessions</button>
-      <button data-tab="homework">homework</button>
-      <button data-tab="breaks">breaks</button>
-      <button data-tab="assistant">assistant</button>
-      <button data-tab="courses">courses</button>
-      <button data-tab="settings">settings</button>
-    </nav>
-  </header>
-  <main id="app"><div class="loading">Loading</div></main>
+  </div>
+  <nav id="tabbar" class="p-tab-bar" aria-label="Sections" hidden>
+    <button class="p-tab-bar__tab" data-tab="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span>Overview</span></button>
+    <button class="p-tab-bar__tab" data-tab="sessions"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span>Sessions</span></button>
+    <button class="p-tab-bar__tab" data-tab="homework"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Homework</span></button>
+    <button class="p-tab-bar__tab" data-tab="breaks"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><span>Breaks</span></button>
+    <button class="p-tab-bar__tab" data-tab="assistant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span>Assistant</span></button>
+    <button class="p-tab-bar__tab" data-tab="courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 17l9 5 9-5"/></svg><span>Courses</span></button>
+    <button class="p-tab-bar__tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>Settings</span></button>
+  </nav>
   <a class="credit" href="https://unsplash.com/photos/L50EwWmAY2w" target="_blank" rel="noopener">Photo: Daniel J. Schwarz</a>
   <input type="file" id="file-input" accept=".ics,text/calendar" hidden>
   <div id="toast" class="toast" role="status" hidden></div>

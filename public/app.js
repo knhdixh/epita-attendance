@@ -7,6 +7,8 @@ import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey
 
 const $app = document.getElementById('app');
 const $tabs = document.getElementById('tabs');
+const $tabbar = document.getElementById('tabbar');
+const $scroller = document.getElementById('scroller');
 const $account = document.getElementById('account');
 const $file = document.getElementById('file-input');
 const $toast = document.getElementById('toast');
@@ -98,36 +100,30 @@ async function reload() {
 async function renderLogin() {
   document.body.classList.add('signed-out');
   $tabs.hidden = true;
+  $tabbar.hidden = true;
   $account.innerHTML = '';
   const cfg = await api('/auth/config');
   const pk = cfg.passkeys && passkeysSupported();
   $app.innerHTML = `
-    <h1 class="display" aria-label="attendance80"><span class="word" aria-hidden="true">${maskedWord('attendance80')}</span><span class="cursor" aria-hidden="true"></span></h1>
-    <div class="signin">
-      ${pk ? '<button class="btn primary" data-action="pk-login">Sign in with a passkey</button>' : ''}
-      ${cfg.google ? '<a class="btn" href="/auth/google">Continue with Google</a>' : ''}
-      ${pk && cfg.signup ? `
-        <form id="pk-signup" class="signup-row">
-          <input name="name" required maxlength="60" placeholder="Your name" autocomplete="name" aria-label="Your name">
-          <button class="btn" type="submit">Create account</button>
-        </form>
-        <p>Face ID, fingerprint or PIN. No password.</p>` : ''}
-      ${!pk && cfg.passkeys ? '<p>This browser has no passkeys. Use Google.</p>' : ''}
-      ${cfg.dev ? '<a class="btn" href="/auth/dev">Dev login</a>' : ''}
-    </div>
-    <section class="panel landing-rows">
-      <h3><span>Index</span><span>03</span></h3>
-      <div class="cards">
-        ${[['/ics-guide', 'calendar', 'export from zeus'], ['/privacy', 'privacy', 'policy'], ['/terms', 'terms', 'of service']]
-          .map(([href, name, what], i) => `<a class="card" href="${href}"><span class="num">${pad2(i + 1)}</span>
-            <header><h4 data-scramble>${name}</h4></header><div class="headline">${what}<span class="arrow">↗</span></div></a>`).join('')}
+    <section class="signin-card p-glass-lg">
+      <div class="app-icon" aria-hidden="true">80</div>
+      <h1>Attendance80</h1>
+      <p class="lede">Know how many classes you can still miss, in every course.</p>
+      <div class="signin">
+        ${pk ? '<button class="btn p-button p-button-primary p-button-large" data-action="pk-login">Sign in with a passkey</button>' : ''}
+        ${cfg.google ? '<a class="btn p-button p-button-default p-button-large" href="/auth/google">Continue with Google</a>' : ''}
+        ${pk && cfg.signup ? `
+          <form id="pk-signup" class="signup-row">
+            <input class="p-field" name="name" required maxlength="60" placeholder="Your name" autocomplete="name" aria-label="Your name">
+            <button class="btn p-button p-button-default" type="submit">Create account</button>
+          </form>
+          <p class="hint">Face ID, fingerprint or PIN. No password.</p>` : ''}
+        ${!pk && cfg.passkeys ? '<p class="hint">This browser has no passkeys. Use Google.</p>' : ''}
+        ${cfg.dev ? '<a class="btn p-button p-button-borderless" href="/auth/dev">Dev login</a>' : ''}
       </div>
-    </section>
-    ${footer()}`;
-  reveal();
-  const fluid = document.createElement('script');
-  fluid.src = '/fluid.js';
-  document.body.append(fluid);
+      <p class="links"><a href="/ics-guide">Get your .ics</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+    </section>`;
+  $app.classList.add('enter');
 }
 
 // Sign-in buttons and methods are text only (knhdixh cookbook: no icons).
@@ -139,116 +135,50 @@ const googleIcon = () => '';
 function render() {
   const { user } = state.data;
   $account.innerHTML = `
-    <span class="import-group"><button class="btn small" data-action="upload" title="Upload or re-import an .ics file">import</button><a class="help-dot" href="/ics-guide" title="Where do I get my .ics file?" aria-label="How to get your .ics file">?</a></span>
-    <span class="email">${esc(user.email || user.name || '')}</span>
-    <button class="btn small ghost" data-action="logout">sign out</button>`;
+    <div class="account-name">${esc(user.name || user.email || '')}</div>
+    ${user.email && user.name ? `<div class="account-email">${esc(user.email)}</div>` : ''}
+    <div class="account-actions">
+      <button class="btn p-button p-button-default p-button-small" data-action="upload" title="Upload or re-import an .ics file">Import .ics</button>
+      <button class="btn p-button p-button-borderless p-button-small" data-action="logout">Sign out</button>
+    </div>`;
   document.body.classList.remove('signed-out');
-  document.getElementById('fluid')?.remove();
 
-  // The reveal plays only when the view changes, never on the re-render after a click.
+  // Entrance animation only when the view changes, never on the re-render after a click.
   const view = state.data.events.length || state.tab === 'settings' ? state.tab : 'empty';
   const changed = view !== lastView;
-  const first = lastView === null;
   lastView = view;
 
-  if (view === 'empty') {
-    $tabs.hidden = true;
-    renderEmpty();
-  } else {
-    $tabs.hidden = false;
-    for (const b of $tabs.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === state.tab);
-    ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
-    $app.insertAdjacentHTML('afterbegin', pageHead(state.tab));
+  const empty = view === 'empty';
+  $tabs.hidden = $tabbar.hidden = empty;
+  for (const b of document.querySelectorAll('[data-tab]')) {
+    const on = b.dataset.tab === state.tab;
+    b.classList.toggle('p-selected', on && b.classList.contains('p-sidebar-row'));
+    b.toggleAttribute('aria-current', on);
   }
-  $app.insertAdjacentHTML('beforeend', footer());
-  indexRows();
-  if (changed) reveal({ quick: !first });
+  if (empty) renderEmpty();
+  else {
+    ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab]));
+  }
+  if (changed) {
+    $scroller.scrollTop = 0;
+    $app.classList.remove('enter');
+    void $app.offsetWidth;
+    $app.classList.add('enter');
+  }
 }
 
 let lastView = null;
 const pad2 = (n) => String(n).padStart(2, '0');
-const footer = () => `<footer class="foot"><span>${esc(location.hostname)}</span><span>${new Date().getFullYear()}</span></footer>`;
-const pageHead = (label) => `<header class="page-head"><h2 aria-label="${esc(label)}"><span class="word" aria-hidden="true">${maskedWord(label)}</span></h2></header>`;
-
-// ---------------------------------------------------------------- motion (knhdixh cookbook §4)
-
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789';
-const randGlyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
-const ROWS = '.row, .hw-item, .card, .method, .family, .window, .msg, .byok-option, .stat';
-let settleTimer;
-
-// A heading split into masked characters that rise and cycle glyphs (see scrambleIn).
-function maskedWord(word) {
-  return [...word].map((c, i) => `<span class="mask"><span class="ch" style="--i:${i}" data-c="${esc(c)}">${esc(c)}</span></span>`).join('');
-}
-
-// Stagger index for each row. Capped so long lists don't keep the page waiting.
-function indexRows() {
-  $app.querySelectorAll(ROWS).forEach((el, i) => el.style.setProperty('--i', Math.min(i, 14)));
-  $app.querySelectorAll('table.courses tbody tr, .cal-day, .weeks > .week').forEach((el, i) => el.style.setProperty('--i', Math.min(i, 60)));
-}
-
-// Each character cycles through random glyphs while it rises, then settles. Returns when it is done.
-function scrambleIn(word, base) {
-  const chars = [...word.querySelectorAll('.ch')];
-  chars.forEach((ch, i) => {
-    const final = ch.dataset.c, start = base + i * 55, settle = start + 420 + i * 30, t0 = performance.now();
-    (function frame(now) {
-      const t = now - t0;
-      if (t >= settle) { ch.textContent = final; return; }
-      if (t >= start) ch.textContent = randGlyph();
-      requestAnimationFrame(frame);
-    })(t0);
-  });
-  return base + chars.length * 85 + 450;
-}
-
-// Decodes a name left to right (row hover).
-function decode(el) {
-  const target = el.dataset.text || (el.dataset.text = el.textContent);
-  if (el._raf) cancelAnimationFrame(el._raf);
-  const t0 = performance.now(), dur = 380;
-  (function frame(now) {
-    const p = Math.min(1, (now - t0) / dur), fixed = Math.floor(p * target.length);
-    let out = target.slice(0, fixed);
-    for (let k = fixed; k < target.length; k++) out += /[\s-]/.test(target[k]) ? target[k] : randGlyph();
-    el.textContent = out;
-    if (p < 1) el._raf = requestAnimationFrame(frame);
-  })(t0);
-}
-
-// Title rises, hairlines draw in, rows rise, footer fades. Tab changes use compressed delays.
-function reveal({ quick = false } = {}) {
-  clearTimeout(settleTimer);
-  $app.classList.remove('ready', 'settled');
-  $app.classList.toggle('quick', quick);
-  const cursor = $app.querySelector('.cursor');
-  if (reduced) { $app.classList.add('ready', 'settled'); cursor?.classList.add('on'); return; }
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    $app.classList.add('ready');
-    const word = $app.querySelector('.page-head .word, .display .word');
-    const done = word ? scrambleIn(word, quick ? 0 : 200) : 0;
-    if (cursor) setTimeout(() => cursor.classList.add('on'), done);
-    settleTimer = setTimeout(() => $app.classList.add('settled'), quick ? 1800 : 3300);
-  }));
-}
-
-for (const type of ['mouseover', 'focusin']) {
-  document.addEventListener(type, (e) => {
-    const row = e.target.closest?.('.card');
-    if (!row || reduced || (e.relatedTarget && row.contains(e.relatedTarget))) return;
-    const name = row.querySelector('[data-scramble]');
-    if (name) decode(name);
-  });
-}
+const TITLES = { overview: 'Overview', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const pageHead = (label) => `<header class="page-head"><h2>${esc(label)}</h2></header>`;
 
 function renderEmpty() {
   $app.innerHTML = `
-    ${pageHead('import')}
+    ${pageHead('Import')}
     <section class="dropzone" data-action="upload" id="dropzone">
       <p>Drop your <code>.ics</code> here, or choose it.</p>
-      <button class="btn primary" type="button">Choose file</button>
+      <button class="btn p-button p-button-primary" type="button">Choose file</button>
     </section>
     <p class="guide-link"><a href="/ics-guide">Export it from Zeus</a></p>
     ${state.data.account.google || state.data.account.passkeys.length > 1 ? '' : `
@@ -261,7 +191,7 @@ function groupBanner() {
   if (!families.length || families.some(([, list]) => list.some((c) => c.tracked))) return '';
   return `<div class="banner">
     <span>Pick your groups for ${families.map(([f]) => esc(f)).join(', ')}.</span>
-    <button class="btn small" data-goto="courses">Choose groups</button>
+    <button class="btn p-button p-button-default p-button-small" data-goto="courses">Choose groups</button>
   </div>`;
 }
 
@@ -288,19 +218,19 @@ function renderOverview() {
         <div class="stat"><span class="n">${unmarked.length}</span><span class="l">to mark</span></div>
       </div>
       <p class="ov-line ${overall.level}">${overviewLine(overall, tracked[0], user.threshold)}</p>
-      ${unmarked.length ? '<button class="btn primary small" data-action="mark-all-present">Mark all attended</button>' : ''}
+      ${unmarked.length ? '<button class="btn p-button p-button-primary p-button-small" data-action="mark-all-present">Mark all attended</button>' : ''}
     </section>
 
     ${today.length || next ? `
     <section class="panel">
-      <h3><span>${today.length ? 'Today' : 'Next'}</span><span>${pad2(today.length || 1)}</span></h3>
+      <h3>${today.length ? 'Today' : 'Next'}</h3>
       <div class="list">${(today.length ? today : [next]).map((e) => sessionRow(e, { showDate: !today.length })).join('')}</div>
     </section>` : ''}
 
     ${hw.homeworkPanel()}
 
     <section class="panel">
-      <h3><span>Courses</span><span>${pad2(tracked.length)}</span></h3>
+      <h3>Courses</h3>
       <div class="cards">
         ${tracked.map(({ course, stats }, i) => courseCard(course, stats, i)).join('') || '<p class="empty">No tracked courses.</p>'}
       </div>
@@ -328,12 +258,11 @@ function courseCard(course, s, i) {
   const attendedW = s.total ? ((s.total - s.absent) / s.total) * 100 : 100;
   return `
     <article class="card ${s.level}" data-course-open="${course.id}" tabindex="0">
-      <span class="num">${pad2(i + 1)}</span>
       <header>
-        <h4 data-scramble>${esc(course.name)}</h4>
+        <h4>${esc(course.name)}</h4>
         ${course.tag !== 'normal' ? `<span class="chip tag-${course.tag}">${TAGS[course.tag].label.toLowerCase()}</span>` : ''}
       </header>
-      <div class="headline">${skipsLeft(s)}<span class="arrow">↗</span></div>
+      <div class="headline">${skipsLeft(s)}<span class="chev" aria-hidden="true">›</span></div>
       <div class="bar" title="Projected ${pct(s.projectedRate)}">
         <div class="fill" style="width:${attendedW}%"></div>
         <div class="mark" style="left:${thr}%"></div>
@@ -365,10 +294,10 @@ function sessionRow(e, { showDate = false } = {}) {
         <div class="loc muted small">${esc(e.location)}${e.note ? ` · <em>${esc(e.note)}</em>` : ''}</div>
         ${hw.homeworkForSession(e).map((h) => `<a class="hw-badge" href="#homework" data-goto="homework" title="Homework due at this session">Due: ${esc(h.title)}</a>`).join('')}
       </div>
-      <select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
+      <div class="p-select"><select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
         <option value="" ${!e.tag ? 'selected' : ''}>${TAGS[course.tag].label}</option>
         ${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${e.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}
-      </select>
+      </select></div>
       <div class="status" role="group" aria-label="Attendance">
         <button data-status="present" class="${st === 'present' ? 'on' : ''}" title="${past ? 'Attended' : 'Will attend'}">✓</button>
         <button data-status="absent" class="${st === 'absent' ? 'on' : ''} ${mustAttend && !past ? 'danger' : ''}" title="${past ? 'Absent' : 'Plan to skip'}">×</button>
@@ -417,19 +346,19 @@ function renderSessions() {
   $app.innerHTML = `
     ${groupBanner()}
     <div class="filters">
-      <select id="f-course">
+      <div class="p-select"><select id="f-course">
         <option value="all">All ${f.showHidden ? '' : 'tracked '}courses</option>
         ${shownCourses.map((c) => `<option value="${c.id}" ${String(c.id) === f.course ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-      </select>
-      <div class="seg" id="f-when">
-        ${[['upcoming', 'Upcoming'], ['unmarked', 'Needs marking'], ['past', 'Past'], ['skips', 'Absences'], ['mustattend', 'Exams & mandatory'], ['all', 'All']]
-          .map(([k, l]) => `<button data-when="${k}" class="${f.when === k ? 'on' : ''}">${l}</button>`).join('')}
+      </select></div>
+      <div class="p-segmented seg" id="f-when" role="group" aria-label="Show">
+        ${[['upcoming', 'Upcoming'], ['unmarked', 'To mark'], ['past', 'Past'], ['skips', 'Absences'], ['mustattend', 'Exams'], ['all', 'All']]
+          .map(([k, l]) => `<label class="p-segment"><input type="radio" name="f-when" value="${k}" ${f.when === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}
       </div>
-      <input id="f-q" type="search" placeholder="Search" value="${esc(f.q)}">
-      <label class="check"><input type="checkbox" id="f-hidden" ${f.showHidden ? 'checked' : ''}> show untracked</label>
+      <input class="p-field" id="f-q" type="search" placeholder="Search" value="${esc(f.q)}">
+      <label class="p-checkbox check"><input type="checkbox" id="f-hidden" ${f.showHidden ? 'checked' : ''}><span></span> Show untracked</label>
     </div>
     ${courseSummary}
-    ${f.when === 'unmarked' && list.length ? `<p><button class="btn small" data-action="mark-shown-present">Mark these ${list.length} as attended</button></p>` : ''}
+    ${f.when === 'unmarked' && list.length ? `<p><button class="btn p-button p-button-default p-button-small" data-action="mark-shown-present">Mark these ${list.length} as attended</button></p>` : ''}
     <div class="days">
       ${days.map((d) => `
         <section class="day ${dayKey(now) === d.key ? 'today' : ''}">
@@ -457,11 +386,11 @@ function renderCourses() {
         ${families.map(([family, list]) => `
           <label class="family">
             <span>${esc(family)}</span>
-            <select data-family="${esc(family)}">
+            <div class="p-select"><select data-family="${esc(family)}">
               <option value="">Not in this course</option>
               ${list.map((c) => `<option value="${c.id}" ${c.tracked ? 'selected' : ''}>${esc(c.group)}</option>`).join('')}
               ${list.filter((c) => c.tracked).length > 1 ? '<option value="multi" selected>Several groups</option>' : ''}
-            </select>
+            </select></div>
           </label>`).join('')}
       </div>
     </section>` : ''}
@@ -474,9 +403,9 @@ function renderCourses() {
         <tbody>
           ${perCourse.map(({ course: c, stats: s }) => `
             <tr class="${c.tracked ? '' : 'off'}" data-course="${c.id}">
-              <td><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"></td>
+              <td><label class="p-checkbox"><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"><span></span></label></td>
               <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a>${groupedIds.has(c.id) ? ' <span class="chip">group</span>' : ''}</td>
-              <td><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></td>
+              <td><div class="p-select"><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div></td>
               <td class="num">${count(c.id)}</td>
               <td class="num">${hours(c.id)}</td>
               <td class="num ${c.tracked ? s.level : ''}">${c.tracked ? pct(s.projectedRate) : '—'}</td>
@@ -493,15 +422,15 @@ function renderSettings() {
       <h3>Attendance rules</h3>
       <form id="settings-form" class="form">
         <label>Minimum attendance
-          <span class="input-suffix"><input type="number" name="threshold" min="1" max="100" step="1" value="${Math.round(user.threshold * 100)}"> %</span>
+          <span class="input-suffix"><input class="p-field" type="number" name="threshold" min="1" max="100" step="1" value="${Math.round(user.threshold * 100)}"> %</span>
         </label>
         <label>Count attendance by
-          <select name="unit">
+          <div class="p-select"><select name="unit">
             <option value="sessions" ${user.unit === 'sessions' ? 'selected' : ''}>Number of sessions</option>
             <option value="hours" ${user.unit === 'hours' ? 'selected' : ''}>Hours (longer sessions weigh more)</option>
-          </select>
+          </select></div>
         </label>
-        <button class="btn primary" type="submit">Save</button>
+        <button class="btn p-button p-button-primary" type="submit">Save</button>
       </form>
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
@@ -510,7 +439,7 @@ function renderSettings() {
       <h3>Calendar</h3>
       <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
         <a href="/ics-guide">How to export it from Zeus</a>.</p>
-      <button class="btn" data-action="upload">Import .ics</button>
+      <button class="btn p-button p-button-default" data-action="upload">Import .ics</button>
     </section>
     ${signInMethodsPanel()}
     ${byok.settingsPanel()}
@@ -518,12 +447,12 @@ function renderSettings() {
     <section class="panel narrow danger-zone">
       <h3>Delete data</h3>
       <p>Remove all imported sessions, courses and attendance marks from your account. Homework is kept.</p>
-      <button class="btn danger" data-action="wipe">Delete all my data</button>
+      <button class="btn p-button p-button-destructive" data-action="wipe">Delete all my data</button>
       <h3 class="danger-title">Delete my account</h3>
       <p>Permanently delete your account and everything in it: calendar, attendance, homework, breaks, passkeys,
         AI key and Google Calendar connection (access is revoked; the "Homework (Attendance80)" calendar stays in your
         Google account for you to delete).</p>
-      <button class="btn danger" data-action="delete-account">Delete my account</button>
+      <button class="btn p-button p-button-destructive" data-action="delete-account">Delete my account</button>
     </section>
     <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
 }
@@ -541,10 +470,10 @@ function signInMethodsPanel() {
             <span>${keyIcon()}</span>
             <div><b>${esc(p.name || 'Passkey')}</b>${p.backed_up ? ' <span class="chip">synced</span>' : ''}
               <div class="muted small">Added ${fmt(p.created_at)}${p.last_used_at ? ` · last used ${fmt(p.last_used_at)}` : ''}</div></div>
-            <button class="btn small ghost" data-remove-passkey="${esc(p.id)}">Remove</button>
+            <button class="btn p-button p-button-borderless p-button-small" data-remove-passkey="${esc(p.id)}">Remove</button>
           </div>`).join('')}
       </div>
-      ${passkeysSupported() ? `<button class="btn" data-action="pk-add">${keyIcon()} Add a passkey${account.passkeys.length ? ' on another device' : ''}</button>` : ''}
+      ${passkeysSupported() ? `<button class="btn p-button p-button-default" data-action="pk-add">${keyIcon()} Add a passkey${account.passkeys.length ? ' on another device' : ''}</button>` : ''}
       <p class="muted small">${account.google
         ? 'Add a passkey to sign in with Face ID, fingerprint or PIN instead of Google.'
         : 'Add a passkey on a second device (or use a synced one) so you can always get back in.'}</p>
@@ -637,7 +566,7 @@ async function importFile(file) {
 
 // ---------------------------------------------------------------- events
 
-$tabs.addEventListener('click', (e) => {
+for (const nav of [$tabs, $tabbar]) nav.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-tab]');
   if (!b) return;
   state.tab = b.dataset.tab;
@@ -735,6 +664,7 @@ document.addEventListener('change', (e) => {
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
+  if (t.name === 'f-when') { state.filter.when = t.value; return render(); }
 
   const row = t.closest('[data-event]');
   if (row && t.dataset.field === 'tag') return setEventField(Number(row.dataset.event), { tag: t.value || null });

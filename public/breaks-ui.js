@@ -77,7 +77,7 @@ export function renderBreaks() {
       <div class="grid-head">
         <h3>When could you take a break?</h3>
         <label class="len-pick">Length
-          <select id="break-len">${GRID_LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.len ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <div class="p-select"><select id="break-len">${GRID_LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.len ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         </label>
       </div>
       <p class="muted small">Each day shows what happens if a ${s.len}-day break <b>starts</b> that day.</p>
@@ -87,7 +87,7 @@ export function renderBreaks() {
       </div>
       ${m.noSkip.length ? `<p class="note warn">No spare absences at all in: ${m.noSkip.map((c) => `<b>${esc(c.name)}</b>`).join(', ')}.
         Any break over one of their sessions would drop that course below ${pct(state.data.user.threshold)}, so plan breaks around them (or check if a session can be excused).</p>` : ''}
-      <p class="muted small">✓ safe · ! no spare skips left · × drops a course below ${pct(state.data.user.threshold)} or miss an exam · 🌴 no classes missed. Click a day to check that break.</p>
+      <p class="muted small">✓ safe · ! no spare skips left · × drops a course below ${pct(state.data.user.threshold)} or miss an exam · ~ no classes missed. Click a day to check that break.</p>
     </section>
 
     <div class="breaks-layout">
@@ -95,14 +95,14 @@ export function renderBreaks() {
         <h3>Plan a break</h3>
         <form id="break-form" class="form">
           <div class="form-row">
-            <label>First day off <input type="date" name="from" required value="${esc(s.from)}" min="${m.today}"></label>
-            <label>Last day off <input type="date" name="to" required value="${esc(s.to)}" min="${esc(s.from || m.today)}"></label>
+            <label>First day off <input class="p-field" type="date" name="from" required value="${esc(s.from)}" min="${m.today}"></label>
+            <label>Last day off <input class="p-field" type="date" name="to" required value="${esc(s.to)}" min="${esc(s.from || m.today)}"></label>
           </div>
-          <label>Name <input name="label" maxlength="100" placeholder="Optional, e.g. Trip home" value="${esc(s.label)}"></label>
+          <label>Name <input class="p-field" name="label" maxlength="100" placeholder="Optional, e.g. Trip home" value="${esc(s.label)}"></label>
         </form>
         <div id="break-result">${sim ? simulationView(sim, unit) : '<p class="muted">Pick dates to see the effect on every course.</p>'}</div>
         ${sim && sim.sessions.length ? `
-          <button class="btn ${sim.level === 'fail' ? 'danger' : 'primary'}" data-action="save-break">
+          <button class="btn p-button ${sim.level === 'fail' ? 'p-button-destructive' : 'p-button-primary'}" data-action="save-break">
             Save break (mark ${sim.sessions.length} session${sim.sessions.length === 1 ? '' : 's'} as planned absences)</button>` : ''}
       </section>
 
@@ -110,10 +110,10 @@ export function renderBreaks() {
         <h3>Find the best time</h3>
         <form id="find-form" class="form">
           <label>How long
-            <select name="days">${LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.days ? 'selected' : ''}>${l}</option>`).join('')}</select>
+            <div class="p-select"><select name="days">${LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.days ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
           </label>
-          <label>Finish before <input type="date" name="within" value="${esc(s.within)}" min="${m.today}" max="${m.lastDay}" title="Optional"></label>
-          <button class="btn primary" type="submit">Find dates</button>
+          <label>Finish before <input class="p-field" type="date" name="within" value="${esc(s.within)}" min="${m.today}" max="${m.lastDay}" title="Optional"></label>
+          <button class="btn p-button p-button-primary" type="submit">Find dates</button>
         </form>
         <div id="find-result">${s.result ? findView(s.result) : `<p class="muted small">Ranks breaks by fewest classes missed. Weekends and school holidays count as free days, and breaks over exams are excluded. Your calendar runs until ${esc(dayLabel(m.lastDay))}.</p>`}</div>
       </section>
@@ -129,7 +129,7 @@ export function renderBreaks() {
             <div class="hw-title">${esc(b.label || 'Break')}</div>
             <div class="hw-meta small">${esc(dayLabel(b.start_date))} – ${esc(dayLabel(b.end_date))} · ${b.sessions} session${b.sessions === 1 ? '' : 's'} marked absent</div>
           </div>
-          <div class="hw-actions"><button class="btn small ghost" data-remove-break="${b.id}" title="Remove and restore those sessions">Remove</button></div>
+          <div class="hw-actions"><button class="btn p-button p-button-borderless p-button-small" data-remove-break="${b.id}" title="Remove and restore those sessions">Remove</button></div>
         </div>`).join('')}</div>
     </section>` : ''}
     <p class="muted small">Tip: you can also ask the Assistant, e.g. “when could I go home for a week in November?”.</p>`;
@@ -139,13 +139,13 @@ function findView(r) {
   if (!r.windows.length) {
     return `<div class="verdict fail">No safe ${r.days}-day break${r.within ? ` before ${esc(dayLabel(r.within))}` : ''}.</div>
       ${r.longest ? `<p>Longest safe break: <b>${esc(dayLabel(r.longest.from))} – ${esc(dayLabel(r.longest.to))}</b> (${r.longest.days} days, ${r.longest.sessions} sessions).
-        <button class="btn small" data-use="${r.longest.from}|${r.longest.to}">Check it</button></p>` : ''}`;
+        <button class="btn p-button p-button-default p-button-small" data-use="${r.longest.from}|${r.longest.to}">Check it</button></p>` : ''}`;
   }
   return `<div class="list">${r.windows.map((w) => `
-    <div class="window ${w.level}">
+    <div class="window-row ${w.level}">
       <div><b>${esc(dayLabel(w.from))} – ${esc(dayLabel(w.to))}</b>
         <div class="muted small">${w.sessions ? `skips ${w.sessions} session${w.sessions === 1 ? '' : 's'}` : 'no classes missed'}${w.holidayDays ? ` · ${w.holidayDays} holiday days` : ''}${w.level === 'risk' ? ' · leaves no spare skips' : ''}</div></div>
-      <button class="btn small" data-use="${w.from}|${w.to}">Check</button>
+      <button class="btn p-button p-button-default p-button-small" data-use="${w.from}|${w.to}">Check</button>
     </div>`).join('')}</div>`;
 }
 
