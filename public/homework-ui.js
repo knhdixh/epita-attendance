@@ -317,7 +317,7 @@ export async function onClick(e) {
     return true;
   }
   if (action === 'rotate-feed') {
-    if (!confirm('Create a new feed link? Calendars subscribed to the old link will stop updating.')) return true;
+    if (!confirm('Create new feed links? Calendars subscribed to the old homework and timetable links will stop updating.')) return true;
     try {
       await api('/api/feed/rotate', { method: 'POST' });
       await reload(); render(); toast('New feed link created.');

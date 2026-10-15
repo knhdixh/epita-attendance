@@ -1,6 +1,7 @@
 import { parseICS } from './ics.js';
 import { splitGroup, TAGS, STATUSES } from '../public/stats.js';
 import { buildFeed } from './homework.js';
+import { buildTimetableFeed } from './timetable-feed.js';
 import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal.js';
 import { HttpError } from './http.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
@@ -353,9 +354,11 @@ async function feedToken(env, user) {
 }
 
 async function handleFeed(env, url) {
-  const m = url.pathname.match(/^\/feed\/([A-Za-z0-9_-]{20,})\.ics$/);
+  // /feed/<token>.ics is homework, /feed/<token>/timetable.ics the timetable. Both use the same private token.
+  const m = url.pathname.match(/^\/feed\/([A-Za-z0-9_-]{20,})(\.ics|\/timetable\.ics)$/);
   const user = m && await env.DB.prepare('SELECT id FROM users WHERE feed_token = ?').bind(m[1]).first();
   if (!user) return new Response('Not found', { status: 404 });
+  if (m[2] === '/timetable.ics') return timetableFeed(env, url, user);
   const [homework, courses] = await env.DB.batch([
     // Upcoming homework plus the last 60 days, so the feed stays small.
     env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND due_at > ? ORDER BY due_at`)
@@ -367,6 +370,22 @@ async function handleFeed(env, url) {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': 'inline; filename="homework.ics"',
+      'Cache-Control': 'private, max-age=300',
+    },
+  });
+}
+
+async function timetableFeed(env, url, user) {
+  const [events, courses] = await env.DB.batch([
+    // The last 60 days and everything ahead, so the feed stays small late in the year.
+    env.DB.prepare(`SELECT uid, course_id, summary, location, description, start_at, end_at, status, tag, note
+      FROM events WHERE user_id = ? AND end_at > ? ORDER BY start_at`).bind(user.id, Date.now() - 60 * 86400000),
+    env.DB.prepare('SELECT id, tracked, tag FROM courses WHERE user_id = ?').bind(user.id),
+  ]);
+  return new Response(buildTimetableFeed(events.results, courses.results, { host: url.hostname }), {
+    headers: {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': 'inline; filename="timetable.ics"',
       'Cache-Control': 'private, max-age=300',
     },
   });

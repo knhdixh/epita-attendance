@@ -58,11 +58,11 @@ export function buildGcalEvent(hw, courseName, appUrl) {
 
 // ---------------------------------------------------------------- .ics feed
 
-const icsEscape = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-const icsUtc = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+export const icsEscape = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+export const icsUtc = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
 // Fold lines at 75 octets (RFC 5545 §3.1) without splitting multi-byte characters.
-function fold(line) {
+export function fold(line) {
   const enc = new TextEncoder();
   if (enc.encode(line).length <= 75) return line;
   const out = [];
