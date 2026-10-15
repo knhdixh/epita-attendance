@@ -376,11 +376,11 @@ async function handleFeed(env, url) {
 }
 
 async function timetableFeed(env, url, user) {
+  // The whole imported calendar (a semester is ~100 KB), not just upcoming sessions.
   const [events, courses] = await env.DB.batch([
-    // The last 60 days and everything ahead, so the feed stays small late in the year.
-    env.DB.prepare(`SELECT uid, course_id, summary, location, description, start_at, end_at, status, tag, note
-      FROM events WHERE user_id = ? AND end_at > ? ORDER BY start_at`).bind(user.id, Date.now() - 60 * 86400000),
-    env.DB.prepare('SELECT id, tracked, tag FROM courses WHERE user_id = ?').bind(user.id),
+    env.DB.prepare(`SELECT uid, course_id, summary, location, description, start_at, end_at
+      FROM events WHERE user_id = ? ORDER BY start_at`).bind(user.id),
+    env.DB.prepare('SELECT id, tracked FROM courses WHERE user_id = ?').bind(user.id),
   ]);
   return new Response(buildTimetableFeed(events.results, courses.results, { host: url.hostname }), {
     headers: {

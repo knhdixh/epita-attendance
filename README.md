@@ -16,7 +16,7 @@ Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudf
 | 🏷 **Tags** | Normal / Mandatory / Exam / Optional, per course or per session. Skipping an exam or mandatory session is flagged; Optional sessions never count. |
 | 📚 **Homework** | Due dates, or "due at the next session of X", reminders and notes. Overdue items appear on the overview, and each session shows the homework due at it. |
 | 🔔 **Google Calendar sync** | Todoist-style: homework is pushed to a *Homework (Attendance80)* calendar, and reminders arrive as Google Calendar notifications. There's also a private `.ics` feed for Apple Calendar or Outlook. |
-| 🗓 **Timetable feed** | A private calendar link with your sessions (only your groups) for Google Calendar, Apple Calendar or Outlook. It follows Zeus updates, exams and planned skips. |
+| 🗓 **Calendar feeds** | Two private links for Google Calendar, Apple Calendar or Outlook: your timetable (every session of your groups, as on Zeus, following Zeus updates) and, optionally, your homework. |
 | 🌴 **Break planner** | A calendar showing, for a break length you choose (1 day to 2 weeks), whether a break starting on each day is safe, a preview of any date range per course, and a finder for the best N-day break that skips the fewest classes, uses weekends and school holidays, and never covers an exam. |
 | 🤖 **AI assistant** | "Can I take next week off?", "I missed French today", "add TP4 due friday", "make my weekly plan". All maths and dates are done by the app, not the model, and every change it makes can be undone. |
 

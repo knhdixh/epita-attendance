@@ -498,7 +498,6 @@ function renderSettings() {
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
     </section>
     ${calendarPanel()}
-    ${state.data.events.length ? timetableFeedPanel() : ''}
     ${signInMethodsPanel()}
     ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
@@ -513,28 +512,6 @@ function renderSettings() {
       <button class="btn p-button p-button-destructive" data-action="delete-account">Delete my account</button>
     </section>
     <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
-}
-
-// Subscribing to this keeps Google/Apple Calendar in step with the app: it follows re-imports, the Zeus
-// refresh and attendance marks. Same private token as the homework feed, so "Reset link" resets both.
-function timetableFeedPanel() {
-  const feed = state.data.integrations.feedUrl.replace(/\.ics$/, '/timetable.ics');
-  const webcal = feed.replace(/^https?:/, 'webcal:');
-  return `
-    <section class="panel narrow">
-      <h3>Timetable in your calendar app</h3>
-      <p class="muted small">Subscribe to your timetable (only the groups you picked) in Google Calendar, Apple Calendar or
-        Outlook. It stays in sync with Attendance80, including Zeus updates, exams and planned skips. Apple Calendar and
-        Outlook check it often; Google Calendar every few hours.</p>
-      <div class="copy-row">
-        <input class="p-field" id="timetable-url" readonly value="${esc(feed)}" aria-label="Timetable feed URL">
-        <button class="btn p-button p-button-default" data-action="copy-timetable">Copy</button>
-      </div>
-      <div class="form-row">
-        <a class="btn p-button p-button-default p-button-small" href="${esc(webcal)}">Open in Apple Calendar / Outlook</a>
-        <a class="btn p-button p-button-default p-button-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
-      </div>
-    </section>`;
 }
 
 function zeusLinkForm() {
@@ -754,12 +731,6 @@ document.addEventListener('click', async (e) => {
       try { localStorage.clear(); } catch { /* storage unavailable */ }
       location.href = '/';
     } catch (err) { toast(err.message, true); }
-    return;
-  }
-  if (action === 'copy-timetable') {
-    const input = document.getElementById('timetable-url');
-    try { await navigator.clipboard.writeText(input.value); toast('Link copied.'); }
-    catch { input.select(); toast('Press Cmd/Ctrl+C to copy.'); }
     return;
   }
   if (action === 'zeus-sync' || action === 'zeus-disconnect') {

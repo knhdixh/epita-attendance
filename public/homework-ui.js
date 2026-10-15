@@ -170,40 +170,54 @@ export function homeworkForSession(e) {
   return state.data.homework.filter((h) => !h.done && h.course_id === e.course_id && h.due_at === e.start_at);
 }
 
+// One link per calendar, each subscribable in any calendar app. Both share one private token, so
+// "Reset links" resets both. Google Calendar sync is an extra option for homework (instant, with reminders).
+function feedRow(id, title, hint, url) {
+  const webcal = url.replace(/^https?:/, 'webcal:');
+  return `
+      <div class="feed">
+        <h4>${title}</h4>
+        <p class="muted small">${hint}</p>
+        <div class="copy-row">
+          <input class="p-field" id="${id}" readonly value="${esc(url)}" aria-label="${title} feed URL">
+          <button class="btn p-button p-button-default" data-action="copy-feed" data-target="${id}">Copy</button>
+        </div>
+        <div class="form-row">
+          <a class="btn p-button p-button-default p-button-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
+          <a class="btn p-button p-button-default p-button-small" href="${esc(webcal)}">Apple Calendar / Outlook</a>
+        </div>
+      </div>`;
+}
+
 export function integrationsPanel() {
   const integ = state.data.integrations;
   const feed = integ.feedUrl;
-  const webcal = feed.replace(/^https?:/, 'webcal:');
   const g = integ.gcal;
   return `
     <section class="panel narrow">
-      <h3>Google Calendar sync</h3>
+      <h3>Subscribe in your calendar app</h3>
+      <p class="muted small">Private links that Google Calendar, Apple Calendar and Outlook keep up to date, including Zeus
+        updates. Apple Calendar and Outlook check them often; Google Calendar every few hours.</p>
+      ${feedRow('timetable-url', 'Timetable', 'Every session of the groups you picked, as on Zeus.', feed.replace(/\.ics$/, '/timetable.ics'))}
+      ${feedRow('feed-url', 'Homework <span class="chip">optional</span>', 'Your homework, on its due date.', feed)}
+      <button class="btn p-button p-button-borderless p-button-small" data-action="rotate-feed" title="Old links stop working">Reset links</button>
+    </section>
+    <section class="panel narrow">
+      <h3>Google Calendar sync <span class="chip">homework</span></h3>
       ${!integ.gcalAvailable ? '<p class="muted">Not configured on this server.</p>' : g ? `
         <p>Connected as <b>${esc(g.email || 'your Google account')}</b>. Homework is kept in a calendar called
-          <b>Homework (Attendance80)</b>. Changes appear immediately, and each reminder is a Google Calendar notification.</p>
+          <b>Homework (Attendance80)</b>. Changes appear immediately, and each reminder is a Google Calendar notification.
+          Use this instead of the homework link above in Google Calendar.</p>
         ${g.error ? `<p class="note bad">${esc(g.error)}</p>` : ''}
         <div class="form-row">
           ${g.error ? '<a class="btn p-button p-button-primary" href="/auth/google/calendar">Reconnect</a>' : ''}
           <button class="btn p-button p-button-default" data-action="gcal-resync">Sync now</button>
           <button class="btn p-button p-button-borderless" data-action="gcal-disconnect">Disconnect</button>
         </div>` : `
-        <p>Push homework into a dedicated calendar in your Google account, like Todoist does. Reminders then show up as
-          Google Calendar notifications on your phone and computer. The app can only see the calendar it creates.</p>
-        <a class="btn p-button p-button-primary" href="/auth/google/calendar">Connect Google Calendar</a>`}
-    </section>
-    <section class="panel narrow">
-      <h3>Calendar feed (any calendar app)</h3>
-      <p class="muted small">A private link to your homework in iCalendar format. Apple Calendar and Outlook refresh it often;
-        Google Calendar only every few hours, so use the sync above for Google.</p>
-      <div class="copy-row">
-        <input class="p-field" id="feed-url" readonly value="${esc(feed)}" aria-label="Feed URL">
-        <button class="btn p-button p-button-default" data-action="copy-feed">Copy</button>
-      </div>
-      <div class="form-row">
-        <a class="btn p-button p-button-default p-button-small" href="${esc(webcal)}">Open in Apple Calendar / Outlook</a>
-        <a class="btn p-button p-button-default p-button-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
-        <button class="btn p-button p-button-borderless p-button-small" data-action="rotate-feed" title="Old link stops working">Reset link</button>
-      </div>
+        <p>For Google users, an alternative to the homework link: homework is pushed into its own calendar in your Google
+          account, changes appear immediately, and reminders arrive as Google Calendar notifications. The app can only see
+          the calendar it creates.</p>
+        <a class="btn p-button p-button-default" href="/auth/google/calendar">Connect Google Calendar</a>`}
     </section>`;
 }
 
@@ -311,7 +325,7 @@ export async function onClick(e) {
     return true;
   }
   if (action === 'copy-feed') {
-    const input = document.getElementById('feed-url');
+    const input = document.getElementById(e.target.closest('[data-target]')?.dataset.target || 'feed-url');
     try { await navigator.clipboard.writeText(input.value); toast('Link copied.'); }
     catch { input.select(); toast('Press Cmd/Ctrl+C to copy.'); }
     return true;

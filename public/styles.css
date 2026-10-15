@@ -302,6 +302,10 @@ details.hw-group summary { cursor: pointer; }
 .sync.bad { color: var(--red); }
 .copy-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .copy-row .p-field { flex: 1; min-width: 0; font-size: 13px; }
+.feed { padding: 12px 0; border-top: 1px solid var(--sep); }
+.feed h4 { margin: 0 0 2px; font-size: 15px; }
+.feed .muted { margin: 0 0 8px; }
+.feed + .btn { margin-top: 4px; }
 .sub-title { margin-top: 18px !important; font-size: 15px; }
 .zeus-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
 .zeus-form > .p-field { flex: 1 1 100%; min-width: 0; font-size: 13px; }
