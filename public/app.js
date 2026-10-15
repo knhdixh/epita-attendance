@@ -239,6 +239,10 @@ function renderEmpty() {
       <button class="btn p-button p-button-primary" type="button">Choose file</button>
     </section>
     <p class="guide-link"><a href="/ics-guide">Export it from Zeus</a></p>
+    <section class="panel narrow">
+      <h3>Or keep it updated automatically</h3>
+      ${zeusLinkForm()}
+    </section>
     ${state.data.account.google || state.data.account.passkeys.length > 1 ? '' : `
     <p class="guide-link"><a href="#settings" data-goto="settings">Add a second passkey</a> so you can always sign in.</p>`}`;
 }
@@ -493,12 +497,7 @@ function renderSettings() {
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
     </section>
-    <section class="panel narrow">
-      <h3>Calendar</h3>
-      <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
-        <a href="/ics-guide">How to export it from Zeus</a>.</p>
-      <button class="btn p-button p-button-default" data-action="upload">Import .ics</button>
-    </section>
+    ${calendarPanel()}
     ${signInMethodsPanel()}
     ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
@@ -513,6 +512,70 @@ function renderSettings() {
       <button class="btn p-button p-button-destructive" data-action="delete-account">Delete my account</button>
     </section>
     <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
+}
+
+function zeusLinkForm() {
+  return `<p class="muted small">Paste your Zeus link (<b>Generate an ICS → Generate my link</b>) and the timetable is
+      re-imported every 3 days. <a href="/ics-guide#link">How to get it</a>.</p>
+    <form id="zeus-form" class="zeus-form">
+      <input class="p-field" name="url" type="url" required placeholder="https://zeus.ionis-it.com/api/group/…" aria-label="Zeus link" autocomplete="off">
+      <label class="muted small">Include classes from <input class="p-field" name="from" type="date" aria-label="First day of the semester"></label>
+      <button class="btn p-button p-button-primary" type="submit">Connect</button>
+    </form>`;
+}
+
+function calendarPanel() {
+  const src = state.data.calendarSource;
+  const ago = (ms) => {
+    const min = Math.round((Date.now() - ms) / 60000);
+    return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : fmtShort(ms);
+  };
+  return `
+    <section class="panel narrow">
+      <h3>Calendar</h3>
+      ${src ? `
+        <p>Updated automatically from Zeus every 3 days${src.from ? `, with classes from ${esc(fmtShort(Date.parse(src.from)))}` : ''}.
+          Last updated <b>${src.okAt ? ago(src.okAt) : 'never'}</b>.</p>
+        ${src.error ? `<p class="note bad">${esc(src.error)}</p>` : ''}
+        <div class="form-row">
+          <button class="btn p-button p-button-default" data-action="zeus-sync">Update now</button>
+          <button class="btn p-button p-button-borderless" data-action="zeus-disconnect">Turn off</button>
+        </div>
+        ${syncLog()}` : `
+        <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
+          <a href="/ics-guide">How to export it from Zeus</a>.</p>
+        <button class="btn p-button p-button-default" data-action="upload">Import .ics</button>
+        <h3 class="sub-title">Update automatically</h3>
+        ${zeusLinkForm()}`}
+    </section>`;
+}
+
+const SYNC_SOURCES = { cron: 'Automatic', manual: 'Update now', connect: 'Connected' };
+
+// The last 10 fetches from Zeus, newest first: when, what started it, and what came back.
+function syncLog() {
+  const rows = state.data.calendarSyncs || [];
+  if (!rows.length) return '';
+  const when = (ms) => new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return `<details class="sync-log">
+      <summary>Recent updates</summary>
+      <ul>${rows.map((r) => `
+        <li class="${r.ok ? 'ok' : 'bad'}">
+          <span class="sync-when">${esc(when(r.at))}</span>
+          <span class="sync-what">${esc(SYNC_SOURCES[r.source] || r.source)} · ${r.ok
+            ? `${r.sessions} sessions${r.added ? `, ${r.added} new` : ''}${r.removed ? `, ${r.removed} removed` : ''}`
+            : esc(r.error || 'Failed')}</span>
+          <span class="sync-meta">${r.http_status ? `HTTP ${r.http_status} · ` : ''}${(r.duration_ms / 1000).toFixed(1)} s</span>
+        </li>`).join('')}
+      </ul>
+    </details>`;
+}
+
+function importSummary(r) {
+  const parts = [`${r.added} new`, `${r.updated} updated`];
+  if (r.removed) parts.push(`${r.removed} removed`);
+  if (r.recurringIgnored) parts.push(`${r.recurringIgnored} recurring events only imported once`);
+  return `${r.total} sessions (${parts.join(', ')})`;
 }
 
 function signInMethodsPanel() {
@@ -613,10 +676,7 @@ async function importFile(file) {
     await reload();
     if (state.tab === 'settings') state.tab = 'overview';
     render();
-    const parts = [`${r.added} new`, `${r.updated} updated`];
-    if (r.removed) parts.push(`${r.removed} removed`);
-    if (r.recurringIgnored) parts.push(`${r.recurringIgnored} recurring events only imported once`);
-    toast(`Imported ${r.total} sessions (${parts.join(', ')}).`);
+    toast(`Imported ${importSummary(r)}.`);
   } catch (err) {
     toast(err.message, true);
   }
@@ -673,8 +733,19 @@ document.addEventListener('click', async (e) => {
     } catch (err) { toast(err.message, true); }
     return;
   }
+  if (action === 'zeus-sync' || action === 'zeus-disconnect') {
+    const off = action === 'zeus-disconnect';
+    if (off && !confirm('Stop updating the calendar from Zeus? Your sessions and marks stay.')) return;
+    t.closest('button').disabled = true;
+    try {
+      const r = await api(off ? '/api/calendar-source' : '/api/calendar-source/sync', { method: off ? 'DELETE' : 'POST' });
+      toast(off ? 'Automatic updates turned off.' : `Updated: ${importSummary(r)}.`);
+    } catch (err) { toast(err.message, true); }
+    await reload(); render();
+    return;
+  }
   if (action === 'wipe') {
-    if (!confirm('Delete all your sessions and attendance marks? This cannot be undone.')) return;
+    if (!confirm(`Delete all your sessions and attendance marks?${state.data.calendarSource ? ' Automatic updates from Zeus are turned off too.' : ''} This cannot be undone.`)) return;
     await api('/api/data', { method: 'DELETE' });
     await reload(); state.tab = 'overview'; render();
     return toast('All data deleted.');
@@ -760,6 +831,22 @@ document.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
     if (await passkeyAction(() => registerPasskey(name))) location.href = '/';
+    return;
+  }
+  if (e.target.id === 'zeus-form') {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Connecting…';
+    try {
+      const r = await api('/api/calendar-source', { method: 'PUT', body: { url: fd.get('url'), from: fd.get('from') || null } });
+      await reload();
+      render();
+      toast(`Connected to Zeus. Imported ${importSummary(r)}.`);
+    } catch (err) {
+      toast(err.message, true);
+      btn.disabled = false; btn.textContent = 'Connect';
+    }
     return;
   }
   if (e.target.id !== 'settings-form') return;

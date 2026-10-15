@@ -35,7 +35,7 @@
           <li><b>Search a group:</b> type or expand the list (e.g. <kbd>EPITA</kbd> ▸ …) and select your class or promotion.</li>
           <li>Turn on <b>Get reservations from the past</b>.</li>
           <li><b>From:</b> the <b>first day of this semester</b>.</li>
-          <li>Click <b>Download ICS</b>. “Generate my link” isn't needed: Attendance80 imports the file.</li>
+          <li>Click <b>Download ICS</b>, or <b>Generate my link</b> to have it update by itself (see below).</li>
         </ul>
         <img class="shot form" src="/img/zeus-ics-options.jpg" width="840" height="1078" loading="lazy"
           alt="Zeus “Generate an ICS” form: Group, group search, “Get reservations from the past” switched on, and the From date">
@@ -50,11 +50,22 @@
       </li>
     </ol>
 
+    <section class="tips panel" id="link">
+      <h3>Keep it updated automatically</h3>
+      <p>Instead of downloading the file, fill in the same form and click <b>Generate my link</b>. Copy the link Zeus shows
+        (it starts with <code>https://zeus.ionis-it.com/api/</code>), then paste it in Attendance80 under
+        <b>Settings → Calendar → Update automatically</b>.</p>
+      <p>Attendance80 re-imports it every 3 days (you can also click <b>Update now</b> any time), so timetable changes show up without you doing anything, and your marks
+        are kept. Set <b>Include classes from</b> to the first day of the semester if your link doesn't already start there.
+        Anyone with this link can read the group's timetable, so keep it to yourself; generating a new one on Zeus stops
+        the old one working.</p>
+    </section>
+
     <section class="tips panel">
       <h3>Good to know</h3>
       <ul>
-        <li><b>Timetable changed?</b> Download a fresh file the same way and import it again. Your attendance marks, tags and
-          notes are kept.</li>
+        <li><b>Timetable changed?</b> Download a fresh file the same way and import it again (or use the link above and it's
+          automatic). Your attendance marks, tags and notes are kept.</li>
         <li>The file contains every sub-group (GR1, GR2, …). Choosing yours under <b>Courses</b> hides the others, so they don't
           count toward your attendance.</li>
         <li>Holidays (“Vacances”) are detected automatically and never count as missed classes.</li>

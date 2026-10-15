@@ -302,6 +302,21 @@ details.hw-group summary { cursor: pointer; }
 .sync.bad { color: var(--red); }
 .copy-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .copy-row .p-field { flex: 1; min-width: 0; font-size: 13px; }
+.sub-title { margin-top: 18px !important; font-size: 15px; }
+.zeus-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+.zeus-form > .p-field { flex: 1 1 100%; min-width: 0; font-size: 13px; }
+.zeus-form > label { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; }
+.zeus-form > label .p-field { width: auto; }
+.sync-log { margin-top: 14px; font-size: 13px; }
+.sync-log summary { cursor: pointer; color: var(--label-2); }
+.sync-log ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.sync-log li { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; padding: 6px 0; border-top: 1px solid var(--sep); }
+.sync-log li::before { content: ''; width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; grid-row: span 2; background: var(--green); }
+.sync-log li.bad::before { background: var(--red); }
+.sync-log li.bad .sync-what { color: var(--red); }
+.sync-when { font-variant-numeric: tabular-nums; }
+.sync-meta { color: var(--label-2); font-variant-numeric: tabular-nums; }
+.sync-what { grid-column: 2 / -1; color: var(--label-2); }
 
 /* ---------- breaks */
 .grid-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
