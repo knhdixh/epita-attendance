@@ -6,51 +6,105 @@
   <title>Attendance80: track your class attendance</title>
   <meta name="description" content="Attendance80 helps students track class attendance from their timetable, plan breaks and stay above the minimum.">
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230088FF'/><text x='50' y='66' font-family='-apple-system,Helvetica,Arial' font-weight='700' font-size='46' text-anchor='middle' fill='white'>80</text></svg>">
-  <link rel="preload" as="image" href="/img/bg-wide.avif" type="image/avif" media="(min-aspect-ratio: 1/1)">
-  <link rel="preload" as="image" href="/img/bg-tall.avif" type="image/avif" media="(max-aspect-ratio: 1/1)">
-  <!-- Puppertino 2.0.0 (MIT) from the shared knhdixh asset host: only the components this app uses, in one file. -->
-  <link rel="stylesheet" href="https://cdn.knhdixh.com/puppertino/2.0.0/bundle.css?c=typography,colors,shadows,materials,buttons,forms,segmented-controls,sidebars,lists,tabs">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232a6ae0'/><text x='50' y='66' font-family='-apple-system,Helvetica,Arial' font-weight='700' font-size='46' text-anchor='middle' fill='white'>80</text></svg>">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="p-auto-dark-mode">
-  <div class="bg" aria-hidden="true" style="background-image:url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QCARXhpZgAATU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAACigAwAEAAAAAQAAABkAAAAA/8IAEQgAGQAoAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAMCBAEFAAYHCAkKC//EAMMQAAEDAwIEAwQGBAcGBAgGcwECAAMRBBIhBTETIhAGQVEyFGFxIweBIJFCFaFSM7EkYjAWwXLRQ5I0ggjhU0AlYxc18JNzolBEsoPxJlQ2ZJR0wmDShKMYcOInRTdls1V1pJXDhfLTRnaA40dWZrQJChkaKCkqODk6SElKV1hZWmdoaWp3eHl6hoeIiYqQlpeYmZqgpaanqKmqsLW2t7i5usDExcbHyMnK0NTV1tfY2drg5OXm5+jp6vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAQIAAwQFBgcICQoL/8QAwxEAAgIBAwMDAgMFAgUCBASHAQACEQMQEiEEIDFBEwUwIjJRFEAGMyNhQhVxUjSBUCSRoUOxFgdiNVPw0SVgwUThcvEXgmM2cCZFVJInotIICQoYGRooKSo3ODk6RkdISUpVVldYWVpkZWZnaGlqc3R1dnd4eXqAg4SFhoeIiYqQk5SVlpeYmZqgo6SlpqeoqaqwsrO0tba3uLm6wMLDxMXGx8jJytDT1NXW19jZ2uDi4+Tl5ufo6ery8/T19vf4+fr/2wBDAAkJCQkJCRAJCRAWEBAQFh4WFhYWHiYeHh4eHiYuJiYmJiYmLi4uLi4uLi43Nzc3NzdBQUFBQUlJSUlJSUlJSUn/2wBDAQsMDBIREiARESBMMyozTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEz/2gAMAwEAAhEDEQAAAQ3PJrU3TOuXXVPeYDVH0la/35HHNdTyGexMltlv/9oACAEBAAEFAormVLTeRtV+qqbybJFwtTHAAB8stOj59EpzU4IEpclqlYKcS7drf5Ve0X//2gAIAQMRAT8B2tO0u7lxm9P/2gAIAQIRAT8B3O4O4NMxp//aAAgBAQAGPwKkhq6F9Io9exHfi+jtkp9BePYM/c//xAAzEAEAAwACAgICAgMBAQAAAgsBEQAhMUFRYXGBkaGxwfDREOHxIDBAUGBwgJCgsMDQ4P/aAAgBAQABPyHihN3msUOPF4IB1zN2EPyVmUpDzbiTLY9kiiEOPibCD/SpY1sZD9378xNmnye7KEfv/l/Je/xeT5vFv//aAAwDAQACEQMRAAAQw81hE0//xAAzEQEBAQADAAECBQUBAQABAQkBABEhMRBBUWEgcfCRgaGx0cHh8TBAUGBwgJCgsMDQ4P/aAAgBAxEBPxBm/BarNtt//9oACAECEQE/EMegHOLB8//aAAgBAQABPxBVITUInz3/ADeAAk8/piKzIDC0vbmfF7yXAR+SkRI8nEXeoiPSfNYIE6mGPFyDA6/20oJBlim1adof+rBq0QPq6zpsvB91QEKMEJ8c5djSwmg/FIgJHbj8Xl8m86FH+H7b/Iv/2Q==)">
-    <picture>
-      <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset="/img/bg-tall.avif">
-      <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset="/img/bg-tall.webp">
-      <source type="image/avif" srcset="/img/bg-wide.avif">
-      <img src="/img/bg-wide.webp" alt="" decoding="async" onload="this.closest('.bg').classList.add('loaded')">
-    </picture>
-  </div>
-  <!-- One fixed window: its blur sits on a static photo, so it is computed once rather than on every scroll. -->
-  <div class="window">
-    <aside class="window-sidebar">
-      <div class="brand">Attendance<span>80</span></div>
-      <nav id="tabs" class="p-sidebar" aria-label="Sections" hidden>
-        <button class="p-sidebar-row" data-tab="overview"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg></span>Overview</button>
-        <button class="p-sidebar-row" data-tab="sessions"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Sessions</button>
-        <button class="p-sidebar-row" data-tab="homework"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg></span>Homework</button>
-        <button class="p-sidebar-row" data-tab="breaks"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></span>Breaks</button>
-        <button class="p-sidebar-row" data-tab="assistant"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>Assistant</button>
-        <button class="p-sidebar-row" data-tab="courses"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 17l9 5 9-5"/></svg></span>Courses</button>
-        <button class="p-sidebar-row" data-tab="settings"><span class="p-sidebar-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg></span>Settings</button>
-      </nav>
-      <div id="account" class="account"></div>
+<body>
+  <!-- Icons, referenced with <svg><use href="#i-name"/></svg>. 24px grid, drawn with stroke: currentColor. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-sessions" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v3.5M15.5 3v3.5M8 13.5h2M11 13.5h2M14 13.5h2M8 16.5h2M11 16.5h2"/></symbol>
+    <symbol id="i-homework" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m8.6 12.2 2.3 2.3 4.6-4.8"/></symbol>
+    <symbol id="i-breaks" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/></symbol>
+    <symbol id="i-assistant" viewBox="0 0 24 24"><path d="M11 4.5l1.7 4.6 4.6 1.7-4.6 1.7L11 17.1l-1.7-4.6L4.7 10.8l4.6-1.7z"/><path d="M18 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+    <symbol id="i-courses" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.8"/><path d="M12 3.5l1.6 1.9 2.4-.5.8 2.3 2.3.8-.5 2.4L20.5 12l-1.9 1.6.5 2.4-2.3.8-.8 2.3-2.4-.5L12 20.5l-1.6-1.9-2.4.5-.8-2.3-2.3-.8.5-2.4L3.5 12l1.9-1.6-.5-2.4 2.3-.8.8-2.3 2.4.5z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24"><path d="M9.5 4.5 8 19.5M16 4.5l-1.5 15M5 9h14.5M4.5 15H19"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4.5M7.5 9 12 4.5 16.5 9M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14M10 12h10M16.5 8.5 20 12l-3.5 3.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.5 12.5 4 4 9-9"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4.5" y="5.5" width="15" height="14" rx="2"/><path d="M4.5 10h15M9 3.5v3.5M15 3.5v3.5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M5 19h3.5L19 8.5 15.5 5 5 15.5z"/><path d="m13.5 7 3.5 3.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.5 10.5v5.5M13.5 10.5v5.5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9M19 4.5V8h-3.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17.5 10h.01M7.5 14h9"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <div class="sb-top">
+        <button class="account-btn" id="account-btn" aria-haspopup="menu" aria-expanded="false">
+          <span class="avatar" id="avatar" aria-hidden="true"></span>
+          <span class="account-name" id="account-name"></span>
+          <svg class="ic sm" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </button>
+        <button class="icon-btn" data-action="toggle-sidebar" title="Close sidebar (M)" aria-label="Close sidebar"><svg class="ic" aria-hidden="true"><use href="#i-panel"/></svg></button>
+      </div>
+      <div class="menu" id="account-menu" role="menu" hidden>
+        <div class="menu-head" id="account-email"></div>
+        <button role="menuitem" data-goto="settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>Settings<kbd>G</kbd><span class="then">then</span><kbd>,</kbd></button>
+        <button role="menuitem" data-action="upload"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Import .ics</button>
+        <button role="menuitem" data-action="shortcuts"><svg class="ic" aria-hidden="true"><use href="#i-keyboard"/></svg>Keyboard shortcuts<kbd>?</kbd></button>
+        <hr>
+        <button role="menuitem" data-action="logout"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg>Sign out</button>
+      </div>
+
+      <div id="sb-main" hidden>
+        <button class="sb-add" data-action="add-homework"><span class="plus" aria-hidden="true"><svg class="ic"><use href="#i-plus"/></svg></span>Add homework</button>
+        <nav id="tabs" class="sb-nav" aria-label="Sections">
+          <button class="sb-row" data-action="palette"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span class="label">Search</span><kbd class="count">/</kbd></button>
+          <button class="sb-row" data-tab="overview"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg><span class="label">Overview</span></button>
+          <button class="sb-row" data-tab="sessions"><svg class="ic" aria-hidden="true"><use href="#i-sessions"/></svg><span class="label">Sessions</span><span class="count" data-count="sessions"></span></button>
+          <button class="sb-row" data-tab="homework"><svg class="ic" aria-hidden="true"><use href="#i-homework"/></svg><span class="label">Homework</span><span class="count" data-count="homework"></span></button>
+          <button class="sb-row" data-tab="breaks"><svg class="ic" aria-hidden="true"><use href="#i-breaks"/></svg><span class="label">Breaks</span></button>
+          <button class="sb-row" data-tab="assistant"><svg class="ic" aria-hidden="true"><use href="#i-assistant"/></svg><span class="label">Assistant</span></button>
+        </nav>
+        <div class="sb-section">
+          <div class="sb-section-head">
+            <button class="sb-heading" data-tab="courses" title="Manage courses (G then C)">My courses</button>
+          </div>
+          <nav id="sb-courses" class="sb-nav" aria-label="Courses"></nav>
+        </div>
+      </div>
+      <div class="sb-bottom">
+        <button class="sb-row" data-tab="settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span class="label">Settings</span></button>
+      </div>
     </aside>
-    <div class="window-content" id="scroller">
+    <div class="scrim" data-action="toggle-sidebar" aria-hidden="true"></div>
+
+    <div class="content" id="scroller">
+      <header class="topbar" id="topbar">
+        <button class="icon-btn open-sidebar" data-action="toggle-sidebar" title="Open sidebar (M)" aria-label="Open sidebar"><svg class="ic" aria-hidden="true"><use href="#i-panel"/></svg></button>
+        <button class="icon-btn open-drawer" data-action="toggle-sidebar" aria-label="Menu"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
+        <div class="topbar-title" id="topbar-title" aria-hidden="true"></div>
+        <button class="icon-btn" data-action="palette" title="Search (/)" aria-label="Search"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></button>
+      </header>
       <main id="app"><div class="loading">Loading…</div></main>
     </div>
   </div>
-  <nav id="tabbar" class="p-tab-bar" aria-label="Sections" hidden>
-    <button class="p-tab-bar__tab" data-tab="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span>Overview</span></button>
-    <button class="p-tab-bar__tab" data-tab="sessions"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span>Sessions</span></button>
-    <button class="p-tab-bar__tab" data-tab="homework"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Homework</span></button>
-    <button class="p-tab-bar__tab" data-tab="breaks"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><span>Breaks</span></button>
-    <button class="p-tab-bar__tab" data-tab="assistant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span>Assistant</span></button>
-    <button class="p-tab-bar__tab" data-tab="courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 17l9 5 9-5"/></svg><span>Courses</span></button>
-    <button class="p-tab-bar__tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>Settings</span></button>
-  </nav>
-  <a class="credit" href="https://unsplash.com/photos/L50EwWmAY2w" target="_blank" rel="noopener">Photo: Daniel J. Schwarz</a>
+
+  <div class="palette-wrap" id="palette" hidden>
+    <div class="palette" role="dialog" aria-modal="true" aria-label="Search and commands">
+      <div class="palette-input">
+        <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="palette-q" type="text" placeholder="Search or type a command…" autocomplete="off" spellcheck="false"
+          role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list">
+        <kbd class="palette-kbd">esc</kbd>
+      </div>
+      <div class="palette-list" id="palette-list" role="listbox" aria-label="Results"></div>
+      <footer class="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> to move</span><span><kbd>↵</kbd> to open</span><span><kbd>/</kbd> or <kbd>⌘K</kbd> anywhere</span></footer>
+    </div>
+  </div>
+
   <input type="file" id="file-input" accept=".ics,text/calendar" hidden>
   <div id="toast" class="toast" role="status" hidden></div>
   <script type="module" src="/app.js"></script>

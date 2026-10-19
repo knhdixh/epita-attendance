@@ -17,7 +17,7 @@ const localTime = (ms) => { const d = new Date(ms); return `${pad(d.getHours())}
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
 // Due-date label like "Today 09:00", "Tomorrow", "Mon 20 Oct 14:00".
-function dueLabel(hw) {
+export function dueLabel(hw) {
   const day = new Date(hw.due_date + 'T00:00:00').getTime(); // local midnight of the due date
   const diff = Math.round((day - startOfToday()) / DAY);
   const dayText = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff === -1 ? 'Yesterday'
@@ -47,24 +47,23 @@ function syncIcon(hw) {
 
 function hwItem(hw, now = Date.now()) {
   const course = courseById()[hw.course_id];
-  const overdue = !hw.done && hw.due_at < now;
   const remind = REMINDERS.find(([m]) => m === hw.remind_minutes)?.[1];
   return `
-    <div class="hw-item ${hw.done ? 'done' : ''} ${overdue ? 'overdue' : ''}" data-hw="${hw.id}">
-      <label class="p-checkbox p-checkbox-large hw-check"><input type="checkbox" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done"><span></span></label>
-      <div class="hw-main">
+    <div class="hw-item ${hw.done ? 'done' : ''}" data-hw="${hw.id}">
+      <label class="checkbox round hw-check" title="${hw.done ? 'Mark not done' : 'Mark done'}"><input type="checkbox" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done: ${esc(hw.title)}"><span></span></label>
+      <div class="hw-main" data-hw-edit>
         <div class="hw-title">${esc(hw.title)}</div>
-        <div class="hw-meta small">
-          <span class="${overdue ? 'bad' : ''}">${esc(dueLabel(hw))}</span>
-          ${course ? `<span class="chip">${esc(course.name)}</span>` : ''}
-          ${hw.remind_minutes != null && !hw.done ? `<span class="muted" title="Reminder">reminder ${esc(remind)}</span>` : ''}
+        ${hw.notes ? `<div class="hw-notes">${esc(hw.notes)}</div>` : ''}
+        <div class="hw-meta">
+          <span class="due ${hw.done ? '' : bucket(hw, now)}"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>${esc(dueLabel(hw))}</span>
+          ${hw.remind_minutes != null && !hw.done ? `<span title="Reminder">reminder ${esc(remind)}</span>` : ''}
           ${syncIcon(hw)}
+          ${course ? `<span class="hw-course"><svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg>${esc(course.name)}</span>` : ''}
         </div>
-        ${hw.notes ? `<div class="hw-notes muted small">${esc(hw.notes)}</div>` : ''}
       </div>
       <div class="hw-actions">
-        <button class="btn p-button p-button-borderless p-button-small" data-hw-edit title="Edit">edit</button>
-        <button class="btn p-button p-button-borderless p-button-small" data-hw-delete title="Delete">delete</button>
+        <button class="btn btn-borderless btn-small" data-hw-edit title="Edit" aria-label="Edit"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
+        <button class="btn btn-borderless btn-small" data-hw-delete title="Delete" aria-label="Delete"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
 }
@@ -85,72 +84,105 @@ function sessionOptions(courseId) {
 
 // ---------------------------------------------------------------- views
 
+// The quick-add box, used both to add homework (top of the list) and to edit an item in place.
+function quickAdd(draft, editing) {
+  const tracked = state.data.courses.filter((c) => c.tracked || c.id === draft.course_id);
+  return `
+    <form id="hw-form" class="qa" autocomplete="off">
+      <div class="qa-body">
+        <input class="qa-title" name="title" required maxlength="200" placeholder="e.g. TP 3 – SQL joins" value="${esc(draft.title)}" aria-label="What's due">
+        <textarea class="qa-notes" name="notes" rows="1" maxlength="4000" placeholder="Notes" aria-label="Notes">${esc(draft.notes)}</textarea>
+      </div>
+      <div class="qa-opts">
+        <input class="field" type="date" name="due_date" required value="${esc(draft.due_date)}" aria-label="Due date">
+        <input class="field" type="time" name="due_time" value="${esc(draft.due_time || '')}" aria-label="Due time" title="Leave empty for end of day">
+        <div class="select"><select name="course_id" aria-label="Course">
+          <option value="">No course</option>
+          ${tracked.map((c) => `<option value="${c.id}" ${c.id === draft.course_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select></div>
+        <div class="select"><select name="due_session" aria-label="Due at a session">${sessionOptions(draft.course_id)}</select></div>
+        <div class="select"><select name="remind_minutes" aria-label="Reminder">
+          ${REMINDERS.map(([m, l]) => `<option value="${m ?? ''}" ${m === draft.remind_minutes ? 'selected' : ''}>${l}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="qa-foot">
+        <span class="hint">No time means end of day.</span>
+        <button class="btn" type="button" data-hw-cancel>Cancel</button>
+        <button class="btn btn-primary" type="submit">${editing ? 'Save' : 'Add homework'}</button>
+      </div>
+    </form>`;
+}
+
 export function renderHomework() {
-  const { homework, courses } = state.data;
+  const { homework } = state.data;
   const editing = state.hwEditing ? homework.find((h) => h.id === state.hwEditing) : null;
-  const draft = editing || {
-    title: '', notes: '', course_id: state.hwCourse ?? null, due_date: localDate(Date.now() + DAY), due_time: '',
-    remind_minutes: DEFAULT_REMINDER,
-  };
   const now = Date.now();
   const groups = Object.fromEntries([...BUCKETS, ['done']].map(([k]) => [k, []]));
   for (const hw of homework) groups[bucket(hw, now)].push(hw);
   groups.done.sort((a, b) => b.due_at - a.due_at);
-  const tracked = courses.filter((c) => c.tracked || c.id === draft.course_id);
   const integ = state.data.integrations;
+  const item = (hw) => (hw.id === editing?.id ? quickAdd(editing, true) : hwItem(hw, now));
+  const draft = {
+    title: '', notes: '', course_id: state.hwCourse ?? null, due_date: localDate(Date.now() + DAY), due_time: '',
+    remind_minutes: DEFAULT_REMINDER,
+  };
 
   $app.innerHTML = `
-    <div class="hw-layout">
-      <section class="panel hw-form-panel">
-        <h3>${editing ? 'Edit homework' : 'Add homework'}</h3>
-        <form id="hw-form" class="form hw-form" autocomplete="off">
-          <label>What's due
-            <input class="p-field" name="title" required maxlength="200" placeholder="e.g. TP 3 – SQL joins" value="${esc(draft.title)}">
-          </label>
-          <label>Course
-            <div class="p-select"><select name="course_id">
-              <option value="">No course</option>
-              ${tracked.map((c) => `<option value="${c.id}" ${c.id === draft.course_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-            </select></div>
-          </label>
-          <label>Due at a session
-            <div class="p-select"><select name="due_session">${sessionOptions(draft.course_id)}</select></div>
-          </label>
-          <div class="form-row">
-            <label>Date <input class="p-field" type="date" name="due_date" required value="${esc(draft.due_date)}"></label>
-            <label>Time <input class="p-field" type="time" name="due_time" value="${esc(draft.due_time || '')}"></label>
-          </div>
-          <p class="muted small hint">Leave the time empty for "due by end of day".</p>
-          <label>Reminder
-            <div class="p-select"><select name="remind_minutes">
-              ${REMINDERS.map(([m, l]) => `<option value="${m ?? ''}" ${m === draft.remind_minutes ? 'selected' : ''}>${l}</option>`).join('')}
-            </select></div>
-          </label>
-          <label>Notes <textarea class="p-field" name="notes" rows="3" maxlength="4000" placeholder="Instructions, links…">${esc(draft.notes)}</textarea></label>
-          <div class="form-row">
-            <button class="btn p-button p-button-primary" type="submit">${editing ? 'Save' : 'Add homework'}</button>
-            ${editing ? '<button class="btn p-button p-button-default" type="button" data-hw-cancel>Cancel</button>' : ''}
-          </div>
-        </form>
-        <p class="muted small">${integ?.gcal
-          ? `Synced to Google Calendar (${esc(integ.gcal.email || '')}). Reminders arrive as Google Calendar notifications.`
-          : 'Tip: connect Google Calendar in <a href="#settings" data-goto="settings">Settings</a> to get reminders on your phone.'}</p>
-      </section>
-      <section class="hw-lists">
-        ${homework.length ? '' : '<p class="muted empty">No homework yet. Add your first one.</p>'}
-        ${BUCKETS.filter(([k]) => groups[k].length).map(([k, label]) => `
-          <div class="hw-group ${k}">
-            <h4>${label} <span class="muted">${groups[k].length}</span></h4>
-            <div class="list">${groups[k].map((hw) => hwItem(hw, now)).join('')}</div>
-          </div>`).join('')}
-        ${groups.done.length ? `
-          <details class="hw-group done">
-            <summary><h4>Done <span class="muted">${groups.done.length}</span></h4></summary>
-            <div class="list">${groups.done.map((hw) => hwItem(hw, now)).join('')}</div>
-          </details>` : ''}
-      </section>
-    </div>`;
+    <section class="hw-lists">
+      ${state.hwFormOpen && !editing ? quickAdd(draft, false)
+        : '<button class="add-row" data-hw-add><span class="plus" aria-hidden="true"><svg class="ic"><use href="#i-plus"/></svg></span>Add homework</button>'}
+      ${homework.length || state.hwFormOpen ? '' : '<p class="empty">Nothing due. Press <kbd>Q</kbd> to add homework.</p>'}
+      ${BUCKETS.filter(([k]) => groups[k].length).map(([k, label]) => `
+        <div class="hw-group ${k}">
+          <h4>${label} <span class="muted">${groups[k].length}</span></h4>
+          <div class="list">${groups[k].map(item).join('')}</div>
+        </div>`).join('')}
+      ${groups.done.length ? `
+        <details class="hw-group done" ${editing?.done ? 'open' : ''}>
+          <summary><h4>Done <span class="muted">${groups.done.length}</span></h4></summary>
+          <div class="list">${groups.done.map(item).join('')}</div>
+        </details>` : ''}
+    </section>
+    <p class="hint hw-tip">${integ?.gcal
+      ? `Synced to Google Calendar (${esc(integ.gcal.email || '')}). Reminders arrive as Google Calendar notifications.`
+      : 'Tip: connect Google Calendar in <a href="#settings" data-goto="settings">Settings</a> to get reminders on your phone.'}</p>`;
 }
+
+// Opens the quick-add box on the Homework page (sidebar button, Q, the palette).
+export function openForm() {
+  state.hwEditing = null;
+  state.hwFormOpen = true;
+  state.tab = 'homework';
+  history.replaceState(null, '', '#homework');
+  render();
+  focusForm();
+}
+
+function focusForm() {
+  const title = document.querySelector('#hw-form .qa-title');
+  if (!title) return;
+  title.focus();
+  title.setSelectionRange(title.value.length, title.value.length);
+  autosize(document.querySelector('#hw-form .qa-notes'));
+  title.closest('form').scrollIntoView({ block: 'nearest' });
+}
+
+export function editHomework(id) {
+  state.hwEditing = id;
+  state.hwFormOpen = false;
+  state.tab = 'homework';
+  history.replaceState(null, '', '#homework');
+  render();
+  focusForm();
+}
+
+function closeForm() {
+  state.hwEditing = null;
+  state.hwFormOpen = false;
+  render();
+}
+
+function autosize(ta) { if (ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 240) + 'px'; } }
 
 // Overview panel: overdue + due within a week.
 export function homeworkPanel() {
@@ -179,12 +211,12 @@ function feedRow(id, title, hint, url) {
         <h4>${title}</h4>
         <p class="muted small">${hint}</p>
         <div class="copy-row">
-          <input class="p-field" id="${id}" readonly value="${esc(url)}" aria-label="${title} feed URL">
-          <button class="btn p-button p-button-default" data-action="copy-feed" data-target="${id}">Copy</button>
+          <input class="field" id="${id}" readonly value="${esc(url)}" aria-label="${title} feed URL">
+          <button class="btn btn-default" data-action="copy-feed" data-target="${id}">Copy</button>
         </div>
         <div class="form-row">
-          <a class="btn p-button p-button-default p-button-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
-          <a class="btn p-button p-button-default p-button-small" href="${esc(webcal)}">Apple Calendar / Outlook</a>
+          <a class="btn btn-default btn-small" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Add to Google Calendar</a>
+          <a class="btn btn-default btn-small" href="${esc(webcal)}">Apple Calendar / Outlook</a>
         </div>
       </div>`;
 }
@@ -200,7 +232,7 @@ export function integrationsPanel() {
         updates. Apple Calendar and Outlook check them often; Google Calendar every few hours.</p>
       ${feedRow('timetable-url', 'Timetable', 'Every session of the groups you picked, as on Zeus.', feed.replace(/\.ics$/, '/timetable.ics'))}
       ${feedRow('feed-url', 'Homework <span class="chip">optional</span>', 'Your homework, on its due date.', feed)}
-      <button class="btn p-button p-button-borderless p-button-small" data-action="rotate-feed" title="Old links stop working">Reset links</button>
+      <button class="btn btn-borderless btn-small" data-action="rotate-feed" title="Old links stop working">Reset links</button>
     </section>
     <section class="panel narrow">
       <h3>Google Calendar sync <span class="chip">homework</span></h3>
@@ -210,14 +242,14 @@ export function integrationsPanel() {
           Use this instead of the homework link above in Google Calendar.</p>
         ${g.error ? `<p class="note bad">${esc(g.error)}</p>` : ''}
         <div class="form-row">
-          ${g.error ? '<a class="btn p-button p-button-primary" href="/auth/google/calendar">Reconnect</a>' : ''}
-          <button class="btn p-button p-button-default" data-action="gcal-resync">Sync now</button>
-          <button class="btn p-button p-button-borderless" data-action="gcal-disconnect">Disconnect</button>
+          ${g.error ? '<a class="btn btn-primary" href="/auth/google/calendar">Reconnect</a>' : ''}
+          <button class="btn btn-default" data-action="gcal-resync">Sync now</button>
+          <button class="btn btn-borderless" data-action="gcal-disconnect">Disconnect</button>
         </div>` : `
         <p>For Google users, an alternative to the homework link: homework is pushed into its own calendar in your Google
           account, changes appear immediately, and reminders arrive as Google Calendar notifications. The app can only see
           the calendar it creates.</p>
-        <a class="btn p-button p-button-default" href="/auth/google/calendar">Connect Google Calendar</a>`}
+        <a class="btn btn-default" href="/auth/google/calendar">Connect Google Calendar</a>`}
     </section>`;
 }
 
@@ -248,8 +280,9 @@ async function saveForm(form) {
     upsertLocal(hw);
     state.hwEditing = null;
     state.hwCourse = body.course_id; // keep the course selected for the next entry
-    if (!hw.sync_error) toast(editing ? 'Homework updated.' : 'Homework added.');
+    if (!hw.sync_error) toast(editing ? 'Homework updated.' : `Added “${hw.title}”.`);
     render();
+    if (!editing) focusForm(); // the quick-add box stays open for the next one
   } catch (err) {
     btn.disabled = false;
     toast(err.message, true);
@@ -304,16 +337,10 @@ export async function onClick(e) {
   const id = item && Number(item.dataset.hw);
   const action = t.closest('[data-action]')?.dataset.action;
 
-  if (t.closest('[data-hw-edit]')) {
-    state.hwEditing = id;
-    state.tab = 'homework';
-    history.replaceState(null, '', '#homework');
-    render();
-    document.querySelector('#hw-form input[name=title]')?.focus();
-    return true;
-  }
+  if (t.closest('[data-hw-edit]') && id) { editHomework(id); return true; }
+  if (t.closest('[data-hw-add]')) { openForm(); return true; }
   if (t.closest('[data-hw-delete]')) { remove(id); return true; }
-  if (t.closest('[data-hw-cancel]')) { state.hwEditing = null; render(); return true; }
+  if (t.closest('[data-hw-cancel]')) { closeForm(); return true; }
 
   if (action === 'gcal-resync') { gcalResync(); return true; }
   if (action === 'gcal-disconnect') {
@@ -355,6 +382,21 @@ export function onChange(e) {
     form.elements.due_time.value = localTime(ms);
   }
   return true;
+}
+
+export function onInput(e) {
+  if (!e.target.matches('#hw-form .qa-notes')) return false;
+  autosize(e.target);
+  return true;
+}
+
+// Esc cancels the quick-add box; Cmd/Ctrl+Enter saves it from the notes.
+export function onKeydown(e) {
+  const form = e.target.closest?.('#hw-form');
+  if (!form) return false;
+  if (e.key === 'Escape') { e.preventDefault(); closeForm(); return true; }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); form.requestSubmit(); return true; }
+  return false;
 }
 
 export function onSubmit(e) {

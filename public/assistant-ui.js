@@ -69,7 +69,7 @@ function markdown(src) {
 
 function actionChip(a, mi, ai) {
   const undo = a.undone ? '<span class="muted small">undone</span>'
-    : `<button class="btn p-button p-button-borderless p-button-small" data-undo="${mi}:${ai}">Undo</button>`;
+    : `<button class="btn btn-borderless btn-small" data-undo="${mi}:${ai}">Undo</button>`;
   if (a.type === 'homework_added') {
     const h = a.homework;
     const due = new Date(h.due_at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', ...(h.due_time ? { hour: '2-digit', minute: '2-digit' } : {}) });
@@ -104,14 +104,14 @@ export function renderAssistant() {
         <span class="muted small">${info.byok
           ? `Your ${esc(info.byok.label)} key · ${info.used} today`
           : `Shared · ${info.used} / ${info.limit} today · <a href="#settings" data-byok="setup">use your own free key</a>`}</span>
-        ${chat.messages.length ? '<button class="btn p-button p-button-borderless p-button-small" data-action="chat-clear">Clear chat</button>' : ''}
+        ${chat.messages.length ? '<button class="btn btn-borderless btn-small" data-action="chat-clear">Clear chat</button>' : ''}
       </header>
       ${introCard()}
       <div class="chat-log" id="chat-log">
         ${chat.messages.length ? '' : `
           <div class="chat-empty">
             <p>Ask about your attendance, sessions and homework. I can also mark attendance and add homework for you.</p>
-            <div class="chips">${SUGGESTIONS.map(([label, prompt], i) => `<button class="btn p-button p-button-default p-button-small" data-suggest="${i}">${esc(label)}</button>`).join('')}</div>
+            <div class="chips">${SUGGESTIONS.map(([label, prompt], i) => `<button class="btn btn-default btn-small" data-suggest="${i}">${esc(label)}</button>`).join('')}</div>
           </div>`}
         ${chat.messages.map((m, mi) => `
           <div class="msg ${m.role}${m.error ? ' error' : ''}">
@@ -121,10 +121,10 @@ export function renderAssistant() {
           </div>`).join('')}
         ${chat.pending ? '<div class="msg assistant"><div class="bubble typing"><span></span><span></span><span></span></div></div>' : ''}
       </div>
-      ${chat.messages.length ? `<div class="chips compact">${SUGGESTIONS.slice(0, 4).map(([label], i) => `<button class="btn p-button p-button-borderless p-button-small" data-suggest="${i}">${esc(label)}</button>`).join('')}</div>` : ''}
+      ${chat.messages.length ? `<div class="chips compact">${SUGGESTIONS.slice(0, 4).map(([label], i) => `<button class="btn btn-borderless btn-small" data-suggest="${i}">${esc(label)}</button>`).join('')}</div>` : ''}
       <form id="chat-form" class="chat-input">
-        <textarea class="p-field" name="message" rows="1" maxlength="4000" placeholder="e.g. I missed French today · Add TP4 due at the next Databases class" ${chat.pending ? 'disabled' : ''}>${esc(chat.draft)}</textarea>
-        <button class="btn p-button p-button-primary" type="submit" ${chat.pending ? 'disabled' : ''}>Send</button>
+        <textarea class="field" name="message" rows="1" maxlength="4000" placeholder="e.g. I missed French today · Add TP4 due at the next Databases class" ${chat.pending ? 'disabled' : ''}>${esc(chat.draft)}</textarea>
+        <button class="btn btn-primary" type="submit" ${chat.pending ? 'disabled' : ''}>Send</button>
       </form>
       <p class="muted small chat-note">${info.byok
         ? `Runs on your ${esc(info.byok.label)} account. Your messages and schedule are sent to ${esc(info.byok.label)}.`
@@ -247,5 +247,8 @@ export function onSubmit(e) {
   send(e.target.elements.message.value);
   return true;
 }
+
+// Used by the command palette ("Ask the assistant: …").
+export const ask = send;
 
 export const _internal = { markdown };

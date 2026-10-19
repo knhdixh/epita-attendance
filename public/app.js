@@ -4,12 +4,15 @@ import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
 import * as byok from './byok-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
+import * as palette from './palette.js';
 
 const $app = document.getElementById('app');
-const $tabs = document.getElementById('tabs');
-const $tabbar = document.getElementById('tabbar');
 const $scroller = document.getElementById('scroller');
-const $account = document.getElementById('account');
+const $sbMain = document.getElementById('sb-main');
+const $sbCourses = document.getElementById('sb-courses');
+const $accountBtn = document.getElementById('account-btn');
+const $accountMenu = document.getElementById('account-menu');
+const $topTitle = document.getElementById('topbar-title');
 const $file = document.getElementById('file-input');
 const $toast = document.getElementById('toast');
 
@@ -24,7 +27,6 @@ const state = {
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const pct = (x) => `${Math.round(x * 1000) / 10}%`;
 const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-const fmtDay = (ms) => new Date(ms).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const fmtShort = (ms) => new Date(ms).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
 const dayKey = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
 const unitLabel = (n, unit) => unit === 'hours' ? `${n} h` : `${n} session${n === 1 ? '' : 's'}`;
@@ -88,7 +90,8 @@ async function boot() {
   if (!user) return renderLogin();
   await reload();
   const fromHash = location.hash.slice(1);
-  if (['overview', 'sessions', 'homework', 'breaks', 'assistant', 'courses', 'settings'].includes(fromHash)) state.tab = fromHash;
+  if (fromHash in TITLES) state.tab = fromHash;
+  try { if (localStorage.getItem(SIDEBAR_KEY) === 'closed') document.body.classList.add('sidebar-closed'); } catch { /* storage unavailable */ }
   render();
   hw.handleRedirectParams(params);
 }
@@ -99,27 +102,24 @@ async function reload() {
 
 async function renderLogin() {
   document.body.classList.add('signed-out');
-  $tabs.hidden = true;
-  $tabbar.hidden = true;
-  $account.innerHTML = '';
   const cfg = await api('/auth/config');
   const pk = cfg.passkeys && passkeysSupported();
   $app.innerHTML = `
-    <section class="signin-card p-glass-lg">
+    <section class="signin-card">
       <div class="app-icon" aria-hidden="true">80</div>
       <h1 aria-label="Attendance80"><span class="word" aria-hidden="true">${maskedWord('Attendance80')}</span></h1>
       <p class="lede">Know how many classes you can still miss, in every course.</p>
       <div class="signin">
-        ${pk ? '<button class="btn p-button p-button-primary p-button-large" data-action="pk-login">Sign in with a passkey</button>' : ''}
-        ${cfg.google ? '<a class="btn p-button p-button-default p-button-large" href="/auth/google">Continue with Google</a>' : ''}
+        ${pk ? '<button class="btn btn-primary btn-large" data-action="pk-login">Sign in with a passkey</button>' : ''}
+        ${cfg.google ? '<a class="btn btn-large" href="/auth/google">Continue with Google</a>' : ''}
         ${pk && cfg.signup ? `
           <form id="pk-signup" class="signup-row">
-            <input class="p-field" name="name" required maxlength="60" placeholder="Your name" autocomplete="name" aria-label="Your name">
-            <button class="btn p-button p-button-default" type="submit">Create account</button>
+            <input class="field" name="name" required maxlength="60" placeholder="Your name" autocomplete="name" aria-label="Your name">
+            <button class="btn btn-default" type="submit">Create account</button>
           </form>
           <p class="hint">Face ID, fingerprint or PIN. No password.</p>` : ''}
         ${!pk && cfg.passkeys ? '<p class="hint">This browser has no passkeys. Use Google.</p>' : ''}
-        ${cfg.dev ? '<a class="btn p-button p-button-borderless" href="/auth/dev">Dev login</a>' : ''}
+        ${cfg.dev ? '<a class="btn btn-borderless" href="/auth/dev">Dev login</a>' : ''}
       </div>
       <p class="links"><a href="/ics-guide">Get your .ics</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
     </section>`;
@@ -143,14 +143,6 @@ const googleIcon = () => '';
 // ---------------------------------------------------------------- render
 
 function render() {
-  const { user } = state.data;
-  $account.innerHTML = `
-    <div class="account-name">${esc(user.name || user.email || '')}</div>
-    ${user.email && user.name ? `<div class="account-email">${esc(user.email)}</div>` : ''}
-    <div class="account-actions">
-      <button class="btn p-button p-button-default p-button-small" data-action="upload" title="Upload or re-import an .ics file">Import .ics</button>
-      <button class="btn p-button p-button-borderless p-button-small" data-action="logout">Sign out</button>
-    </div>`;
   document.body.classList.remove('signed-out');
   document.getElementById('fluid')?.remove();
 
@@ -159,18 +151,14 @@ function render() {
   const changed = view !== lastView;
   lastView = view;
 
-  const empty = view === 'empty';
-  $tabs.hidden = $tabbar.hidden = empty;
-  for (const b of document.querySelectorAll('[data-tab]')) {
-    const on = b.dataset.tab === state.tab;
-    b.classList.toggle('p-selected', on && b.classList.contains('p-sidebar-row'));
-    b.toggleAttribute('aria-current', on);
-  }
-  if (empty) renderEmpty();
+  renderSidebar(view);
+  if (view === 'empty') renderEmpty();
   else {
     ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
-    $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab]));
+    $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
+  $topTitle.textContent = view === 'empty' ? 'Import' : TITLES[state.tab];
+  document.title = `${$topTitle.textContent} · Attendance80`;
   if (changed) {
     $scroller.scrollTop = 0;
     playEnter(first);
@@ -180,18 +168,70 @@ function render() {
 
 let lastView = null;
 let first = true;
-const pad2 = (n) => String(n).padStart(2, '0');
 const TITLES = { overview: 'Overview', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
-const pageHead = (label) => `<header class="page-head"><h2 aria-label="${esc(label)}"><span class="word" aria-hidden="true">${maskedWord(label)}</span></h2></header>`;
+const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
-// ---------------------------------------------------------------- motion (knhdixh.com recipes, Apple timing)
-// Only transform and opacity animate. The title's characters rise from a mask while cycling glyphs, then the cards
-// and their first rows rise in a short stagger. First load plays the full timing; tab changes are compressed.
+// The small grey text on the right of the page title.
+function pageSub() {
+  if (state.tab === 'overview') return esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
+  if (state.tab === 'homework') {
+    const open = state.data.homework.filter((h) => !h.done).length;
+    return open ? `${open} open` : '';
+  }
+  if (state.tab === 'sessions' && state.shownIds) return `${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`;
+  return '';
+}
+
+const unmarkedEvents = () => trackedEvents().filter((e) => e.start_at <= Date.now() && !e.status);
+
+// Account, counts and the course list. Sessions filtered to one course highlight that course instead of Sessions.
+function renderSidebar(view) {
+  const { user, homework, courses, events } = state.data;
+  const name = user.name || user.email || 'Account';
+  $accountBtn.querySelector('.avatar').textContent = name.trim()[0] || '?';
+  $accountBtn.querySelector('.account-name').textContent = name;
+  document.getElementById('account-email').textContent = user.email || '';
+  $sbMain.hidden = view === 'empty';
+  if (view === 'empty') return;
+
+  const now = Date.now();
+  const unmarked = unmarkedEvents().length;
+  const open = homework.filter((h) => !h.done);
+  const overdue = open.some((h) => h.due_at < now);
+  setCount('sessions', unmarked, 'warn', `${unmarked} past session${unmarked === 1 ? '' : 's'} to mark`);
+  setCount('homework', open.length, overdue ? 'bad' : '', overdue ? 'Some homework is overdue' : `${open.length} open`);
+
+  const { perCourse } = statsByCourse(courses, events, opts());
+  const tracked = perCourse.filter((p) => p.course.tracked && p.stats.sessions)
+    .sort((a, b) => a.course.name.localeCompare(b.course.name));
+  const courseFocus = state.tab === 'sessions' && state.filter.course !== 'all' ? state.filter.course : null;
+  $sbCourses.innerHTML = tracked.map(({ course, stats }) => `
+    <button class="sb-row ${stats.level}" data-course-open="${course.id}" title="${esc(course.name)}: ${esc(skipsLeft(stats))}" ${String(course.id) === courseFocus ? 'aria-current="page"' : ''}>
+      <svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg><span class="label">${esc(course.name)}</span>
+      <span class="count">${stats.remaining < -1e-9 ? '!' : fmtNum(stats.remainingDisplay)}</span>
+    </button>`).join('') || '<p class="empty">No tracked courses.</p>';
+
+  for (const b of document.querySelectorAll('.sidebar [data-tab]')) {
+    const on = b.dataset.tab === state.tab && !(courseFocus && b.dataset.tab === 'sessions');
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  }
+}
+
+function setCount(tab, n, tone, title) {
+  const el = document.querySelector(`[data-count="${tab}"]`);
+  el.textContent = n || '';
+  el.className = `count ${n ? tone : ''}`;
+  el.title = n ? title : '';
+}
+
+// ---------------------------------------------------------------- motion
+// Only transform and opacity animate. Blocks and their first rows rise in a short stagger when the view changes;
+// the sign-in title keeps the knhdixh.com character reveal.
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 const randGlyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
-const ROWS = '.row, .hw-item, .method, .family, .window-row, .msg, .byok-option, .stat, .cal-day, .weeks > .week, table.courses tbody tr';
+const ROWS = '.row, .hw-item, .card, .method, .family, .window-row, .msg, .byok-option, .stat, table.courses tbody tr';
 
 function maskedWord(word) {
   return [...word].map((c, i) => `<span class="mask"><span class="ch" style="--c:${i}" data-c="${esc(c)}">${esc(c)}</span></span>`).join('');
@@ -217,7 +257,7 @@ let enterTimer;
 function playEnter(full) {
   clearTimeout(enterTimer);
   $app.classList.remove('enter', 'full');
-  // Stagger only the first few cards and rows; anything further down is off screen and just appears.
+  // Stagger only the first few blocks and rows; anything further down is off screen and just appears.
   [...$app.children].forEach((el, i) => el.style.setProperty('--i', Math.min(i, 6)));
   $app.querySelectorAll('.rise').forEach((el) => el.classList.remove('rise'));
   [...$app.querySelectorAll(ROWS)].slice(0, 14).forEach((el, i) => { el.classList.add('rise'); el.style.setProperty('--r', i); });
@@ -225,10 +265,10 @@ function playEnter(full) {
   void $app.offsetWidth;
   $app.classList.add('enter');
   $app.classList.toggle('full', full);
-  const word = $app.querySelector('.page-head .word, .signin-card .word');
-  if (word) scrambleIn(word, full ? 160 : 0, full ? 55 : 28);
+  const word = $app.querySelector('.signin-card .word');
+  if (word) scrambleIn(word, 120, 40);
   // Drop the class once it has played, so re-renders after a click don't replay the entrance.
-  enterTimer = setTimeout(() => $app.classList.remove('enter', 'full'), full ? 1700 : 1000);
+  enterTimer = setTimeout(() => $app.classList.remove('enter', 'full'), full ? 1400 : 900);
 }
 
 function renderEmpty() {
@@ -236,7 +276,7 @@ function renderEmpty() {
     ${pageHead('Import')}
     <section class="dropzone" data-action="upload" id="dropzone">
       <p>Drop your <code>.ics</code> here, or choose it.</p>
-      <button class="btn p-button p-button-primary" type="button">Choose file</button>
+      <button class="btn btn-primary" type="button">Choose file</button>
     </section>
     <p class="guide-link"><a href="/ics-guide">Export it from Zeus</a></p>
     <section class="panel narrow">
@@ -253,7 +293,7 @@ function groupBanner() {
   if (!families.length || families.some(([, list]) => list.some((c) => c.tracked))) return '';
   return `<div class="banner">
     <span>Pick your groups for ${families.map(([f]) => esc(f)).join(', ')}.</span>
-    <button class="btn p-button p-button-default p-button-small" data-goto="courses">Choose groups</button>
+    <button class="btn btn-default btn-small" data-goto="courses">Choose groups</button>
   </div>`;
 }
 
@@ -268,7 +308,7 @@ function renderOverview() {
 
   const today = trackedEvents().filter((e) => dayKey(e.start_at) === dayKey(now));
   const next = trackedEvents().find((e) => e.start_at > now);
-  const unmarked = trackedEvents().filter((e) => e.start_at <= now && !e.status);
+  const unmarked = unmarkedEvents();
 
   const [whole, decimals] = pct(overall.projectedRate).replace('%', '').split('.');
   $app.innerHTML = `
@@ -279,8 +319,10 @@ function renderOverview() {
         <div class="stat"><span class="n">${fmtNum(overall.absent)}<small>/${fmtNum(overall.total)}</small></span><span class="l">absences</span></div>
         <div class="stat"><span class="n">${unmarked.length}</span><span class="l">to mark</span></div>
       </div>
-      <p class="ov-line ${overall.level}">${overviewLine(overall, tracked[0], user.threshold)}</p>
-      ${unmarked.length ? '<button class="btn p-button p-button-primary p-button-small" data-action="mark-all-present">Mark all attended</button>' : ''}
+      <div class="ov-foot">
+        <p class="ov-line ${overall.level}">${overviewLine(overall, tracked[0], user.threshold)}</p>
+        ${unmarked.length ? `<button class="btn btn-small" data-action="mark-all-present">Mark ${unmarked.length} as attended</button>` : ''}
+      </div>
     </section>
 
     ${today.length || next ? `
@@ -354,9 +396,9 @@ function sessionRow(e, { showDate = false } = {}) {
       <div class="what">
         <div class="title">${esc(e.summary)}</div>
         <div class="loc muted small">${esc(e.location)}${e.note ? ` · <em>${esc(e.note)}</em>` : ''}</div>
-        ${hw.homeworkForSession(e).map((h) => `<a class="hw-badge" href="#homework" data-goto="homework" title="Homework due at this session">Due: ${esc(h.title)}</a>`).join('')}
+        ${hw.homeworkForSession(e).map((h) => `<a class="hw-badge" href="#homework" data-hw-open="${h.id}" title="Homework due at this session"><svg class="ic sm" aria-hidden="true"><use href="#i-homework"/></svg>${esc(h.title)}</a>`).join('')}
       </div>
-      <div class="p-select"><select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
+      <div class="select"><select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
         <option value="" ${!e.tag ? 'selected' : ''}>${TAGS[course.tag].label}</option>
         ${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${e.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}
       </select></div>
@@ -408,23 +450,24 @@ function renderSessions() {
   $app.innerHTML = `
     ${groupBanner()}
     <div class="filters">
-      <div class="p-select"><select id="f-course">
+      <div class="select"><select id="f-course">
         <option value="all">All ${f.showHidden ? '' : 'tracked '}courses</option>
         ${shownCourses.map((c) => `<option value="${c.id}" ${String(c.id) === f.course ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
       </select></div>
-      <div class="p-segmented seg" id="f-when" role="group" aria-label="Show">
+      <div class="seg" id="f-when" role="group" aria-label="Show">
         ${[['upcoming', 'Upcoming'], ['unmarked', 'To mark'], ['past', 'Past'], ['skips', 'Absences'], ['mustattend', 'Exams'], ['all', 'All']]
-          .map(([k, l]) => `<label class="p-segment"><input type="radio" name="f-when" value="${k}" ${f.when === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+          .map(([k, l]) => `<label class="segment"><input type="radio" name="f-when" value="${k}" ${f.when === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}
       </div>
-      <input class="p-field" id="f-q" type="search" placeholder="Search" value="${esc(f.q)}">
-      <label class="p-checkbox check"><input type="checkbox" id="f-hidden" ${f.showHidden ? 'checked' : ''}><span></span> Show untracked</label>
+      <input class="field" id="f-q" type="search" placeholder="Search" value="${esc(f.q)}">
+      <label class="checkbox check"><input type="checkbox" id="f-hidden" ${f.showHidden ? 'checked' : ''}><span></span>Show untracked</label>
     </div>
     ${courseSummary}
-    ${f.when === 'unmarked' && list.length ? `<p><button class="btn p-button p-button-default p-button-small" data-action="mark-shown-present">Mark these ${list.length} as attended</button></p>` : ''}
+    ${f.when === 'unmarked' && list.length ? `<p><button class="btn btn-default btn-small" data-action="mark-shown-present">Mark these ${list.length} as attended</button></p>` : ''}
     <div class="days">
       ${days.map((d) => `
         <section class="day ${dayKey(now) === d.key ? 'today' : ''}">
-          <h4><span>${fmtDay(d.ms)}</span>${dayKey(now) === d.key ? '<span>today</span>' : ''}</h4>
+          <h4><span>${esc(new Date(d.ms).toLocaleDateString([], { day: 'numeric', month: 'short', year: new Date(d.ms).getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric' }))}</span>
+            <span class="dow">· ${esc(new Date(d.ms).toLocaleDateString([], { weekday: 'long' }))}</span>${dayKey(now) === d.key ? '<span class="tag-today">· Today</span>' : ''}</h4>
           <div class="list">${d.items.map((e) => sessionRow(e)).join('')}</div>
         </section>`).join('') || '<p class="muted empty">No sessions match.</p>'}
     </div>`;
@@ -448,7 +491,7 @@ function renderCourses() {
         ${families.map(([family, list]) => `
           <label class="family">
             <span>${esc(family)}</span>
-            <div class="p-select"><select data-family="${esc(family)}">
+            <div class="select"><select data-family="${esc(family)}">
               <option value="">Not in this course</option>
               ${list.map((c) => `<option value="${c.id}" ${c.tracked ? 'selected' : ''}>${esc(c.group)}</option>`).join('')}
               ${list.filter((c) => c.tracked).length > 1 ? '<option value="multi" selected>Several groups</option>' : ''}
@@ -465,9 +508,9 @@ function renderCourses() {
         <tbody>
           ${perCourse.map(({ course: c, stats: s }) => `
             <tr class="${c.tracked ? '' : 'off'}" data-course="${c.id}">
-              <td><label class="p-checkbox"><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"><span></span></label></td>
+              <td><label class="checkbox"><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"><span></span></label></td>
               <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a>${groupedIds.has(c.id) ? ' <span class="chip">group</span>' : ''}</td>
-              <td><div class="p-select"><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div></td>
+              <td><div class="select"><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div></td>
               <td class="num">${count(c.id)}</td>
               <td class="num">${hours(c.id)}</td>
               <td class="num ${c.tracked ? s.level : ''}">${c.tracked ? pct(s.projectedRate) : '—'}</td>
@@ -484,15 +527,15 @@ function renderSettings() {
       <h3>Attendance rules</h3>
       <form id="settings-form" class="form">
         <label>Minimum attendance
-          <span class="input-suffix"><input class="p-field" type="number" name="threshold" min="1" max="100" step="1" value="${Math.round(user.threshold * 100)}"> %</span>
+          <span class="input-suffix"><input class="field" type="number" name="threshold" min="1" max="100" step="1" value="${Math.round(user.threshold * 100)}"> %</span>
         </label>
         <label>Count attendance by
-          <div class="p-select"><select name="unit">
+          <div class="select"><select name="unit">
             <option value="sessions" ${user.unit === 'sessions' ? 'selected' : ''}>Number of sessions</option>
             <option value="hours" ${user.unit === 'hours' ? 'selected' : ''}>Hours (longer sessions weigh more)</option>
           </select></div>
         </label>
-        <button class="btn p-button p-button-primary" type="submit">Save</button>
+        <button class="btn btn-primary" type="submit">Save</button>
       </form>
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
@@ -504,12 +547,12 @@ function renderSettings() {
     <section class="panel narrow danger-zone">
       <h3>Delete data</h3>
       <p>Remove all imported sessions, courses and attendance marks from your account. Homework is kept.</p>
-      <button class="btn p-button p-button-destructive" data-action="wipe">Delete all my data</button>
+      <button class="btn btn-destructive" data-action="wipe">Delete all my data</button>
       <h3 class="danger-title">Delete my account</h3>
       <p>Permanently delete your account and everything in it: calendar, attendance, homework, breaks, passkeys,
         AI key and Google Calendar connection (access is revoked; the "Homework (Attendance80)" calendar stays in your
         Google account for you to delete).</p>
-      <button class="btn p-button p-button-destructive" data-action="delete-account">Delete my account</button>
+      <button class="btn btn-destructive" data-action="delete-account">Delete my account</button>
     </section>
     <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
 }
@@ -518,9 +561,9 @@ function zeusLinkForm() {
   return `<p class="muted small">Paste your Zeus link (<b>Generate an ICS → Generate my link</b>) and the timetable is
       re-imported every 3 days. <a href="/ics-guide#link">How to get it</a>.</p>
     <form id="zeus-form" class="zeus-form">
-      <input class="p-field" name="url" type="url" required placeholder="https://zeus.ionis-it.com/api/group/…" aria-label="Zeus link" autocomplete="off">
-      <label class="muted small">Include classes from <input class="p-field" name="from" type="date" aria-label="First day of the semester"></label>
-      <button class="btn p-button p-button-primary" type="submit">Connect</button>
+      <input class="field" name="url" type="url" required placeholder="https://zeus.ionis-it.com/api/group/…" aria-label="Zeus link" autocomplete="off">
+      <label class="muted small">Include classes from <input class="field" name="from" type="date" aria-label="First day of the semester"></label>
+      <button class="btn btn-primary" type="submit">Connect</button>
     </form>`;
 }
 
@@ -538,13 +581,13 @@ function calendarPanel() {
           Last updated <b>${src.okAt ? ago(src.okAt) : 'never'}</b>.</p>
         ${src.error ? `<p class="note bad">${esc(src.error)}</p>` : ''}
         <div class="form-row">
-          <button class="btn p-button p-button-default" data-action="zeus-sync">Update now</button>
-          <button class="btn p-button p-button-borderless" data-action="zeus-disconnect">Turn off</button>
+          <button class="btn btn-default" data-action="zeus-sync">Update now</button>
+          <button class="btn btn-borderless" data-action="zeus-disconnect">Turn off</button>
         </div>
         ${syncLog()}` : `
         <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
           <a href="/ics-guide">How to export it from Zeus</a>.</p>
-        <button class="btn p-button p-button-default" data-action="upload">Import .ics</button>
+        <button class="btn btn-default" data-action="upload">Import .ics</button>
         <h3 class="sub-title">Update automatically</h3>
         ${zeusLinkForm()}`}
     </section>`;
@@ -591,10 +634,10 @@ function signInMethodsPanel() {
             <span>${keyIcon()}</span>
             <div><b>${esc(p.name || 'Passkey')}</b>${p.backed_up ? ' <span class="chip">synced</span>' : ''}
               <div class="muted small">Added ${fmt(p.created_at)}${p.last_used_at ? ` · last used ${fmt(p.last_used_at)}` : ''}</div></div>
-            <button class="btn p-button p-button-borderless p-button-small" data-remove-passkey="${esc(p.id)}">Remove</button>
+            <button class="btn btn-borderless btn-small" data-remove-passkey="${esc(p.id)}">Remove</button>
           </div>`).join('')}
       </div>
-      ${passkeysSupported() ? `<button class="btn p-button p-button-default" data-action="pk-add">${keyIcon()} Add a passkey${account.passkeys.length ? ' on another device' : ''}</button>` : ''}
+      ${passkeysSupported() ? `<button class="btn btn-default" data-action="pk-add">${keyIcon()} Add a passkey${account.passkeys.length ? ' on another device' : ''}</button>` : ''}
       <p class="muted small">${account.google
         ? 'Add a passkey to sign in with Face ID, fingerprint or PIN instead of Google.'
         : 'Add a passkey on a second device (or use a synced one) so you can always get back in.'}</p>
@@ -682,22 +725,167 @@ async function importFile(file) {
   }
 }
 
+// ---------------------------------------------------------------- navigation
+
+// [tab, label, icon, key after G]
+const NAV = [
+  ['overview', 'Overview', 'i-home', 'O'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
+  ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
+  ['settings', 'Settings', 'i-settings', ','],
+];
+const SIDEBAR_KEY = 'a80-sidebar';
+const isPhone = () => matchMedia('(max-width: 760px)').matches;
+
+function go(tab) {
+  closeDrawer();
+  if (tab === 'sessions' && state.tab !== 'sessions') state.filter.course = 'all';
+  state.tab = tab;
+  history.replaceState(null, '', '#' + tab);
+  render();
+}
+
+function openCourse(id) {
+  closeDrawer();
+  Object.assign(state.filter, { course: String(id), when: 'all', q: '' });
+  state.tab = 'sessions';
+  history.replaceState(null, '', '#sessions');
+  render();
+  document.querySelector('.day.today, .row.future')?.scrollIntoView({ block: 'center' });
+}
+
+// Jumps to one session in its course's list and flashes it.
+function showSession(id) {
+  const ev = findEvent(id);
+  openCourse(ev.course_id);
+  const el = $app.querySelector(`[data-event="${id}"]`);
+  el?.scrollIntoView({ block: 'center' });
+  el?.classList.add('flash');
+}
+
+function toggleSidebar() {
+  if (isPhone()) return document.body.classList.toggle('drawer-open');
+  const closed = document.body.classList.toggle('sidebar-closed');
+  try { localStorage.setItem(SIDEBAR_KEY, closed ? 'closed' : 'open'); } catch { /* storage unavailable */ }
+}
+const closeDrawer = () => document.body.classList.remove('drawer-open');
+
+function toggleMenu(show = $accountMenu.hidden) {
+  $accountMenu.hidden = !show;
+  $accountBtn.setAttribute('aria-expanded', String(show));
+  if (show) $accountMenu.querySelector('button').focus();
+}
+
+// ---------------------------------------------------------------- command palette
+
+palette.setSource({ items: paletteItems, fallback: paletteFallback, help: shortcutsHelp });
+
+function paletteItems() {
+  if (!state.data) return [];
+  const { courses, events, homework, user } = state.data;
+  const hasData = events.length > 0;
+  const now = Date.now();
+  const items = NAV.filter(([tab]) => hasData || tab === 'settings').map(([tab, label, icon, key]) => ({
+    id: `nav:${tab}`, section: 'Navigation', label: `Go to ${label}`, icon, keys: ['G', 'then', key], home: true, run: () => go(tab),
+  }));
+
+  const act = (id, label, icon, run, extra = {}) => items.push({ id: `act:${id}`, section: 'Actions', label, icon, run, home: true, ...extra });
+  act('add-homework', 'Add homework', 'i-plus', hw.openForm, { tone: 'accent', keys: ['Q'] });
+  if (state.data.assistant && hasData) act('ask', 'Ask the assistant', 'i-assistant', () => go('assistant'), { keywords: 'ai chat question' });
+  const unmarked = unmarkedEvents();
+  if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
+  if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
+  act('import', 'Import .ics file', 'i-upload', () => $file.click(), { keywords: 'upload calendar timetable zeus' });
+  if (state.data.calendarSource) act('zeus-sync', 'Update timetable from Zeus', 'i-refresh', zeusSync, { home: false, keywords: 'sync refresh' });
+  if (state.data.integrations?.feedUrl) act('copy-feed', 'Copy timetable calendar link', 'i-link', copyTimetableFeed, { home: false, keywords: 'feed ics subscribe google apple outlook' });
+  act('sidebar', 'Toggle sidebar', 'i-panel', toggleSidebar, { keys: ['M'], home: false });
+  act('shortcuts', 'Keyboard shortcuts', 'i-keyboard', () => palette.open('?'), { keys: ['?'], home: false, keywords: 'keys help' });
+  act('logout', 'Sign out', 'i-logout', () => document.querySelector('#account-menu [data-action="logout"]').click(), { home: false, keywords: 'log out' });
+
+  if (hasData) {
+    const { perCourse } = statsByCourse(courses, events, opts());
+    for (const { course, stats } of perCourse) {
+      items.push({
+        id: `course:${course.id}`, section: 'Courses', label: course.name, icon: 'i-hash', tone: course.tracked ? stats.level : '',
+        sub: course.tracked ? skipsLeft(stats) : 'not tracked', keywords: 'course', run: () => openCourse(course.id),
+      });
+    }
+    const byId = courseById();
+    for (const h of homework) {
+      items.push({
+        id: `hw:${h.id}`, section: 'Homework', label: h.title, icon: 'i-homework', tone: !h.done && h.due_at < now ? 'fail' : '',
+        sub: `${h.done ? 'done · ' : ''}${hw.dueLabel(h)}${byId[h.course_id] ? ` · ${byId[h.course_id].name}` : ''}`, run: () => hw.editHomework(h.id),
+      });
+    }
+    // The next session of each tracked course (or its latest one, when it has no more); the course opens the rest.
+    const next = new Map();
+    for (const ev of trackedEvents()) if (!next.has(ev.summary) || next.get(ev.summary).end_at <= now) next.set(ev.summary, ev);
+    for (const ev of next.values()) {
+      items.push({
+        id: `ev:${ev.id}`, section: 'Sessions', label: ev.summary, icon: 'i-sessions',
+        sub: `${fmtShort(ev.start_at)} ${fmtTime(ev.start_at)}${ev.location ? ` · ${ev.location}` : ''}`, run: () => showSession(ev.id),
+      });
+    }
+  }
+  return items;
+}
+
+// Always offered below the matches: send the text to the assistant, or search the session list for it.
+function paletteFallback(q) {
+  if (!state.data?.events.length) return [];
+  const out = [];
+  if (state.data.assistant) {
+    out.push({ id: 'ask:q', recentId: 'act:ask', section: 'Assistant', label: `Ask: “${q}”`, icon: 'i-assistant', tone: 'accent',
+      run: () => { go('assistant'); ai.ask(q); } });
+  }
+  out.push({ id: 'find:q', recentId: '', section: 'Assistant', label: `Search all sessions for “${q}”`, icon: 'i-search',
+    run: () => { Object.assign(state.filter, { course: 'all', when: 'all', q }); go('sessions'); } });
+  return out;
+}
+
+function shortcutsHelp() {
+  const rows = [
+    [['/'], 'Search and commands'], [['⌘', 'K'], 'Search and commands, even while typing'], [['Q'], 'Add homework'],
+    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'],
+    ...NAV.map(([, label, , key]) => [['G', 'then', key], `Go to ${label}`]),
+    [['Esc'], 'Close, or cancel the homework form'], [['⌘', '↵'], 'Save homework from the notes'],
+  ];
+  return `<div class="pal-section">Keyboard shortcuts</div>
+    <div class="keys" style="padding:0 10px 6px">${rows.map(([keys, what]) => `<span>${esc(what)}</span>
+      <span class="k">${keys.map((k) => (k === 'then' ? 'then' : `<kbd>${esc(k)}</kbd>`)).join('')}</span>`).join('')}</div>`;
+}
+
+async function zeusSync() {
+  try {
+    const r = await api('/api/calendar-source/sync', { method: 'POST' });
+    toast(`Updated: ${importSummary(r)}.`);
+    await reload(); render();
+  } catch (err) { toast(err.message, true); }
+}
+
+async function copyTimetableFeed() {
+  const url = state.data.integrations.feedUrl.replace(/\.ics$/, '/timetable.ics');
+  try { await navigator.clipboard.writeText(url); toast('Timetable link copied.'); }
+  catch { go('settings'); toast('Copy the link from Settings.', true); }
+}
+
 // ---------------------------------------------------------------- events
 
-for (const nav of [$tabs, $tabbar]) nav.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-tab]');
-  if (!b) return;
-  state.tab = b.dataset.tab;
-  history.replaceState(null, '', '#' + state.tab);
-  render();
-});
-
 document.addEventListener('click', async (e) => {
-  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e)) return;
   const t = e.target;
+  if (!t.closest('#account-menu, #account-btn')) toggleMenu(false);
+  if (t.closest('#account-btn')) return toggleMenu();
+  if (t.closest('#account-menu button')) toggleMenu(false);
+  const tab = t.closest('[data-tab]');
+  if (tab) return go(tab.dataset.tab);
+
+  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
+  if (action === 'palette') { closeDrawer(); return palette.open(); }
+  if (action === 'shortcuts') return palette.open('?');
+  if (action === 'toggle-sidebar') return toggleSidebar();
+  if (action === 'add-homework') { closeDrawer(); return hw.openForm(); }
   if (action === 'upload') return $file.click();
   if (action === 'pk-login') {
     if (await passkeyAction(signInWithPasskey)) location.href = '/';
@@ -718,9 +906,7 @@ document.addEventListener('click', async (e) => {
     location.href = '/';
     return;
   }
-  if (action === 'mark-all-present') {
-    return bulkStatus(trackedEvents().filter((x) => x.start_at <= Date.now() && !x.status).map((x) => x.id), 'present');
-  }
+  if (action === 'mark-all-present') return bulkStatus(unmarkedEvents().map((x) => x.id), 'present');
   if (action === 'mark-shown-present') return bulkStatus(state.shownIds, 'present');
   if (action === 'delete-account') {
     const typed = prompt('This permanently deletes your account and all its data. It cannot be undone.\n\nType DELETE to confirm.');
@@ -765,28 +951,55 @@ document.addEventListener('click', async (e) => {
   }
 
   const goto = t.closest('[data-goto]');
-  if (goto) { state.tab = goto.dataset.goto; history.replaceState(null, '', '#' + state.tab); return render(); }
+  if (goto) { e.preventDefault(); return go(goto.dataset.goto); }
+
+  const hwOpen = t.closest('[data-hw-open]');
+  if (hwOpen) { e.preventDefault(); return hw.editHomework(Number(hwOpen.dataset.hwOpen)); }
 
   const open = t.closest('[data-course-open]');
-  if (open) {
-    e.preventDefault();
-    state.tab = 'sessions';
-    state.filter.course = open.dataset.courseOpen;
-    state.filter.when = 'all';
-    history.replaceState(null, '', '#sessions');
-    render();
-    document.querySelector('.day.today, .row.future')?.scrollIntoView({ block: 'center' });
-    return;
-  }
+  if (open) { e.preventDefault(); return openCourse(open.dataset.courseOpen); }
 
   const when = t.closest('[data-when]');
   if (when) { state.filter.when = when.dataset.when; return render(); }
 });
 
+// Keyboard: "/" and Cmd/Ctrl+K open the palette, Q adds homework, M toggles the sidebar, "?" lists the shortcuts,
+// and G then a letter goes to a page (G then H = Homework). Single keys are ignored while typing.
+const isTyping = (el) => el?.closest?.('input, textarea, select, [contenteditable="true"]');
+let gAt = 0;
+
 document.addEventListener('keydown', (e) => {
-  if (ai.onKeydown(e)) return;
-  if (e.key === 'Enter' && e.target.matches('[data-course-open]')) e.target.click();
+  const signedIn = state.data && !document.body.classList.contains('signed-out');
+  if (signedIn && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    return palette.isOpen() ? palette.close() : palette.open();
+  }
+  if (palette.isOpen()) return;
+  if (hw.onKeydown(e) || ai.onKeydown(e)) return;
+  if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
+  if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
+  if (!signedIn || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
+
+  const k = e.key.toLowerCase();
+  if (Date.now() - gAt < 1500) {
+    gAt = 0;
+    const page = NAV.find((n) => n[3].toLowerCase() === k);
+    if (page) { e.preventDefault(); go(page[0]); }
+    return;
+  }
+  if (k === '/') { e.preventDefault(); palette.open(); }
+  else if (e.key === '?') { e.preventDefault(); palette.open('?'); }
+  else if (k === 'g') gAt = Date.now();
+  else if (k === 'q') { e.preventDefault(); hw.openForm(); }
+  else if (k === 'm') toggleSidebar();
 });
+
+window.addEventListener('hashchange', () => {
+  const tab = location.hash.slice(1);
+  if (state.data && tab in TITLES && tab !== state.tab) go(tab);
+});
+
+$scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
   if (byok.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
@@ -814,7 +1027,7 @@ document.addEventListener('change', (e) => {
 
 let searchTimer;
 document.addEventListener('input', (e) => {
-  if (ai.onInput(e) || brk.onInput(e)) return;
+  if (ai.onInput(e) || hw.onInput(e) || brk.onInput(e)) return;
   if (e.target.id !== 'f-q') return;
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
