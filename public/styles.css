@@ -492,6 +492,8 @@ details.hw-group[open] summary h4::before { transform: rotate(90deg); }
 .feed h4 { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
 .feed .muted { margin: 0 0 8px; }
 .feed + .btn { margin-top: 10px; }
+.feed-groups { display: inline-flex; flex-wrap: wrap; margin: 0 0 10px; }
+.feed-groups .scope-chip[aria-pressed="true"]:not([data-feed-group="all"]) { color: var(--accent); }
 .sub-title { margin-top: 24px !important; }
 /* calendars: one row per link or file, then the add box */
 .cal-src { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }

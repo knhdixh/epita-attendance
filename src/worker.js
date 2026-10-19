@@ -223,13 +223,20 @@ async function handleFeed(env, url) {
 }
 
 async function timetableFeed(env, url, user) {
+  // ?groups=12,15 keeps the sessions of those calendars (picked under the link in Settings); none means all.
+  const groups = [...new Set((url.searchParams.get('groups') || '').split(',').map(Number))].filter((n) => Number.isInteger(n) && n > 0);
   // The whole imported calendar (a semester is ~100 KB), not just upcoming sessions.
-  const [events, courses] = await env.DB.batch([
-    env.DB.prepare(`SELECT uid, course_id, summary, location, description, start_at, end_at
+  const [events, courses, cals] = await env.DB.batch([
+    env.DB.prepare(`SELECT uid, course_id, summary, location, description, start_at, end_at,
+        (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
       FROM events WHERE user_id = ? ORDER BY start_at`).bind(user.id),
     env.DB.prepare('SELECT id, tracked FROM courses WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('SELECT id, name FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id').bind(user.id),
   ]);
-  return new Response(buildTimetableFeed(events.results, courses.results, { host: url.hostname }), {
+  const names = cals.results.filter((c) => groups.includes(c.id)).map((c) => c.name);
+  const name = names.length && names.length < cals.results.length ? `Timetable (${names.join(' + ')})` : 'Timetable';
+  const list = events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals) }));
+  return new Response(buildTimetableFeed(list, courses.results, { host: url.hostname, groups, name }), {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': 'inline; filename="timetable.ics"',

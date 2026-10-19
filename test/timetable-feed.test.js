@@ -24,3 +24,14 @@ test('timetable feed: every session of tracked courses, exactly as imported', ()
   assert.equal(events[0].description, 'Prof: Smith');
   assert.equal(events[0].start, now - 90 * 24 * H, 'past sessions are included');
 });
+
+test('timetable feed: groups keeps sessions in any picked calendar, and those in none', () => {
+  const text = buildTimetableFeed([
+    ev({ uid: 'a', summary: 'SE1 only', cals: [10] }),
+    ev({ uid: 'b', summary: 'SE2 only', cals: [11] }),
+    ev({ uid: 'c', summary: 'Shared', cals: [10, 11, 12] }),
+    ev({ uid: 'd', summary: 'No calendar', cals: [] }),
+  ], courses, { now, groups: [10], name: 'Timetable (SE1)' });
+  assert.ok(text.includes('X-WR-CALNAME:Timetable (SE1)'));
+  assert.deepEqual(parseICS(text).events.map((e) => e.summary), ['SE1 only', 'Shared', 'No calendar']);
+});

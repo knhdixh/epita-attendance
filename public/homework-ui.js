@@ -204,12 +204,12 @@ export function homeworkForSession(e) {
 
 // One link per calendar, each subscribable in any calendar app. Both share one private token, so
 // "Reset links" resets both. Google Calendar sync is an extra option for homework (instant, with reminders).
-function feedRow(id, title, hint, url) {
+function feedRow(id, title, hint, url, extra = '') {
   const webcal = url.replace(/^https?:/, 'webcal:');
   return `
-      <div class="feed">
+      <div class="feed" id="${id}-row">
         <h4>${title}</h4>
-        <p class="muted small">${hint}</p>
+        <p class="muted small">${hint}</p>${extra}
         <div class="copy-row">
           <input class="field" id="${id}" readonly value="${esc(url)}" aria-label="${title} feed URL">
           <button class="btn btn-default" data-action="copy-feed" data-target="${id}">Copy</button>
@@ -221,6 +221,40 @@ function feedRow(id, title, hint, url) {
       </div>`;
 }
 
+// Which groups (calendars) the timetable link includes. It starts as the Count selection in the top bar; an
+// empty list means every group and gives the plain link, so links shared before groups existed keep working.
+let feedGroups = null;
+
+export function timetableFeedUrl(ids = feedGroups ?? state.scope) {
+  const base = state.data.integrations.feedUrl.replace(/\.ics$/, '/timetable.ics');
+  return ids.length ? `${base}?groups=${ids.join(',')}` : base;
+}
+
+function timetableRow() {
+  const cals = state.data.calendars;
+  const valid = new Set(cals.map((c) => c.id));
+  feedGroups = (feedGroups ?? state.scope).filter((id) => valid.has(id));
+  const on = new Set(feedGroups);
+  const chip = (id, label, pressed) => `<button class="scope-chip" data-feed-group="${id}" aria-pressed="${pressed}">${esc(label)}</button>`;
+  const picker = cals.length < 2 ? '' : `
+        <div class="scope feed-groups" role="group" aria-label="Groups in this calendar"><span class="scope-label">Groups</span>${chip('all', 'All', !on.size)}${cals.map((c) => chip(c.id, c.name, on.has(c.id))).join('')}</div>`;
+  const hint = cals.length < 2 ? 'Every session of the groups you picked, as on Zeus.'
+    : on.size ? `Only the sessions of ${esc(cals.filter((c) => on.has(c.id)).map((c) => c.name).join(' + '))}, as on Zeus. Each choice is its own link.`
+      : 'Every session of all your groups, as on Zeus. Pick groups to get a link with only theirs.';
+  return feedRow('timetable-url', 'Timetable', hint, timetableFeedUrl(feedGroups), picker);
+}
+
+// Same as the Count toggle: from All, a group alone; otherwise toggle it. None or every group means All.
+function toggleFeedGroup(value) {
+  const cals = state.data.calendars;
+  const on = new Set(value === 'all' ? [] : feedGroups);
+  if (value !== 'all') { const id = Number(value); if (on.has(id)) on.delete(id); else on.add(id); }
+  feedGroups = on.size >= cals.length ? [] : cals.map((c) => c.id).filter((id) => on.has(id));
+  const focused = document.activeElement?.dataset.feedGroup;
+  document.getElementById('timetable-url-row').outerHTML = timetableRow();
+  if (focused) document.querySelector(`[data-feed-group="${focused}"]`)?.focus();
+}
+
 export function integrationsPanel() {
   const integ = state.data.integrations;
   const feed = integ.feedUrl;
@@ -230,7 +264,7 @@ export function integrationsPanel() {
       <h3>Subscribe in your calendar app</h3>
       <p class="muted small">Private links that Google Calendar, Apple Calendar and Outlook keep up to date, including Zeus
         updates. Apple Calendar and Outlook check them often; Google Calendar every few hours.</p>
-      ${feedRow('timetable-url', 'Timetable', 'Every session of the groups you picked, as on Zeus.', feed.replace(/\.ics$/, '/timetable.ics'))}
+      ${timetableRow()}
       ${feedRow('feed-url', 'Homework <span class="chip">optional</span>', 'Your homework, on its due date.', feed)}
       <button class="btn btn-borderless btn-small" data-action="rotate-feed" title="Old links stop working">Reset links</button>
     </section>
@@ -342,6 +376,8 @@ export async function onClick(e) {
   if (t.closest('[data-hw-delete]')) { remove(id); return true; }
   if (t.closest('[data-hw-cancel]')) { closeForm(); return true; }
 
+  const group = t.closest('[data-feed-group]');
+  if (group) { toggleFeedGroup(group.dataset.feedGroup); return true; }
   if (action === 'gcal-resync') { gcalResync(); return true; }
   if (action === 'gcal-disconnect') {
     if (!confirm('Disconnect Google Calendar? Existing events stay in your Google calendar "Homework (Attendance80)", and you can delete that calendar in Google Calendar.')) return true;

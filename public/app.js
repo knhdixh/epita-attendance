@@ -856,7 +856,7 @@ function shortcutsHelp() {
 }
 
 async function copyTimetableFeed() {
-  const url = state.data.integrations.feedUrl.replace(/\.ics$/, '/timetable.ics');
+  const url = hw.timetableFeedUrl();
   try { await navigator.clipboard.writeText(url); toast('Timetable link copied.'); }
   catch { go('settings'); toast('Copy the link from Settings.', true); }
 }
