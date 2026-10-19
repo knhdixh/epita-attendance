@@ -11,7 +11,7 @@ Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudf
 | | |
 |---|---|
 | 🔑 **Sign in without Google** | Create an account with a **passkey** (Face ID, fingerprint, PIN, or a passkey synced via iCloud, Google Password Manager or 1Password). No password, and no Google approval needed. Google sign-in stays available, and Google users can add a passkey too. |
-| 📅 **Calendar import** | Upload the school `.ics`, or paste your Zeus link (*Generate my link*) and it's re-imported automatically every 3 days, with a log of every fetch in Settings. Re-imports match sessions by UID, so your marks are kept. Group-split courses (`GR1 – …`, `GR12 – …`) are hidden until you pick your group. |
+| 📅 **Calendars** | Add several calendars: Zeus links (*Generate my link*) or any other `.ics` link, re-imported automatically every 3 days, and uploaded `.ics` files you can replace with a newer version. Each can be renamed, updated or removed, with a log of every import in Settings. Re-importing one calendar never touches another, and a session in two calendars is counted once. Re-imports match sessions by UID, so your marks are kept. Group-split courses (`GR1 – …`, `GR12 – …`) are hidden until you pick your group. |
 | ✅ **Attendance** | Mark each session ✓ attended, ✗ absent (on a future session this means a *planned* skip) or **E** excused. Each course shows its projected %, absences used, and how many sessions you can still skip. |
 | 🏷 **Tags** | Normal / Mandatory / Exam / Optional, per course or per session. Skipping an exam or mandatory session is flagged; Optional sessions never count. |
 | 📚 **Homework** | Due dates, or "due at the next session of X", reminders and notes. Overdue items appear on the overview, and each session shows the homework due at it. |
@@ -49,8 +49,9 @@ A course turns amber when it has less than one skip left or a missed exam, and r
 
 ```
 src/
-  worker.js          routing, auth, REST API, ICS import, scheduled Zeus refresh
-  zeus.js            Zeus link validation and download
+  worker.js          routing, auth, REST API
+  calendars.js       calendars (links and files), ICS import, scheduled link refresh
+  calendar-link.js   calendar link validation (Zeus and other .ics links) and download
   ics.js             iCalendar parser (folding, escaping, TZID/UTC/all-day)
   assistant.js       AI assistant: context, tools, chat loop, daily limit
   gcal.js            Google Calendar sync (encrypted refresh tokens)

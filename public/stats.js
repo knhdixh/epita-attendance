@@ -11,7 +11,7 @@ export const STATUSES = ['present', 'absent', 'excused'];
 
 // "GR3 - French for Fall 26 T1" -> { group: "GR3", family: "French for Fall 26 T1" }
 export function splitGroup(name) {
-  const m = /^(GR?\s?\d+)\s*-\s*(.+)$/i.exec(name.trim());
+  const m = /^(GR?\s?\d+)\s*[-–—]\s*(.+)$/i.exec(name.trim());
   return m ? { group: m[1].toUpperCase().replace(/\s/g, ''), family: m[2].trim() } : null;
 }
 

@@ -3,6 +3,7 @@ import * as hw from './homework-ui.js';
 import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
 import * as byok from './byok-ui.js';
+import * as cal from './calendars-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -13,7 +14,6 @@ const $sbCourses = document.getElementById('sb-courses');
 const $accountBtn = document.getElementById('account-btn');
 const $accountMenu = document.getElementById('account-menu');
 const $topTitle = document.getElementById('topbar-title');
-const $file = document.getElementById('file-input');
 const $toast = document.getElementById('toast');
 
 const state = {
@@ -157,7 +157,7 @@ function render() {
     ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
-  $topTitle.textContent = view === 'empty' ? 'Import' : TITLES[state.tab];
+  $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
   document.title = `${$topTitle.textContent} · Attendance80`;
   $app.classList.toggle('wide', view === 'breaks');
   // The entrance plays once, on first load; switching pages just swaps the content.
@@ -275,16 +275,10 @@ function playEnter(full) {
 
 function renderEmpty() {
   $app.innerHTML = `
-    ${pageHead('Import')}
-    <section class="dropzone" data-action="upload" id="dropzone">
-      <p>Drop your <code>.ics</code> here, or choose it.</p>
-      <button class="btn btn-primary" type="button">Choose file</button>
-    </section>
-    <p class="guide-link"><a href="/ics-guide">Export it from Zeus</a></p>
-    <section class="panel narrow">
-      <h3>Or keep it updated automatically</h3>
-      ${zeusLinkForm()}
-    </section>
+    ${pageHead('Add your timetable')}
+    <p class="lead-in">Add your Zeus link to keep it up to date automatically, or upload an <code>.ics</code> file.
+      You can add more calendars later in Settings.</p>
+    ${cal.addBox({ cancel: false })}
     ${state.data.account.google || state.data.account.passkeys.length > 1 ? '' : `
     <p class="guide-link"><a href="#settings" data-goto="settings">Add a second passkey</a> so you can always sign in.</p>`}`;
 }
@@ -542,7 +536,7 @@ function renderSettings() {
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
     </section>
-    ${calendarPanel()}
+    ${cal.settingsPanel()}
     ${signInMethodsPanel()}
     ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
@@ -557,70 +551,6 @@ function renderSettings() {
       <button class="btn btn-destructive" data-action="delete-account">Delete my account</button>
     </section>
     <p class="muted small center legal-links"><a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a></p>`;
-}
-
-function zeusLinkForm() {
-  return `<p class="muted small">Paste your Zeus link (<b>Generate an ICS → Generate my link</b>) and the timetable is
-      re-imported every 3 days. <a href="/ics-guide#link">How to get it</a>.</p>
-    <form id="zeus-form" class="zeus-form">
-      <input class="field" name="url" type="url" required placeholder="https://zeus.ionis-it.com/api/group/…" aria-label="Zeus link" autocomplete="off">
-      <label class="muted small">Include classes from <input class="field" name="from" type="date" aria-label="First day of the semester"></label>
-      <button class="btn btn-primary" type="submit">Connect</button>
-    </form>`;
-}
-
-function calendarPanel() {
-  const src = state.data.calendarSource;
-  const ago = (ms) => {
-    const min = Math.round((Date.now() - ms) / 60000);
-    return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : fmtShort(ms);
-  };
-  return `
-    <section class="panel narrow">
-      <h3>Calendar</h3>
-      ${src ? `
-        <p>Updated automatically from Zeus every 3 days${src.from ? `, with classes from ${esc(fmtShort(Date.parse(src.from)))}` : ''}.
-          Last updated <b>${src.okAt ? ago(src.okAt) : 'never'}</b>.</p>
-        ${src.error ? `<p class="note bad">${esc(src.error)}</p>` : ''}
-        <div class="form-row">
-          <button class="btn btn-default" data-action="zeus-sync">Update now</button>
-          <button class="btn btn-borderless" data-action="zeus-disconnect">Turn off</button>
-        </div>
-        ${syncLog()}` : `
-        <p>Re-import your <code>.ics</code> whenever the school publishes changes. Sessions are matched by their ID, so your marks are kept.
-          <a href="/ics-guide">How to export it from Zeus</a>.</p>
-        <button class="btn btn-default" data-action="upload">Import .ics</button>
-        <h3 class="sub-title">Update automatically</h3>
-        ${zeusLinkForm()}`}
-    </section>`;
-}
-
-const SYNC_SOURCES = { cron: 'Automatic', manual: 'Update now', connect: 'Connected' };
-
-// The last 10 fetches from Zeus, newest first: when, what started it, and what came back.
-function syncLog() {
-  const rows = state.data.calendarSyncs || [];
-  if (!rows.length) return '';
-  const when = (ms) => new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  return `<details class="sync-log">
-      <summary>Recent updates</summary>
-      <ul>${rows.map((r) => `
-        <li class="${r.ok ? 'ok' : 'bad'}">
-          <span class="sync-when">${esc(when(r.at))}</span>
-          <span class="sync-what">${esc(SYNC_SOURCES[r.source] || r.source)} · ${r.ok
-            ? `${r.sessions} sessions${r.added ? `, ${r.added} new` : ''}${r.removed ? `, ${r.removed} removed` : ''}`
-            : esc(r.error || 'Failed')}</span>
-          <span class="sync-meta">${r.http_status ? `HTTP ${r.http_status} · ` : ''}${(r.duration_ms / 1000).toFixed(1)} s</span>
-        </li>`).join('')}
-      </ul>
-    </details>`;
-}
-
-function importSummary(r) {
-  const parts = [`${r.added} new`, `${r.updated} updated`];
-  if (r.removed) parts.push(`${r.removed} removed`);
-  if (r.recurringIgnored) parts.push(`${r.recurringIgnored} recurring events only imported once`);
-  return `${r.total} sessions (${parts.join(', ')})`;
 }
 
 function signInMethodsPanel() {
@@ -712,21 +642,6 @@ async function setTracked(updates) {
   }
 }
 
-async function importFile(file) {
-  if (!file) return;
-  try {
-    const ics = await file.text();
-    if (!ics.includes('BEGIN:VCALENDAR')) throw new Error('That does not look like an .ics calendar file.');
-    const r = await api('/api/import', { method: 'POST', body: { ics } });
-    await reload();
-    if (state.tab === 'settings') state.tab = 'overview';
-    render();
-    toast(`Imported ${importSummary(r)}.`);
-  } catch (err) {
-    toast(err.message, true);
-  }
-}
-
 // ---------------------------------------------------------------- navigation
 
 // [tab, label, icon, key after G]
@@ -796,8 +711,7 @@ function paletteItems() {
   const unmarked = unmarkedEvents();
   if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
   if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
-  act('import', 'Import .ics file', 'i-upload', () => $file.click(), { keywords: 'upload calendar timetable zeus' });
-  if (state.data.calendarSource) act('zeus-sync', 'Update timetable from Zeus', 'i-refresh', zeusSync, { home: false, keywords: 'sync refresh' });
+  items.push(...cal.paletteItems(go));
   if (state.data.integrations?.feedUrl) act('copy-feed', 'Copy timetable calendar link', 'i-link', copyTimetableFeed, { home: false, keywords: 'feed ics subscribe google apple outlook' });
   act('sidebar', 'Toggle sidebar', 'i-panel', toggleSidebar, { keys: ['M'], home: false });
   act('shortcuts', 'Keyboard shortcuts', 'i-keyboard', () => palette.open('?'), { keys: ['?'], home: false, keywords: 'keys help' });
@@ -856,14 +770,6 @@ function shortcutsHelp() {
       <span class="k">${keys.map((k) => (k === 'then' ? 'then' : `<kbd>${esc(k)}</kbd>`)).join('')}</span>`).join('')}</div>`;
 }
 
-async function zeusSync() {
-  try {
-    const r = await api('/api/calendar-source/sync', { method: 'POST' });
-    toast(`Updated: ${importSummary(r)}.`);
-    await reload(); render();
-  } catch (err) { toast(err.message, true); }
-}
-
 async function copyTimetableFeed() {
   const url = state.data.integrations.feedUrl.replace(/\.ics$/, '/timetable.ics');
   try { await navigator.clipboard.writeText(url); toast('Timetable link copied.'); }
@@ -880,7 +786,7 @@ document.addEventListener('click', async (e) => {
   const tab = t.closest('[data-tab]');
   if (tab) return go(tab.dataset.tab);
 
-  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e)) return;
+  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -888,7 +794,8 @@ document.addEventListener('click', async (e) => {
   if (action === 'shortcuts') return palette.open('?');
   if (action === 'toggle-sidebar') return toggleSidebar();
   if (action === 'add-homework') { closeDrawer(); return hw.openForm(); }
-  if (action === 'upload') return $file.click();
+  if (action === 'upload') return cal.pickFile();
+  if (action === 'add-calendar') { closeDrawer(); return cal.openAdd(); }
   if (action === 'pk-login') {
     if (await passkeyAction(signInWithPasskey)) location.href = '/';
     return;
@@ -921,19 +828,8 @@ document.addEventListener('click', async (e) => {
     } catch (err) { toast(err.message, true); }
     return;
   }
-  if (action === 'zeus-sync' || action === 'zeus-disconnect') {
-    const off = action === 'zeus-disconnect';
-    if (off && !confirm('Stop updating the calendar from Zeus? Your sessions and marks stay.')) return;
-    t.closest('button').disabled = true;
-    try {
-      const r = await api(off ? '/api/calendar-source' : '/api/calendar-source/sync', { method: off ? 'DELETE' : 'POST' });
-      toast(off ? 'Automatic updates turned off.' : `Updated: ${importSummary(r)}.`);
-    } catch (err) { toast(err.message, true); }
-    await reload(); render();
-    return;
-  }
   if (action === 'wipe') {
-    if (!confirm(`Delete all your sessions and attendance marks?${state.data.calendarSource ? ' Automatic updates from Zeus are turned off too.' : ''} This cannot be undone.`)) return;
+    if (!confirm(`Delete all your sessions, attendance marks and breaks?${state.data.calendars.length ? ` Your ${state.data.calendars.length === 1 ? 'calendar is' : `${state.data.calendars.length} calendars are`} removed too.` : ''} This cannot be undone.`)) return;
     await api('/api/data', { method: 'DELETE' });
     await reload(); state.tab = 'overview'; render();
     return toast('All data deleted.');
@@ -977,7 +873,7 @@ document.addEventListener('keydown', (e) => {
     return palette.isOpen() ? palette.close() : palette.open();
   }
   if (palette.isOpen()) return;
-  if (hw.onKeydown(e) || ai.onKeydown(e)) return;
+  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e)) return;
   if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
   if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
   if (!signedIn || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
@@ -1041,27 +937,11 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
     if (await passkeyAction(() => registerPasskey(name))) location.href = '/';
-    return;
-  }
-  if (e.target.id === 'zeus-form') {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const btn = e.target.querySelector('button[type=submit]');
-    btn.disabled = true; btn.textContent = 'Connecting…';
-    try {
-      const r = await api('/api/calendar-source', { method: 'PUT', body: { url: fd.get('url'), from: fd.get('from') || null } });
-      await reload();
-      render();
-      toast(`Connected to Zeus. Imported ${importSummary(r)}.`);
-    } catch (err) {
-      toast(err.message, true);
-      btn.disabled = false; btn.textContent = 'Connect';
-    }
     return;
   }
   if (e.target.id !== 'settings-form') return;
@@ -1076,15 +956,13 @@ document.addEventListener('submit', async (e) => {
   } catch (err) { toast(err.message, true); }
 });
 
-$file.addEventListener('change', () => { importFile($file.files[0]); $file.value = ''; });
-
 // Drag & drop anywhere on the page.
 document.addEventListener('dragover', (e) => { e.preventDefault(); document.body.classList.add('dragging'); });
 document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('dragging'); });
 document.addEventListener('drop', (e) => {
   e.preventDefault();
   document.body.classList.remove('dragging');
-  if (state.data) importFile(e.dataTransfer.files[0]);
+  if (state.data) cal.uploadFile(e.dataTransfer.files[0]);
 });
 
 boot().catch((err) => {

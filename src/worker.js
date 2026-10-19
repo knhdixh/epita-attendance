@@ -1,5 +1,4 @@
-import { parseICS } from './ics.js';
-import { splitGroup, TAGS, STATUSES } from '../public/stats.js';
+import { TAGS, STATUSES } from '../public/stats.js';
 import { buildFeed } from './homework.js';
 import { buildTimetableFeed } from './timetable-feed.js';
 import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal.js';
@@ -10,20 +9,16 @@ import { saveAiKey, deleteAiKey } from './llm.js';
 import { deleteAccount } from './account.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
-import { parseZeusLink, fetchZeus, validDate } from './zeus.js';
+import {
+  MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
+  syncDueCalendars, wipeCalendars,
+} from './calendars.js';
+
+export { syncDueCalendars };
 
 const SESSION_COOKIE = 'sid';
 const STATE_COOKIE = 'oauth_state';
 const SESSION_TTL_MS = 30 * 24 * 3600 * 1000;
-const MAX_ICS_BYTES = 5 * 1024 * 1024;
-// The cron runs every 15 minutes and refreshes ONE link per run: a cold import of a semester calendar costs
-// ~10 ms of CPU, the free plan's per-invocation limit. Links are refreshed every 3 days (a little less, so one
-// that ran a few minutes late isn't pushed back a whole cycle); a failed one is retried after 6 hours.
-// That's 96 links a day, so up to ~280 users stay on the 3-day cycle, and beyond that it stretches evenly.
-const SYNC_EVERY_MS = 71 * 3600 * 1000;
-const RETRY_FAILED_MS = 6 * 3600 * 1000;
-const SYNC_BATCH = 1;
-const NON_CLASS = /\b(vacances|holidays?|jour f[ée]ri[ée]|f[ée]ri[ée]|cong[ée]s?)\b/i;
 
 const json = (data, init = {}) => Response.json(data, init);
 
@@ -51,8 +46,6 @@ function redirect(location, cookies = []) {
   for (const c of cookies) headers.append('Set-Cookie', c);
   return new Response(null, { status: 302, headers });
 }
-
-export const courseKey = (summary) => summary.toLowerCase().replace(/\s+/g, ' ').trim();
 
 // ---------------------------------------------------------------- auth
 
@@ -190,152 +183,6 @@ async function handleAuth(request, env, url) {
   return new Response('Not found', { status: 404 });
 }
 
-// ---------------------------------------------------------------- import
-
-// Imports (or re-imports) an ICS file. Events are matched by UID so attendance marks
-// survive uploading an updated calendar. Events missing from the new file are removed
-// unless the user already marked, tagged or annotated them.
-async function importIcs(env, userId, text) {
-  const { events, recurring } = parseICS(text);
-  const seen = new Map();
-  let cancelled = 0;
-  for (const ev of events) {
-    if (ev.cancelled) { cancelled++; continue; }
-    if (!seen.has(ev.uid)) seen.set(ev.uid, ev);
-  }
-  if (!seen.size) throw new HttpError(400, 'No events found in this file.');
-
-  const courses = new Map();
-  const rows = [];
-  for (const ev of seen.values()) {
-    const key = courseKey(ev.summary);
-    if (!courses.has(key)) {
-      // Holidays and group-specific sessions (other groups) start untracked.
-      const tracked = NON_CLASS.test(ev.summary) || splitGroup(ev.summary) ? 0 : 1;
-      courses.set(key, { key, name: ev.summary, tracked });
-    }
-    rows.push({ key, uid: ev.uid, summary: ev.summary, location: ev.location,
-      description: ev.description, start: ev.start, end: ev.end });
-  }
-
-  const existing = await env.DB.prepare('SELECT uid FROM events WHERE user_id = ?').bind(userId).all();
-  const existingUids = new Set(existing.results.map((r) => r.uid));
-  const importStamp = Date.now();
-
-  // json_each keeps this to a handful of queries regardless of calendar size.
-  const results = await env.DB.batch([
-    env.DB.prepare(`INSERT INTO courses (user_id, key, name, tracked, tag)
-      SELECT ?1, json_extract(value, '$.key'), json_extract(value, '$.name'), json_extract(value, '$.tracked'), 'normal'
-      FROM json_each(?2) WHERE true
-      ON CONFLICT (user_id, key) DO NOTHING`).bind(userId, JSON.stringify([...courses.values()])),
-    env.DB.prepare(`INSERT INTO events (user_id, course_id, uid, summary, location, description, start_at, end_at, seen_at)
-      SELECT ?1, c.id, json_extract(e.value, '$.uid'), json_extract(e.value, '$.summary'),
-        json_extract(e.value, '$.location'), json_extract(e.value, '$.description'),
-        json_extract(e.value, '$.start'), json_extract(e.value, '$.end'), ?3
-      FROM json_each(?2) e JOIN courses c ON c.user_id = ?1 AND c.key = json_extract(e.value, '$.key')
-      WHERE true
-      ON CONFLICT (user_id, uid) DO UPDATE SET course_id = excluded.course_id, summary = excluded.summary,
-        location = excluded.location, description = excluded.description, start_at = excluded.start_at,
-        end_at = excluded.end_at, seen_at = excluded.seen_at`).bind(userId, JSON.stringify(rows), importStamp),
-    env.DB.prepare(`DELETE FROM events WHERE user_id = ? AND seen_at <> ?
-      AND status IS NULL AND tag IS NULL AND note = ''`).bind(userId, importStamp),
-    env.DB.prepare(`DELETE FROM courses WHERE user_id = ?
-      AND NOT EXISTS (SELECT 1 FROM events WHERE events.course_id = courses.id)`).bind(userId),
-  ]);
-
-  const added = rows.filter((r) => !existingUids.has(r.uid)).length;
-  return {
-    total: rows.length, added, updated: rows.length - added,
-    removed: results[2].meta.changes, cancelled, recurringIgnored: recurring,
-  };
-}
-
-// ---------------------------------------------------------------- automatic refresh
-
-const SYNC_LOG_KEEP = 50;
-const CRON_LOG_KEEP = 200;
-
-// Fetches and imports the user's Zeus link, recording the attempt in calendar_syncs whatever happens.
-async function fetchAndImport(env, userId, url, from, source) {
-  const started = Date.now();
-  let status = null, result = null, error = null;
-  try {
-    const res = await fetchZeus(url, from, MAX_ICS_BYTES);
-    status = res.status;
-    result = await importIcs(env, userId, res.text);
-    return result;
-  } catch (e) {
-    status = e.upstream ?? status;
-    error = e instanceof HttpError ? e : new HttpError(502, 'Couldn\'t update the calendar. It will be retried automatically.');
-    if (!(e instanceof HttpError)) console.error(e);
-    throw error;
-  } finally {
-    await env.DB.batch([
-      env.DB.prepare(`INSERT INTO calendar_syncs (user_id, at, source, ok, http_status, duration_ms, sessions, added, removed, error)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(userId, started, source, error ? 0 : 1, status, Date.now() - started,
-        result?.total ?? null, result?.added ?? null, result?.removed ?? null, error?.message ?? null),
-      env.DB.prepare(`DELETE FROM calendar_syncs WHERE user_id = ?1 AND id NOT IN
-        (SELECT id FROM calendar_syncs WHERE user_id = ?1 ORDER BY id DESC LIMIT ?2)`).bind(userId, SYNC_LOG_KEEP),
-    ]);
-  }
-}
-
-// Re-imports a connected link. The attempt is stamped first, so a link that keeps failing (or a run that
-// dies mid-way) moves to the back of the cron queue instead of blocking everyone behind it.
-async function syncCalendar(env, userId, url, from, source) {
-  await env.DB.prepare('UPDATE users SET ics_synced_at = ? WHERE id = ?').bind(Date.now(), userId).run();
-  try {
-    const result = await fetchAndImport(env, userId, url, from, source);
-    await env.DB.prepare('UPDATE users SET ics_ok_at = ?, ics_error = NULL WHERE id = ?').bind(Date.now(), userId).run();
-    return result;
-  } catch (e) {
-    await env.DB.prepare('UPDATE users SET ics_error = ? WHERE id = ?').bind(e.message, userId).run();
-    throw e;
-  }
-}
-
-// Paris date of the user's first imported class, so switching to a link doesn't drop past sessions.
-async function firstClassDate(env, userId) {
-  const r = await env.DB.prepare('SELECT MIN(start_at) AS t FROM events WHERE user_id = ?').bind(userId).first();
-  return r?.t == null ? null : new Date(r.t).toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
-}
-
-async function connectCalendar(env, user, body) {
-  const link = parseZeusLink(body.url);
-  if (body.from != null && body.from !== '' && !validDate(body.from)) throw new HttpError(400, 'Invalid start date.');
-  const from = body.from || link.from || await firstClassDate(env, user.id);
-  // Import once before saving, so a wrong link is reported right away instead of failing silently later.
-  const result = await fetchAndImport(env, user.id, link.url, from, 'connect');
-  const now = Date.now();
-  await env.DB.prepare(`UPDATE users SET ics_url = ?, ics_from = ?, ics_synced_at = ?, ics_ok_at = ?, ics_error = NULL
-    WHERE id = ?`).bind(link.url, from, now, now, user.id).run();
-  return result;
-}
-
-const disconnectCalendar = (env, userId) => env.DB.prepare(`UPDATE users SET ics_url = NULL, ics_from = NULL,
-  ics_synced_at = NULL, ics_ok_at = NULL, ics_error = NULL WHERE id = ?`).bind(userId).run();
-
-export async function syncDueCalendars(env, now = Date.now()) {
-  const due = await env.DB.prepare(`SELECT id, ics_url, ics_from FROM users
-    WHERE ics_url IS NOT NULL AND (ics_synced_at IS NULL OR ics_synced_at < ?1
-      OR (ics_error IS NOT NULL AND ics_synced_at < ?2))
-    ORDER BY ics_synced_at LIMIT ?3`).bind(now - SYNC_EVERY_MS, now - RETRY_FAILED_MS, SYNC_BATCH).all();
-  // Runs with nothing to do (most of them) aren't logged, so cron_runs holds the runs that did work.
-  if (!due.results.length) return { due: 0, ok: 0, failed: 0 };
-  const run = await env.DB.prepare('INSERT INTO cron_runs (started_at) VALUES (?) RETURNING id').bind(now).first();
-  let ok = 0;
-  for (const u of due.results) {
-    try { await syncCalendar(env, u.id, u.ics_url, u.ics_from, 'cron'); ok++; } catch { /* logged in calendar_syncs */ }
-  }
-  const summary = { due: due.results.length, ok, failed: due.results.length - ok };
-  await env.DB.batch([
-    env.DB.prepare('UPDATE cron_runs SET finished_at = ?, due = ?, ok = ?, failed = ? WHERE id = ?')
-      .bind(Date.now(), summary.due, summary.ok, summary.failed, run.id),
-    env.DB.prepare('DELETE FROM cron_runs WHERE id NOT IN (SELECT id FROM cron_runs ORDER BY id DESC LIMIT ?)').bind(CRON_LOG_KEEP),
-  ]);
-  return summary;
-}
-
 // ---------------------------------------------------------------- API
 
 async function readJson(request, limit = 64 * 1024) {
@@ -408,8 +255,8 @@ async function handleApi(request, env, url, user) {
       DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? ORDER BY due_at`).bind(user.id),
       DB.prepare('SELECT email, calendar_id, last_error FROM gcal_links WHERE user_id = ?').bind(user.id),
       DB.prepare('SELECT id, label, start_date, end_date, changes, created_at FROM breaks WHERE user_id = ? ORDER BY start_date').bind(user.id),
-      DB.prepare(`SELECT at, source, ok, http_status, duration_ms, sessions, added, removed, error FROM calendar_syncs
-        WHERE user_id = ? ORDER BY id DESC LIMIT 10`).bind(user.id),
+      DB.prepare(`SELECT source_id, at, source, ok, http_status, duration_ms, sessions, added, removed, error FROM calendar_syncs
+        WHERE user_id = ? ORDER BY id DESC LIMIT 20`).bind(user.id),
     ]);
     const gcal = link.results[0];
     return json({
@@ -425,9 +272,7 @@ async function handleApi(request, env, url, user) {
         gcal: gcal ? { email: gcal.email, calendarId: gcal.calendar_id, error: gcal.last_error } : null,
       },
       assistant: env.AI ? await aiUsage(env, user) : null,
-      calendarSource: user.ics_url ? {
-        from: user.ics_from, okAt: user.ics_ok_at, checkedAt: user.ics_synced_at, error: user.ics_error,
-      } : null,
+      calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
     });
   }
@@ -490,24 +335,28 @@ async function handleApi(request, env, url, user) {
     return json({ ok: true });
   }
 
-  if (path === '/api/import' && method === 'POST') {
-    const body = await readJson(request, MAX_ICS_BYTES);
-    if (typeof body.ics !== 'string') throw new HttpError(400, 'Missing "ics" text.');
-    return json(await importIcs(env, user.id, body.ics));
+  // Calendars: { kind: 'link', url, from?, name? } or { kind: 'file', ics, fileName?, name? }.
+  if (path === '/api/calendars' && method === 'POST') {
+    const body = await readJson(request, MAX_ICS_BYTES + 64 * 1024);
+    if (body.kind === 'link') return json(await addLink(env, user, body));
+    if (body.kind === 'file') return json(await addFile(env, user, body));
+    throw new HttpError(400, 'kind must be "link" or "file".');
   }
 
-  if (path === '/api/calendar-source' && method === 'PUT') {
-    return json(await connectCalendar(env, user, await readJson(request)));
+  if ((m = path.match(/^\/api\/calendars\/(\d+)$/)) && method === 'PATCH') {
+    return json(await updateCalendar(env, user, Number(m[1]), await readJson(request)));
   }
 
-  if (path === '/api/calendar-source/sync' && method === 'POST') {
-    if (!user.ics_url) throw new HttpError(400, 'No Zeus link is connected.');
-    return json(await syncCalendar(env, user.id, user.ics_url, user.ics_from, 'manual'));
+  if ((m = path.match(/^\/api\/calendars\/(\d+)$/)) && method === 'DELETE') {
+    return json(await removeCalendar(env, user, Number(m[1])));
   }
 
-  if (path === '/api/calendar-source' && method === 'DELETE') {
-    await disconnectCalendar(env, user.id);
-    return json({ ok: true });
+  if ((m = path.match(/^\/api\/calendars\/(\d+)\/sync$/)) && method === 'POST') {
+    return json(await syncCalendar(env, user, Number(m[1])));
+  }
+
+  if ((m = path.match(/^\/api\/calendars\/(\d+)\/file$/)) && method === 'POST') {
+    return json(await replaceFile(env, user, Number(m[1]), await readJson(request, MAX_ICS_BYTES + 64 * 1024)));
   }
 
   if ((m = path.match(/^\/api\/attendance\/(\d+)$/)) && method === 'PATCH') {
@@ -587,14 +436,8 @@ async function handleApi(request, env, url, user) {
   }
 
   if (path === '/api/data' && method === 'DELETE') {
-    await DB.batch([
-      DB.prepare('DELETE FROM breaks WHERE user_id = ?').bind(user.id),
-      DB.prepare('DELETE FROM events WHERE user_id = ?').bind(user.id),
-      DB.prepare('DELETE FROM courses WHERE user_id = ?').bind(user.id),
-      DB.prepare('DELETE FROM calendar_syncs WHERE user_id = ?').bind(user.id),
-    ]);
-    // Otherwise the next scheduled refresh would bring the calendar straight back.
-    await disconnectCalendar(env, user.id);
+    // Calendars go too: otherwise the next scheduled refresh would bring the sessions straight back.
+    await wipeCalendars(env, user.id);
     return json({ ok: true });
   }
 

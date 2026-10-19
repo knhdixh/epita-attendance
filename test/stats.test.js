@@ -48,5 +48,6 @@ test('hours unit weighs by duration', () => {
 test('splitGroup', () => {
   assert.deepEqual(splitGroup('GR10 - French for Fall 26 T1'), { group: 'GR10', family: 'French for Fall 26 T1' });
   assert.deepEqual(splitGroup('G2 - Adapting to a New Culture'), { group: 'G2', family: 'Adapting to a New Culture' });
+  assert.deepEqual(splitGroup('GR3 – English'), { group: 'GR3', family: 'English' });
   assert.equal(splitGroup('Tutorat & French for Fall 26 T1'), null);
 });

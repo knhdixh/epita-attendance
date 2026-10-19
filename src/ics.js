@@ -86,6 +86,7 @@ export function parseICS(text, { defaultTz = 'Europe/Paris' } = {}) {
           description: cur.description || '',
           start: cur.start,
           end: cur.end,
+          allDay: Boolean(cur.allDay),
           cancelled: cur.status === 'CANCELLED',
         });
       }

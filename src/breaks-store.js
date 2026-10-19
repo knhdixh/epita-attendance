@@ -31,15 +31,17 @@ export async function saveBreak(env, user, { from, to, label = '', tz, now = Dat
   return { break: results.at(-1).results[0], simulation: sim };
 }
 
-// Restores sessions the break marked absent (only those still marked absent).
+// Restores sessions the break marked absent (only those still marked absent, and still there: a re-import may
+// have removed some). Returns how many were actually restored.
 export async function removeBreak(env, user, id) {
   const row = await env.DB.prepare('SELECT * FROM breaks WHERE id = ? AND user_id = ?').bind(id, user.id).first();
   if (!row) throw new HttpError(404, 'Break not found.');
-  const changes = JSON.parse(row.changes || '[]');
-  await env.DB.batch([
-    ...changes.map((c) => env.DB.prepare(`UPDATE events SET status = ? WHERE id = ? AND user_id = ? AND status = 'absent'`)
-      .bind(c.from, c.id, user.id)),
+  const [restored] = await env.DB.batch([
+    env.DB.prepare(`UPDATE events SET status = (
+        SELECT json_extract(value, '$.from') FROM json_each(?2) WHERE json_extract(value, '$.id') = events.id)
+      WHERE user_id = ?1 AND status = 'absent' AND id IN (SELECT json_extract(value, '$.id') FROM json_each(?2))`)
+      .bind(user.id, row.changes || '[]'),
     env.DB.prepare('DELETE FROM breaks WHERE id = ? AND user_id = ?').bind(id, user.id),
   ]);
-  return { restored: changes.length };
+  return { restored: restored.meta.changes };
 }
