@@ -45,7 +45,7 @@ function syncIcon(hw) {
   return '<span class="sync" title="Not synced yet">syncing</span>';
 }
 
-function hwItem(hw, now = Date.now()) {
+export function hwItem(hw, now = Date.now()) {
   const course = courseById()[hw.course_id];
   const remind = REMINDERS.find(([m]) => m === hw.remind_minutes)?.[1];
   return `

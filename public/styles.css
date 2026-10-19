@@ -833,3 +833,28 @@ body.doc .footer-links { margin-top: 32px; font-size: 12.5px; color: var(--text-
   #fluid { display: none; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- upcoming: a week strip, then the days */
+.up-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.up-range { font-size: 15px; font-weight: 700; }
+.up-ctrl { display: flex; align-items: center; gap: 4px; }
+.up-ctrl .icon-btn:disabled, .up-ctrl .btn:disabled { opacity: .35; cursor: default; background: none; }
+.up-prev .ic { transform: rotate(90deg); }
+.up-next .ic { transform: rotate(-90deg); }
+.up-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.up-day {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 7px; border: 0; border-radius: 8px;
+  background: none; color: var(--text); font: inherit; cursor: pointer; transition: background-color .15s;
+}
+.up-day:hover:not(:disabled) { background: var(--hover); }
+.up-day .dow { color: var(--text-2); font-size: 11.5px; }
+.up-day .d { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.up-day .dots { display: flex; gap: 3px; height: 4px; }
+.up-day .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+.up-day.today { background: var(--accent-soft); }
+.up-day.today .d, .up-day.today .dow { color: var(--accent); }
+.up-day.past { opacity: .35; cursor: default; }
+.up-days .day { scroll-margin-top: 64px; }
+.up-free { padding: 10px 0; color: var(--text-3); font-size: 13px; }
+.up-more { margin-top: 4px; }
+.up-more .btn .ic { margin-left: 4px; }

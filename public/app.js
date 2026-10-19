@@ -234,7 +234,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -250,18 +250,19 @@ function render() {
 
 let lastView = null;
 let first = true;
-const TITLES = { overview: 'Overview', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { overview: 'Overview', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
 function pageSub() {
-  const scope = ['overview', 'sessions', 'courses', 'breaks'].includes(state.tab) ? scopeNote() : '';
+  const scope = ['overview', 'upcoming', 'sessions', 'courses', 'breaks'].includes(state.tab) ? scopeNote() : '';
   const parts = [];
   if (state.tab === 'overview') parts.push(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
   if (state.tab === 'homework') {
     const open = state.data.homework.filter((h) => !h.done).length;
     if (open) parts.push(`${open} open`);
   }
+  if (state.tab === 'upcoming' && state.weekCount != null) parts.push(`${state.weekCount} session${state.weekCount === 1 ? '' : 's'} this week`);
   if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
 }
@@ -405,7 +406,7 @@ function renderOverview() {
 
     ${today.length || next ? `
     <section class="panel">
-      <h3>${today.length ? 'Today' : 'Next'}</h3>
+      <h3><span>${today.length ? 'Today' : 'Next'}</span><a href="#upcoming" data-goto="upcoming">upcoming →</a></h3>
       <div class="list">${(today.length ? today : [next]).map((e) => sessionRow(e, { showDate: !today.length })).join('')}</div>
     </section>` : ''}
 
@@ -551,6 +552,80 @@ function renderSessions() {
         </section>`).join('') || '<p class="muted empty">No sessions match.</p>'}
     </div>`;
   state.shownIds = list.map((e) => e.id);
+}
+
+// ---------------------------------------------------------------- upcoming
+// A week at a time, like a planner: a strip of seven days on top, then each day's sessions and the homework
+// due that day. The current week starts at today; earlier weeks aren't offered (Sessions › Past has those).
+
+function weekStart(offset) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (d.getDay() + 6) % 7 + 7 * offset); // weeks start on Monday
+  return d;
+}
+
+function renderUpcoming() {
+  const offset = state.upWeek ?? 0;
+  const now = Date.now();
+  const today = dayKey(now);
+  const start = weekStart(offset);
+  const midnight = new Date(now); midnight.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(midnight); tomorrow.setDate(midnight.getDate() + 1);
+  const days = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    return { ms: d.getTime(), key: dayKey(d.getTime()), past: d < midnight };
+  });
+  const end = days.pop().ms; // the next Monday
+  const byDay = new Map(days.map((d) => [d.key, { sessions: [], homework: [] }]));
+  for (const e of trackedEvents()) if (e.start_at >= start.getTime() && e.start_at < end) byDay.get(dayKey(e.start_at))?.sessions.push(e);
+  for (const h of state.data.homework) if (!h.done && h.due_at >= start.getTime() && h.due_at < end) byDay.get(dayKey(h.due_at))?.homework.push(h);
+  state.weekCount = days.filter((d) => !d.past).reduce((n, d) => n + byDay.get(d.key).sessions.length, 0);
+
+  const month = (ms, o) => new Date(ms).toLocaleDateString([], o);
+  const range = month(days[0].ms, { month: 'long' }) === month(days[6].ms, { month: 'long' })
+    ? month(days[0].ms, { month: 'long', year: 'numeric' })
+    : `${month(days[0].ms, { month: 'short' })} – ${month(days[6].ms, { month: 'short', year: 'numeric' })}`;
+  const relDay = (d) => d.key === today ? 'Today' : d.key === dayKey(tomorrow.getTime()) ? 'Tomorrow' : '';
+
+  $app.innerHTML = `
+    ${groupBanner()}
+    <div class="up-head">
+      <h3 class="up-range">${esc(range)}</h3>
+      <div class="up-ctrl">
+        <button class="icon-btn up-prev" data-up-week="${offset - 1}" title="Previous week" aria-label="Previous week" ${offset ? '' : 'disabled'}><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+        <button class="btn btn-small" data-up-week="0" ${offset ? '' : 'disabled'}>Today</button>
+        <button class="icon-btn up-next" data-up-week="${offset + 1}" title="Next week" aria-label="Next week"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      </div>
+    </div>
+    <div class="up-strip">
+      ${days.map((d) => {
+        const n = byDay.get(d.key).sessions.length;
+        const dt = new Date(d.ms);
+        return `<button class="up-day${d.key === today ? ' today' : ''}${d.past ? ' past' : ''}" data-up-day="${d.key}" ${d.past ? 'disabled' : ''}
+          aria-label="${esc(dt.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}: ${n} session${n === 1 ? '' : 's'}">
+          <span class="dow">${esc(dt.toLocaleDateString([], { weekday: 'short' }))}</span>
+          <span class="d">${dt.getDate()}</span>
+          <span class="dots" aria-hidden="true">${'<i></i>'.repeat(Math.min(n, 4))}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div class="days up-days">
+      ${days.filter((d) => !d.past).map((d) => {
+        const { sessions, homework } = byDay.get(d.key);
+        const dt = new Date(d.ms);
+        const rel = relDay(d);
+        return `
+        <section class="day${d.key === today ? ' today' : ''}" id="up-${d.key}">
+          <h4><span>${esc(dt.toLocaleDateString([], { day: 'numeric', month: 'short' }))}</span>
+            <span class="dow">· ${esc(dt.toLocaleDateString([], { weekday: 'long' }))}</span>${rel ? `<span class="tag-today">· ${rel}</span>` : ''}</h4>
+          ${sessions.length || homework.length ? `
+          <div class="list">${sessions.map((e) => sessionRow(e)).join('')}${homework.map((h) => hw.hwItem(h, now)).join('')}</div>`
+          : '<p class="up-free">Nothing scheduled</p>'}
+        </section>`;
+      }).join('')}
+    </div>
+    <p class="up-more"><button class="btn btn-default btn-small" data-up-week="${offset + 1}">Next week<svg class="ic sm" aria-hidden="true"><use href="#i-arrow"/></svg></button></p>`;
 }
 
 function renderCourses() {
@@ -729,7 +804,7 @@ async function setTracked(updates) {
 
 // [tab, label, icon, key after G]
 const NAV = [
-  ['overview', 'Overview', 'i-home', 'O'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
+  ['overview', 'Overview', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
   ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
@@ -739,6 +814,7 @@ const isPhone = () => matchMedia('(max-width: 760px)').matches;
 function go(tab) {
   closeDrawer();
   if (tab === 'sessions' && state.tab !== 'sessions') state.filter.course = 'all';
+  if (tab === 'upcoming' && state.tab !== 'upcoming') state.upWeek = 0;
   state.tab = tab;
   history.replaceState(null, '', '#' + tab);
   render();
@@ -872,6 +948,10 @@ document.addEventListener('click', async (e) => {
   if (tab) return go(tab.dataset.tab);
   const scope = t.closest('[data-scope]');
   if (scope) return toggleScope(scope.dataset.scope);
+  const week = t.closest('[data-up-week]');
+  if (week) { state.upWeek = Math.max(0, Number(week.dataset.upWeek)); render(); $scroller.scrollTop = 0; return; }
+  const upDay = t.closest('[data-up-day]');
+  if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
   if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
