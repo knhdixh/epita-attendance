@@ -159,9 +159,11 @@ function render() {
   }
   $topTitle.textContent = view === 'empty' ? 'Import' : TITLES[state.tab];
   document.title = `${$topTitle.textContent} · Attendance80`;
+  $app.classList.toggle('wide', view === 'breaks');
+  // The entrance plays once, on first load; switching pages just swaps the content.
   if (changed) {
     $scroller.scrollTop = 0;
-    playEnter(first);
+    if (first) playEnter(true);
   }
   first = false;
 }
@@ -225,13 +227,13 @@ function setCount(tab, n, tone, title) {
 }
 
 // ---------------------------------------------------------------- motion
-// Only transform and opacity animate. Blocks and their first rows rise in a short stagger when the view changes;
+// Only transform and opacity animate. On first load, blocks and their first rows rise in a short stagger;
 // the sign-in title keeps the knhdixh.com character reveal.
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 const randGlyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
-const ROWS = '.row, .hw-item, .card, .method, .family, .window-row, .msg, .byok-option, .stat, table.courses tbody tr';
+const ROWS = '.row, .hw-item, .card, .method, .family, .brk-window, .msg, .byok-option, .stat, table.courses tbody tr';
 
 function maskedWord(word) {
   return [...word].map((c, i) => `<span class="mask"><span class="ch" style="--c:${i}" data-c="${esc(c)}">${esc(c)}</span></span>`).join('');

@@ -1,4 +1,5 @@
-// Breaks tab: week-by-week overview, break planner with live preview, best-window finder, saved breaks.
+// Breaks tab: pick a length, see the best dates and a calendar of start days, and check any break in a side panel
+// that updates as you click. Saving a break marks its sessions as planned absences.
 import { state, esc, api, toast, render, reload } from './app.js';
 import { breakModel, simulateBreak, findBreakWindows, startDayGrid, addDays } from './breaks.js';
 
@@ -6,26 +7,15 @@ const $app = document.getElementById('app');
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 const pct = (x) => `${Math.round(x * 1000) / 10}%`;
 const fmtN = (n) => (Number.isInteger(n) ? n : Math.round(n * 10) / 10);
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const dayLabel = (d, opts = { weekday: 'short', day: 'numeric', month: 'short' }) =>
   new Date(d + 'T12:00:00Z').toLocaleDateString([], { ...opts, timeZone: 'UTC' });
-const LEVEL = {
-  free: ['No classes', 'free'], ok: ['Safe', 'ok'], risk: ['Possible, no spare skips left', 'risk'], fail: ['Not possible', 'fail'],
+// "Mon, Oct 19 – Wed, Oct 21", or one date for a one-day range.
+const rangeLabel = (from, to, sep = '–') => (from === to ? dayLabel(from) : `${dayLabel(from)} ${sep} ${dayLabel(to)}`);
+const LENGTHS = [[1, '1 day'], [3, 'Long weekend'], [7, '1 week'], [9, '9 days'], [14, '2 weeks']];
+const VERDICT = {
+  free: 'No classes to miss', ok: 'Safe', risk: 'Possible, but leaves no spare skips', fail: 'Not possible',
 };
-const GRID_LENGTHS = [[1, '1 day'], [2, '2 days'], [3, '3 days (long weekend)'], [4, '4 days'], [5, '5 days'], [7, '1 week'], [9, '9 days'], [14, '2 weeks']];
-const ICON = { free: '~', ok: '✓', risk: '!', fail: '×' };
-
-function calCell(c, i) {
-  const d = new Date(c.date + 'T12:00:00Z');
-  const first = i === 0 || d.getUTCDate() === 1;
-  const num = first ? dayLabel(c.date, { day: 'numeric', month: 'short' }) : String(d.getUTCDate());
-  if (c.past || c.beyond) return `<div class="cal-day off" title="${c.past ? 'Past' : 'After the end of your calendar'}"><span class="cal-num">${esc(num)}</span></div>`;
-  const title = [`${dayLabel(c.date)} – ${dayLabel(c.to)}: ${LEVEL[c.level][0]}`, c.sessions ? `${c.sessions} sessions missed` : '', ...c.blockers].filter(Boolean).join('\n');
-  return `<button class="cal-day ${LEVEL[c.level][1]}${c.holiday ? ' holiday' : ''}${c.date === state.breaks.from ? ' picked' : ''}" data-start="${c.date}" title="${esc(title)}">
-    <span class="cal-num">${esc(num)}</span><span class="cal-icon">${ICON[c.level]}</span>
-    <span class="cal-meta">${c.sessions ? `${c.sessions} missed` : ''}</span></button>`;
-}
-
-const LENGTHS = [[1, '1 day'], [2, '2 days'], [3, 'Long weekend (3 days)'], [4, '4 days'], [5, '5 days'], [7, 'A week'], [9, '9 days (week + 2 weekends)'], [14, 'Two weeks']];
 
 function model() {
   const { courses, events, user } = state.data;
@@ -33,142 +23,163 @@ function model() {
 }
 
 function ui() {
-  if (!state.breaks) {
-    state.breaks = { from: '', to: '', label: '', days: 7, within: '', result: null, len: 7 };
-  }
+  state.breaks ??= { from: '', to: '', label: '', len: 7 };
   return state.breaks;
 }
 
 function skipsLeft(s, unit) {
-  if (s.remaining < -1e-9) return `<span class="bad">over by ${fmtN(Math.ceil(-s.remaining * 2) / 2)}</span>`;
-  return `${fmtN(s.remainingDisplay)}${unit === 'hours' ? ' h' : ''}`;
+  if (s.remaining < -1e-9) return `over by ${fmtN(Math.ceil(-s.remaining * 2) / 2)}`;
+  return `${fmtN(s.remainingDisplay)}${unit === 'hours' ? ' h' : ''} left`;
 }
 
-function simulationView(sim, unit) {
-  if (!sim.sessions.length && !sim.conflicts.length) {
-    return `<div class="verdict free">No classes to skip between ${esc(dayLabel(sim.from))} and ${esc(dayLabel(sim.to))}. Enjoy! ${sim.holidayDays ? `(${sim.holidayDays} school-holiday days)` : ''}</div>`;
+// ---------------------------------------------------------------- calendar
+
+// One cell per possible start day. Safe days stand out; impossible ones recede. The picked break is a band.
+function calCell(c, i, s) {
+  const d = new Date(c.date + 'T12:00:00Z');
+  const month = i === 0 || d.getUTCDate() === 1 ? dayLabel(c.date, { month: 'short' }) : '';
+  const num = `${month ? `<span class="cal-month">${esc(month)}</span>` : ''}<span class="cal-num">${d.getUTCDate()}</span>`;
+  const inBreak = s.from && c.date >= s.from && c.date <= s.to;
+  const band = inBreak ? ` in${c.date === s.from ? ' first' : ''}${c.date === s.to ? ' last' : ''}` : '';
+  if (c.past || c.beyond) {
+    return `<div class="cal-day off${band}" title="${c.past ? 'Past' : 'After the end of your calendar'}">${num}</div>`;
   }
-  const [label, cls] = LEVEL[sim.level];
-  return `
-    <div class="verdict ${cls}">
-      <strong>${label}.</strong> ${sim.days} day${sim.days > 1 ? 's' : ''} off, skipping ${sim.sessions.length} session${sim.sessions.length === 1 ? '' : 's'}${sim.holidayDays ? `, ${sim.holidayDays} school-holiday day${sim.holidayDays > 1 ? 's' : ''} included` : ''}.
-    </div>
-    ${sim.conflicts.length ? `<div class="note bad">Can't-miss sessions in this break:
-      <ul>${sim.conflicts.map((e) => `<li>${esc(e.summary)}, ${esc(new Date(e.start_at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</li>`).join('')}</ul></div>` : ''}
-    <table class="courses sim">
-      <thead><tr><th>Course</th><th class="num">Skipped</th><th class="num">Skips left</th><th class="num">After break</th></tr></thead>
-      <tbody>${sim.courses.map((c) => `
-        <tr><td>${esc(c.course.name)}</td><td class="num">${c.skipped}</td>
-          <td class="num">${skipsLeft(c.before, unit)} → ${skipsLeft(c.after, unit)}</td>
-          <td class="num ${c.level}">${pct(c.after.projectedRate)}</td></tr>`).join('')}</tbody>
-    </table>`;
+  const title = [`${s.len}-day break from ${dayLabel(c.date)}: ${VERDICT[c.level]}`, c.sessions ? `${plural(c.sessions, 'session')} missed` : '', ...c.blockers]
+    .filter(Boolean).join('\n');
+  return `<button class="cal-day ${c.level}${c.holiday ? ' holiday' : ''}${band}" data-start="${c.date}" title="${esc(title)}" aria-label="${esc(title)}">
+    ${num}<span class="cal-dot" aria-hidden="true"></span></button>`;
 }
+
+// ---------------------------------------------------------------- the picked break
+
+function detailView(sim, s, m, unit) {
+  const level = sim.sessions.length || sim.conflicts.length ? sim.level : 'free';
+  const facts = [plural(sim.days, 'day'), sim.sessions.length ? `skips ${plural(sim.sessions.length, 'session')}` : 'no classes missed'];
+  if (sim.holidayDays) facts.push(plural(sim.holidayDays, 'holiday day'));
+  return `
+    <div class="brk-card">
+      <div class="brk-card-head">
+        <div>
+          <div class="brk-range">${esc(rangeLabel(sim.from, sim.to, '→'))}</div>
+          <div class="brk-facts">${facts.join(' · ')}</div>
+        </div>
+        <button class="icon-btn" data-action="clear-break" title="Clear" aria-label="Clear"><svg class="ic sm" aria-hidden="true"><use href="#i-plus" transform="rotate(45 12 12)"/></svg></button>
+      </div>
+      <p class="brk-verdict ${level}">${VERDICT[level]}</p>
+      ${sim.conflicts.length ? `<div class="brk-conflicts"><b>Can't miss:</b>
+        <ul>${sim.conflicts.map((e) => `<li>${esc(e.summary)}, ${esc(new Date(e.start_at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</li>`).join('')}</ul></div>` : ''}
+      ${sim.courses.length ? `<div class="brk-courses">${sim.courses.map((c) => `
+        <div class="brk-course ${c.level}">
+          <span class="name">${esc(c.course.name)}</span>
+          <span class="skip">−${c.skipped}</span>
+          <span class="left">${esc(skipsLeft(c.before, unit))} <span aria-hidden="true">→</span> <b>${esc(skipsLeft(c.after, unit))}</b></span>
+          <span class="after">${pct(c.after.projectedRate)}</span>
+        </div>`).join('')}</div>` : ''}
+      <form id="break-form" class="brk-form" autocomplete="off">
+        <div class="brk-dates">
+          <label>From <input class="field" type="date" name="from" required value="${esc(s.from)}" min="${m.today}"></label>
+          <label>To <input class="field" type="date" name="to" required value="${esc(s.to)}" min="${esc(s.from || m.today)}"></label>
+        </div>
+        <input class="field" name="label" maxlength="100" placeholder="Name, e.g. Trip home" value="${esc(s.label)}" aria-label="Name">
+      </form>
+      ${sim.sessions.length ? `
+        <button class="btn ${level === 'fail' ? 'btn-destructive' : 'btn-primary'} brk-save" data-action="save-break">Save break</button>
+        <p class="hint">Marks ${plural(sim.sessions.length, 'session')} as planned absences. You can remove it later.</p>` : ''}
+    </div>`;
+}
+
+function savedView(saved) {
+  if (!saved.length) return '';
+  return `
+    <section class="brk-saved">
+      <h3 class="section-title"><span>Saved breaks</span><span class="muted">${saved.length}</span></h3>
+      ${saved.map((b) => `
+        <div class="brk-saved-row">
+          <div>
+            <div>${esc(b.label || 'Break')}</div>
+            <div class="brk-facts">${esc(rangeLabel(b.start_date, b.end_date))} · ${plural(b.sessions, 'session')} marked absent</div>
+          </div>
+          <button class="btn btn-borderless btn-small" data-remove-break="${b.id}" title="Remove and restore those sessions" aria-label="Remove"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+        </div>`).join('')}
+    </section>`;
+}
+
+// ---------------------------------------------------------------- page
 
 export function renderBreaks() {
   const s = ui();
   const m = model();
   const unit = state.data.user.unit;
   const grid = startDayGrid(m, s.len);
+  const best = findBreakWindows(m, { days: s.len, limit: 4 });
   const sim = s.from && s.to && s.to >= s.from ? simulateBreak(m, s.from, s.to) : null;
-  const saved = state.data.breaks || [];
+  const picked = (w) => w.from === s.from && w.to === s.to;
+  const lenWord = s.len === 1 ? 'day off' : `${s.len}-day break`;
 
   $app.innerHTML = `
-    <section class="panel">
-      <div class="grid-head">
-        <h3>When could you take a break?</h3>
-        <label class="len-pick">Length
-          <div class="select"><select id="break-len">${GRID_LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.len ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-        </label>
+    <div class="brk-toolbar">
+      <div class="seg" role="radiogroup" aria-label="Break length">
+        ${LENGTHS.map(([d, l]) => `<label class="segment"><input type="radio" name="brk-len" value="${d}" ${d === s.len ? 'checked' : ''}><span>${l}</span></label>`).join('')}
       </div>
-      <p class="muted small">Each day shows what happens if a ${s.len}-day break <b>starts</b> that day.</p>
-      <div class="cal">
-        ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div class="cal-dow">${d}</div>`).join('')}
-        ${grid.flat().map((c, i) => calCell(c, i)).join('')}
-      </div>
-      ${m.noSkip.length ? `<p class="note warn">No spare absences at all in: ${m.noSkip.map((c) => `<b>${esc(c.name)}</b>`).join(', ')}.
-        Any break over one of their sessions would drop that course below ${pct(state.data.user.threshold)}, so plan breaks around them (or check if a session can be excused).</p>` : ''}
-      <p class="muted small">✓ safe · ! no spare skips left · × drops a course below ${pct(state.data.user.threshold)} or miss an exam · ~ no classes missed. Click a day to check that break.</p>
-    </section>
-
-    <div class="breaks-layout">
-      <section class="panel">
-        <h3>Plan a break</h3>
-        <form id="break-form" class="form">
-          <div class="form-row">
-            <label>First day off <input class="field" type="date" name="from" required value="${esc(s.from)}" min="${m.today}"></label>
-            <label>Last day off <input class="field" type="date" name="to" required value="${esc(s.to)}" min="${esc(s.from || m.today)}"></label>
-          </div>
-          <label>Name <input class="field" name="label" maxlength="100" placeholder="Optional, e.g. Trip home" value="${esc(s.label)}"></label>
-        </form>
-        <div id="break-result">${sim ? simulationView(sim, unit) : '<p class="muted">Pick dates to see the effect on every course.</p>'}</div>
-        ${sim && sim.sessions.length ? `
-          <button class="btn ${sim.level === 'fail' ? 'btn-destructive' : 'btn-primary'}" data-action="save-break">
-            Save break (mark ${sim.sessions.length} session${sim.sessions.length === 1 ? '' : 's'} as planned absences)</button>` : ''}
-      </section>
-
-      <section class="panel">
-        <h3>Find the best time</h3>
-        <form id="find-form" class="form">
-          <label>How long
-            <div class="select"><select name="days">${LENGTHS.map(([d, l]) => `<option value="${d}" ${d === s.days ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-          </label>
-          <label>Finish before <input class="field" type="date" name="within" value="${esc(s.within)}" min="${m.today}" max="${m.lastDay}" title="Optional"></label>
-          <button class="btn btn-primary" type="submit">Find dates</button>
-        </form>
-        <div id="find-result">${s.result ? findView(s.result) : `<p class="muted small">Ranks breaks by fewest classes missed. Weekends and school holidays count as free days, and breaks over exams are excluded. Your calendar runs until ${esc(dayLabel(m.lastDay))}.</p>`}</div>
-      </section>
+      <span class="hint">Calendar until ${esc(dayLabel(m.lastDay, { day: 'numeric', month: 'short' }))}</span>
     </div>
 
-    ${saved.length ? `
-    <section class="panel">
-      <h3>Saved breaks</h3>
-      <div class="list">${saved.map((b) => `
-        <div class="hw-item">
-          <span class="num">~</span>
-          <div class="hw-main">
-            <div class="hw-title">${esc(b.label || 'Break')}</div>
-            <div class="hw-meta small">${esc(dayLabel(b.start_date))} – ${esc(dayLabel(b.end_date))} · ${b.sessions} session${b.sessions === 1 ? '' : 's'} marked absent</div>
-          </div>
-          <div class="hw-actions"><button class="btn btn-borderless btn-small" data-remove-break="${b.id}" title="Remove and restore those sessions">Remove</button></div>
-        </div>`).join('')}</div>
-    </section>` : ''}
-    <p class="muted small">Tip: you can also ask the Assistant, e.g. “when could I go home for a week in November?”.</p>`;
-}
+    <div class="brk">
+      <div class="brk-main">
+        <section class="panel">
+          <h3>Best dates</h3>
+          ${best.windows.length ? `<div class="list">${best.windows.map((w) => `
+            <button class="brk-window ${w.level}${picked(w) ? ' picked' : ''}" data-use="${w.from}|${w.to}">
+              <span class="cal-dot" aria-hidden="true"></span>
+              <span class="brk-window-range">${esc(rangeLabel(w.from, w.to))}</span>
+              <span class="brk-facts">${w.sessions ? `skips ${plural(w.sessions, 'session')}` : 'no classes missed'}${w.holidayDays ? ` · ${plural(w.holidayDays, 'holiday day')}` : ''}${w.level === 'risk' ? ' · no spare skips after' : ''}</span>
+            </button>`).join('')}</div>`
+          : `<p class="empty">No safe ${lenWord} left in your calendar.${best.longest
+            ? ` The longest is <button class="link" data-use="${best.longest.from}|${best.longest.to}">${esc(rangeLabel(best.longest.from, best.longest.to))}</button> (${plural(best.longest.days, 'day')}).` : ''}</p>`}
+        </section>
 
-function findView(r) {
-  if (!r.windows.length) {
-    return `<div class="verdict fail">No safe ${r.days}-day break${r.within ? ` before ${esc(dayLabel(r.within))}` : ''}.</div>
-      ${r.longest ? `<p>Longest safe break: <b>${esc(dayLabel(r.longest.from))} – ${esc(dayLabel(r.longest.to))}</b> (${r.longest.days} days, ${r.longest.sessions} sessions).
-        <button class="btn btn-default btn-small" data-use="${r.longest.from}|${r.longest.to}">Check it</button></p>` : ''}`;
-  }
-  return `<div class="list">${r.windows.map((w) => `
-    <div class="window-row ${w.level}">
-      <div><b>${esc(dayLabel(w.from))} – ${esc(dayLabel(w.to))}</b>
-        <div class="muted small">${w.sessions ? `skips ${w.sessions} session${w.sessions === 1 ? '' : 's'}` : 'no classes missed'}${w.holidayDays ? ` · ${w.holidayDays} holiday days` : ''}${w.level === 'risk' ? ' · leaves no spare skips' : ''}</div></div>
-      <button class="btn btn-default btn-small" data-use="${w.from}|${w.to}">Check</button>
-    </div>`).join('')}</div>`;
+        <section class="panel">
+          <h3><span>Start a ${lenWord} on…</span>
+            <span class="brk-legend"><i class="ok"></i>safe<i class="risk"></i>tight<i class="fail"></i>not possible<i class="free"></i>no classes</span></h3>
+          <div class="cal">
+            ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div class="cal-dow">${d}</div>`).join('')}
+            ${grid.flat().map((c, i) => calCell(c, i, s)).join('')}
+          </div>
+          ${m.noSkip.length ? `<p class="hint">No spare absences in ${m.noSkip.map((c) => `<b>${esc(c.name)}</b>`).join(', ')}:
+            any break over one of their sessions drops it below ${pct(state.data.user.threshold)}.</p>` : ''}
+        </section>
+      </div>
+
+      <aside class="brk-side">
+        ${sim ? detailView(sim, s, m, unit) : `
+          <div class="brk-card brk-empty">
+            <svg class="ic" aria-hidden="true"><use href="#i-breaks"/></svg>
+            <p>Pick a day on the calendar or one of the best dates to see what the break costs in every course.</p>
+            <p class="hint">Or ask the <a href="#assistant" data-goto="assistant">Assistant</a>, e.g. “when could I go home for a week in November?”</p>
+          </div>`}
+        ${savedView(state.data.breaks || [])}
+      </aside>
+    </div>`;
 }
 
 // ---------------------------------------------------------------- handlers
+
+function pick(from, to) {
+  const s = ui();
+  [s.from, s.to] = [from, to];
+  render();
+  // On narrow screens the panel sits below the calendar; bring it into view.
+  if (matchMedia('(max-width: 1100px)').matches) document.querySelector('.brk-side')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
 
 export function onClick(e) {
   const t = e.target;
   const s = ui();
   const start = t.closest('[data-start]');
-  if (start) {
-    s.from = start.dataset.start;
-    s.to = addDays(s.from, s.len - 1);
-    render();
-    document.getElementById('break-form')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    return true;
-  }
+  if (start) { pick(start.dataset.start, addDays(start.dataset.start, s.len - 1)); return true; }
   const use = t.closest('[data-use]');
-  if (use) {
-    [s.from, s.to] = use.dataset.use.split('|');
-    render();
-    document.getElementById('break-form')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    return true;
-  }
+  if (use) { pick(...use.dataset.use.split('|')); return true; }
+  if (t.closest('[data-action="clear-break"]')) { Object.assign(s, { from: '', to: '', label: '' }); render(); return true; }
   if (t.closest('[data-action="save-break"]')) { save(); return true; }
   const rm = t.closest('[data-remove-break]');
   if (rm) { remove(Number(rm.dataset.removeBreak)); return true; }
@@ -176,17 +187,15 @@ export function onClick(e) {
 }
 
 export function onChange(e) {
-  if (e.target.id === 'break-len') {
-    const s = ui();
+  const s = ui();
+  if (e.target.name === 'brk-len') {
     s.len = Number(e.target.value);
-    if (LENGTHS.some(([d]) => d === s.len)) { s.days = s.len; s.result = null; } // keep "Find the best time" in step
-    if (s.from) s.to = addDays(s.from, s.len - 1);   // keep the planned break in sync
+    if (s.from) s.to = addDays(s.from, s.len - 1); // keep the picked break the chosen length
     render();
     return true;
   }
   const form = e.target.closest('#break-form');
-  if (!form) return false;
-  const s = ui();
+  if (!form || e.target.name === 'label') return false;
   s.from = form.elements.from.value;
   s.to = form.elements.to.value;
   if (s.from && (!s.to || s.to < s.from)) s.to = s.from;
@@ -201,16 +210,9 @@ export function onInput(e) {
 }
 
 export function onSubmit(e) {
-  if (e.target.id === 'break-form') { e.preventDefault(); return true; }
-  if (e.target.id !== 'find-form') return false;
+  if (e.target.id !== 'break-form') return false;
   e.preventDefault();
-  const s = ui();
-  const fd = new FormData(e.target);
-  s.days = Number(fd.get('days'));
-  s.within = fd.get('within') || '';
-  const r = findBreakWindows(model(), { days: s.days, to: s.within || undefined });
-  s.result = { ...r, days: s.days, within: s.within };
-  render();
+  if (document.querySelector('[data-action="save-break"]')) save();
   return true;
 }
 
@@ -221,9 +223,9 @@ async function save() {
   try {
     const r = await api('/api/breaks', { method: 'POST', body: { from: s.from, to: s.to, label: s.label, tz: tz() } });
     await reload();
-    Object.assign(s, { from: '', to: '', label: '', result: null });
+    Object.assign(s, { from: '', to: '', label: '' });
     render();
-    toast(`Break saved: ${r.sessions} session${r.sessions === 1 ? '' : 's'} marked as planned absences.`);
+    toast(`Break saved: ${plural(r.sessions, 'session')} marked as planned absences.`);
   } catch (err) { toast(err.message, true); }
 }
 
@@ -234,6 +236,6 @@ async function remove(id) {
     const r = await api(`/api/breaks/${id}`, { method: 'DELETE' });
     await reload();
     render();
-    toast(`Break removed, ${r.restored} session${r.restored === 1 ? '' : 's'} restored.`);
+    toast(`Break removed, ${plural(r.restored, 'session')} restored.`);
   } catch (err) { toast(err.message, true); }
 }
