@@ -1,7 +1,7 @@
 // Breaks tab. A month calendar is the date-range picker: each day shows what missing it costs, you click your first
 // and last day off, and the side panel shows what that break does to every course and saves it. Suggestions of a
 // chosen length fill the same range. Saving a break marks its sessions as planned absences.
-import { state, esc, api, toast, render, reload } from './app.js';
+import { state, esc, api, toast, render, reload, groupChip, courseGroups } from './app.js';
 import { breakModel, simulateBreak, findBreakWindows, startDayGrid, addDays, weekdayOf } from './breaks.js';
 
 const $app = document.getElementById('app');
@@ -128,7 +128,7 @@ function panelView(sim, s, unit) {
           <ul>${sim.conflicts.map((e) => `<li>${esc(e.summary)}, ${esc(new Date(e.start_at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</li>`).join('')}</ul></div>` : ''}
         ${sim.courses.length ? `<div class="brk-courses">${sim.courses.map((c) => `
           <div class="brk-course ${c.level}">
-            <span class="name">${esc(c.course.name)}</span>
+            <span class="name">${esc(c.course.name)} ${groupChip(courseGroups(c.course.id), { all: false })}</span>
             <span class="skip">−${c.skipped}</span>
             <span class="left">${esc(skipsLeft(c.before, unit))} <span aria-hidden="true">→</span> <b>${esc(skipsLeft(c.after, unit))}</b></span>
             <span class="after">${pct(c.after.projectedRate)}</span>

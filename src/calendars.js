@@ -1,6 +1,7 @@
 // A user's calendars: links (Zeus or any .ics URL) that the cron re-imports, and uploaded .ics files.
-// Every session belongs to the calendar that last imported it, so importing one calendar only reconciles its
-// own sessions. A session present in two calendars (same UID) is stored once and owned by the last importer.
+// A session (matched by UID) is stored once per user and can be in several calendars, e.g. a lecture shared by
+// groups SE1, SE2 and SE3: event_sources records which calendars contain it. Importing a calendar only updates
+// its own memberships; a session is deleted once no calendar contains it (with the exceptions in importIcs).
 import { parseICS } from './ics.js';
 import { splitGroup } from '../public/stats.js';
 import { HttpError } from './http.js';
@@ -25,10 +26,11 @@ export const courseKey = (summary) => summary.toLowerCase().replace(/\s+/g, ' ')
 // ---------------------------------------------------------------- import
 
 // Imports (or re-imports) one calendar's .ics text. Sessions are matched by UID, so marks survive an updated
-// calendar. Sessions of this calendar that the new text no longer has are removed, except:
+// calendar. A session this calendar no longer has leaves it, and is deleted if no other calendar has it, except:
 // - past ones the user marked, tagged or annotated (they're the attendance record);
 // - future ones with a note. A future session that was only marked (e.g. a planned skip) or tagged is removed,
 //   since a cancelled class must not keep counting as an absence.
+// A kept session stays in this calendar, so it still shows (and counts) under its group.
 export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
   const { events, recurring } = parseICS(text);
   const seen = new Map();
@@ -66,27 +68,39 @@ export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
       FROM json_each(?2) WHERE true
       ON CONFLICT (user_id, key) DO NOTHING`)
       .bind(userId, JSON.stringify([...courses.values()].map((c) => ({ ...c, tracked: c.allDayOnly ? 0 : c.tracked })))),
-    env.DB.prepare(`INSERT INTO events (user_id, source_id, course_id, uid, summary, location, description, start_at, end_at, seen_at)
-      SELECT ?1, ?4, c.id, json_extract(e.value, '$.uid'), json_extract(e.value, '$.summary'),
+    env.DB.prepare(`INSERT INTO events (user_id, course_id, uid, summary, location, description, start_at, end_at)
+      SELECT ?1, c.id, json_extract(e.value, '$.uid'), json_extract(e.value, '$.summary'),
         json_extract(e.value, '$.location'), json_extract(e.value, '$.description'),
-        json_extract(e.value, '$.start'), json_extract(e.value, '$.end'), ?3
+        json_extract(e.value, '$.start'), json_extract(e.value, '$.end')
       FROM json_each(?2) e JOIN courses c ON c.user_id = ?1 AND c.key = json_extract(e.value, '$.key')
       WHERE true
-      ON CONFLICT (user_id, uid) DO UPDATE SET source_id = excluded.source_id, course_id = excluded.course_id,
+      ON CONFLICT (user_id, uid) DO UPDATE SET course_id = excluded.course_id,
         summary = excluded.summary, location = excluded.location, description = excluded.description,
-        start_at = excluded.start_at, end_at = excluded.end_at, seen_at = excluded.seen_at`)
-      .bind(userId, JSON.stringify(rows), stamp, sourceId),
-    env.DB.prepare(`DELETE FROM events WHERE user_id = ?1 AND source_id = ?2 AND seen_at <> ?3 AND note = ''
-      AND (start_at > ?4 OR (status IS NULL AND tag IS NULL))`).bind(userId, sourceId, stamp, now),
+        start_at = excluded.start_at, end_at = excluded.end_at`).bind(userId, JSON.stringify(rows)),
+    env.DB.prepare(`INSERT INTO event_sources (event_id, source_id, seen_at)
+      SELECT ev.id, ?3, ?4 FROM json_each(?2) j JOIN events ev ON ev.user_id = ?1 AND ev.uid = json_extract(j.value, '$.uid')
+      WHERE true
+      ON CONFLICT (event_id, source_id) DO UPDATE SET seen_at = excluded.seen_at`)
+      .bind(userId, JSON.stringify(rows.map((r) => ({ uid: r.uid }))), sourceId, stamp),
+    // Leave this calendar: sessions another calendar still has, and sessions that may go (see above).
+    env.DB.prepare(`DELETE FROM event_sources WHERE source_id = ?1 AND seen_at <> ?2 AND (
+        EXISTS (SELECT 1 FROM event_sources o WHERE o.event_id = event_sources.event_id AND o.source_id <> ?1)
+        OR event_id IN (SELECT id FROM events WHERE user_id = ?3 AND note = '' AND (start_at > ?4 OR (status IS NULL AND tag IS NULL))))`)
+      .bind(sourceId, stamp, userId, now),
+    deleteOrphans(env, userId),
     pruneCourses(env, userId),
   ]);
 
   const added = rows.filter((r) => !existingUids.has(r.uid)).length;
   return {
     total: rows.length, added, updated: rows.length - added,
-    removed: results[2].meta.changes, cancelled, recurringIgnored: recurring,
+    removed: results[4].meta.changes, cancelled, recurringIgnored: recurring,
   };
 }
+
+// Sessions no calendar contains any more (after an import, or removing a calendar), with their marks.
+const deleteOrphans = (env, userId) => env.DB.prepare(`DELETE FROM events WHERE user_id = ?
+  AND NOT EXISTS (SELECT 1 FROM event_sources WHERE event_id = events.id)`).bind(userId);
 
 // Courses left without sessions (after an import or removing a calendar). Their homework keeps its title
 // and loses the course link (ON DELETE SET NULL).
@@ -153,7 +167,8 @@ async function roomFor(env, user) {
 export async function listCalendars(env, userId) {
   const [sources, counts] = await env.DB.batch([
     env.DB.prepare(`SELECT ${SOURCE_COLUMNS} FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id`).bind(userId),
-    env.DB.prepare('SELECT source_id, COUNT(*) AS n FROM events WHERE user_id = ? GROUP BY source_id').bind(userId),
+    env.DB.prepare(`SELECT es.source_id, COUNT(*) AS n FROM event_sources es JOIN calendar_sources s ON s.id = es.source_id
+      WHERE s.user_id = ? GROUP BY es.source_id`).bind(userId),
   ]);
   const n = new Map(counts.results.map((r) => [r.source_id, r.n]));
   return sources.results.map((s) => ({
@@ -263,11 +278,11 @@ export async function updateCalendar(env, user, id, body) {
   return { calendar: id };
 }
 
-// Removes the calendar with its sessions (and their marks); its sync log goes by cascade.
+// Removes the calendar (its memberships and sync log go by cascade) and the sessions only it had, with their marks.
 async function removeById(env, userId, id) {
-  const [removed] = await env.DB.batch([
-    env.DB.prepare('DELETE FROM events WHERE user_id = ? AND source_id = ?').bind(userId, id),
+  const [, removed] = await env.DB.batch([
     env.DB.prepare('DELETE FROM calendar_sources WHERE id = ? AND user_id = ?').bind(id, userId),
+    deleteOrphans(env, userId),
     pruneCourses(env, userId),
   ]);
   return { removed: removed.meta.changes };

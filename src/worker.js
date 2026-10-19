@@ -250,7 +250,8 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/data' && method === 'GET') {
     const [courses, events, homework, link, breaks, syncs] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
-      DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note
+      DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
+          (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
         FROM events WHERE user_id = ? ORDER BY start_at`).bind(user.id),
       DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? ORDER BY due_at`).bind(user.id),
       DB.prepare('SELECT email, calendar_id, last_error FROM gcal_links WHERE user_id = ?').bind(user.id),
@@ -263,7 +264,8 @@ async function handleApi(request, env, url, user) {
       user: { email: user.email, name: user.name, picture: user.picture, threshold: user.threshold, unit: user.unit },
       account: { google: !isPasskeyOnly(user), passkeys: await listPasskeys(env, user) },
       courses: courses.results,
-      events: events.results,
+      // cals: the calendars (groups) each session is in.
+      events: events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals).sort((a, b) => a - b) })),
       homework: homework.results,
       breaks: breaks.results.map((b) => ({ ...b, sessions: JSON.parse(b.changes).length, changes: undefined })),
       integrations: {

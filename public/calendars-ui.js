@@ -114,7 +114,7 @@ export function settingsPanel() {
       <div class="list">${list.map(row).join('')}</div>
       ${state.calAdding || !list.length ? addBox({ cancel: list.length > 0 })
         : '<button class="add-row" data-cal-add><span class="plus" aria-hidden="true"><svg class="ic"><use href="#i-plus"/></svg></span>Add calendar</button>'}
-      <p class="hint">Sessions in more than one calendar are counted once. Removing a calendar removes its sessions and their marks.</p>
+      <p class="hint">A session in several calendars (like a lecture for every group) is stored and counted once, and labelled with each calendar's name. Use <b>Count</b> at the top to count only some of them.</p>
       ${syncLog()}
     </section>`;
 }
@@ -207,7 +207,10 @@ export function onClick(e) {
   }
   if (t.closest('[data-cal-remove]')) {
     const c = calendars().find((x) => x.id === id);
-    if (!confirm(`Remove "${c.name}"? Its ${plural(c.sessions, 'session')} and their attendance marks are deleted.${c.kind === 'link' ? ' It stops updating.' : ''}`)) return true;
+    // Only sessions no other calendar has are deleted; shared ones (e.g. lectures for all groups) stay.
+    const only = state.data.allEvents.filter((e) => e.cals.length === 1 && e.cals[0] === id).length;
+    const shared = c.sessions - only;
+    if (!confirm(`Remove "${c.name}"? ${only ? `${plural(only, 'session')} only in it, and their attendance marks, are deleted.` : 'No sessions are deleted.'}${shared ? ` ${plural(shared, 'shared session')} stay in your other calendars.` : ''}${c.kind === 'link' ? ' It stops updating.' : ''}`)) return true;
     api(`/api/calendars/${id}`, { method: 'DELETE' })
       .then((r) => refresh(`Removed ${c.name} (${plural(r.removed, 'session')}).`))
       .catch((err) => toast(err.message, true));

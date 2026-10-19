@@ -175,6 +175,25 @@ main { max-width: 800px; margin: 0 auto; padding: 4px 48px 96px; }
 .topbar .open-sidebar, .topbar .open-drawer { display: none; }
 body.sidebar-closed .topbar .open-sidebar { display: grid; }
 .topbar > .icon-btn:last-child { margin-left: auto; }
+
+/* Count: which calendars (groups) the attendance takes into account */
+.scope { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 8px; background: var(--hover); }
+.scope-label { padding: 0 6px 0 8px; color: var(--text-2); font-size: 12px; font-weight: 500; }
+.scope-chip {
+  height: 26px; padding: 0 10px; border: 0; border-radius: 6px; background: none; color: var(--text-2);
+  font: 500 12.5px var(--font); white-space: nowrap; cursor: pointer; transition: background-color .15s, color .15s;
+}
+.scope-chip:hover { color: var(--text); }
+.scope-chip[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .06); }
+.scope-chip[data-scope]:not([data-scope="all"])[aria-pressed="true"] { color: var(--accent); }
+.scope-note { color: var(--accent); }
+
+/* which calendar(s) a session or course is in */
+.chip.group { background: var(--accent-soft); color: var(--accent); }
+.chip.group.all { background: var(--hover); color: var(--text-3); }
+.row .title .chip.group, .card h4 + .chip.group { margin-left: 4px; }
+.sb-row .chip.group { flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; padding: 0 5px; font-size: 10.5px; line-height: 16px; }
+.brk-course .name .chip.group { font-size: 10.5px; line-height: 16px; padding: 0 5px; vertical-align: 1px; }
 .scrim { display: none; }
 
 /* phones: the sidebar becomes a drawer */
@@ -187,7 +206,8 @@ body.sidebar-closed .topbar .open-sidebar { display: grid; }
   .scrim { display: block; position: fixed; inset: 0; z-index: 45; background: rgba(0, 0, 0, .32); opacity: 0; pointer-events: none; transition: opacity .25s; }
   body.drawer-open .scrim { opacity: 1; pointer-events: auto; }
   .sb-top .icon-btn { display: none; }
-  .topbar { padding-top: env(safe-area-inset-top); height: calc(52px + env(safe-area-inset-top)); }
+  .topbar { flex-wrap: wrap; row-gap: 8px; height: auto; padding: calc(10px + env(safe-area-inset-top)) 12px 10px; }
+  .topbar .scope { order: 10; flex: 1 0 100%; overflow-x: auto; scrollbar-width: none; }
   .topbar .open-drawer { display: grid; }
   body.sidebar-closed .topbar .open-sidebar { display: none; }
   main { padding: 0 16px calc(80px + env(safe-area-inset-bottom)); }

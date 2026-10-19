@@ -1,5 +1,5 @@
 // Homework tab, overview panel, session badges and calendar-integration settings.
-import { state, esc, api, toast, render, reload, courseById, fmtTime } from './app.js';
+import { state, esc, api, toast, render, reload, courseById, fmtTime, groupLabel, courseGroups } from './app.js';
 
 const $app = document.getElementById('app');
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -58,7 +58,7 @@ function hwItem(hw, now = Date.now()) {
           <span class="due ${hw.done ? '' : bucket(hw, now)}"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>${esc(dueLabel(hw))}</span>
           ${hw.remind_minutes != null && !hw.done ? `<span title="Reminder">reminder ${esc(remind)}</span>` : ''}
           ${syncIcon(hw)}
-          ${course ? `<span class="hw-course"><svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg>${esc(course.name)}</span>` : ''}
+          ${course ? `<span class="hw-course"><svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg>${esc([course.name, groupLabel(courseGroups(course.id))].filter((x) => x && x !== 'All groups').join(' · '))}</span>` : ''}
         </div>
       </div>
       <div class="hw-actions">

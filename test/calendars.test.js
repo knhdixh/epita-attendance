@@ -40,30 +40,39 @@ test('links: Zeus links are normalised, other https/webcal calendars are kept, u
   }
 });
 
-test('calendars are independent: importing one never removes another\'s sessions', async () => {
+// Calendars each session is in, by uid: { uid: [calendar names] }.
+const memberships = (db) => Object.fromEntries(db.prepare(`SELECT e.uid, group_concat(s.name, '+') AS cals FROM events e
+  LEFT JOIN event_sources es ON es.event_id = e.id LEFT JOIN calendar_sources s ON s.id = es.source_id
+  WHERE e.user_id = 1 GROUP BY e.id ORDER BY e.uid`).all().map((r) => [r.uid, (r.cals || '').split('+').filter(Boolean).sort()]));
+
+test('a session shared by several group calendars is stored once and is in each of them', async () => {
   const { env, db, user } = setup();
-  const a = await addFile(env, user, { ics: ics(['a1', 'a2', ['shared', 'English']]), fileName: 'S3.ics' });
-  const b = await addFile(env, user, { ics: ics(['b1', ['shared', 'English']]), fileName: 'electives.ics', name: 'Electives' });
-  assert.deepEqual(uids(db), ['a1', 'a2', 'b1', 'shared']); // the shared session is stored once
-  assert.equal(db.prepare("SELECT source_id FROM events WHERE uid = 'shared'").get().source_id, b.calendar);
+  // Like three Zeus group links: one shared lecture, plus each group's own classes.
+  const se1 = await addFile(env, user, { ics: ics(['lecture', 'g1-td', 'g1-tp']), name: 'SE1' });
+  const se2 = await addFile(env, user, { ics: ics(['lecture']), name: 'SE2' });
+  const se3 = await addFile(env, user, { ics: ics(['lecture', 'g3-td']), name: 'SE3' });
+  assert.equal(se2.added, 0); // the lecture already existed: SE2 joins it instead of taking it from SE1
+  assert.deepEqual(memberships(db), { 'g1-td': ['SE1'], 'g1-tp': ['SE1'], 'g3-td': ['SE3'], lecture: ['SE1', 'SE2', 'SE3'] });
+  assert.deepEqual((await listCalendars(env, 1)).map((c) => [c.name, c.sessions]), [['SE1', 3], ['SE2', 1], ['SE3', 2]]);
 
-  // Re-uploading A without a2 removes a2 only; B's b1 stays. A takes the shared session back.
-  const r = await replaceFile(env, user, a.calendar, { ics: ics(['a1', ['shared', 'English']]), fileName: 'S3 v2.ics' });
+  // SE1 drops the lecture and g1-tp: g1-tp goes; the lecture stays, still in SE2 and SE3.
+  const r = await replaceFile(env, user, se1.calendar, { ics: ics(['g1-td']), fileName: 'SE1 v2.ics' });
   assert.equal(r.removed, 1);
-  assert.deepEqual(uids(db), ['a1', 'b1', 'shared']);
+  assert.deepEqual(memberships(db), { 'g1-td': ['SE1'], 'g3-td': ['SE3'], lecture: ['SE2', 'SE3'] });
 
-  const list = await listCalendars(env, 1);
-  assert.deepEqual(list.map((c) => [c.name, c.kind, c.fileName, c.sessions]), [['S3', 'file', 'S3 v2.ics', 2], ['Electives', 'file', 'electives.ics', 1]]);
+  // A marked past session that SE3 drops stays in SE3, so it still counts under that group.
+  db.exec("UPDATE events SET status = 'present' WHERE uid = 'g3-td'");
+  await replaceFile(env, user, se3.calendar, { ics: ics(['lecture']) });
+  assert.deepEqual(memberships(db)['g3-td'], ['SE3']);
 
-  // Removing B removes its session and the course left empty; another user is untouched.
+  // Removing SE3 deletes only what no other calendar has; the lecture stays in SE2.
   db.exec("INSERT INTO courses (id, user_id, key, name) VALUES (99, 2, 'x', 'X')");
-  await updateCalendar(env, user, b.calendar, { name: '  Options  ' });
-  assert.equal((await listCalendars(env, 1))[1].name, 'Options');
-  assert.deepEqual(await removeCalendar(env, user, b.calendar), { removed: 1 });
-  assert.deepEqual(uids(db), ['a1', 'shared']);
-  assert.deepEqual(db.prepare('SELECT name FROM courses WHERE user_id = 1 ORDER BY name').all().map((c) => c.name), ['English', 'Maths']);
-  assert.equal(db.prepare('SELECT COUNT(*) n FROM courses WHERE user_id = 2').get().n, 1);
-  await assert.rejects(removeCalendar(env, { id: 2 }, a.calendar), { status: 404 }); // not theirs
+  await updateCalendar(env, user, se2.calendar, { name: '  Group 2  ' });
+  assert.equal((await listCalendars(env, 1))[1].name, 'Group 2');
+  assert.deepEqual(await removeCalendar(env, user, se3.calendar), { removed: 1 });
+  assert.deepEqual(memberships(db), { 'g1-td': ['SE1'], lecture: ['Group 2'] });
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM courses WHERE user_id = 2').get().n, 1); // another user is untouched
+  await assert.rejects(removeCalendar(env, { id: 2 }, se1.calendar), { status: 404 }); // not theirs
 });
 
 test('new courses made only of all-day events (holidays, term dates) start untracked', async () => {
@@ -129,7 +138,7 @@ test('the cron refreshes one overdue link per run, logs it, retries failures soo
   assert.deepEqual(await syncDueCalendars(env, now), { due: 1, ok: 1, failed: 0 });
   assert.deepEqual(await syncDueCalendars(env, now), { due: 0, ok: 0, failed: 0 });
   assert.deepEqual(calls, ['https://zeus.ionis-it.com/api/group/9/ics/revokedtoken', `${LINK}?startDate=2026-09-01`]);
-  assert.deepEqual(uids(db, 'source_id = 1'), ['e1', 'e2']);
+  assert.deepEqual(uids(db, 'id IN (SELECT event_id FROM event_sources WHERE source_id = 1)'), ['e1', 'e2']);
   const [s1, s2] = db.prepare('SELECT ok_at, synced_at, error FROM calendar_sources WHERE id IN (1, 2) ORDER BY id').all();
   assert.ok(s1.ok_at && !s1.error);
   assert.match(s2.error, /no longer accepts/);
@@ -152,7 +161,7 @@ test('the cron refreshes one overdue link per run, logs it, retries failures soo
   db.exec("UPDATE events SET status = 'present' WHERE uid = 'e1'");
   t.mock.method(globalThis, 'fetch', async () => new Response(ics(['e3'])));
   for (let i = 0; i < 3; i++) await syncDueCalendars(env, now + 72 * H);
-  assert.deepEqual(uids(db, 'source_id = 1'), ['e1', 'e3']);
+  assert.deepEqual(uids(db, 'id IN (SELECT event_id FROM event_sources WHERE source_id = 1)'), ['e1', 'e3']);
   assert.equal(db.prepare('SELECT removed FROM calendar_syncs WHERE source_id = 1 ORDER BY id DESC').get().removed, 1);
 });
 
@@ -168,7 +177,7 @@ test('removing a break restores only the sessions still there and still absent',
   assert.deepEqual(db.prepare('SELECT id, status FROM events ORDER BY id').all().map((r) => [r.id, r.status]), [[1, null], [2, 'present']]);
 });
 
-test('migration 0009 turns each user\'s link or upload into a calendar and keeps every mark', () => {
+test('migrations 0009 and 0010 turn each user\'s link or upload into a calendar with its sessions and marks', () => {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON;');
   const files = fs.readdirSync('migrations').sort();
@@ -181,12 +190,14 @@ test('migration 0009 turns each user\'s link or upload into a calendar and keeps
       (1, 1, 'a', 'Maths', 1, 2, 300, 'present'), (2, 2, 'a', 'Maths', 1, 2, 700, NULL);
     INSERT INTO calendar_syncs (user_id, at, source, ok, duration_ms) VALUES (1, 400, 'cron', 1, 5), (2, 100, 'manual', 1, 5);`);
   for (const f of files.filter((f) => f >= '0009')) db.exec(fs.readFileSync(`migrations/${f}`, 'utf8'));
+  // Links are queued for a re-import (synced_at NULL), which restores memberships of shared sessions.
   assert.deepEqual(db.prepare('SELECT user_id, kind, url, from_date, synced_at, ok_at FROM calendar_sources ORDER BY user_id').all().map((r) => ({ ...r })), [
-    { user_id: 1, kind: 'link', url: LINK, from_date: '2026-09-01', synced_at: 500, ok_at: 400 },
+    { user_id: 1, kind: 'link', url: LINK, from_date: '2026-09-01', synced_at: null, ok_at: 400 },
     { user_id: 2, kind: 'file', url: null, from_date: null, synced_at: null, ok_at: 700 },
   ]);
-  assert.deepEqual(db.prepare('SELECT user_id, source_id, status FROM events ORDER BY user_id').all().map((r) => ({ ...r })),
-    [{ user_id: 1, source_id: 1, status: 'present' }, { user_id: 2, source_id: 2, status: null }]);
+  assert.deepEqual(db.prepare(`SELECT e.user_id, es.source_id, e.status FROM events e JOIN event_sources es ON es.event_id = e.id
+    ORDER BY e.user_id`).all().map((r) => ({ ...r })), [{ user_id: 1, source_id: 1, status: 'present' }, { user_id: 2, source_id: 2, status: null }]);
+  assert.ok(!db.prepare('PRAGMA table_info(events)').all().some((c) => ['source_id', 'seen_at'].includes(c.name)));
   assert.deepEqual(db.prepare('SELECT user_id, source_id FROM calendar_syncs').all().map((r) => ({ ...r })), [{ user_id: 1, source_id: 1 }]);
   assert.ok(!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name.startsWith('ics_')));
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);

@@ -14,6 +14,7 @@ const $sbCourses = document.getElementById('sb-courses');
 const $accountBtn = document.getElementById('account-btn');
 const $accountMenu = document.getElementById('account-menu');
 const $topTitle = document.getElementById('topbar-title');
+const $scope = document.getElementById('scope');
 const $toast = document.getElementById('toast');
 
 const state = {
@@ -97,7 +98,85 @@ async function boot() {
 }
 
 async function reload() {
-  state.data = await api('/api/data');
+  const data = await api('/api/data');
+  data.allEvents = data.events;
+  state.data = data;
+  applyScope();
+}
+
+// ---------------------------------------------------------------- groups (calendars)
+// A session can be in several calendars, e.g. a lecture shared by groups SE1, SE2 and SE3 (e.cals lists them).
+// The scope picks which calendars count: every view and all the attendance maths only see sessions in at least
+// one of them (state.data.events), while state.data.allEvents keeps everything. An empty scope means all.
+
+const SCOPE_KEY = 'a80-scope';
+
+function applyScope() {
+  const d = state.data;
+  const valid = new Set(d.calendars.map((c) => c.id));
+  let saved = state.scope;
+  if (!saved) { try { saved = JSON.parse(localStorage.getItem(SCOPE_KEY) || '[]'); } catch { saved = []; } }
+  const scope = Array.isArray(saved) ? saved.filter((id) => valid.has(id)) : [];
+  state.scope = scope.length < valid.size ? scope : [];
+  const on = new Set(state.scope);
+  d.events = on.size ? d.allEvents.filter((e) => !e.cals.length || e.cals.some((c) => on.has(c))) : d.allEvents;
+  // The calendars each course has sessions in (from all sessions, so labels don't change with the scope).
+  d.courseCals = new Map();
+  for (const e of d.allEvents) {
+    if (!d.courseCals.has(e.course_id)) d.courseCals.set(e.course_id, new Set());
+    for (const c of e.cals) d.courseCals.get(e.course_id).add(c);
+  }
+}
+
+function setScope(ids) {
+  state.scope = ids;
+  try { localStorage.setItem(SCOPE_KEY, JSON.stringify(ids)); } catch { /* storage unavailable */ }
+  applyScope();
+  render();
+}
+
+// "SE1 · SE3" for the calendars a session or course is in, "All groups" when it's in every one, and nothing
+// when the user has a single calendar.
+function groupLabel(ids) {
+  const cals = state.data.calendars;
+  const set = new Set(ids || []);
+  const names = cals.filter((c) => set.has(c.id)).map((c) => c.name); // in the order of the calendar list
+  if (cals.length < 2 || !names.length) return '';
+  return names.length === cals.length ? 'All groups' : names.join(' · ');
+}
+
+// The label as a chip. `all: false` leaves out "All groups" where space is tight (sidebar).
+function groupChip(ids, { all = true } = {}) {
+  const label = groupLabel(ids);
+  if (!label || (!all && label === 'All groups')) return '';
+  return `<span class="chip group${label === 'All groups' ? ' all' : ''}" title="Calendars: ${esc(label)}">${esc(label)}</span>`;
+}
+const courseGroups = (courseId) => state.data.courseCals.get(courseId);
+
+// "SE1 + SE3" when only some calendars count, for page subtitles.
+function scopeNote() {
+  if (!state.scope.length) return '';
+  const names = new Map(state.data.calendars.map((c) => [c.id, c.name]));
+  return `Counting ${state.scope.map((id) => names.get(id)).join(' + ')} only`;
+}
+
+// The toggle in the top bar: All, or any combination of calendars.
+function renderScope(view) {
+  const cals = state.data.calendars;
+  $scope.hidden = cals.length < 2 || view === 'empty';
+  if ($scope.hidden) return;
+  const on = new Set(state.scope);
+  const chip = (id, label, pressed) => `<button class="scope-chip" data-scope="${id}" aria-pressed="${pressed}">${esc(label)}</button>`;
+  $scope.innerHTML = `<span class="scope-label">Count</span>${chip('all', 'All', !on.size)}${cals.map((c) => chip(c.id, c.name, on.has(c.id))).join('')}`;
+}
+
+// From "all", a calendar alone; otherwise toggle it. None or every calendar means all again.
+function toggleScope(value) {
+  if (value === 'all') return setScope([]);
+  const id = Number(value);
+  const on = new Set(state.scope);
+  if (!on.size) on.add(id); else if (on.has(id)) on.delete(id); else on.add(id);
+  setScope(on.size >= state.data.calendars.length ? [] : [...on]);
 }
 
 async function renderLogin() {
@@ -152,6 +231,7 @@ function render() {
   lastView = view;
 
   renderSidebar(view);
+  renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
     ({ overview: renderOverview, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
@@ -175,13 +255,15 @@ const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label
 
 // The small grey text on the right of the page title.
 function pageSub() {
-  if (state.tab === 'overview') return esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
+  const scope = ['overview', 'sessions', 'courses', 'breaks'].includes(state.tab) ? scopeNote() : '';
+  const parts = [];
+  if (state.tab === 'overview') parts.push(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
   if (state.tab === 'homework') {
     const open = state.data.homework.filter((h) => !h.done).length;
-    return open ? `${open} open` : '';
+    if (open) parts.push(`${open} open`);
   }
-  if (state.tab === 'sessions' && state.shownIds) return `${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`;
-  return '';
+  if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
+  return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
 }
 
 const unmarkedEvents = () => trackedEvents().filter((e) => e.start_at <= Date.now() && !e.status);
@@ -209,7 +291,7 @@ function renderSidebar(view) {
   const courseFocus = state.tab === 'sessions' && state.filter.course !== 'all' ? state.filter.course : null;
   $sbCourses.innerHTML = tracked.map(({ course, stats }) => `
     <button class="sb-row ${stats.level}" data-course-open="${course.id}" title="${esc(course.name)}: ${esc(skipsLeft(stats))}" ${String(course.id) === courseFocus ? 'aria-current="page"' : ''}>
-      <svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg><span class="label">${esc(course.name)}</span>
+      <svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg><span class="label">${esc(course.name)}</span>${groupChip(courseGroups(course.id), { all: false })}
       <span class="count">${stats.remaining < -1e-9 ? '!' : fmtNum(stats.remainingDisplay)}</span>
     </button>`).join('') || '<p class="empty">No tracked courses.</p>';
 
@@ -360,6 +442,7 @@ function courseCard(course, s, i) {
     <article class="card ${s.level}" data-course-open="${course.id}" tabindex="0">
       <header>
         <h4>${esc(course.name)}</h4>
+        ${groupChip(courseGroups(course.id))}
         ${course.tag !== 'normal' ? `<span class="chip tag-${course.tag}">${TAGS[course.tag].label.toLowerCase()}</span>` : ''}
       </header>
       <div class="headline">${skipsLeft(s)}<span class="chev" aria-hidden="true">›</span></div>
@@ -390,7 +473,7 @@ function sessionRow(e, { showDate = false } = {}) {
         <div>${fmtTime(e.start_at)}</div><div>${fmtTime(e.end_at)}</div>
       </div>
       <div class="what">
-        <div class="title">${esc(e.summary)}</div>
+        <div class="title">${esc(e.summary)} ${groupChip(e.cals)}</div>
         <div class="loc muted small">${esc(e.location)}${e.note ? ` · <em>${esc(e.note)}</em>` : ''}</div>
         ${hw.homeworkForSession(e).map((h) => `<a class="hw-badge" href="#homework" data-hw-open="${h.id}" title="Homework due at this session"><svg class="ic sm" aria-hidden="true"><use href="#i-homework"/></svg>${esc(h.title)}</a>`).join('')}
       </div>
@@ -505,7 +588,7 @@ function renderCourses() {
           ${perCourse.map(({ course: c, stats: s }) => `
             <tr class="${c.tracked ? '' : 'off'}" data-course="${c.id}">
               <td><label class="checkbox"><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"><span></span></label></td>
-              <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a>${groupedIds.has(c.id) ? ' <span class="chip">group</span>' : ''}</td>
+              <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a> ${groupChip(courseGroups(c.id))}${groupedIds.has(c.id) ? ' <span class="chip">group split</span>' : ''}</td>
               <td><div class="select"><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div></td>
               <td class="num">${count(c.id)}</td>
               <td class="num">${hours(c.id)}</td>
@@ -722,7 +805,8 @@ function paletteItems() {
     for (const { course, stats } of perCourse) {
       items.push({
         id: `course:${course.id}`, section: 'Courses', label: course.name, icon: 'i-hash', tone: course.tracked ? stats.level : '',
-        sub: course.tracked ? skipsLeft(stats) : 'not tracked', keywords: 'course', run: () => openCourse(course.id),
+        sub: [course.tracked ? skipsLeft(stats) : 'not tracked', groupLabel(courseGroups(course.id))].filter(Boolean).join(' · '),
+        keywords: 'course', run: () => openCourse(course.id),
       });
     }
     const byId = courseById();
@@ -738,7 +822,8 @@ function paletteItems() {
     for (const ev of next.values()) {
       items.push({
         id: `ev:${ev.id}`, section: 'Sessions', label: ev.summary, icon: 'i-sessions',
-        sub: `${fmtShort(ev.start_at)} ${fmtTime(ev.start_at)}${ev.location ? ` · ${ev.location}` : ''}`, run: () => showSession(ev.id),
+        sub: [`${fmtShort(ev.start_at)} ${fmtTime(ev.start_at)}`, ev.location, groupLabel(ev.cals)].filter(Boolean).join(' · '),
+        run: () => showSession(ev.id),
       });
     }
   }
@@ -785,6 +870,8 @@ document.addEventListener('click', async (e) => {
   if (t.closest('#account-menu button')) toggleMenu(false);
   const tab = t.closest('[data-tab]');
   if (tab) return go(tab.dataset.tab);
+  const scope = t.closest('[data-scope]');
+  if (scope) return toggleScope(scope.dataset.scope);
 
   if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
@@ -969,4 +1056,4 @@ boot().catch((err) => {
   $app.innerHTML = `<p class="error">Failed to load: ${esc(err.message)}</p>`;
 });
 
-export { state, esc, api, toast, render, reload, courseById, fmtTime };
+export { state, esc, api, toast, render, reload, courseById, fmtTime, groupChip, groupLabel, courseGroups };
