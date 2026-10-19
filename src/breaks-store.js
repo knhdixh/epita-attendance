@@ -11,22 +11,22 @@ export async function loadPlanningData(env, user) {
   return { courses: courses.results, events: events.results };
 }
 
-export function planningModel(data, user, tz) {
-  return breakModel({ ...data, threshold: user.threshold, unit: user.unit, tz });
+export function planningModel(data, user, tz, now = Date.now()) {
+  return breakModel({ ...data, threshold: user.threshold, unit: user.unit, tz, now });
 }
 
 // Marks every future, counted session in the range as a planned absence and records the break.
-export async function saveBreak(env, user, { from, to, label = '', tz }) {
+export async function saveBreak(env, user, { from, to, label = '', tz, now = Date.now() }) {
   if (!isDate(from) || !isDate(to) || to < from) throw new HttpError(400, 'Invalid break dates.');
   if (!isValidTimeZone(tz)) throw new HttpError(400, 'Invalid time zone.');
   if (typeof label !== 'string' || label.length > 100) throw new HttpError(400, 'Label is too long.');
-  const sim = simulateBreak(planningModel(await loadPlanningData(env, user), user, tz), from, to);
+  const sim = simulateBreak(planningModel(await loadPlanningData(env, user), user, tz, now), from, to);
   const changes = sim.sessions.map((e) => ({ id: e.id, from: e.status }));
   const statements = sim.sessions.map((e) =>
     env.DB.prepare(`UPDATE events SET status = 'absent' WHERE id = ? AND user_id = ?`).bind(e.id, user.id));
   statements.push(env.DB.prepare(`INSERT INTO breaks (user_id, label, start_date, end_date, changes, created_at)
     VALUES (?, ?, ?, ?, ?, ?) RETURNING id, label, start_date, end_date, changes, created_at`)
-    .bind(user.id, label.trim(), sim.from, to, JSON.stringify(changes), Date.now()));
+    .bind(user.id, label.trim(), sim.from, to, JSON.stringify(changes), now));
   const results = await env.DB.batch(statements);
   return { break: results.at(-1).results[0], simulation: sim };
 }

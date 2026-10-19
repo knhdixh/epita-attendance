@@ -277,14 +277,14 @@ function resolveRange(args, now, tz) {
   return { from, to };
 }
 
-function describeBreak(sim, data, user, tz) {
+function describeBreak(sim, data, user, tz, now) {
   const verdict = { ok: 'safe', risk: 'possible, but leaves no spare skips in some course', fail: 'not possible without dropping below the minimum or missing an exam/mandatory session' }[sim.level];
   return {
     break: `${sim.from} to ${sim.to} (${sim.days} days)`,
     verdict: sim.sessions.length ? verdict : 'no classes in that period',
     sessions_skipped: sim.sessions.length,
     courses: sim.courses.map((c) => ({ course: c.course.name, sessions_skipped: c.skipped, after: statsSummary(c.after, user.unit) })),
-    exam_or_mandatory_conflicts: sim.conflicts.map((e) => sessionLine(e, data, tz, Date.now())),
+    exam_or_mandatory_conflicts: sim.conflicts.map((e) => sessionLine(e, data, tz, now)),
     school_holiday_days: sim.holidayDays,
   };
 }
@@ -293,7 +293,7 @@ const asIds = (v) => (Array.isArray(v) ? v : [v]).map(Number).filter(Number.isIn
 
 async function runTool(name, args, ctx) {
   const { env, user, tz, origin } = ctx;
-  const now = Date.now();
+  const now = ctx.now ?? Date.now(); // tests pin the clock through ctx.now
   const opts = { threshold: user.threshold, unit: user.unit, now };
   const data = ctx.data;
   const ownSessions = (ids) => {
@@ -333,7 +333,7 @@ async function runTool(name, args, ctx) {
     }
 
     case 'add_homework': {
-      const dueDate = resolveDay(args.due ?? args.due_date, Date.now(), tz);
+      const dueDate = resolveDay(args.due ?? args.due_date, now, tz);
       if (!dueDate) return { error: `Could not understand the due day "${args.due}". Use a weekday name, "tomorrow", or YYYY-MM-DD.` };
       const body = {
         title: args.title, notes: args.notes || '', course_id: args.course_id ?? null,
@@ -368,14 +368,14 @@ async function runTool(name, args, ctx) {
       const range = resolveRange(args, now, tz);
       if (range.error) return range;
       if (name === 'save_break') {
-        const r = await saveBreak(env, user, { from: range.from, to: range.to, label: args.label || '', tz });
+        const r = await saveBreak(env, user, { from: range.from, to: range.to, label: args.label || '', tz, now });
         ctx.actions.push({ type: 'break_saved', break: r.break, sessions: r.simulation.sessions.length });
         const marked = new Set(r.simulation.sessions.map((e) => e.id));
         for (const e of data.events) if (marked.has(e.id)) e.status = 'absent';
         data.breaks.push(r.break);
-        return { saved: `${range.from} to ${range.to}`, sessions_marked_absent: r.simulation.sessions.length, ...describeBreak(r.simulation, data, user, tz) };
+        return { saved: `${range.from} to ${range.to}`, sessions_marked_absent: r.simulation.sessions.length, ...describeBreak(r.simulation, data, user, tz, now) };
       }
-      return describeBreak(simulateBreak(planningModel(data, user, tz), range.from, range.to), data, user, tz);
+      return describeBreak(simulateBreak(planningModel(data, user, tz, now), range.from, range.to), data, user, tz, now);
     }
 
     case 'find_break': {
@@ -383,7 +383,7 @@ async function runTool(name, args, ctx) {
       if (!(days >= 1 && days <= 60)) return { error: 'days must be between 1 and 60.' };
       const from = isDate(args.from) ? args.from : undefined;
       const to = isDate(args.to) ? args.to : undefined;
-      const m = planningModel(data, user, tz);
+      const m = planningModel(data, user, tz, now);
       const { windows, longest } = findBreakWindows(m, { days, from, to });
       const label = (d) => `${parts(Date.parse(d + 'T12:00:00Z'), 'UTC').weekday} ${d}`;
       const noSkip = m.noSkip.length ? `These courses allow no absences at all: ${m.noSkip.map((c) => c.name).join(', ')}.` : undefined;
@@ -401,7 +401,7 @@ async function runTool(name, args, ctx) {
     }
 
     case 'skippable_weeks': {
-      const weeks = weekOverview(planningModel(data, user, tz), Math.min(16, Number(args.weeks) || 10));
+      const weeks = weekOverview(planningModel(data, user, tz, now), Math.min(16, Number(args.weeks) || 10));
       return {
         weeks: weeks.map((w) => `${w.from} to ${w.to}: ${{ free: 'no classes', ok: 'safe to skip', risk: 'possible but leaves no skips in some course', fail: 'not possible' }[w.level]}`
           + `${w.sessions ? ` (${w.sessions} sessions)` : ''}${w.holidayDays ? `, ${w.holidayDays} school-holiday days` : ''}${w.blockers.length ? ` — ${w.blockers.join('; ')}` : ''}`),

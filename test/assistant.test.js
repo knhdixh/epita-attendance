@@ -12,7 +12,7 @@ async function loadCtx() {
   const db = env.DB.raw;
   const courses = db.prepare('SELECT id, name, tracked, tag FROM courses').all();
   return {
-    env, user, tz: 'Europe/Paris', origin: 'https://app', actions: [],
+    env, user, tz: 'Europe/Paris', origin: 'https://app', actions: [], now: NOW,
     data: {
       courses, events: db.prepare('SELECT * FROM events ORDER BY start_at').all(),
       homework: db.prepare('SELECT * FROM homework').all(), breaks: [], byId: Object.fromEntries(courses.map((c) => [c.id, c])),
