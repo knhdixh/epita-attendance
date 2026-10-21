@@ -9,6 +9,10 @@ import { saveAiKey, deleteAiKey } from './llm.js';
 import { deleteAccount } from './account.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
+import { createCatchup, setRecordingUrl } from './catchups.js';
+import { userFromToken, tokenAllows, listTokens, createToken, revokeToken } from './tokens.js';
+import { buildPlan } from '../public/plan.js';
+import { isValidTimeZone } from './homework.js';
 import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
   syncDueCalendars, wipeCalendars,
@@ -256,7 +260,7 @@ async function handleApi(request, env, url, user) {
 
   if (path === '/api/data' && method === 'GET') {
     const [courses, events, homework, link, breaks, syncs] = await DB.batch([
-      DB.prepare('SELECT id, name, tracked, tag FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
+      DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
         FROM events WHERE user_id = ? ORDER BY start_at`).bind(user.id),
@@ -285,6 +289,37 @@ async function handleApi(request, env, url, user) {
       calendarSyncs: syncs.results,
     });
   }
+
+  // The day plan (see public/plan.js) with the sessions, to-dos and courses it refers to, for scripts.
+  // ?tz=Europe/Helsinki sets the day boundaries (default: the time zone of the request's location).
+  if (path === '/api/plan' && method === 'GET') {
+    const tz = [url.searchParams.get('tz'), request.cf?.timezone, 'Europe/Paris'].find((z) => z && isValidTimeZone(z));
+    const now = Date.now();
+    const [courses, events, homework, cals] = await DB.batch([
+      DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
+      DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note,
+          (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
+        FROM events WHERE user_id = ? AND end_at > ? AND start_at < ? ORDER BY start_at`).bind(user.id, now - 14 * 86400000, now + 21 * 86400000),
+      DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND (done = 0 OR due_at > ?) ORDER BY due_at`).bind(user.id, now - 14 * 86400000),
+      DB.prepare('SELECT id, name, attendance FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id').bind(user.id),
+    ]);
+    const evs = events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals) }));
+    const hw = homework.results.map(({ gcal_event_id: _, sync_error: __, ...h }) => h);
+    return json({
+      plan: buildPlan({ courses: courses.results, events: evs, homework: hw, now, tz }),
+      courses: courses.results, calendars: cals.results.map((c) => ({ ...c, attendance: Boolean(c.attendance) })),
+      sessions: evs, homework: hw,
+      attendance: { threshold: user.threshold, unit: user.unit },
+    });
+  }
+
+  if (path === '/api/catchups' && method === 'POST') {
+    return json(await createCatchup(env, user, await readJson(request), url.origin));
+  }
+
+  if (path === '/api/tokens' && method === 'GET') return json({ tokens: await listTokens(env, user) });
+  if (path === '/api/tokens' && method === 'POST') return json(await createToken(env, user, await readJson(request), randomToken));
+  if ((m = path.match(/^\/api\/tokens\/(\d+)$/)) && method === 'DELETE') return json(await revokeToken(env, user, Number(m[1])));
 
   if (path === '/api/ai-key' && method === 'PUT') {
     // Tests the key against the provider before saving it (encrypted).
@@ -403,6 +438,10 @@ async function handleApi(request, env, url, user) {
     const body = await readJson(request);
     const sets = [], vals = [];
     if ('tracked' in body) { sets.push('tracked = ?'); vals.push(body.tracked ? 1 : 0); }
+    if ('recording_url' in body) {
+      await setRecordingUrl(env, user, Number(m[1]), body.recording_url);
+      if (sets.length === 0 && !('tag' in body)) return json({ ok: true });
+    }
     if ('tag' in body) {
       if (!validTag(body.tag)) throw new HttpError(400, 'Invalid tag.');
       sets.push('tag = ?'); vals.push(body.tag);
@@ -473,6 +512,16 @@ export default {
       if (url.pathname.startsWith('/auth/')) return await handleAuth(request, env, url);
       if (url.pathname.startsWith('/feed/')) return await handleFeed(env, url);
       if (url.pathname.startsWith('/api/')) {
+        const bearer = request.headers.get('Authorization');
+        if (bearer) {
+          const user = await userFromToken(env, bearer);
+          if (!user) throw new HttpError(401, 'Invalid or revoked token.');
+          if (!tokenAllows(user.tokenScope, request.method, url.pathname)) {
+            throw new HttpError(403, user.tokenScope === 'read' && request.method !== 'GET'
+              ? 'This token can only read. Create a read and write token in Settings.' : 'Tokens can\'t use this endpoint.');
+          }
+          return await handleApi(request, env, url, user);
+        }
         const user = await currentUser(request, env);
         if (url.pathname === '/api/me') return json({ user: user && { email: user.email, name: user.name, picture: user.picture } });
         if (!user) throw new HttpError(401, 'Not signed in.');

@@ -23,6 +23,29 @@ const CRON_LOG_KEEP = 200;
 
 export const courseKey = (summary) => summary.toLowerCase().replace(/\s+/g, ' ').trim();
 
+// Sisu (Tampere University and other Finnish universities) titles each session
+// "COMP.CS.410, Operating Systems and Concurrency, Lectures 24.8.–5.12.2026 - Common - Lecture: Luennot 2 - TAU Festia …":
+// code, course name, teaching implementation, then " - "-separated parts, one of them the kind ("Lecture:",
+// "Group 1: Viikkoharjoitukset"). Older entries are just "DATA.DB.100 Q&A". The course is the code, so every
+// lecture, exercise group and year of a course lands in one course.
+export const isSisu = (text) => /^PRODID:[^\r\n]*SISU/im.test(text.slice(0, 2000));
+const SISU_TITLE = /^(?:CANCELLED! )?([A-Z][A-Z0-9-]*(?:\.[A-Z0-9-]+)*\.\d[\dA-Z-]*)(?:, ([^,]+), (.*)| (.*))?$/;
+
+export function sisuSession(summary) {
+  const m = SISU_TITLE.exec(summary);
+  if (!m) return null;
+  const [, code, name, rest, short] = m;
+  const kind = rest
+    ? (rest.split(' - ').find((p) => /^[^:]{1,40}:/.test(p)) || '').replace(/:\s*$/, '').replace(/:\s+/, ': ').trim()
+    : (short || '').trim();
+  const course = name?.trim() || code;
+  return { key: `sisu:${code.toLowerCase()}`, course, summary: kind ? `${course} · ${kind}` : course };
+}
+
+// Calendars that don't count attendance only need recent sessions (for catch-ups); older ones are dropped.
+const NO_ATTENDANCE_HISTORY_DAYS = 60;
+const ymd = (ms) => new Date(ms).toISOString().slice(0, 10).replace(/-/g, '');
+
 // ---------------------------------------------------------------- import
 
 // Imports (or re-imports) one calendar's .ics text. Sessions are matched by UID, so marks survive an updated
@@ -31,8 +54,12 @@ export const courseKey = (summary) => summary.toLowerCase().replace(/\s+/g, ' ')
 // - future ones with a note. A future session that was only marked (e.g. a planned skip) or tagged is removed,
 //   since a cancelled class must not keep counting as an absence.
 // A kept session stays in this calendar, so it still shows (and counts) under its group.
+// Courses a calendar creates take its attendance setting.
 export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
-  const { events, recurring } = parseICS(text);
+  const src = await env.DB.prepare('SELECT attendance FROM calendar_sources WHERE id = ?').bind(sourceId).first();
+  const attendance = src ? src.attendance : 1;
+  const sisu = isSisu(text);
+  const { events, recurring } = parseICS(text, { since: attendance ? null : ymd(now - NO_ATTENDANCE_HISTORY_DAYS * 86400000) });
   const seen = new Map();
   let cancelled = 0;
   for (const ev of events) {
@@ -46,13 +73,14 @@ export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
   const courses = new Map();
   const rows = [];
   for (const ev of seen.values()) {
-    const key = courseKey(ev.summary);
+    const s = (sisu && sisuSession(ev.summary)) || { key: courseKey(ev.summary), course: ev.summary, summary: ev.summary };
+    const { key } = s;
     if (!courses.has(key)) {
-      const tracked = NON_CLASS.test(ev.summary) || splitGroup(ev.summary) ? 0 : 1;
-      courses.set(key, { key, name: ev.summary, tracked, allDayOnly: true });
+      const tracked = NON_CLASS.test(s.course) || (!sisu && splitGroup(s.course)) ? 0 : 1;
+      courses.set(key, { key, name: s.course, tracked, attendance, allDayOnly: true });
     }
     if (!ev.allDay) courses.get(key).allDayOnly = false;
-    rows.push({ key, uid: ev.uid, summary: ev.summary, location: ev.location,
+    rows.push({ key, uid: ev.uid, summary: s.summary, location: ev.location,
       description: ev.description, start: ev.start, end: ev.end });
   }
 
@@ -63,8 +91,9 @@ export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
 
   // json_each keeps this to a handful of queries regardless of calendar size.
   const results = await env.DB.batch([
-    env.DB.prepare(`INSERT INTO courses (user_id, key, name, tracked, tag)
-      SELECT ?1, json_extract(value, '$.key'), json_extract(value, '$.name'), json_extract(value, '$.tracked'), 'normal'
+    env.DB.prepare(`INSERT INTO courses (user_id, key, name, tracked, tag, attendance)
+      SELECT ?1, json_extract(value, '$.key'), json_extract(value, '$.name'), json_extract(value, '$.tracked'), 'normal',
+        json_extract(value, '$.attendance')
       FROM json_each(?2) WHERE true
       ON CONFLICT (user_id, key) DO NOTHING`)
       .bind(userId, JSON.stringify([...courses.values()].map((c) => ({ ...c, tracked: c.allDayOnly ? 0 : c.tracked })))),
@@ -137,7 +166,7 @@ async function loggedImport(env, userId, sourceId, trigger, load) {
 
 // ---------------------------------------------------------------- calendars
 
-const SOURCE_COLUMNS = 'id, user_id, kind, name, url, from_date, file_name, synced_at, ok_at, error, created_at';
+const SOURCE_COLUMNS = 'id, user_id, kind, name, url, from_date, file_name, synced_at, ok_at, error, created_at, attendance';
 
 async function ownSource(env, user, id) {
   const s = await env.DB.prepare(`SELECT ${SOURCE_COLUMNS} FROM calendar_sources WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
@@ -174,6 +203,7 @@ export async function listCalendars(env, userId) {
   return sources.results.map((s) => ({
     id: s.id, kind: s.kind, name: s.name, site: s.url ? linkSite(s.url) : null, from: s.from_date, fileName: s.file_name,
     checkedAt: s.synced_at, okAt: s.ok_at, error: s.error, sessions: n.get(s.id) || 0, createdAt: s.created_at,
+    attendance: Boolean(s.attendance),
   }));
 }
 
@@ -193,9 +223,10 @@ export async function addLink(env, user, body) {
     throw new HttpError(409, 'This calendar is already added.');
   }
   const from = body.from || link.from || (link.zeus ? await firstClassDate(env, user.id) : null);
+  const attendance = attendanceFor(body, link.sisu);
   const now = Date.now();
-  const { id } = await env.DB.prepare(`INSERT INTO calendar_sources (user_id, kind, name, url, from_date, synced_at, created_at)
-    VALUES (?, 'link', ?, ?, ?, ?, ?) RETURNING id`).bind(user.id, name, link.url, from, now, now).first();
+  const { id } = await env.DB.prepare(`INSERT INTO calendar_sources (user_id, kind, name, url, from_date, synced_at, created_at, attendance)
+    VALUES (?, 'link', ?, ?, ?, ?, ?, ?) RETURNING id`).bind(user.id, name, link.url, from, now, now, attendance).first();
   try {
     const result = await loggedImport(env, user.id, id, 'connect', () => fetchCalendar(link.url, from, MAX_ICS_BYTES));
     await env.DB.prepare('UPDATE calendar_sources SET ok_at = ? WHERE id = ?').bind(Date.now(), id).run();
@@ -204,6 +235,13 @@ export async function addLink(env, user, body) {
     await removeById(env, user.id, id);
     throw e;
   }
+}
+
+// Attendance counts unless the request says otherwise, or the calendar is a Sisu one (Finnish universities don't
+// take attendance the way EPITA does).
+function attendanceFor(body, sisu) {
+  if (typeof body.attendance === 'boolean') return body.attendance ? 1 : 0;
+  return sisu ? 0 : 1;
 }
 
 function icsText(body) {
@@ -220,8 +258,8 @@ export async function addFile(env, user, body) {
   const name = cleanName(body.name, file?.replace(/\.ics$/i, '') || 'Calendar');
   await roomFor(env, user);
   const now = Date.now();
-  const { id } = await env.DB.prepare(`INSERT INTO calendar_sources (user_id, kind, name, file_name, created_at)
-    VALUES (?, 'file', ?, ?, ?) RETURNING id`).bind(user.id, name, file, now).first();
+  const { id } = await env.DB.prepare(`INSERT INTO calendar_sources (user_id, kind, name, file_name, created_at, attendance)
+    VALUES (?, 'file', ?, ?, ?, ?) RETURNING id`).bind(user.id, name, file, now, attendanceFor(body, isSisu(text))).first();
   try {
     const result = await loggedImport(env, user.id, id, 'upload', async () => ({ text, status: null }));
     await env.DB.prepare('UPDATE calendar_sources SET ok_at = ? WHERE id = ?').bind(Date.now(), id).run();
@@ -263,10 +301,22 @@ export async function syncCalendar(env, user, id) {
   return syncLink(env, await ownSource(env, user, id), 'manual');
 }
 
-// Rename, or (links) change the first day imported. A new first day is applied right away.
+// Rename, turn attendance on or off, or (links) change the first day imported. A new first day is applied right away.
+// Attendance applies to the courses with sessions in this calendar.
 export async function updateCalendar(env, user, id, body) {
   const s = await ownSource(env, user, id);
   const name = 'name' in body ? cleanName(body.name, s.name) : s.name;
+  if ('attendance' in body) {
+    if (typeof body.attendance !== 'boolean') throw new HttpError(400, 'attendance must be true or false.');
+    const a = body.attendance ? 1 : 0;
+    await env.DB.batch([
+      env.DB.prepare('UPDATE calendar_sources SET attendance = ? WHERE id = ?').bind(a, id),
+      env.DB.prepare(`UPDATE courses SET attendance = ?1 WHERE user_id = ?2 AND id IN
+        (SELECT e.course_id FROM events e JOIN event_sources es ON es.event_id = e.id WHERE es.source_id = ?3)`).bind(a, user.id, id),
+    ]);
+    // Turned on: fetch the history the calendar left out while it didn't count attendance.
+    if (a && !s.attendance && s.kind === 'link') return { calendar: id, ...await syncLink(env, { ...s, attendance: a }, 'manual') };
+  }
   let from = s.from_date;
   if ('from' in body) {
     if (s.kind !== 'link') throw new HttpError(400, 'Only linked calendars have a first day.');

@@ -3,7 +3,7 @@
 // by the model, so numbers it reports are exact.
 import { HttpError } from './http.js';
 import { callModel, getAiKey, keyConfig, describeKey } from './llm.js';
-import { TAGS, computeStats, effectiveTag } from '../public/stats.js';
+import { TAGS, computeStats, effectiveTag, countsAttendance } from '../public/stats.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
 import { REMIND_OPTIONS, isValidTimeZone } from './homework.js';
 import { simulateBreak, findBreakWindows, weekOverview, addDays, weekdayOf, isDate } from '../public/breaks.js';
@@ -81,7 +81,7 @@ function statsSummary(s, unit) {
 
 async function loadData(env, user) {
   const [courses, events, homework, breaks] = await env.DB.batch([
-    env.DB.prepare('SELECT id, name, tracked, tag FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
+    env.DB.prepare('SELECT id, name, tracked, tag, attendance FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
     env.DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note
       FROM events WHERE user_id = ? ORDER BY start_at`).bind(user.id),
     env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? ORDER BY due_at`).bind(user.id),
@@ -107,8 +107,9 @@ function sessionLine(e, data, tz, now) {
 
 function buildContext(data, user, tz, now) {
   const opts = { threshold: user.threshold, unit: user.unit, now };
-  const tracked = data.courses.filter((c) => c.tracked);
-  const trackedIds = new Set(tracked.map((c) => c.id));
+  const tracked = data.courses.filter(countsAttendance);
+  const trackedIds = new Set(data.courses.filter((c) => c.tracked).map((c) => c.id));
+  const noAttendance = data.courses.filter((c) => c.tracked && !countsAttendance(c));
   const lines = [
     `NOW: ${when(now, tz)} (${tz})`,
     `DATES (use these to resolve weekdays, never compute them): ${Array.from({ length: 22 }, (_, i) => {
@@ -124,6 +125,9 @@ function buildContext(data, user, tz, now) {
     lines.push(`course #${c.id} ${c.name}${c.tag !== 'normal' ? ` [default tag ${c.tag}]` : ''}: projected ${sum.projected}, `
       + `absences ${sum.absences_used} of ${sum.absences_allowed} allowed, can still skip ${sum.can_still_skip}, ${sum.status}; `
       + `${s.upcoming} upcoming, ${s.unmarkedPast} past not marked${s.missedMustAttend.length ? `, MISSED ${s.missedMustAttend.length} exam/mandatory` : ''}`);
+  }
+  if (noAttendance.length) {
+    lines.push('', `OTHER COURSES (in the timetable, attendance not counted, never give skip advice for them): ${noAttendance.map((c) => `#${c.id} ${c.name}`).join(', ')}`);
   }
   lines.push('', 'SESSIONS (tracked courses, last 7 days to next 21 days; use get_sessions for other dates):');
   for (const e of data.events) {

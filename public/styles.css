@@ -858,3 +858,23 @@ body.doc .footer-links { margin-top: 32px; font-size: 12.5px; color: var(--text-
 .up-free { padding: 10px 0; color: var(--text-3); font-size: 13px; }
 .up-more { margin-top: 4px; }
 .up-more .btn .ic { margin-left: 4px; }
+
+/* ---------------------------------------------------------------- today */
+.today-line { font-size: 17px; line-height: 1.5; margin: 4px 0 20px; max-width: 62ch; }
+.today-line b { font-weight: 600; }
+.banner.warn { background: color-mix(in srgb, var(--orange) 12%, transparent); }
+.gaps { display: grid; }
+.gap { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.gap:last-child { border-bottom: 0; }
+.gap .when { color: var(--text); font-size: 12.5px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.gap .when span { color: var(--text-2); font-weight: 400; }
+.gap a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 2px; }
+.week-line { margin: 0; color: var(--text-2); }
+.week-line.risk { color: var(--orange); }
+.hw-item.catchup .hw-title::before { content: "↺ "; color: var(--text-2); }
+.hw-rec { color: var(--accent, inherit); }
+.status button[data-action="catchup"].on { color: var(--orange); }
+
+code.token { user-select: all; word-break: break-all; font-size: 12px; }
+#token-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#token-form .field { flex: 1 1 220px; }

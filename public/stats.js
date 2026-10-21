@@ -15,6 +15,9 @@ export function splitGroup(name) {
   return m ? { group: m[1].toUpperCase().replace(/\s/g, ''), family: m[2].trim() } : null;
 }
 
+// A tracked course whose calendar counts attendance (a Sisu timetable, say, doesn't).
+export const countsAttendance = (c) => Boolean(c?.tracked) && c.attendance !== 0;
+
 export const effectiveTag = (ev, course) => ev.tag || course?.tag || 'normal';
 
 const weightOf = (ev, unit) => (unit === 'hours' ? (ev.end_at - ev.start_at) / 3600000 : 1);
@@ -71,7 +74,7 @@ export function statsByCourse(courses, events, opts) {
   const groups = new Map(courses.map((c) => [c.id, []]));
   for (const ev of events) groups.get(ev.course_id)?.push(ev);
   const perCourse = courses.map((c) => ({ course: c, stats: computeStats(groups.get(c.id), byId, opts) }));
-  const tracked = new Set(courses.filter((c) => c.tracked).map((c) => c.id));
+  const tracked = new Set(courses.filter(countsAttendance).map((c) => c.id));
   const overall = computeStats(events.filter((e) => tracked.has(e.course_id)), byId, opts);
   return { perCourse, overall };
 }

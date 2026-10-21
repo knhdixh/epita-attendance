@@ -10,6 +10,9 @@ const REMINDERS = [
   [180, '3 hours before'], [1440, '1 day before'], [2880, '2 days before'], [10080, '1 week before'],
 ];
 const DEFAULT_REMINDER = 1440;
+// How long an item takes, used by Today to fit it into free time. Empty = 1 h (catch-ups: the session's length).
+const EFFORTS = [[null, 'Time: default'], [15, '15 min'], [30, '30 min'], [60, '1 h'], [90, '1.5 h'], [120, '2 h'], [180, '3 h'],
+  [300, '5 h'], [480, '8 h'], [720, '12 h']];
 
 const pad = (n) => String(n).padStart(2, '0');
 const localDate = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
@@ -45,17 +48,26 @@ function syncIcon(hw) {
   return '<span class="sync" title="Not synced yet">syncing</span>';
 }
 
-export function hwItem(hw, now = Date.now()) {
+// The recording link a catch-up carries in its notes ("Recording: https://…").
+const recordingOf = (hw) => /^Recording: (https?:\/\/\S+)/m.exec(hw.notes || '')?.[1];
+const effortLabel = (m) => (m < 60 ? `~${m} min` : `~${Math.round(m / 30) / 2} h`);
+
+// `plan` (from the Today page) adds how long the item takes.
+export function hwItem(hw, now = Date.now(), plan = null) {
   const course = courseById()[hw.course_id];
   const remind = REMINDERS.find(([m]) => m === hw.remind_minutes)?.[1];
+  const recording = hw.kind === 'catchup' && recordingOf(hw);
   return `
-    <div class="hw-item ${hw.done ? 'done' : ''}" data-hw="${hw.id}">
+    <div class="hw-item ${hw.done ? 'done' : ''} ${hw.kind === 'catchup' ? 'catchup' : ''}" data-hw="${hw.id}">
       <label class="checkbox round hw-check" title="${hw.done ? 'Mark not done' : 'Mark done'}"><input type="checkbox" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done: ${esc(hw.title)}"><span></span></label>
       <div class="hw-main" data-hw-edit>
         <div class="hw-title">${esc(hw.title)}</div>
         ${hw.notes ? `<div class="hw-notes">${esc(hw.notes)}</div>` : ''}
         <div class="hw-meta">
           <span class="due ${hw.done ? '' : bucket(hw, now)}"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>${esc(dueLabel(hw))}</span>
+          ${hw.kind === 'catchup' ? '<span class="chip">catch-up</span>' : ''}
+          ${plan ? `<span title="Time it needs (set it when editing)">${effortLabel(plan.effort)}</span>` : ''}
+          ${recording ? `<a href="${esc(recording)}" target="_blank" rel="noopener" class="hw-rec">recording ↗</a>` : ''}
           ${hw.remind_minutes != null && !hw.done ? `<span title="Reminder">reminder ${esc(remind)}</span>` : ''}
           ${syncIcon(hw)}
           ${course ? `<span class="hw-course"><svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg>${esc([course.name, groupLabel(courseGroups(course.id))].filter((x) => x && x !== 'All groups').join(' · '))}</span>` : ''}
@@ -103,6 +115,10 @@ function quickAdd(draft, editing) {
         <div class="select"><select name="due_session" aria-label="Due at a session">${sessionOptions(draft.course_id)}</select></div>
         <div class="select"><select name="remind_minutes" aria-label="Reminder">
           ${REMINDERS.map(([m, l]) => `<option value="${m ?? ''}" ${m === draft.remind_minutes ? 'selected' : ''}>${l}</option>`).join('')}
+        </select></div>
+        <div class="select"><select name="effort_minutes" aria-label="Time it needs" title="Time it needs">
+          ${(EFFORTS.some(([m]) => m === (draft.effort_minutes ?? null)) ? EFFORTS : [...EFFORTS, [draft.effort_minutes, `${draft.effort_minutes} min`]])
+            .map(([m, l]) => `<option value="${m ?? ''}" ${m === (draft.effort_minutes ?? null) ? 'selected' : ''}>${l}</option>`).join('')}
         </select></div>
       </div>
       <div class="qa-foot">
@@ -305,6 +321,7 @@ async function saveForm(form) {
     course_id: fd.get('course_id') ? Number(fd.get('course_id')) : null,
     due_date: fd.get('due_date'), due_time: fd.get('due_time') || null, tz: tz(),
     remind_minutes: remind === '' ? null : Number(remind),
+    effort_minutes: fd.get('effort_minutes') ? Number(fd.get('effort_minutes')) : null,
   };
   const editing = state.hwEditing;
   const btn = form.querySelector('[type=submit]');

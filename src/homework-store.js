@@ -4,7 +4,8 @@ import { REMIND_OPTIONS, isValidTimeZone, dueInstant } from './homework.js';
 import { syncHomework } from './gcal.js';
 
 export const HOMEWORK_COLUMNS = `id, course_id, title, notes, due_date, due_time, tz, due_at, remind_minutes, done,
-  gcal_event_id, sync_error, created_at, updated_at`;
+  gcal_event_id, sync_error, created_at, updated_at, kind, event_id, effort_minutes`;
+const MAX_EFFORT = 24 * 60;
 
 export async function homeworkInput(env, user, b) {
   const title = typeof b.title === 'string' ? b.title.trim() : '';
@@ -20,6 +21,10 @@ export async function homeworkInput(env, user, b) {
   if (!isValidTimeZone(b.tz)) throw new HttpError(400, 'Invalid time zone.');
   const remind = b.remind_minutes ?? null;
   if (remind !== null && !REMIND_OPTIONS.includes(remind)) throw new HttpError(400, 'Invalid reminder.');
+  const effort = b.effort_minutes ?? null;
+  if (effort !== null && !(Number.isInteger(effort) && effort > 0 && effort <= MAX_EFFORT)) {
+    throw new HttpError(400, 'Effort is a number of minutes (24 h at most).');
+  }
   let courseId = b.course_id ?? null;
   if (courseId !== null) {
     courseId = Number(courseId);
@@ -30,7 +35,7 @@ export async function homeworkInput(env, user, b) {
   if (!Number.isFinite(dueAt)) throw new HttpError(400, 'Invalid due date.');
   return {
     title, notes, course_id: courseId, due_date: b.due_date, due_time: dueTime, tz: b.tz,
-    due_at: dueAt, remind_minutes: remind, done: b.done ? 1 : 0,
+    due_at: dueAt, remind_minutes: remind, done: b.done ? 1 : 0, effort_minutes: effort,
   };
 }
 
@@ -43,10 +48,10 @@ export async function createHomework(env, user, body, appUrl) {
   const input = await homeworkInput(env, user, body);
   const now = Date.now();
   const hw = await env.DB.prepare(`INSERT INTO homework (user_id, course_id, title, notes, due_date, due_time, tz, due_at,
-      remind_minutes, done, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+      remind_minutes, done, created_at, updated_at, effort_minutes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
     RETURNING ${HOMEWORK_COLUMNS}`)
     .bind(user.id, input.course_id, input.title, input.notes, input.due_date, input.due_time, input.tz, input.due_at,
-      input.remind_minutes, now, now).first();
+      input.remind_minutes, now, now, input.effort_minutes).first();
   return syncHomework(env, user.id, hw, await courseName(env, user, hw.course_id), appUrl);
 }
 
@@ -56,8 +61,8 @@ export async function updateHomework(env, user, id, body, appUrl) {
   if (!current) throw new HttpError(404, 'Homework not found.');
   const input = await homeworkInput(env, user, { ...current, ...body, done: body.done ?? current.done });
   const hw = await env.DB.prepare(`UPDATE homework SET course_id = ?, title = ?, notes = ?, due_date = ?, due_time = ?, tz = ?,
-      due_at = ?, remind_minutes = ?, done = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
+      due_at = ?, remind_minutes = ?, done = ?, effort_minutes = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
     .bind(input.course_id, input.title, input.notes, input.due_date, input.due_time, input.tz, input.due_at,
-      input.remind_minutes, input.done, Date.now(), id, user.id).first();
+      input.remind_minutes, input.done, input.effort_minutes, Date.now(), id, user.id).first();
   return syncHomework(env, user.id, hw, await courseName(env, user, hw.course_id), appUrl);
 }

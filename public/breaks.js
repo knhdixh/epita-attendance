@@ -1,6 +1,6 @@
 // Break planning: what happens if you skip every session in a date range, which windows are safe,
 // and which weeks could be skipped entirely. Pure functions, shared by the browser and the Worker.
-import { TAGS, effectiveTag, computeStats } from './stats.js';
+import { TAGS, effectiveTag, computeStats, countsAttendance } from './stats.js';
 
 export const HOLIDAY_RE = /\b(vacances|holidays?|bank holiday|jour f[ée]ri[ée]|f[ée]ri[ée]|cong[ée]s?)\b/i;
 const DAY = 86400000;
@@ -30,7 +30,7 @@ function levelOf(stats) {
 export function breakModel({ courses, events, threshold, unit, now = Date.now(), tz }) {
   const dayKey = makeDayKey(tz);
   const byId = Object.fromEntries(courses.map((c) => [c.id, c]));
-  const tracked = courses.filter((c) => c.tracked);
+  const tracked = courses.filter(countsAttendance);
   const opts = { threshold, unit, now };
   const evByCourse = new Map(tracked.map((c) => [c.id, []]));
   for (const e of events) evByCourse.get(e.course_id)?.push(e);

@@ -1,5 +1,5 @@
 // Minimal iCalendar (RFC 5545) VEVENT parser. Handles line folding, escaping,
-// UTC / floating / TZID / all-day dates. Recurring events (RRULE) are not expanded.
+// UTC / floating / TZID / all-day dates, DTEND or DURATION. Recurring events (RRULE) are not expanded.
 
 function unfold(text) {
   return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n[ \t]/g, '');
@@ -61,7 +61,38 @@ export function parseDate(value, params = {}, defaultTz = 'Europe/Paris') {
   return guess;
 }
 
-export function parseICS(text, { defaultTz = 'Europe/Paris' } = {}) {
+// "PT1H45M", "P1D", "-PT15M" -> ms (null if not a duration).
+export function parseDuration(value) {
+  const m = /^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(value.trim());
+  if (!m || value.trim().endsWith('P') || value.trim().endsWith('T')) return null;
+  const [, sign, w = 0, d = 0, h = 0, mi = 0, s = 0] = m;
+  const ms = ((((+w * 7 + +d) * 24 + +h) * 60 + +mi) * 60 + +s) * 1000;
+  return sign === '-' ? -ms : ms;
+}
+
+// Drops the events that start before `since` (YYYYMMDD) before parsing: a calendar with years of history
+// (Sisu sends every course since enrolment) would otherwise cost more CPU than a Worker invocation has.
+// The comparison is on the date as written, so an event a day either side of the cutoff may stay.
+function dropBefore(text, since) {
+  const out = [];
+  let i = text.indexOf('BEGIN:VEVENT');
+  if (i < 0) return text;
+  out.push(text.slice(0, i));
+  while (i >= 0) {
+    const next = text.indexOf('BEGIN:VEVENT', i + 12);
+    const end = next < 0 ? text.length : next;
+    const d = text.indexOf('\nDTSTART', i);
+    const colon = d >= 0 && d < end ? text.indexOf(':', d) : -1;
+    const date = colon >= 0 && colon < end ? text.slice(colon + 1, colon + 9) : null;
+    if (!date || !/^\d{8}$/.test(date) || date >= since) out.push(text.slice(i, end));
+    else if (next < 0) out.push('END:VCALENDAR\r\n');
+    i = next;
+  }
+  return out.join('');
+}
+
+export function parseICS(text, { defaultTz = 'Europe/Paris', since = null } = {}) {
+  if (since) text = dropBefore(text, since);
   const lines = unfold(text).split('\n');
   const events = [];
   let cur = null;
@@ -78,6 +109,7 @@ export function parseICS(text, { defaultTz = 'Europe/Paris' } = {}) {
     if (line === 'END:VEVENT') {
       if (cur.rrule) recurring++;
       if (cur.uid && cur.start != null) {
+        if (cur.end == null && cur.duration != null) cur.end = cur.start + cur.duration;
         if (cur.end == null) cur.end = cur.start + (cur.allDay ? 86400000 : 3600000);
         events.push({
           uid: cur.uid,
@@ -108,6 +140,7 @@ export function parseICS(text, { defaultTz = 'Europe/Paris' } = {}) {
         cur.allDay = prop.params.VALUE === 'DATE' || /^\d{8}$/.test(prop.value.trim());
         break;
       case 'DTEND': cur.end = parseDate(prop.value, prop.params, defaultTz); break;
+      case 'DURATION': cur.duration = parseDuration(prop.value); break;
     }
   }
   return { events, recurring };

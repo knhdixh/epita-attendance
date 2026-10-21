@@ -5,7 +5,7 @@ import { isValidTimeZone } from './homework.js';
 
 export async function loadPlanningData(env, user) {
   const [courses, events] = await env.DB.batch([
-    env.DB.prepare('SELECT id, name, tracked, tag FROM courses WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('SELECT id, name, tracked, tag, attendance FROM courses WHERE user_id = ?').bind(user.id),
     env.DB.prepare('SELECT id, course_id, summary, start_at, end_at, status, tag FROM events WHERE user_id = ? ORDER BY start_at').bind(user.id),
   ]);
   return { courses: courses.results, events: events.results };

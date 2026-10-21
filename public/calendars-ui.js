@@ -32,7 +32,7 @@ export function addBox({ cancel = true } = {}) {
       <form id="cal-link-form" class="cal-add-opt" autocomplete="off">
         <div class="cal-add-head"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><b>From a link</b><span>updates every 3 days</span></div>
         <input class="field" name="url" type="text" inputmode="url" required spellcheck="false"
-          placeholder="https://zeus.ionis-it.com/api/group/… or webcal://…" aria-label="Calendar link">
+          placeholder="Zeus, Sisu (Export into external calendar) or any webcal:// link" aria-label="Calendar link">
         <div class="cal-add-row">
           <input class="field" name="name" maxlength="60" placeholder="Name (optional)" aria-label="Name">
           <label title="Zeus links: the first day to import, so past classes stay">From <input class="field" type="date" name="from" aria-label="Import classes from"></label>
@@ -59,6 +59,8 @@ function row(c) {
         <div class="cal-edit-fields">
           <input class="field" name="name" maxlength="60" required value="${esc(c.name)}" aria-label="Name">
           ${c.kind === 'link' ? `<label>From <input class="field" type="date" name="from" value="${esc(c.from || '')}" aria-label="Import classes from"></label>` : ''}
+          <label class="checkbox check" title="Off for a school that doesn't take attendance: its courses stay in your timetable and plan, without the 80% maths">
+            <input type="checkbox" name="attendance" ${c.attendance ? 'checked' : ''}><span></span>Count attendance</label>
         </div>
         <div class="cal-src-actions">
           <button class="btn btn-small" type="button" data-cal-cancel>Cancel</button>
@@ -74,13 +76,13 @@ function row(c) {
       <span class="cal-src-icon"><svg class="ic" aria-hidden="true"><use href="#${c.kind === 'link' ? 'i-link' : 'i-calendar'}"/></svg></span>
       <div class="cal-src-main">
         <div class="cal-src-name">${esc(c.name)}</div>
-        <div class="cal-src-meta">${[where && esc(where), plural(c.sessions, 'session'), status].filter(Boolean).join(' · ')}</div>
+        <div class="cal-src-meta">${[where && esc(where), plural(c.sessions, 'session'), !c.attendance && 'attendance not counted', status].filter(Boolean).join(' · ')}</div>
       </div>
       <div class="cal-src-actions">
         ${c.kind === 'link'
           ? '<button class="btn btn-borderless btn-small" data-cal-sync title="Update now" aria-label="Update now"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></button>'
           : '<button class="btn btn-borderless btn-small" data-cal-replace title="Upload a newer version" aria-label="Upload a newer version"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg></button>'}
-        <button class="btn btn-borderless btn-small" data-cal-edit title="Rename${c.kind === 'link' ? ' or change the first day' : ''}" aria-label="Edit"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
+        <button class="btn btn-borderless btn-small" data-cal-edit title="Rename, count attendance${c.kind === 'link' ? ' or change the first day' : ''}" aria-label="Edit"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
         <button class="btn btn-borderless btn-small" data-cal-remove title="Remove" aria-label="Remove"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
@@ -244,7 +246,7 @@ export function onSubmit(e) {
     e.preventDefault();
     const fd = new FormData(form);
     const id = Number(form.dataset.cal);
-    const body = { name: fd.get('name') };
+    const body = { name: fd.get('name'), attendance: fd.has('attendance') };
     if (fd.has('from')) body.from = fd.get('from') || null;
     api(`/api/calendars/${id}`, { method: 'PATCH', body })
       .then((r) => { state.calEditing = null; return refresh(r.total != null ? `Saved and updated: ${importSummary(r)}.` : 'Saved.'); })

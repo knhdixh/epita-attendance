@@ -31,7 +31,7 @@ test('links: Zeus links are normalised, other https/webcal calendars are kept, u
   assert.deepEqual(parseCalendarLink(` ${LINK}?startDate=2026-09-01T00:00:00&x=1 `), { url: LINK, from: '2026-09-01', zeus: true, name: 'Zeus group 1234' });
   assert.deepEqual(parseCalendarLink(LINK.replace('https:', 'webcal:')), { url: LINK, from: null, zeus: true, name: 'Zeus group 1234' });
   assert.deepEqual(parseCalendarLink('webcal://p12-caldav.icloud.com/published/2/abc?x=1#frag'),
-    { url: 'https://p12-caldav.icloud.com/published/2/abc?x=1', from: null, zeus: false, name: 'p12-caldav.icloud.com' });
+    { url: 'https://p12-caldav.icloud.com/published/2/abc?x=1', from: null, zeus: false, sisu: false, name: 'p12-caldav.icloud.com' });
   for (const bad of ['', 'not a url', 'http://zeus.ionis-it.com/api/group/1/ics/AbC123def456', 'ftp://example.com/a.ics',
     'https://zeus.ionis-it.com/api/group/1/ics', 'https://zeus.ionis-it.com/api/group/1/ics/../../x/AbC123def456',
     'https://127.0.0.1/a.ics', 'https://[::1]/a.ics', 'https://localhost/a.ics', 'https://intranet/a.ics',

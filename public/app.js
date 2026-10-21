@@ -1,9 +1,11 @@
-import { TAGS, splitGroup, effectiveTag, statsByCourse, computeStats } from './stats.js';
+import { TAGS, splitGroup, effectiveTag, statsByCourse, computeStats, countsAttendance } from './stats.js';
 import * as hw from './homework-ui.js';
 import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
 import * as byok from './byok-ui.js';
 import * as cal from './calendars-ui.js';
+import * as today from './today-ui.js';
+import * as tokens from './tokens-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -19,7 +21,7 @@ const $toast = document.getElementById('toast');
 
 const state = {
   data: null,           // { user, courses, events }
-  tab: 'overview',
+  tab: 'today',
   filter: { course: 'all', when: 'upcoming', showHidden: false, q: '' },
 };
 
@@ -234,7 +236,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -250,14 +252,14 @@ function render() {
 
 let lastView = null;
 let first = true;
-const TITLES = { overview: 'Overview', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
 function pageSub() {
   const scope = ['overview', 'upcoming', 'sessions', 'courses', 'breaks'].includes(state.tab) ? scopeNote() : '';
   const parts = [];
-  if (state.tab === 'overview') parts.push(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
+  if (state.tab === 'today' || state.tab === 'overview') parts.push(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }));
   if (state.tab === 'homework') {
     const open = state.data.homework.filter((h) => !h.done).length;
     if (open) parts.push(`${open} open`);
@@ -267,7 +269,10 @@ function pageSub() {
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
 }
 
-const unmarkedEvents = () => trackedEvents().filter((e) => e.start_at <= Date.now() && !e.status);
+const unmarkedEvents = () => {
+  const byId = courseById();
+  return trackedEvents().filter((e) => e.start_at <= Date.now() && !e.status && countsAttendance(byId[e.course_id]));
+};
 
 // Account, counts and the course list. Sessions filtered to one course highlight that course instead of Sessions.
 function renderSidebar(view) {
@@ -285,16 +290,25 @@ function renderSidebar(view) {
   const overdue = open.some((h) => h.due_at < now);
   setCount('sessions', unmarked, 'warn', `${unmarked} past session${unmarked === 1 ? '' : 's'} to mark`);
   setCount('homework', open.length, overdue ? 'bad' : '', overdue ? 'Some homework is overdue' : `${open.length} open`);
+  const endOfDay = new Date(now).setHours(23, 59, 59, 999);
+  const dueToday = open.filter((h) => h.due_at <= endOfDay).length;
+  setCount('today', dueToday, overdue ? 'bad' : 'warn', `${dueToday} due today or overdue`);
 
   const { perCourse } = statsByCourse(courses, events, opts());
-  const tracked = perCourse.filter((p) => p.course.tracked && p.stats.sessions)
+  const tracked = perCourse.filter((p) => countsAttendance(p.course) && p.stats.sessions)
     .sort((a, b) => a.course.name.localeCompare(b.course.name));
   const courseFocus = state.tab === 'sessions' && state.filter.course !== 'all' ? state.filter.course : null;
-  $sbCourses.innerHTML = tracked.map(({ course, stats }) => `
-    <button class="sb-row ${stats.level}" data-course-open="${course.id}" title="${esc(course.name)}: ${esc(skipsLeft(stats))}" ${String(course.id) === courseFocus ? 'aria-current="page"' : ''}>
+  // Courses that don't count attendance follow, without a count.
+  const others = perCourse.filter((p) => p.course.tracked && !countsAttendance(p.course) && p.stats.sessions)
+    .sort((a, b) => a.course.name.localeCompare(b.course.name));
+  $sbCourses.innerHTML = [...tracked, ...others].map(({ course, stats }) => {
+    const counts = countsAttendance(course);
+    return `
+    <button class="sb-row ${counts ? stats.level : ''}" data-course-open="${course.id}" title="${esc(course.name)}${counts ? `: ${esc(skipsLeft(stats))}` : ''}" ${String(course.id) === courseFocus ? 'aria-current="page"' : ''}>
       <svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg><span class="label">${esc(course.name)}</span>${groupChip(courseGroups(course.id), { all: false })}
-      <span class="count">${stats.remaining < -1e-9 ? '!' : fmtNum(stats.remainingDisplay)}</span>
-    </button>`).join('') || '<p class="empty">No tracked courses.</p>';
+      <span class="count">${!counts ? '' : stats.remaining < -1e-9 ? '!' : fmtNum(stats.remainingDisplay)}</span>
+    </button>`;
+  }).join('') || '<p class="empty">No tracked courses.</p>';
 
   for (const b of document.querySelectorAll('.sidebar [data-tab]')) {
     const on = b.dataset.tab === state.tab && !(courseFocus && b.dataset.tab === 'sessions');
@@ -381,7 +395,7 @@ function renderOverview() {
   const o = opts();
   const { perCourse, overall } = statsByCourse(courses, events, o);
   const now = Date.now();
-  const tracked = perCourse.filter((p) => p.course.tracked && p.stats.sessions)
+  const tracked = perCourse.filter((p) => countsAttendance(p.course) && p.stats.sessions)
     .sort((a, b) => ({ fail: 0, risk: 1, ok: 2 })[a.stats.level] - ({ fail: 0, risk: 1, ok: 2 })[b.stats.level]
       || a.stats.remaining - b.stats.remaining);
 
@@ -467,8 +481,11 @@ function sessionRow(e, { showDate = false } = {}) {
   const past = e.start_at <= Date.now();
   const st = e.status;
   const mustAttend = TAGS[tag].mustAttend;
+  const counts = countsAttendance(course);
+  const catchup = state.data.homework.find((h) => h.kind === 'catchup' && h.event_id === e.id);
+  const catchupBtn = past ? `<button data-action="catchup" class="${catchup ? 'on' : ''}" title="${catchup ? 'Catch-up added: open it' : 'Missed it? Add a catch-up'}">↺</button>` : '';
   return `
-    <div class="row ${past ? 'past' : 'future'} ${st ? 'st-' + st : past ? 'st-unmarked' : ''} ${course.tracked ? '' : 'untracked'}" data-event="${e.id}">
+    <div class="row ${past ? 'past' : 'future'} ${!counts ? 'no-att' : st ? 'st-' + st : past ? 'st-unmarked' : ''} ${course.tracked ? '' : 'untracked'}" data-event="${e.id}">
       <div class="when">
         ${showDate ? `<div class="date">${fmtShort(e.start_at)}</div>` : ''}
         <div>${fmtTime(e.start_at)}</div><div>${fmtTime(e.end_at)}</div>
@@ -478,7 +495,7 @@ function sessionRow(e, { showDate = false } = {}) {
         <div class="loc muted small">${esc(e.location)}${e.note ? ` · <em>${esc(e.note)}</em>` : ''}</div>
         ${hw.homeworkForSession(e).map((h) => `<a class="hw-badge" href="#homework" data-hw-open="${h.id}" title="Homework due at this session"><svg class="ic sm" aria-hidden="true"><use href="#i-homework"/></svg>${esc(h.title)}</a>`).join('')}
       </div>
-      <div class="select"><select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
+      ${counts ? `<div class="select"><select class="tag-select tag-${tag}" data-field="tag" title="Session tag (default: course tag)">
         <option value="" ${!e.tag ? 'selected' : ''}>${TAGS[course.tag].label}</option>
         ${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${e.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}
       </select></div>
@@ -486,8 +503,13 @@ function sessionRow(e, { showDate = false } = {}) {
         <button data-status="present" class="${st === 'present' ? 'on' : ''}" title="${past ? 'Attended' : 'Will attend'}">✓</button>
         <button data-status="absent" class="${st === 'absent' ? 'on' : ''} ${mustAttend && !past ? 'danger' : ''}" title="${past ? 'Absent' : 'Plan to skip'}">×</button>
         <button data-status="excused" class="${st === 'excused' ? 'on' : ''}" title="Excused (doesn't count)">E</button>
+        ${catchupBtn}
         <button data-action="note" title="Add a note">+</button>
-      </div>
+      </div>` : `<span></span>
+      <div class="status" role="group" aria-label="Session">
+        ${catchupBtn}
+        <button data-action="note" title="Add a note">+</button>
+      </div>`}
     </div>`;
 }
 
@@ -658,16 +680,17 @@ function renderCourses() {
       <p class="muted small">Untracked courses don't count toward attendance. The tag applies to every session of the course unless a session overrides it.
         <br><b>Exam</b>/<b>Mandatory</b>: counted, and flagged if you skip them. <b>Optional</b>: never counted.</p>
       <table class="courses">
-        <thead><tr><th>Track</th><th>Course</th><th>Default tag</th><th class="num">Sessions</th><th class="num">Hours</th><th class="num">Projected</th></tr></thead>
+        <thead><tr><th>Track</th><th>Course</th><th>Default tag</th><th class="num">Sessions</th><th class="num">Hours</th><th class="num">Projected</th><th>Recordings</th></tr></thead>
         <tbody>
           ${perCourse.map(({ course: c, stats: s }) => `
             <tr class="${c.tracked ? '' : 'off'}" data-course="${c.id}">
               <td><label class="checkbox"><input type="checkbox" data-field="tracked" ${c.tracked ? 'checked' : ''} aria-label="Track ${esc(c.name)}"><span></span></label></td>
-              <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a> ${groupChip(courseGroups(c.id))}${groupedIds.has(c.id) ? ' <span class="chip">group split</span>' : ''}</td>
+              <td><a href="#" data-course-open="${c.id}">${esc(c.name)}</a> ${groupChip(courseGroups(c.id))}${groupedIds.has(c.id) ? ' <span class="chip">group split</span>' : ''}${c.attendance === 0 ? ' <span class="chip">no attendance</span>' : ''}</td>
               <td><div class="select"><select data-field="tag" class="tag-${c.tag}">${Object.entries(TAGS).map(([k, t]) => `<option value="${k}" ${c.tag === k ? 'selected' : ''}>${t.label}</option>`).join('')}</select></div></td>
               <td class="num">${count(c.id)}</td>
               <td class="num">${hours(c.id)}</td>
-              <td class="num ${c.tracked ? s.level : ''}">${c.tracked ? pct(s.projectedRate) : '—'}</td>
+              <td class="num ${countsAttendance(c) ? s.level : ''}">${countsAttendance(c) ? pct(s.projectedRate) : '—'}</td>
+              <td>${c.recording_url ? `<a href="${esc(c.recording_url)}" target="_blank" rel="noopener">open ↗</a> ` : ''}<button class="btn btn-borderless btn-small" data-action="recording" title="Where this course's lecture recordings are; catch-ups link to it">${c.recording_url ? 'edit' : 'add link'}</button></td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -696,6 +719,7 @@ function renderSettings() {
     </section>
     ${cal.settingsPanel()}
     ${signInMethodsPanel()}
+    ${tokens.settingsPanel()}
     ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
     <section class="panel narrow danger-zone">
@@ -763,6 +787,25 @@ async function setEventField(id, patch) {
   }
 }
 
+// A catch-up for a missed session: due before the course meets again, with the course's recording link.
+async function addCatchup(ev, { quiet = false } = {}) {
+  try {
+    const item = await api('/api/catchups', { method: 'POST', body: { event_id: ev.id, tz: Intl.DateTimeFormat().resolvedOptions().timeZone } });
+    if (!state.data.homework.some((h) => h.id === item.id)) state.data.homework.push(item);
+    state.data.homework.sort((a, b) => a.due_at - b.due_at);
+    render();
+    toast(quiet ? `Added a catch-up for ${courseById()[ev.course_id]?.name}.` : 'Catch-up added to your list.');
+  } catch (err) { toast(err.message, true); }
+}
+
+async function removeCatchup(item) {
+  try {
+    await api(`/api/homework/${item.id}`, { method: 'DELETE' });
+    state.data.homework = state.data.homework.filter((h) => h.id !== item.id);
+    render();
+  } catch (err) { toast(err.message, true); }
+}
+
 async function bulkStatus(ids, status) {
   if (!ids.length) return;
   const set = new Set(ids);
@@ -804,7 +847,7 @@ async function setTracked(updates) {
 
 // [tab, label, icon, key after G]
 const NAV = [
-  ['overview', 'Overview', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
+  ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
   ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
@@ -880,8 +923,8 @@ function paletteItems() {
     const { perCourse } = statsByCourse(courses, events, opts());
     for (const { course, stats } of perCourse) {
       items.push({
-        id: `course:${course.id}`, section: 'Courses', label: course.name, icon: 'i-hash', tone: course.tracked ? stats.level : '',
-        sub: [course.tracked ? skipsLeft(stats) : 'not tracked', groupLabel(courseGroups(course.id))].filter(Boolean).join(' · '),
+        id: `course:${course.id}`, section: 'Courses', label: course.name, icon: 'i-hash', tone: countsAttendance(course) ? stats.level : '',
+        sub: [!course.tracked ? 'not tracked' : countsAttendance(course) ? skipsLeft(stats) : 'attendance not counted', groupLabel(courseGroups(course.id))].filter(Boolean).join(' · '),
         keywords: 'course', run: () => openCourse(course.id),
       });
     }
@@ -953,7 +996,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e)) return;
+  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -998,7 +1041,7 @@ document.addEventListener('click', async (e) => {
   if (action === 'wipe') {
     if (!confirm(`Delete all your sessions, attendance marks and breaks?${state.data.calendars.length ? ` Your ${state.data.calendars.length === 1 ? 'calendar is' : `${state.data.calendars.length} calendars are`} removed too.` : ''} This cannot be undone.`)) return;
     await api('/api/data', { method: 'DELETE' });
-    await reload(); state.tab = 'overview'; render();
+    await reload(); state.tab = 'today'; render();
     return toast('All data deleted.');
   }
   if (action === 'note' && row) {
@@ -1008,11 +1051,35 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
+  if (action === 'recording') {
+    const course = courseById()[Number(t.closest('[data-course]').dataset.course)];
+    const url = prompt(`Link to the lecture recordings of ${course.name} (Panopto, Moodle, YouTube…). New catch-ups link to it. Leave empty to remove.`, course.recording_url || '');
+    if (url === null) return;
+    try {
+      await api(`/api/courses/${course.id}`, { method: 'PATCH', body: { recording_url: url.trim() } });
+      course.recording_url = url.trim() || null;
+      render();
+    } catch (err) { toast(err.message, true); }
+    return;
+  }
+  if (action === 'catchup' && row) {
+    const ev = findEvent(Number(row.dataset.event));
+    const existing = state.data.homework.find((h) => h.kind === 'catchup' && h.event_id === ev.id);
+    return existing ? hw.editHomework(existing.id) : addCatchup(ev);
+  }
+
   const statusBtn = t.closest('button[data-status]');
   if (statusBtn && row) {
     const ev = findEvent(Number(row.dataset.event));
     const status = ev.status === statusBtn.dataset.status ? null : statusBtn.dataset.status;
-    return setEventField(ev.id, { status });
+    await setEventField(ev.id, { status });
+    // Missing a class puts a catch-up on your list; marking it attended again takes an untouched one off.
+    if (ev.start_at <= Date.now()) {
+      const existing = state.data.homework.find((h) => h.kind === 'catchup' && h.event_id === ev.id);
+      if (status === 'absent' && !existing) await addCatchup(ev, { quiet: true });
+      if (status !== 'absent' && existing && !existing.done && existing.created_at === existing.updated_at) await removeCatchup(existing);
+    }
+    return;
   }
 
   const goto = t.closest('[data-goto]');
@@ -1104,7 +1171,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
@@ -1136,4 +1203,4 @@ boot().catch((err) => {
   $app.innerHTML = `<p class="error">Failed to load: ${esc(err.message)}</p>`;
 });
 
-export { state, esc, api, toast, render, reload, courseById, fmtTime, groupChip, groupLabel, courseGroups };
+export { state, esc, api, toast, render, reload, courseById, fmtTime, groupChip, groupLabel, courseGroups, sessionRow };

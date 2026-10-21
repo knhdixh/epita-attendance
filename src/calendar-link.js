@@ -34,7 +34,9 @@ export function parseCalendarLink(input) {
     throw new HttpError(400, BAD_LINK);
   }
   u.hash = '';
-  return { url: u.toString(), from: null, zeus: false, name: host.replace(/^www\./, '') };
+  // Sisu share links: https://sisu.tuni.fi/ilmo/api/calendar-share/<uuid>
+  const sisu = /(^|\.)sisu\./.test(host) && u.pathname.includes('/calendar-share/');
+  return { url: u.toString(), from: null, zeus: false, sisu, name: sisu ? `Sisu (${host.split('.').slice(1).join('.')})` : host.replace(/^www\./, '') };
 }
 
 const isZeus = (url) => new URL(url).hostname === ZEUS_HOST;
