@@ -6,9 +6,9 @@
   // Custom domain (DNS managed on Cloudflare). The workers.dev address redirects here.
   "routes": [{ "pattern": "epita.knhdixh.com", "custom_domain": true }],
   "workers_dev": true,
-  // Refreshes users' Zeus calendar links: one link per run, each link every 3 days (see SYNC_EVERY_MS in
-  // src/worker.js for why it's one per run). Inherited by env.staging.
-  "triggers": { "crons": ["*/15 * * * *"] },
+  // Refreshes users' calendar links: one link per run, each link every hour (see SYNC_EVERY_MS in
+  // src/calendars.js for why it's one per run). Inherited by env.staging.
+  "triggers": { "crons": ["* * * * *"] },
   "preview_urls": false,
   "assets": {
     "directory": "public",

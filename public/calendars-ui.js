@@ -17,6 +17,7 @@ function ago(ms) {
 }
 
 export function importSummary(r) {
+  if (r.unchanged) return `${plural(r.total, 'session')} (no changes)`;
   const parts = [`${r.added} new`, `${r.updated} updated`];
   if (r.removed) parts.push(`${r.removed} removed`);
   if (r.recurringIgnored) parts.push(`${r.recurringIgnored} recurring only imported once`);
@@ -30,7 +31,7 @@ export function addBox({ cancel = true } = {}) {
   return `
     <div class="cal-add">
       <form id="cal-link-form" class="cal-add-opt" autocomplete="off">
-        <div class="cal-add-head"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><b>From a link</b><span>updates every 3 days</span></div>
+        <div class="cal-add-head"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg><b>From a link</b><span>updates every hour</span></div>
         <input class="field" name="url" type="text" inputmode="url" required spellcheck="false"
           placeholder="Zeus, Sisu (Export into external calendar) or any webcal:// link" aria-label="Calendar link">
         <div class="cal-add-row">

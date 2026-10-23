@@ -11,11 +11,12 @@ export const MAX_ICS_BYTES = 5 * 1024 * 1024;
 export const MAX_CALENDARS = 10;
 const NAME_MAX = 60;
 const NON_CLASS = /\b(vacances|holidays?|jour f[ée]ri[ée]|f[ée]ri[ée]|cong[ée]s?)\b/i;
-// The cron runs every 15 minutes and refreshes ONE link per run: a cold import of a semester calendar costs
-// ~10 ms of CPU, the free plan's per-invocation limit. Links are refreshed every 3 days (a little less, so one
-// that ran a few minutes late isn't pushed back a whole cycle); a failed one is retried after 6 hours.
-// That's 96 links a day, so up to ~280 links stay on the 3-day cycle, and beyond that it stretches evenly.
-const SYNC_EVERY_MS = 71 * 3600 * 1000;
+// The cron runs every minute and refreshes ONE link per run: a cold import of a semester calendar costs
+// ~10 ms of CPU, the free plan's per-invocation limit. Links are refreshed every hour (a little less, so one
+// that ran a few minutes late isn't pushed back a whole cycle); a failed one waits 6 hours, so a revoked link
+// isn't hammered. That's 60 links an hour, so up to ~55 links stay on the hourly cycle, and beyond that it
+// stretches evenly.
+const SYNC_EVERY_MS = 55 * 60 * 1000;
 const RETRY_FAILED_MS = 6 * 3600 * 1000;
 const SYNC_BATCH = 1;
 const SYNC_LOG_KEEP = 50;
@@ -45,6 +46,8 @@ export function sisuSession(summary) {
 // Calendars that don't count attendance only need recent sessions (for catch-ups); older ones are dropped.
 const NO_ATTENDANCE_HISTORY_DAYS = 60;
 const ymd = (ms) => new Date(ms).toISOString().slice(0, 10).replace(/-/g, '');
+const sha256 = async (text) => btoa(String.fromCharCode(...new Uint8Array(
+  await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))));
 
 // ---------------------------------------------------------------- import
 
@@ -56,7 +59,7 @@ const ymd = (ms) => new Date(ms).toISOString().slice(0, 10).replace(/-/g, '');
 // A kept session stays in this calendar, so it still shows (and counts) under its group.
 // Courses a calendar creates take its attendance setting.
 export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
-  const src = await env.DB.prepare('SELECT attendance FROM calendar_sources WHERE id = ?').bind(sourceId).first();
+  const src = await env.DB.prepare('SELECT attendance, import_hash FROM calendar_sources WHERE id = ?').bind(sourceId).first();
   const attendance = src ? src.attendance : 1;
   const sisu = isSisu(text);
   const { events, recurring } = parseICS(text, { since: attendance ? null : ymd(now - NO_ATTENDANCE_HISTORY_DAYS * 86400000) });
@@ -84,30 +87,40 @@ export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
       description: ev.description, start: ev.start, end: ev.end });
   }
 
+  const coursesJson = JSON.stringify([...courses.values()].map((c) => ({ ...c, tracked: c.allDayOnly ? 0 : c.tracked })));
+  const rowsJson = JSON.stringify(rows);
+  // Same sessions as the last import today: nothing to write (see migrations/0012). The day is part of the hash so
+  // sessions kept only for a mark or note are still reconsidered daily once the mark goes.
+  const hash = await sha256(`${ymd(now)}\n${coursesJson}\n${rowsJson}`);
+  if (src?.import_hash === hash) {
+    return { total: rows.length, added: 0, updated: 0, removed: 0, cancelled, recurringIgnored: recurring, unchanged: true };
+  }
+
   const existing = await env.DB.prepare('SELECT uid FROM events WHERE user_id = ?').bind(userId).all();
   const existingUids = new Set(existing.results.map((r) => r.uid));
   // Imports are told apart by this stamp; make it unique even for two imports in the same millisecond.
   const stamp = now * 1000 + Math.floor(Math.random() * 1000);
 
-  // json_each keeps this to a handful of queries regardless of calendar size.
+  // json_each keeps this to a handful of queries regardless of calendar size. CROSS JOIN keeps json_each the outer
+  // loop: otherwise SQLite scans all the user's events and rescans the JSON for each (events x rows reads per sync).
   const results = await env.DB.batch([
     env.DB.prepare(`INSERT INTO courses (user_id, key, name, tracked, tag, attendance)
       SELECT ?1, json_extract(value, '$.key'), json_extract(value, '$.name'), json_extract(value, '$.tracked'), 'normal',
         json_extract(value, '$.attendance')
       FROM json_each(?2) WHERE true
       ON CONFLICT (user_id, key) DO NOTHING`)
-      .bind(userId, JSON.stringify([...courses.values()].map((c) => ({ ...c, tracked: c.allDayOnly ? 0 : c.tracked })))),
+      .bind(userId, coursesJson),
     env.DB.prepare(`INSERT INTO events (user_id, course_id, uid, summary, location, description, start_at, end_at)
       SELECT ?1, c.id, json_extract(e.value, '$.uid'), json_extract(e.value, '$.summary'),
         json_extract(e.value, '$.location'), json_extract(e.value, '$.description'),
         json_extract(e.value, '$.start'), json_extract(e.value, '$.end')
-      FROM json_each(?2) e JOIN courses c ON c.user_id = ?1 AND c.key = json_extract(e.value, '$.key')
+      FROM json_each(?2) e CROSS JOIN courses c ON c.user_id = ?1 AND c.key = json_extract(e.value, '$.key')
       WHERE true
       ON CONFLICT (user_id, uid) DO UPDATE SET course_id = excluded.course_id,
         summary = excluded.summary, location = excluded.location, description = excluded.description,
-        start_at = excluded.start_at, end_at = excluded.end_at`).bind(userId, JSON.stringify(rows)),
+        start_at = excluded.start_at, end_at = excluded.end_at`).bind(userId, rowsJson),
     env.DB.prepare(`INSERT INTO event_sources (event_id, source_id, seen_at)
-      SELECT ev.id, ?3, ?4 FROM json_each(?2) j JOIN events ev ON ev.user_id = ?1 AND ev.uid = json_extract(j.value, '$.uid')
+      SELECT ev.id, ?3, ?4 FROM json_each(?2) j CROSS JOIN events ev ON ev.user_id = ?1 AND ev.uid = json_extract(j.value, '$.uid')
       WHERE true
       ON CONFLICT (event_id, source_id) DO UPDATE SET seen_at = excluded.seen_at`)
       .bind(userId, JSON.stringify(rows.map((r) => ({ uid: r.uid }))), sourceId, stamp),
@@ -118,6 +131,7 @@ export async function importIcs(env, userId, sourceId, text, now = Date.now()) {
       .bind(sourceId, stamp, userId, now),
     deleteOrphans(env, userId),
     pruneCourses(env, userId),
+    env.DB.prepare('UPDATE calendar_sources SET import_hash = ? WHERE id = ?').bind(hash, sourceId),
   ]);
 
   const added = rows.filter((r) => !existingUids.has(r.uid)).length;
@@ -346,7 +360,7 @@ export async function removeCalendar(env, user, id) {
 // Cron: refresh the most overdue link, if any.
 export async function syncDueCalendars(env, now = Date.now()) {
   const due = await env.DB.prepare(`SELECT ${SOURCE_COLUMNS} FROM calendar_sources
-    WHERE url IS NOT NULL AND (synced_at IS NULL OR synced_at < ?1 OR (error IS NOT NULL AND synced_at < ?2))
+    WHERE url IS NOT NULL AND (synced_at IS NULL OR synced_at < (CASE WHEN error IS NULL THEN ?1 ELSE ?2 END))
     ORDER BY synced_at LIMIT ?3`).bind(now - SYNC_EVERY_MS, now - RETRY_FAILED_MS, SYNC_BATCH).all();
   // Runs with nothing to do (most of them) aren't logged, so cron_runs holds the runs that did work.
   if (!due.results.length) return { due: 0, ok: 0, failed: 0 };

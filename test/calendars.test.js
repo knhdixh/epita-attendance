@@ -99,6 +99,23 @@ test('re-import keeps the attendance record but drops cancelled future classes',
   assert.equal(r.removed, 3);
 });
 
+test('an unchanged calendar is skipped (no writes) until it changes or the day turns', async () => {
+  const { env, db } = setup();
+  const now = Date.UTC(2026, 9, 19, 12);
+  db.exec(`INSERT INTO calendar_sources (id, user_id, kind, name, created_at) VALUES (1, 1, 'file', 'S3', 0)`);
+  const seenAt = () => db.prepare('SELECT seen_at FROM event_sources').all().map((r) => r.seen_at);
+  await importIcs(env, 1, 1, ics(['a', 'b']), now);
+  const first = seenAt();
+  const r = await importIcs(env, 1, 1, ics(['a', 'b']), now + H);
+  assert.equal(r.unchanged, true);
+  assert.equal(r.total, 2);
+  assert.deepEqual(seenAt(), first);
+  assert.equal((await importIcs(env, 1, 1, ics(['a']), now + 2 * H)).unchanged, undefined);
+  assert.deepEqual(uids(db), ['a']);
+  await importIcs(env, 1, 1, ics(['a']), now + 3 * H);
+  assert.equal((await importIcs(env, 1, 1, ics(['a']), now + DAY)).unchanged, undefined);
+});
+
 test('adding a link imports it first; a failing or duplicate link leaves nothing behind', async (t) => {
   const { env, db, user } = setup();
   t.mock.method(globalThis, 'fetch', async (url) => (String(url).includes('bad')
@@ -125,12 +142,13 @@ test('the cron refreshes one overdue link per run, logs it, retries failures soo
   db.exec(`INSERT INTO calendar_sources (id, user_id, kind, name, url, from_date, synced_at, created_at) VALUES
     (1, 1, 'link', 'Zeus', '${LINK}', '2026-09-01', ${now - 80 * H}, 0),
     (2, 2, 'link', 'Old', 'https://zeus.ionis-it.com/api/group/9/ics/revokedtoken', NULL, ${now - 90 * H}, 0),
-    (3, 2, 'link', 'Fresh', 'https://example.com/fresh.ics', NULL, ${now - 24 * H}, 0),
+    (3, 2, 'link', 'Fresh', 'https://example.com/fresh.ics', NULL, ${now - 30 * 60000}, 0),
     (4, 2, 'file', 'Upload', NULL, NULL, NULL, 0)`);
   const calls = [];
   t.mock.method(globalThis, 'fetch', async (url) => {
     calls.push(String(url));
-    return String(url).includes('revoked') ? new Response('', { status: 401 }) : new Response(ics(['e1', 'e2']));
+    if (String(url).includes('revoked')) return new Response('', { status: 401 });
+    return new Response(ics(String(url).includes('fresh') ? ['f1'] : ['e1', 'e2']));
   });
 
   // Most overdue first, one per run: link 2 (fails), then link 1. Link 3 isn't due and files never are.
@@ -151,16 +169,20 @@ test('the cron refreshes one overdue link per run, logs it, retries failures soo
   ]);
   assert.ok(db.prepare('SELECT finished_at FROM cron_runs').all().every((r) => r.finished_at));
 
-  // The failed link comes back after 6 hours; the good one waits for its 3-day cycle.
+  // The good link comes back within the hour; the failed one waits 6 hours.
   calls.length = 0;
-  assert.equal((await syncDueCalendars(env, now + 5 * H)).due, 0);
+  assert.equal((await syncDueCalendars(env, now + 20 * 60000)).due, 0);
+  for (let i = 0; i < 2; i++) await syncDueCalendars(env, now + 5 * H);
+  assert.deepEqual(calls, ['https://example.com/fresh.ics', `${LINK}?startDate=2026-09-01`]);
+  calls.length = 0;
   assert.equal((await syncDueCalendars(env, now + 7 * H)).due, 1);
   assert.deepEqual(calls, ['https://zeus.ionis-it.com/api/group/9/ics/revokedtoken']);
 
   // A later refresh keeps the (past) mark on e1 after Zeus drops it, and removes the unmarked e2.
   db.exec("UPDATE events SET status = 'present' WHERE uid = 'e1'");
   t.mock.method(globalThis, 'fetch', async () => new Response(ics(['e3'])));
-  for (let i = 0; i < 3; i++) await syncDueCalendars(env, now + 72 * H);
+  db.exec(`UPDATE calendar_sources SET synced_at = ${now + 72 * H} WHERE id IN (2, 3)`);
+  await syncDueCalendars(env, now + 72 * H);
   assert.deepEqual(uids(db, 'id IN (SELECT event_id FROM event_sources WHERE source_id = 1)'), ['e1', 'e3']);
   assert.equal(db.prepare('SELECT removed FROM calendar_syncs WHERE source_id = 1 ORDER BY id DESC').get().removed, 1);
 });

@@ -535,7 +535,7 @@ export default {
     }
   },
 
-  // Cron (every 15 minutes): refresh the Zeus link that is most overdue, if any.
+  // Cron (every minute): refresh the Zeus link that is most overdue, if any.
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(syncDueCalendars(env).then((r) => r.due && console.log('calendar refresh', r)));
   },
