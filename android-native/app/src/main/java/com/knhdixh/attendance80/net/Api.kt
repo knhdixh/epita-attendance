@@ -1,0 +1,143 @@
+package com.knhdixh.attendance80.net
+
+import kotlinx.serialization.json.JsonElement
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.HTTP
+import retrofit2.http.Headers
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface Api {
+    @GET("auth/config")
+    suspend fun authConfig(): AuthConfigResponse
+
+    @POST("auth/app/token")
+    suspend fun exchangeToken(@Body req: TokenExchangeRequest): TokenResponse
+
+    @POST("auth/passkey/register/options")
+    suspend fun passkeyRegisterOptions(@Body req: PasskeyRegisterOptionsRequest): JsonElement
+
+    @Headers("X-A80-App: 1")
+    @POST("auth/passkey/register/verify")
+    suspend fun passkeyRegisterVerify(@Body req: PasskeyRegisterVerifyRequest): PasskeyRegisterVerifyResponse
+
+    @POST("auth/passkey/login/options")
+    suspend fun passkeyLoginOptions(): JsonElement
+
+    @Headers("X-A80-App: 1")
+    @POST("auth/passkey/login/verify")
+    suspend fun passkeyLoginVerify(@Body req: PasskeyLoginVerifyRequest): PasskeyLoginVerifyResponse
+
+    @POST("auth/logout")
+    suspend fun logout(): OkResponse
+
+    @GET("api/me")
+    suspend fun me(): MeResponse
+
+    @GET("api/data")
+    suspend fun data(): AppData
+
+    @GET("api/focus")
+    suspend fun listFocus(@Query("since") since: Long): FocusListResponse
+
+    @POST("api/focus")
+    suspend fun logFocus(@Body session: FocusLogRequest): FocusSessionDto
+
+    @DELETE("api/focus/{id}")
+    suspend fun deleteFocus(@Path("id") id: Long): OkResponse
+
+    @PUT("api/focus/settings")
+    suspend fun saveFocusSettings(@Body settings: FocusSettingsDto): FocusSettingsResponse
+
+    @PATCH("api/attendance/{id}")
+    suspend fun updateAttendance(@Path("id") id: Long, @Body req: AttendanceUpdateRequest): OkResponse
+
+    @POST("api/attendance/bulk")
+    suspend fun bulkAttendance(@Body req: AttendanceBulkRequest): AttendanceBulkResponse
+
+    @PATCH("api/courses/{id}")
+    suspend fun updateCourse(@Path("id") id: Long, @Body req: CourseUpdateRequest): OkResponse
+
+    @POST("api/courses/tracked")
+    suspend fun updateCoursesTracked(@Body req: CourseTrackedBulkRequest): OkResponse
+
+    @POST("api/catchups")
+    suspend fun createCatchup(@Body req: CatchupRequest): HomeworkDto
+
+    @POST("api/homework")
+    suspend fun createHomework(@Body req: HomeworkCreateRequest): HomeworkDto
+
+    @PATCH("api/homework/{id}")
+    suspend fun updateHomework(@Path("id") id: Long, @Body req: HomeworkUpdateRequest): HomeworkDto
+
+    @DELETE("api/homework/{id}")
+    suspend fun deleteHomework(@Path("id") id: Long): OkResponse
+
+    @POST("api/breaks")
+    suspend fun createBreak(@Body req: BreakCreateRequest): BreakCreateResponse
+
+    @DELETE("api/breaks/{id}")
+    suspend fun deleteBreak(@Path("id") id: Long): BreakDeleteResponse
+
+    @POST("api/calendars")
+    suspend fun addCalendar(@Body req: CalendarAddRequest): CalendarImportSummary
+
+    @PATCH("api/calendars/{id}")
+    suspend fun updateCalendar(@Path("id") id: Long, @Body req: CalendarUpdateRequest): CalendarUpdateResponse
+
+    @POST("api/calendars/{id}/sync")
+    suspend fun syncCalendar(@Path("id") id: Long): CalendarImportSummary
+
+    @POST("api/calendars/{id}/file")
+    suspend fun updateCalendarFile(@Path("id") id: Long, @Body req: CalendarFileRequest): CalendarImportSummary
+
+    @DELETE("api/calendars/{id}")
+    suspend fun deleteCalendar(@Path("id") id: Long): CalendarDeleteResponse
+
+    @POST("api/gcal/resync")
+    suspend fun resyncGcal(): GcalResyncResponse
+
+    @POST("api/gcal/disconnect")
+    suspend fun disconnectGcal(): OkResponse
+
+    @POST("api/feed/rotate")
+    suspend fun rotateFeed(): OkResponse
+
+    @POST("api/app/web-link")
+    suspend fun createWebLink(@Body req: WebLinkRequest): WebLinkResponse
+
+    @GET("api/tokens")
+    suspend fun listTokens(): TokenListResponse
+
+    @POST("api/tokens")
+    suspend fun createToken(@Body req: TokenCreateRequest): PersonalTokenCreatedDto
+
+    @DELETE("api/tokens/{id}")
+    suspend fun deleteToken(@Path("id") id: Long): OkResponse
+
+    @PUT("api/ai-key")
+    suspend fun setAiKey(@Body req: AiKeyRequest): AiKeyResponse
+
+    @DELETE("api/ai-key")
+    suspend fun deleteAiKey(): AiUsageResponse
+
+    @POST("api/assistant/chat")
+    suspend fun chat(@Body req: ChatRequest): ChatResponse
+
+    @DELETE("api/passkeys/{id}")
+    suspend fun deletePasskey(@Path("id") id: String): OkResponse
+
+    @PATCH("api/settings")
+    suspend fun updateSettings(@Body req: SettingsUpdateRequest): OkResponse
+
+    @DELETE("api/data")
+    suspend fun deleteData(): OkResponse
+
+    @HTTP(method = "DELETE", path = "api/account", hasBody = true)
+    suspend fun deleteAccount(@Body req: AccountDeleteRequest): OkResponse
+}
