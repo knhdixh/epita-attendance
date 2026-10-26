@@ -6,6 +6,7 @@ import * as byok from './byok-ui.js';
 import * as cal from './calendars-ui.js';
 import * as today from './today-ui.js';
 import * as tokens from './tokens-ui.js';
+import * as fx from './focus-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -46,7 +47,7 @@ async function api(path, { method = 'GET', body } = {}) {
     throw new Error('Could not reach the server. Check your connection, or whether an ad/tracker blocker is blocking this site.');
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) throw Object.assign(new Error(data.error || `Request failed (${res.status})`), { status: res.status });
   return data;
 }
 
@@ -96,12 +97,14 @@ async function boot() {
   if (fromHash in TITLES) state.tab = fromHash;
   try { if (localStorage.getItem(SIDEBAR_KEY) === 'closed') document.body.classList.add('sidebar-closed'); } catch { /* storage unavailable */ }
   render();
+  fx.init();
   hw.handleRedirectParams(params);
 }
 
 async function reload() {
   const data = await api('/api/data');
   data.allEvents = data.events;
+  fx.adopt(data);
   state.data = data;
   applyScope();
 }
@@ -228,7 +231,7 @@ function render() {
   document.getElementById('fluid')?.remove();
 
   // Entrance animation only when the view changes, never on the re-render after a click.
-  const view = state.data.events.length || state.tab === 'settings' ? state.tab : 'empty';
+  const view = state.data.events.length || state.tab === 'settings' || state.tab === 'focus' ? state.tab : 'empty';
   const changed = view !== lastView;
   lastView = view;
 
@@ -236,7 +239,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -248,11 +251,12 @@ function render() {
     if (first) playEnter(true);
   }
   first = false;
+  fx.paint();
 }
 
 let lastView = null;
 let first = true;
-const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
@@ -264,6 +268,7 @@ function pageSub() {
     const open = state.data.homework.filter((h) => !h.done).length;
     if (open) parts.push(`${open} open`);
   }
+  if (state.tab === 'focus') parts.push(fx.subtitle());
   if (state.tab === 'upcoming' && state.weekCount != null) parts.push(`${state.weekCount} session${state.weekCount === 1 ? '' : 's'} this week`);
   if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
@@ -848,7 +853,7 @@ async function setTracked(updates) {
 // [tab, label, icon, key after G]
 const NAV = [
   ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
-  ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
+  ['focus', 'Focus', 'i-focus', 'F'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
 const SIDEBAR_KEY = 'a80-sidebar';
@@ -903,7 +908,7 @@ function paletteItems() {
   const { courses, events, homework, user } = state.data;
   const hasData = events.length > 0;
   const now = Date.now();
-  const items = NAV.filter(([tab]) => hasData || tab === 'settings').map(([tab, label, icon, key]) => ({
+  const items = NAV.filter(([tab]) => hasData || tab === 'settings' || tab === 'focus').map(([tab, label, icon, key]) => ({
     id: `nav:${tab}`, section: 'Navigation', label: `Go to ${label}`, icon, keys: ['G', 'then', key], home: true, run: () => go(tab),
   }));
 
@@ -913,7 +918,7 @@ function paletteItems() {
   const unmarked = unmarkedEvents();
   if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
   if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
-  items.push(...cal.paletteItems(go));
+  items.push(...cal.paletteItems(go), ...fx.paletteItems());
   if (state.data.integrations?.feedUrl) act('copy-feed', 'Copy timetable calendar link', 'i-link', copyTimetableFeed, { home: false, keywords: 'feed ics subscribe google apple outlook' });
   act('sidebar', 'Toggle sidebar', 'i-panel', toggleSidebar, { keys: ['M'], home: false });
   act('shortcuts', 'Keyboard shortcuts', 'i-keyboard', () => palette.open('?'), { keys: ['?'], home: false, keywords: 'keys help' });
@@ -965,7 +970,7 @@ function paletteFallback(q) {
 function shortcutsHelp() {
   const rows = [
     [['/'], 'Search and commands'], [['⌘', 'K'], 'Search and commands, even while typing'], [['Q'], 'Add homework'],
-    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'],
+    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'], ...fx.SHORTCUTS,
     ...NAV.map(([, label, , key]) => [['G', 'then', key], `Go to ${label}`]),
     [['Esc'], 'Close, or cancel the homework form'], [['⌘', '↵'], 'Save homework from the notes'],
   ];
@@ -996,7 +1001,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (byok.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (byok.onClick(e) || fx.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1095,8 +1100,9 @@ document.addEventListener('click', async (e) => {
   if (when) { state.filter.when = when.dataset.when; return render(); }
 });
 
-// Keyboard: "/" and Cmd/Ctrl+K open the palette, Q adds homework, M toggles the sidebar, "?" lists the shortcuts,
-// and G then a letter goes to a page (G then H = Homework). Single keys are ignored while typing.
+// Keyboard: "/" and Cmd/Ctrl+K open the palette, Q adds homework, F starts or pauses the focus timer, M toggles
+// the sidebar, "?" lists the shortcuts, and G then a letter goes to a page (G then H = Homework). On the Focus page,
+// Space, S and X control the timer. Single keys are ignored while typing.
 const isTyping = (el) => el?.closest?.('input, textarea, select, [contenteditable="true"]');
 let gAt = 0;
 
@@ -1119,10 +1125,12 @@ document.addEventListener('keydown', (e) => {
     if (page) { e.preventDefault(); go(page[0]); }
     return;
   }
+  if (state.tab === 'focus' && fx.onPageKey(e)) return;
   if (k === '/') { e.preventDefault(); palette.open(); }
   else if (e.key === '?') { e.preventDefault(); palette.open('?'); }
   else if (k === 'g') gAt = Date.now();
   else if (k === 'q') { e.preventDefault(); hw.openForm(); }
+  else if (k === 'f') { e.preventDefault(); if (!e.repeat) fx.toggle(); }
   else if (k === 'm') toggleSidebar();
 });
 
@@ -1134,7 +1142,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (byok.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (byok.onChange(e) || fx.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -1171,7 +1179,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');

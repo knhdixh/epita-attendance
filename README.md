@@ -17,11 +17,13 @@ Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudf
 | 📚 **Homework** | Due dates, or "due at the next session of X", reminders and notes. Overdue items appear on the overview, and each session shows the homework due at it. |
 | 🔔 **Google Calendar sync** | Todoist-style: homework is pushed to a *Homework (Attendance80)* calendar, and reminders arrive as Google Calendar notifications. There's also a private `.ics` feed for Apple Calendar or Outlook. |
 | 🗓 **Calendar feeds** | Two private links for Google Calendar, Apple Calendar or Outlook: your timetable (every session of your groups, as on Zeus, following Zeus updates) and, optionally, your homework. |
+| ⏱ **Focus** | A Pomodoro timer (25/5 min, a long break every 4, all adjustable) that can be pointed at a homework item or course. Press **F** anywhere to start or pause; a mini timer stays in the top bar, the sidebar and the tab title, and a sound and notification mark the end of each phase. The timer survives reloads and is shared across tabs, and finished sessions are saved even if you were offline. Stats: today against a daily goal, streak, this week against last, time per course and per homework, and a year heatmap. |
 | 🌴 **Break planner** | A calendar showing, for a break length you choose (1 day to 2 weeks), whether a break starting on each day is safe, a preview of any date range per course, and a finder for the best N-day break that skips the fewest classes, uses weekends and school holidays, and never covers an exam. |
 | ☀️ **Today** | The home page: what's on now and next, a single *Do next* list (homework and catch-ups ranked by the latest time you can start them), today's free time between classes with the to-dos that fit in it, overlapping sessions this week, and how much work is due against how much free time you have. Computed by the app ([`public/plan.js`](public/plan.js)), no AI. |
 | 🇫🇮 **Sisu (Tampere and other Finnish universities)** | Paste the Sisu *Export into external calendar* link. Sessions are grouped by course code ("Deep Learning · Lecture"), and Sisu calendars don't count attendance by default (any calendar can turn it off in Settings): their courses appear in the timetable and the plan, without the 80% maths. |
 | ↺ **Catch-ups** | Missed a class? Marking it absent (or ↺ on any past session) adds "Catch up: …" to your list, due before the course meets again, with the course's recordings link (set it in Courses). |
-| 🔑 **Claude Code access** | Personal tokens (read, or read and write) for `GET /api/plan` and the homework, catch-up and attendance endpoints, so a script or Claude Code can plan with your data. |
+| 📱 **Install it** | The site is an installable app (Chrome: *Install app*; Safari: *Add to Home Screen*), and [`android/`](android) builds an Android APK that opens it full screen. Notifications go through a small service worker that caches nothing. |
+| 🔑 **Claude Code access** | Personal tokens (read, or read and write) for `GET /api/plan` (which includes a focus summary), `GET /api/focus` and the homework, catch-up and attendance endpoints, so a script or Claude Code can plan with your data. |
 | 🤖 **AI assistant** | "Can I take next week off?", "I missed French today", "add TP4 due friday", "make my weekly plan". All maths and dates are done by the app, not the model, and every change it makes can be undone. |
 
 <table>
@@ -61,10 +63,11 @@ src/
   gcal.js            Google Calendar sync (encrypted refresh tokens)
   homework*.js       homework validation, persistence, .ics feed
   breaks-store.js    saving/removing breaks
+  focus.js           focus sessions and timer settings
 public/
   app.js             UI shell: overview, sessions, courses, settings
   *-ui.js            homework, breaks and assistant tabs
-  stats.js, breaks.js  shared maths
+  stats.js, breaks.js, focus.js  shared maths (attendance, breaks, the focus timer and its stats)
 test/                node:test suites (no network, D1 shimmed with node:sqlite)
 ```
 
@@ -115,6 +118,11 @@ Pushes to `main` deploy automatically through **Workers Builds** (Cloudflare das
 | API token | the build token, with **D1 → Edit** added so migrations can run |
 
 Runtime secrets (`GOOGLE_*`, `TOKEN_KEY`) stay on the Worker and are not part of the build.
+
+### Android app
+
+[`android/README.md`](android/README.md): build the APK with Bubblewrap, then put its key's SHA-256 in
+`ANDROID_CERT_SHA256` so `/.well-known/assetlinks.json` lets it open full screen.
 
 ### Staging
 

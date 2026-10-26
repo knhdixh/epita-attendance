@@ -1,5 +1,5 @@
 // Personal access tokens: `Authorization: Bearer a80_…` for scripts such as a Claude Code repo. A token can read
-// (GET /api/plan, GET /api/data) or also write homework, catch-ups and attendance marks; it can never manage
+// (GET /api/plan, /api/data and /api/focus) or also write homework, catch-ups and attendance marks; it can never manage
 // calendars, tokens, keys or the account. Only a SHA-256 of the token is stored; the token is shown once.
 import { HttpError } from './http.js';
 
@@ -11,7 +11,7 @@ export async function sha256(text) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const READ = [['GET', /^\/api\/(plan|data)$/]];
+const READ = [['GET', /^\/api\/(plan|data|focus)$/]];
 const WRITE = [
   ['POST', /^\/api\/homework$/], ['PATCH', /^\/api\/homework\/\d+$/], ['DELETE', /^\/api\/homework\/\d+$/],
   ['POST', /^\/api\/catchups$/], ['PATCH', /^\/api\/attendance\/\d+$/],

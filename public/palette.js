@@ -7,8 +7,8 @@ const $wrap = document.getElementById('palette');
 const $q = document.getElementById('palette-q');
 const $list = document.getElementById('palette-list');
 
-const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Courses', 'Homework', 'Sessions', 'Assistant'];
-const PER_SECTION = { Courses: 6, Homework: 6, Sessions: 6 };
+const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Focus', 'Courses', 'Homework', 'Sessions', 'Assistant'];
+const PER_SECTION = { Focus: 6, Courses: 6, Homework: 6, Sessions: 6 };
 const RECENT_KEY = 'a80-palette-recent';
 
 let source = { items: () => [], fallback: () => [], help: () => '' };

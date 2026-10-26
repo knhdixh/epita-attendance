@@ -1,5 +1,6 @@
 // Homework tab, overview panel, session badges and calendar-integration settings.
 import { state, esc, api, toast, render, reload, courseById, fmtTime, groupLabel, courseGroups } from './app.js';
+import { focusingOn, focusedMinutes, hrs } from './focus-ui.js';
 
 const $app = document.getElementById('app');
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -57,8 +58,10 @@ export function hwItem(hw, now = Date.now(), plan = null) {
   const course = courseById()[hw.course_id];
   const remind = REMINDERS.find(([m]) => m === hw.remind_minutes)?.[1];
   const recording = hw.kind === 'catchup' && recordingOf(hw);
+  const focused = focusedMinutes(hw.id);
+  const focusing = focusingOn() === hw.id;
   return `
-    <div class="hw-item ${hw.done ? 'done' : ''} ${hw.kind === 'catchup' ? 'catchup' : ''}" data-hw="${hw.id}">
+    <div class="hw-item ${hw.done ? 'done' : ''} ${hw.kind === 'catchup' ? 'catchup' : ''} ${focusing ? 'focusing' : ''}" data-hw="${hw.id}">
       <label class="checkbox round hw-check" title="${hw.done ? 'Mark not done' : 'Mark done'}"><input type="checkbox" data-hw-done ${hw.done ? 'checked' : ''} aria-label="Done: ${esc(hw.title)}"><span></span></label>
       <div class="hw-main" data-hw-edit>
         <div class="hw-title">${esc(hw.title)}</div>
@@ -67,6 +70,7 @@ export function hwItem(hw, now = Date.now(), plan = null) {
           <span class="due ${hw.done ? '' : bucket(hw, now)}"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>${esc(dueLabel(hw))}</span>
           ${hw.kind === 'catchup' ? '<span class="chip">catch-up</span>' : ''}
           ${plan ? `<span title="Time it needs (set it when editing)">${effortLabel(plan.effort)}</span>` : ''}
+          ${focusing ? '<span class="hw-focus on">focusing now</span>' : focused >= 1 ? `<span class="hw-focus" title="Focus time on it in the last weeks">${hrs(focused)} focused</span>` : ''}
           ${recording ? `<a href="${esc(recording)}" target="_blank" rel="noopener" class="hw-rec">recording ↗</a>` : ''}
           ${hw.remind_minutes != null && !hw.done ? `<span title="Reminder">reminder ${esc(remind)}</span>` : ''}
           ${syncIcon(hw)}
@@ -74,6 +78,7 @@ export function hwItem(hw, now = Date.now(), plan = null) {
         </div>
       </div>
       <div class="hw-actions">
+        ${hw.done ? '' : `<button class="btn btn-borderless btn-small" data-hw-focus title="Focus on this" aria-label="Focus on this"><svg class="ic" aria-hidden="true"><use href="#i-focus"/></svg></button>`}
         <button class="btn btn-borderless btn-small" data-hw-edit title="Edit" aria-label="Edit"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
         <button class="btn btn-borderless btn-small" data-hw-delete title="Delete" aria-label="Delete"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
       </div>

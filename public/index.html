@@ -9,6 +9,10 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232a6ae0'/><text x='50' y='66' font-family='-apple-system,Helvetica,Arial' font-weight='700' font-size='46' text-anchor='middle' fill='white'>80</text></svg>">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="A80">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -37,6 +41,11 @@
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9M19 4.5V8h-3.5"/></symbol>
     <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
     <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17.5 10h.01M7.5 14h9"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7"/><path d="M12 10v3.5l2.2 1.6M10 3.5h4M12 3.5v3M18 6.5l1.2-1.2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24"><path d="M6 6.5v11l8-5.5zM17.5 6v12"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
   </svg>
 
@@ -69,6 +78,7 @@
           <button class="sb-row" data-tab="upcoming"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="label">Upcoming</span></button>
           <button class="sb-row" data-tab="sessions"><svg class="ic" aria-hidden="true"><use href="#i-sessions"/></svg><span class="label">Sessions</span><span class="count" data-count="sessions"></span></button>
           <button class="sb-row" data-tab="homework"><svg class="ic" aria-hidden="true"><use href="#i-homework"/></svg><span class="label">Homework</span><span class="count" data-count="homework"></span></button>
+          <button class="sb-row" data-tab="focus"><svg class="ic" aria-hidden="true"><use href="#i-focus"/></svg><span class="label">Focus</span><span class="count" data-count="focus"></span></button>
           <button class="sb-row" data-tab="breaks"><svg class="ic" aria-hidden="true"><use href="#i-breaks"/></svg><span class="label">Breaks</span></button>
           <button class="sb-row" data-tab="assistant"><svg class="ic" aria-hidden="true"><use href="#i-assistant"/></svg><span class="label">Assistant</span></button>
         </nav>
@@ -91,6 +101,7 @@
         <button class="icon-btn open-drawer" data-action="toggle-sidebar" aria-label="Menu"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
         <div class="topbar-title" id="topbar-title" aria-hidden="true"></div>
         <div class="scope" id="scope" role="group" aria-label="Count attendance for these calendars" hidden></div>
+        <button class="focus-pill" id="focus-pill" data-tab="focus" hidden></button>
         <button class="icon-btn" data-action="palette" title="Search (/)" aria-label="Search"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></button>
       </header>
       <main id="app"><div class="loading">Loading…</div></main>

@@ -2,6 +2,7 @@
 import { state, esc, fmtTime, courseById, sessionRow } from './app.js';
 import { buildPlan, DAY_START, DAY_END } from './plan.js';
 import * as hw from './homework-ui.js';
+import { todayPanel } from './focus-ui.js';
 
 const $app = document.getElementById('app');
 
@@ -50,6 +51,8 @@ export function renderToday() {
         : '<p class="empty">Nothing due in the next 7 days.</p>'}
       ${plan.later ? `<p class="muted small">${plan.later} more due later.</p>` : ''}
     </section>
+
+    ${todayPanel()}
 
     ${plan.gaps.length ? `
     <section class="panel">

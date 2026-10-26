@@ -1,0 +1,6 @@
+# Everything Bubblewrap generates is rebuilt from twa-manifest.json. The keystore is the app's identity:
+# back it up somewhere safe, never commit it.
+*
+!.gitignore
+!twa-manifest.json
+!README.md

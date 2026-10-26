@@ -878,3 +878,138 @@ body.doc .footer-links { margin-top: 32px; font-size: 12.5px; color: var(--text-
 code.token { user-select: all; word-break: break-all; font-size: 12px; }
 #token-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 #token-form .field { flex: 1 1 220px; }
+
+/* ---------------------------------------------------------------- focus (pomodoro)
+   Focus is the accent colour, breaks are green. Progress bars move with transform only. */
+.focus-pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 9px; border: 0; border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent); font: 600 12.5px var(--font); font-variant-numeric: tabular-nums; cursor: pointer;
+  animation: pop-in .2s var(--ease);
+}
+.focus-pill:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.focus-pill .dot, .fx-phase .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.focus-pill.short, .focus-pill.long { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
+.focus-pill.paused .dot, .fx-timer.paused .fx-phase .dot { animation: blink 1.6s infinite both; }
+.focus-pill + .icon-btn { margin-left: 0 !important; }
+.sb-row .count.live { color: var(--accent); font-weight: 600; }
+.sb-row .count.live.short, .sb-row .count.live.long { color: var(--green); }
+.sb-row .count.paused { opacity: .6; }
+
+.fx-timer {
+  --phase: var(--accent);
+  display: grid; justify-items: center; gap: 10px; margin-bottom: 36px; padding: 28px 20px 22px;
+  border: 1px solid var(--line-2); border-radius: 14px; text-align: center;
+}
+.fx-timer.short, .fx-timer.long { --phase: var(--green); }
+.fx-phase { display: inline-flex; align-items: center; gap: 8px; color: var(--phase); font-weight: 600; font-size: 13.5px; }
+.fx-timer:not(.on) .fx-phase { color: var(--text-2); }
+.fx-clock { font-size: clamp(56px, 14vw, 88px); font-weight: 700; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.fx-timer:not(.on) .fx-clock, .fx-timer.paused .fx-clock { color: var(--text-2); }
+.fx-track { width: min(360px, 100%); height: 4px; border-radius: 99px; background: var(--line-2); overflow: hidden; }
+.fx-bar { height: 100%; background: var(--phase); transform-origin: left; transition: transform .25s linear; }
+.fx-cycle { display: flex; gap: 6px; }
+.fx-cycle i { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--text-3); }
+.fx-cycle i.on { background: var(--accent); box-shadow: none; }
+.fx-target { display: flex; align-items: center; gap: 8px; white-space: nowrap; margin-top: 6px; color: var(--text-2); font-size: 12.5px; max-width: 100%; }
+.fx-target .select { width: min(340px, 64vw); }
+.fx-target .select select { height: 32px; font-size: 13px; }
+.fx-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+.fx-actions .btn kbd, .fx-today .btn kbd { margin-left: 4px; background: rgba(255, 255, 255, .18); color: inherit; box-shadow: none; }
+.fx-actions .btn:not(.btn-primary) kbd, .fx-today .btn kbd { background: var(--hover); color: var(--text-3); }
+@media (hover: none) { .fx-actions kbd, .fx-today kbd { display: none !important; } }
+.fx-note, .fx-done { margin: 2px 0 0; color: var(--text-2); font-size: 12.5px; }
+.fx-note.warn { color: var(--orange); }
+.fx-done .btn { margin-left: 6px; }
+
+.fx-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 0; }
+@media (max-width: 620px) {
+  .fx-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fx-stats .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .fx-stats .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
+.fx-goalbar { display: block; height: 3px; margin-top: 6px; max-width: 120px; border-radius: 99px; background: var(--line-2); overflow: hidden; }
+.fx-goalbar i, .fx-meter i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transform-origin: left; }
+.fx-delta { display: block; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.fx-delta.up { color: var(--green); }
+
+/* this week: seven bars and the daily goal line */
+.fx-week { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; height: 180px; padding-top: 14px; }
+.fx-goal { position: absolute; left: 0; right: 0; bottom: calc(26px + var(--g) * 140px); border-top: 1px dashed var(--line-2); pointer-events: none; }
+.fx-goal span { position: absolute; right: 0; bottom: 2px; color: var(--text-3); font-size: 11px; }
+.fx-col { display: flex; flex-direction: column; min-width: 0; border-radius: 6px; cursor: default; }
+.fx-col:hover { background: var(--hover); }
+.fx-plot { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; }
+.fx-bar-v { width: min(36px, 60%); border-radius: 4px 4px 0 0; background: var(--accent); transform-origin: bottom; }
+main.enter .fx-bar-v { animation: grow-y .8s var(--ease) backwards .15s; }
+@keyframes grow-y { from { transform: scaleY(0); } }
+.fx-col:not(.today) .fx-bar-v { background: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
+.fx-day { height: 26px; padding: 3px 0; line-height: 19px; border-top: 1px solid var(--line); color: var(--text-2); font-size: 12px; text-align: center; }
+.fx-col.today .fx-day { color: var(--accent); font-weight: 600; }
+.fx-col.future .fx-day { color: var(--text-3); }
+
+/* where it went */
+.panel > h3 .scope { font-weight: 400; }
+.fx-summary { margin: 10px 0 6px; color: var(--text-2); font-size: 13px; }
+.fx-sub { margin: 16px 0 2px; color: var(--text-2); font-size: 12px; font-weight: 600; }
+.fx-rows { display: grid; }
+.fx-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(60px, 1fr) 72px 28px; gap: 12px; align-items: center; min-height: 36px; border-bottom: 1px solid var(--line); }
+.fx-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-meter { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.fx-val { color: var(--text-2); font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.fx-val .chip { margin-left: 6px; }
+.fx-again { width: 28px; padding: 0; }
+@media (max-width: 520px) { .fx-row { grid-template-columns: minmax(0, 1fr) 64px 28px; } .fx-meter { display: none; } }
+
+/* last 12 months */
+.fx-best { font-weight: 400; }
+.fx-heat-scroll { overflow-x: auto; padding: 10px 0 4px; scrollbar-width: thin; }
+.fx-heat { display: grid; grid-template-columns: 28px auto; grid-template-rows: auto auto; gap: 4px 6px; width: max-content; }
+.fx-months { grid-column: 2; display: grid; grid-template-columns: repeat(53, 11px); column-gap: 3px; color: var(--text-3); font-size: 10.5px; height: 14px; }
+.fx-months span { white-space: nowrap; }
+.fx-dows { display: grid; grid-template-rows: repeat(7, 11px); row-gap: 3px; color: var(--text-3); font-size: 10px; line-height: 11px; }
+.fx-cells { display: grid; grid-template-rows: repeat(7, 11px); grid-auto-columns: 11px; grid-auto-flow: column; gap: 3px; }
+.fx-cells i, .fx-legend i { width: 11px; height: 11px; border-radius: 3px; background: var(--line); }
+.fx-cells i.future { background: none; }
+.fx-cells i.l1, .fx-legend i.l1 { background: color-mix(in srgb, var(--accent) 22%, var(--line)); }
+.fx-cells i.l2, .fx-legend i.l2 { background: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.fx-cells i.l3, .fx-legend i.l3 { background: color-mix(in srgb, var(--accent) 70%, var(--line)); }
+.fx-cells i.l4, .fx-legend i.l4 { background: var(--accent); }
+.fx-cells i:hover { box-shadow: 0 0 0 1.5px var(--text-2); }
+.fx-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px; color: var(--text-3); font-size: 11.5px; }
+.fx-legend span:first-child { margin-right: 2px; } .fx-legend span:nth-of-type(2) { margin: 0 4px 0 2px; }
+
+/* recent sessions */
+.fx-log { display: grid; grid-template-columns: minmax(150px, max-content) minmax(0, 1fr) auto 28px; gap: 12px; align-items: center; min-height: 40px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.fx-log .when { color: var(--text); font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fx-log .when span { margin-left: 6px; color: var(--text-2); font-weight: 400; }
+.fx-log .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-log .btn { width: 28px; padding: 0; opacity: 0; transition: opacity .15s; }
+.fx-log:hover .btn, .fx-log .btn:focus-visible { opacity: 1; }
+@media (hover: none) { .fx-log .btn { opacity: 1; } }
+@media (max-width: 520px) { .fx-log { grid-template-columns: minmax(0, 1fr) auto 28px; } .fx-log .when { grid-column: 1 / -1; } }
+
+/* settings */
+.fx-settings summary { cursor: pointer; list-style: none; }
+.fx-settings summary h3 { padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 700; }
+.fx-settings summary::-webkit-details-marker { display: none; }
+.fx-settings summary h3::before { content: "›"; display: inline-block; width: 12px; color: var(--text-3); transition: transform .2s var(--ease); }
+.fx-settings[open] summary h3::before { transform: rotate(90deg); }
+.fx-settings .form { max-width: 560px; }
+.fx-settings .form-row > label { flex: 1 1 140px; }
+.fx-settings .input-suffix .field { width: 76px; }
+.fx-checks { display: grid; gap: 8px; }
+
+/* Today and homework */
+.fx-today { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 0; }
+.fx-today p { margin: 0; color: var(--text-2); }
+.fx-today b { color: var(--text); font-variant-numeric: tabular-nums; }
+.hw-focus { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.hw-focus.on { color: var(--accent); font-weight: 600; }
+.hw-item.focusing { box-shadow: inset 2px 0 0 var(--accent); padding-left: 10px; }
+
+/* chart tooltip */
+.fx-tip {
+  position: fixed; z-index: 95; max-width: 260px; padding: 5px 9px; border-radius: 6px; pointer-events: none;
+  background: #282828; color: #fff; font-size: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, .2);
+}
+@media (prefers-color-scheme: dark) { .fx-tip { background: #3a3a3a; } }

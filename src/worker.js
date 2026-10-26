@@ -12,6 +12,8 @@ import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from '.
 import { createCatchup, setRecordingUrl } from './catchups.js';
 import { userFromToken, tokenAllows, listTokens, createToken, revokeToken } from './tokens.js';
 import { buildPlan } from '../public/plan.js';
+import { focusSummary } from '../public/focus.js';
+import { FOCUS_COLUMNS, focusSettings, saveFocusSettings, logFocus, listFocus, deleteFocus } from './focus.js';
 import { isValidTimeZone } from './homework.js';
 import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
@@ -23,6 +25,7 @@ export { syncDueCalendars };
 const SESSION_COOKIE = 'sid';
 const STATE_COOKIE = 'oauth_state';
 const SESSION_TTL_MS = 30 * 24 * 3600 * 1000;
+const FOCUS_DATA_DAYS = 56;
 
 const json = (data, init = {}) => Response.json(data, init);
 
@@ -249,6 +252,16 @@ async function timetableFeed(env, url, user) {
   });
 }
 
+// Digital Asset Links: lets the Android app (android/, a Trusted Web Activity) open this site full screen.
+function assetLinks(env) {
+  const fingerprints = (env.ANDROID_CERT_SHA256 || '').split(',').map((f) => f.trim().toUpperCase()).filter(Boolean);
+  if (!env.ANDROID_PACKAGE || !fingerprints.length) return new Response('Not found', { status: 404 });
+  return json([{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: { namespace: 'android_app', package_name: env.ANDROID_PACKAGE, sha256_cert_fingerprints: fingerprints },
+  }], { headers: { 'Cache-Control': 'public, max-age=3600' } });
+}
+
 const validTag = (t) => Object.hasOwn(TAGS, t);
 const validStatus = (s) => s === null || STATUSES.includes(s);
 
@@ -259,7 +272,7 @@ async function handleApi(request, env, url, user) {
   let m;
 
   if (path === '/api/data' && method === 'GET') {
-    const [courses, events, homework, link, breaks, syncs] = await DB.batch([
+    const [courses, events, homework, link, breaks, syncs, focus] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -269,6 +282,9 @@ async function handleApi(request, env, url, user) {
       DB.prepare('SELECT id, label, start_date, end_date, changes, created_at FROM breaks WHERE user_id = ? ORDER BY start_date').bind(user.id),
       DB.prepare(`SELECT source_id, at, source, ok, http_status, duration_ms, sessions, added, removed, error FROM calendar_syncs
         WHERE user_id = ? ORDER BY id DESC LIMIT 20`).bind(user.id),
+      // The last eight weeks of focus (Today, homework totals, the week chart); the Focus page loads the year.
+      DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
+        .bind(user.id, Date.now() - FOCUS_DATA_DAYS * 86400000),
     ]);
     const gcal = link.results[0];
     return json({
@@ -287,6 +303,7 @@ async function handleApi(request, env, url, user) {
       assistant: env.AI ? await aiUsage(env, user) : null,
       calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
+      focus: { settings: focusSettings(user), sessions: focus.results, since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
     });
   }
 
@@ -295,13 +312,15 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/plan' && method === 'GET') {
     const tz = [url.searchParams.get('tz'), request.cf?.timezone, 'Europe/Paris'].find((z) => z && isValidTimeZone(z));
     const now = Date.now();
-    const [courses, events, homework, cals] = await DB.batch([
+    const [courses, events, homework, cals, focus] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
         FROM events WHERE user_id = ? AND end_at > ? AND start_at < ? ORDER BY start_at`).bind(user.id, now - 14 * 86400000, now + 21 * 86400000),
       DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND (done = 0 OR due_at > ?) ORDER BY due_at`).bind(user.id, now - 14 * 86400000),
       DB.prepare('SELECT id, name, attendance FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id').bind(user.id),
+      DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
+        .bind(user.id, now - FOCUS_DATA_DAYS * 86400000),
     ]);
     const evs = events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals) }));
     const hw = homework.results.map(({ gcal_event_id: _, sync_error: __, ...h }) => h);
@@ -310,8 +329,19 @@ async function handleApi(request, env, url, user) {
       courses: courses.results, calendars: cals.results.map((c) => ({ ...c, attendance: Boolean(c.attendance) })),
       sessions: evs, homework: hw,
       attendance: { threshold: user.threshold, unit: user.unit },
+      // Focus (Pomodoro) time in the days of tz; the sessions themselves are at GET /api/focus.
+      focus: { settings: focusSettings(user), ...focusSummary(focus.results, { now, tz }) },
     });
   }
+
+  // Focus: ?since=<ms> lists sessions from then on (a year at most).
+  if (path === '/api/focus' && method === 'GET') {
+    const since = Math.max(Number(url.searchParams.get('since')) || 0, Date.now() - 400 * 86400000);
+    return json({ sessions: await listFocus(env, user, since), since });
+  }
+  if (path === '/api/focus' && method === 'POST') return json(await logFocus(env, user, await readJson(request)));
+  if ((m = path.match(/^\/api\/focus\/(\d+)$/)) && method === 'DELETE') return json(await deleteFocus(env, user, Number(m[1])));
+  if (path === '/api/focus/settings' && method === 'PUT') return json({ settings: await saveFocusSettings(env, user, await readJson(request)) });
 
   if (path === '/api/catchups' && method === 'POST') {
     return json(await createCatchup(env, user, await readJson(request), url.origin));
@@ -509,6 +539,7 @@ export default {
         const origin = request.headers.get('Origin');
         if (origin && origin !== url.origin) throw new HttpError(403, 'Cross-origin request rejected.');
       }
+      if (url.pathname === '/.well-known/assetlinks.json') return assetLinks(env);
       if (url.pathname.startsWith('/auth/')) return await handleAuth(request, env, url);
       if (url.pathname.startsWith('/feed/')) return await handleFeed(env, url);
       if (url.pathname.startsWith('/api/')) {

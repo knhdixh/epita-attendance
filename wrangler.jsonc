@@ -15,7 +15,7 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     // API and auth routes go to the Worker; everything else is served as static files.
-    "run_worker_first": ["/api/*", "/auth/*", "/feed/*"]
+    "run_worker_first": ["/api/*", "/auth/*", "/feed/*", "/.well-known/*"]
   },
   "d1_databases": [
     {
@@ -38,7 +38,11 @@
     // Optional: restrict sign-in to one email domain, e.g. "epita.fr". Empty = any Google account.
     "ALLOWED_DOMAIN": "",
     // Requests to any other host (e.g. *.workers.dev) are redirected to this one. Empty = no redirect.
-    "CANONICAL_HOST": "epita.knhdixh.com"
+    "CANONICAL_HOST": "epita.knhdixh.com",
+    // Android app (a Trusted Web Activity, see android/): its package and the SHA-256 fingerprint(s) of its signing
+    // key, comma-separated, served at /.well-known/assetlinks.json so the app opens full screen. Empty = 404.
+    "ANDROID_PACKAGE": "com.knhdixh.attendance80",
+    "ANDROID_CERT_SHA256": ""
   },
   "env": {
     // Design sandbox: `npm run deploy:staging` deploys the Worker "epita-attendance-staging" to
@@ -63,7 +67,9 @@
         "AI_SHARED_DAILY_NEURONS": "500",
         "AI_MODEL": "@cf/google/gemma-4-26b-a4b-it",
         "ALLOWED_DOMAIN": "",
-        "CANONICAL_HOST": "epita-staging.knhdixh.com"
+        "CANONICAL_HOST": "epita-staging.knhdixh.com",
+        "ANDROID_PACKAGE": "com.knhdixh.attendance80",
+        "ANDROID_CERT_SHA256": ""
       }
     }
   }
