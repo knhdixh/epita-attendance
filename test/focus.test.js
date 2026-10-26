@@ -212,7 +212,11 @@ test('assetlinks.json: only once the app\'s key fingerprint is set', async () =>
   assert.equal((await get({ ANDROID_PACKAGE: 'com.knhdixh.attendance80', ANDROID_CERT_SHA256: '' })).status, 404);
   const res = await get({ ANDROID_PACKAGE: 'com.knhdixh.attendance80', ANDROID_CERT_SHA256: 'aa:bb, CC:DD' });
   assert.deepEqual(await res.json(), [{
-    relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.use_as_origin'],
+    relation: [
+      'delegate_permission/common.handle_all_urls',
+      'delegate_permission/common.use_as_origin',
+      'delegate_permission/common.get_login_creds',
+    ],
     target: { namespace: 'android_app', package_name: 'com.knhdixh.attendance80', sha256_cert_fingerprints: ['AA:BB', 'CC:DD'] },
   }]);
 });

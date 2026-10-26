@@ -56,19 +56,44 @@ function redirect(location, cookies = []) {
 
 // ---------------------------------------------------------------- auth
 
-async function currentUser(request, env) {
-  const sid = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
-  if (!sid) return null;
-  const user = await env.DB.prepare(`SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-    WHERE s.id = ? AND s.expires_at > ?`).bind(sid, Date.now()).first();
-  return user ? { ...user, sessionId: sid } : null;
+const APP_SESSION_PREFIX = 'a80s_';
+
+async function sha256Base64Url(str) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  const bytes = new Uint8Array(d);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-async function signIn(env, profile, secure) {
-  const user = await env.DB.prepare(`INSERT INTO users (google_sub, email, name, picture, created_at)
+async function currentUser(request, env) {
+  let sid = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
+  if (!sid) {
+    const auth = request.headers.get('Authorization') || '';
+    const m = /^Bearer\s+(a80s_[A-Za-z0-9_-]{20,})$/.exec(auth);
+    if (m) sid = m[1];
+  }
+  if (!sid) return null;
+  const row = await env.DB.prepare(`SELECT u.*, s.expires_at AS session_expires_at FROM sessions s JOIN users u ON u.id = s.user_id
+    WHERE s.id = ? AND s.expires_at > ?`).bind(sid, Date.now()).first();
+  if (!row) return null;
+  const { session_expires_at: expiresAt, ...user } = row;
+  if (sid.startsWith(APP_SESSION_PREFIX)) {
+    const now = Date.now();
+    if (expiresAt - now < 15 * 24 * 3600 * 1000) {
+      await env.DB.prepare('UPDATE sessions SET expires_at = ? WHERE id = ?').bind(now + SESSION_TTL_MS, sid).run();
+    }
+  }
+  return { ...user, sessionId: sid };
+}
+
+async function upsertUser(env, profile) {
+  return await env.DB.prepare(`INSERT INTO users (google_sub, email, name, picture, created_at)
     VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (google_sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture
     RETURNING id`).bind(profile.sub, profile.email ?? null, profile.name ?? null, profile.picture ?? null, Date.now()).first();
+}
+
+async function signIn(env, profile, secure) {
+  const user = await upsertUser(env, profile);
   return startSession(env, user.id, secure);
 }
 
@@ -83,6 +108,16 @@ async function startSession(env, userId, secure) {
   return cookie(SESSION_COOKIE, sid, SESSION_TTL_MS, secure);
 }
 
+async function startAppSession(env, userId) {
+  const sid = APP_SESSION_PREFIX + randomToken(32);
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND expires_at < ?').bind(userId, Date.now()),
+    env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
+      .bind(sid, userId, Date.now() + SESSION_TTL_MS),
+  ]);
+  return sid;
+}
+
 const googleEnabled = (env) => Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 const devLoginEnabled = (env) => env.DEV_LOGIN === '1' || env.DEV_LOGIN === 'true';
 
@@ -95,17 +130,18 @@ async function handleAuth(request, env, url) {
   }
 
   if (url.pathname.startsWith('/auth/passkey/')) {
-    return handlePasskeyAuth(request, env, url, { secure, cookie, parseCookies, randomToken, currentUser, startSession });
+    return handlePasskeyAuth(request, env, url, { secure, cookie, parseCookies, randomToken, currentUser, startSession, startAppSession });
   }
 
   // Both sign-in and "connect Google Calendar" use this flow; the state cookie records which.
-  const startOAuth = (purpose, params) => {
+  const startOAuth = (purpose, params, extraState) => {
     const state = randomToken(16);
     const target = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     target.search = new URLSearchParams({
       client_id: env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: 'code', state, ...params,
     });
-    return redirect(target.toString(), [cookie(STATE_COOKIE, `${purpose}.${state}`, 10 * 60 * 1000, secure)]);
+    const stateVal = extraState ? `${purpose}.${state}.${extraState}` : `${purpose}.${state}`;
+    return redirect(target.toString(), [cookie(STATE_COOKIE, stateVal, 10 * 60 * 1000, secure)]);
   };
 
   if (url.pathname === '/auth/google') {
@@ -113,11 +149,19 @@ async function handleAuth(request, env, url) {
     return startOAuth('login', { scope: 'openid email profile', prompt: 'select_account' });
   }
 
+  if (url.pathname === '/auth/app/google') {
+    if (!googleEnabled(env)) return new Response('Google sign-in is not configured.', { status: 503 });
+    const challenge = url.searchParams.get('challenge');
+    if (!challenge || challenge.length !== 43) return new Response('Invalid challenge.', { status: 400 });
+    return startOAuth('app', { scope: 'openid email profile', prompt: 'select_account' }, challenge);
+  }
+
   if (url.pathname === '/auth/google/calendar') {
     const user = await currentUser(request, env);
     if (!user) return redirect('/');
     if (!googleEnabled(env) || !env.TOKEN_KEY) return redirect('/?gcal_error=config#settings');
-    return startOAuth('calendar', {
+    const isApp = url.searchParams.get('app') === '1';
+    return startOAuth(isApp ? 'calendar-app' : 'calendar', {
       scope: `openid email ${GCAL_SCOPE}`, access_type: 'offline', prompt: 'consent',
       include_granted_scopes: 'true', login_hint: user.email || '',
     });
@@ -125,8 +169,14 @@ async function handleAuth(request, env, url) {
 
   if (url.pathname === '/auth/google/callback') {
     const clearState = cookie(STATE_COOKIE, '', 0, secure);
-    const [purpose, expected] = (parseCookies(request.headers.get('Cookie'))[STATE_COOKIE] || '').split('.');
-    const fail = (code) => redirect(purpose === 'calendar' ? `/?gcal_error=${code}#settings` : `/?auth_error=${code}`, [clearState]);
+    const [purpose, expected, challenge] = (parseCookies(request.headers.get('Cookie'))[STATE_COOKIE] || '').split('.');
+    const isGcal = purpose === 'calendar' || purpose === 'calendar-app';
+    const fail = (code) => {
+      if (purpose === 'app') return redirect(`com.knhdixh.attendance80:/auth?error=${code}`, [clearState]);
+      if (purpose === 'calendar-app') return redirect(`com.knhdixh.attendance80:/gcal?error=${code}`, [clearState]);
+      if (purpose === 'calendar') return redirect(`/?gcal_error=${code}#settings`, [clearState]);
+      return redirect(`/?auth_error=${code}`, [clearState]);
+    };
     const { code, state, error } = Object.fromEntries(url.searchParams);
     if (error) return fail(encodeURIComponent(error));
     if (!code || !state || state !== expected) return fail('state');
@@ -147,7 +197,7 @@ async function handleAuth(request, env, url) {
       if (!infoRes.ok) throw new Error(`userinfo failed: ${infoRes.status}`);
       const info = await infoRes.json();
 
-      if (purpose === 'calendar') {
+      if (isGcal) {
         const user = await currentUser(request, env);
         if (!user) return redirect('/', [clearState]);
         if (!String(tokens.scope || '').split(' ').includes(GCAL_SCOPE)) return fail('scope');
@@ -160,14 +210,21 @@ async function handleAuth(request, env, url) {
             access_token = excluded.access_token, access_expires = excluded.access_expires, last_error = NULL`)
           .bind(user.id, info.email ?? null, await encrypt(env, tokens.refresh_token), tokens.access_token,
             Date.now() + tokens.expires_in * 1000, Date.now()).run();
-        return redirect('/?gcal=connected#settings', [clearState]);
+        return redirect(purpose === 'calendar-app' ? 'com.knhdixh.attendance80:/gcal?result=connected' : '/?gcal=connected#settings', [clearState]);
       }
 
       const domain = (env.ALLOWED_DOMAIN || '').trim().toLowerCase();
       if (!info.email_verified || (domain && !String(info.email).toLowerCase().endsWith('@' + domain))) {
         return fail('domain');
       }
-      return redirect('/', [clearState, await signIn(env, info, secure)]);
+      const user = await upsertUser(env, info);
+      if (purpose === 'app') {
+        const appCode = randomToken(24);
+        await env.DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
+          .bind(appCode, user.id, challenge, Date.now() + 2 * 60 * 1000).run();
+        return redirect(`com.knhdixh.attendance80:/auth?code=${appCode}`, [clearState]);
+      }
+      return redirect('/', [clearState, await startSession(env, user.id, secure)]);
     } catch (e) {
       console.error(e);
       return fail('google');
@@ -179,8 +236,53 @@ async function handleAuth(request, env, url) {
     return redirect('/', [await signIn(env, { sub: 'dev:' + email, email, name: email.split('@')[0] }, secure)]);
   }
 
+  if (url.pathname === '/auth/app/dev' && devLoginEnabled(env)) {
+    const email = url.searchParams.get('email') || 'dev@example.com';
+    const challenge = url.searchParams.get('challenge');
+    if (!challenge) return new Response('Missing challenge', { status: 400 });
+    const user = await upsertUser(env, { sub: 'dev:' + email, email, name: email.split('@')[0] });
+    const code = randomToken(24);
+    await env.DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(code, user.id, challenge, Date.now() + 2 * 60 * 1000).run();
+    return redirect(`com.knhdixh.attendance80:/auth?code=${code}`);
+  }
+
+  if (url.pathname === '/auth/app/token' && request.method === 'POST') {
+    try {
+      const body = await readJson(request);
+      const { code, verifier } = body || {};
+      if (!code || !verifier) throw new Error();
+      const row = await env.DB.prepare('DELETE FROM app_codes WHERE code = ? RETURNING user_id, challenge, expires_at').bind(code).first();
+      if (!row || row.expires_at < Date.now()) throw new Error();
+      const expectedChallenge = await sha256Base64Url(verifier);
+      if (expectedChallenge !== row.challenge) throw new Error();
+      const token = await startAppSession(env, row.user_id);
+      return json({ token });
+    } catch {
+      return json({ error: 'Sign-in expired, please try again.' }, { status: 400 });
+    }
+  }
+
+  if (url.pathname === '/auth/app/web') {
+    const code = url.searchParams.get('code');
+    if (!code) return new Response('Missing code', { status: 400 });
+    const row = await env.DB.prepare('DELETE FROM app_codes WHERE code = ? RETURNING user_id, challenge, expires_at').bind(code).first();
+    if (!row || row.expires_at < Date.now() || !row.challenge?.startsWith('web:')) {
+      return new Response('Sign-in link expired.', { status: 400 });
+    }
+    const next = row.challenge.slice(4);
+    if (next !== '/auth/google/calendar' && next !== '/auth/google/calendar?app=1') {
+      return new Response('Invalid destination.', { status: 400 });
+    }
+    return redirect(next, [await startSession(env, row.user_id, secure)]);
+  }
+
   if (url.pathname === '/auth/logout' && request.method === 'POST') {
-    const sid = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
+    let sid = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
+    if (!sid) {
+      const m = /^Bearer\s+(a80s_[A-Za-z0-9_-]{20,})$/.exec(request.headers.get('Authorization') || '');
+      if (m) sid = m[1];
+    }
     if (sid) await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(sid).run();
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie(SESSION_COOKIE, '', 0, secure) },
@@ -258,7 +360,11 @@ function assetLinks(env) {
   if (!env.ANDROID_PACKAGE || !fingerprints.length) return new Response('Not found', { status: 404 });
   return json([{
     // use_as_origin: the app may open a postMessage channel to the page as this origin (the focus timer bridge).
-    relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.use_as_origin'],
+    relation: [
+      'delegate_permission/common.handle_all_urls',
+      'delegate_permission/common.use_as_origin',
+      'delegate_permission/common.get_login_creds',
+    ],
     target: { namespace: 'android_app', package_name: env.ANDROID_PACKAGE, sha256_cert_fingerprints: fingerprints },
   }], { headers: { 'Cache-Control': 'public, max-age=3600' } });
 }
@@ -346,6 +452,19 @@ async function handleApi(request, env, url, user) {
 
   if (path === '/api/catchups' && method === 'POST') {
     return json(await createCatchup(env, user, await readJson(request), url.origin));
+  }
+
+  if (path === '/api/app/web-link' && method === 'POST') {
+    if (!user.sessionId?.startsWith('a80s_')) throw new HttpError(403, 'App sessions only.');
+    const body = await readJson(request);
+    const next = body?.next;
+    if (next !== '/auth/google/calendar' && next !== '/auth/google/calendar?app=1') {
+      throw new HttpError(400, 'Invalid destination.');
+    }
+    const code = randomToken(24);
+    await DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(code, user.id, 'web:' + next, Date.now() + 60 * 1000).run();
+    return json({ url: `/auth/app/web?code=${code}` });
   }
 
   if (path === '/api/tokens' && method === 'GET') return json({ tokens: await listTokens(env, user) });
@@ -544,6 +663,14 @@ export default {
       if (url.pathname.startsWith('/auth/')) return await handleAuth(request, env, url);
       if (url.pathname.startsWith('/feed/')) return await handleFeed(env, url);
       if (url.pathname.startsWith('/api/')) {
+        const auth = request.headers.get('Authorization') || '';
+        const appMatch = /^Bearer\s+(a80s_[A-Za-z0-9_-]{20,})$/.exec(auth);
+        if (appMatch) {
+          const user = await currentUser(request, env);
+          if (!user) throw new HttpError(401, 'Not signed in.');
+          if (url.pathname === '/api/me') return json({ user: { email: user.email, name: user.name, picture: user.picture } });
+          return await handleApi(request, env, url, user);
+        }
         const bearer = request.headers.get('Authorization');
         if (bearer) {
           const user = await userFromToken(env, bearer);

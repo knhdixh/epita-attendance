@@ -18,6 +18,16 @@ const b64url = {
 // Passkey-only accounts have no Google identity.
 export const isPasskeyOnly = (user) => String(user.google_sub || '').startsWith('passkey:');
 
+export function appOrigins(env) {
+  const fps = (env.ANDROID_CERT_SHA256 || '').split(',').map((f) => f.trim().toUpperCase()).filter(Boolean);
+  return fps.map((fp) => {
+    const hex = fp.replace(/[^0-9A-F]/gi, '');
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return `android:apk-key-hash:${b64url.encode(bytes)}`;
+  });
+}
+
 async function saveChallenge(env, h, row) {
   const id = h.randomToken(18);
   await env.DB.batch([
@@ -49,13 +59,14 @@ const reply = (h, data, cookies = []) => {
   return new Response(JSON.stringify(data), { headers });
 };
 
-// h = { secure, cookie, parseCookies, randomToken, currentUser, startSession }
+// h = { secure, cookie, parseCookies, randomToken, currentUser, startSession, startAppSession }
 export async function handlePasskeyAuth(request, env, url, h) {
   if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed.');
   const rpID = url.hostname;
-  const expectedOrigin = url.origin;
+  const expectedOrigin = [url.origin, ...appOrigins(env)];
   const clearChallenge = h.cookie(CHALLENGE_COOKIE, '', 0, h.secure);
   const user = await h.currentUser(request, env);
+  const isApp = request.headers.get('X-A80-App') === '1';
 
   // ---- create an account, or add a passkey to the signed-in account
   if (url.pathname === '/auth/passkey/register/options') {
@@ -100,12 +111,14 @@ export async function handlePasskeyAuth(request, env, url, h) {
 
     let userId = ch.user_id;
     const cookies = [clearChallenge];
+    let token;
     if (!userId) {
       // New passkey-only account.
       const created = await env.DB.prepare(`INSERT INTO users (google_sub, name, webauthn_id, created_at)
         VALUES (?, ?, ?, ?) RETURNING id`).bind(`passkey:${ch.user_handle}`, ch.name, ch.user_handle, Date.now()).first();
       userId = created.id;
-      cookies.push(await h.startSession(env, userId, h.secure));
+      if (isApp) token = await h.startAppSession(env, userId);
+      else cookies.push(await h.startSession(env, userId, h.secure));
     } else {
       await env.DB.prepare('UPDATE users SET webauthn_id = COALESCE(webauthn_id, ?) WHERE id = ?').bind(ch.user_handle, userId).run();
     }
@@ -113,7 +126,7 @@ export async function handlePasskeyAuth(request, env, url, h) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(credential.id, userId, b64url.encode(credential.publicKey), credential.counter,
       JSON.stringify(credential.transports || body.response?.response?.transports || []), credentialBackedUp ? 1 : 0,
       String(body.deviceName || '').slice(0, 60), Date.now()).run();
-    return reply(h, { ok: true, created: !ch.user_id }, cookies);
+    return reply(h, { ok: true, created: !ch.user_id, ...(token ? { token } : {}) }, cookies);
   }
 
   // ---- sign in with a saved passkey
@@ -140,6 +153,10 @@ export async function handlePasskeyAuth(request, env, url, h) {
     if (!result.verified) throw new HttpError(400, 'Passkey could not be verified.');
     await env.DB.prepare('UPDATE passkeys SET counter = ?, last_used_at = ? WHERE id = ?')
       .bind(result.authenticationInfo.newCounter, Date.now(), pk.id).run();
+    if (isApp) {
+      const token = await h.startAppSession(env, pk.user_id);
+      return reply(h, { ok: true, token }, [clearChallenge]);
+    }
     return reply(h, { ok: true }, [clearChallenge, await h.startSession(env, pk.user_id, h.secure)]);
   }
 
