@@ -21,12 +21,57 @@ final class FocusStore {
     void saveTimer(FocusTimer t) { prefs.edit().putString("timer", t.toJson().toString()).apply(); }
 
     FocusTimer.Settings settings() { return FocusTimer.Settings.fromJson(json("settings")); }
-    void saveSettings(JSONObject s) { if (s != null) prefs.edit().putString("settings", s.toString()).apply(); }
+    /** Settings from the page; tasks it has now saved stop being pending. */
+    void saveSettings(JSONObject s) {
+        if (s == null) return;
+        prefs.edit().putString("settings", s.toString()).apply();
+        JSONArray saved = s.optJSONArray("tasks"), pending = pendingTasks(), keep = new JSONArray();
+        java.util.List<String> savedList = new java.util.ArrayList<>();
+        for (int i = 0; saved != null && i < saved.length(); i++) savedList.add(saved.optString(i));
+        for (int i = 0; i < pending.length(); i++) if (!containsIgnoreCase(savedList, pending.optString(i))) keep.put(pending.optString(i));
+        prefs.edit().putString("pendingTasks", keep.toString()).apply();
+    }
 
     JSONObject snapshot() { return json("snapshot"); }
     void saveSnapshot(JSONObject s) { prefs.edit().putString("snapshot", s.toString()).apply(); }
 
-    JSONArray logs() {
+    /** The raw settings from the page, with your tasks and tags. */
+    JSONObject settingsJson() { JSONObject o = json("settings"); return o != null ? o : new JSONObject(); }
+
+    /** Tasks added in the quick-focus sheet that the page hasn't saved yet. */
+    JSONArray pendingTasks() {
+        try { return new JSONArray(prefs.getString("pendingTasks", "[]")); } catch (JSONException e) { return new JSONArray(); }
+    }
+
+    void addPendingTask(String label) {
+        JSONArray list = pendingTasks();
+        for (int i = 0; i < list.length(); i++) if (list.optString(i).equalsIgnoreCase(label)) return;
+        list.put(label);
+        prefs.edit().putString("pendingTasks", list.toString()).apply();
+    }
+
+    /** Your tasks: the saved ones, then any still waiting for the page. */
+    java.util.List<String> tasks() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        JSONArray saved = settingsJson().optJSONArray("tasks"), pending = pendingTasks();
+        for (int i = 0; pending != null && i < pending.length(); i++) out.add(pending.optString(i));
+        for (int i = 0; saved != null && i < saved.length(); i++) if (!containsIgnoreCase(out, saved.optString(i))) out.add(saved.optString(i));
+        return out;
+    }
+
+    java.util.List<String> tags() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        JSONArray saved = settingsJson().optJSONArray("tags");
+        for (int i = 0; saved != null && i < saved.length(); i++) out.add(saved.optString(i));
+        return out;
+    }
+
+    private static boolean containsIgnoreCase(java.util.List<String> list, String x) {
+        for (String y : list) if (y.equalsIgnoreCase(x)) return true;
+        return false;
+    }
+
+        JSONArray logs() {
         try { return new JSONArray(prefs.getString("logs", "[]")); } catch (JSONException e) { return new JSONArray(); }
     }
 

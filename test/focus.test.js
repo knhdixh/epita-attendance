@@ -244,3 +244,25 @@ test('tasks and tags: cleaned in settings, recorded with the session, and counte
   assert.deepEqual([saved.tasks, saved.tags, saved.focus], [['Thesis'], ['reading'], 25]);
   assert.deepEqual((await saveFocusSettings(env, { ...user, focus_settings: JSON.stringify(saved) }, { goal: 6 })).tasks, ['Thesis'], 'other settings keep the lists');
 });
+
+test('time adjustments: the next length while idle, the end of a running phase', () => {
+  let t = F.setLength(F.idle(), S, 50);
+  assert.equal(t.custom, 50);
+  assert.equal(F.nextLength(t, S), 50);
+  assert.equal(F.setLength(t, S, 25).custom, undefined, 'back to the setting');
+  assert.equal(F.adjust(t, S, 5, T0).custom, 55);
+  assert.equal(F.adjust(F.idle(), S, -30, T0).custom, 1, 'at least a minute');
+  assert.equal(F.setLength(F.idle(), S, 500).custom, F.MAX_PHASE_MIN);
+
+  t = F.start(t, S, T0, 'r');
+  assert.equal(t.endsAt, T0 + 50 * MIN);
+  assert.equal(t.custom, undefined, 'only for that phase');
+  const longer = F.adjust(t, S, 5, T0 + 10 * MIN);
+  assert.equal(longer.endsAt, T0 + 55 * MIN);
+  assert.equal(F.adjust(t, S, -60, T0 + 10 * MIN).endsAt, T0 + 11 * MIN, 'a minute left at least');
+  const paused = F.pause(t, T0 + 10 * MIN);
+  assert.equal(F.remaining(F.adjust(paused, S, -5, T0 + 20 * MIN), T0 + 20 * MIN), 35 * MIN, 'paused: from the pause');
+  assert.equal(F.finish(longer, S, longer.endsAt, 'n').log.planned_seconds, 55 * 60);
+  // A break after an adjusted focus is the usual length again.
+  assert.equal(F.finish(longer, S, longer.endsAt, 'n').next.endsAt - longer.endsAt, 5 * MIN);
+});

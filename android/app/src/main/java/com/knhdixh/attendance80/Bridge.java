@@ -97,6 +97,7 @@ final class Bridge extends CustomTabsCallback {
             hello.put("v", 1);
             hello.put("timer", store.timer().toJson());
             hello.put("logs", store.logs());
+            hello.put("addTasks", store.pendingTasks());
         } catch (JSONException ignored) { }
         send(hello);
     }
@@ -128,7 +129,17 @@ final class Bridge extends CustomTabsCallback {
         send(m);
     }
 
-    private static void send(JSONObject m) {
+    /** A task added in the quick-focus sheet, for the page to keep on the account. */
+    static void sendTasks(Context c) {
+        JSONObject m = new JSONObject();
+        try {
+            m.put("type", "tasks");
+            m.put("addTasks", new FocusStore(c).pendingTasks());
+        } catch (JSONException ignored) { }
+        send(m);
+    }
+
+        private static void send(JSONObject m) {
         CustomTabsSession s = session;
         if (!ready || s == null) return;
         try {

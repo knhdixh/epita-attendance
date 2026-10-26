@@ -202,6 +202,27 @@ function commit({ log, next }) {
 }
 
 // Skip: a focus ends now (recorded as stopped early) and its break follows; a break, running or next, is skipped.
+// −5 / +5 min (the keys − and +), and lengths to pick before starting.
+export function adjustBy(minutes) {
+  save(F.adjust(timer, settings(), minutes, Date.now()));
+  changed();
+}
+function setLength(minutes) {
+  save(F.setLength(timer, settings(), minutes));
+  changed();
+}
+const PRESETS = { focus: [15, 25, 45, 60, 90], short: [3, 5, 10], long: [10, 15, 20, 30] };
+function adjustRow(on, phase, s) {
+  const cur = F.nextLength(timer, s);
+  const presets = on ? [] : [...new Set([...PRESETS[phase], s[phase]])].sort((a, b) => a - b);
+  return `
+      <div class="fx-adjust" role="group" aria-label="${on ? 'Change the time left' : 'Length'}">
+        <button class="tag-chip" data-fx-adjust="-5" title="5 minutes less (−)">−5 min</button>
+        ${presets.map((m) => `<button class="tag-chip" data-fx-length="${m}" aria-pressed="${m === cur}">${m} min</button>`).join('')}
+        <button class="tag-chip" data-fx-adjust="5" title="5 minutes more (+)">+5 min</button>
+      </div>`;
+}
+
 export function skip() {
   if (timer.phase === 'idle') {
     if (timer.next === 'focus') return;
@@ -480,6 +501,9 @@ function fromApp(raw) {
     app.port?.postMessage(JSON.stringify({ type: 'logs-ack', ids: m.logs.map((x) => x?.client_id) }));
     if (state.tab === 'focus' && safeToRender()) render();
   }
+  // Tasks added in the app's quick-focus sheet: kept on the account like ones added here.
+  const added = (m.addTasks || []).map(F.cleanTask).filter((x) => x && !settings().tasks.some((y) => y.toLowerCase() === x.toLowerCase()));
+  if (added.length && state.data) saveSettings({ tasks: [...added, ...settings().tasks].slice(0, F.MAX_TASKS) });
   if (m.type === 'hello') sendPlan(true);
 }
 
@@ -501,7 +525,11 @@ function sendPlan(force = false) {
   const classes = events.filter((e) => tracked.has(e.course_id) && e.end_at > now && e.start_at < now + 8 * 86400000 && e.status !== 'absent')
     .slice(0, 24).map((e) => ({ title: e.summary, start: e.start_at, end: e.end_at, where: e.location || '' }));
   const todo = buildPlan({ courses, events, homework, now }).todo.slice(0, 3).map((h) => ({ title: h.title, due: h.due_at }));
-  const msg = JSON.stringify({ type: 'plan', classes, todo });
+  // What the quick-focus sheet offers besides your own tasks (those come with the settings).
+  const byId = courseById();
+  const open = homework.filter((h) => !h.done).slice(0, 30)
+    .map((h) => ({ id: h.id, title: h.title, course_id: h.course_id ?? null, course: byId[h.course_id]?.name || '' }));
+  const msg = JSON.stringify({ type: 'plan', classes, todo, homework: open });
   if (!force && msg === app.plan) return;
   app.plan = msg;
   try { app.port.postMessage(msg); } catch { app.port = null; }
@@ -551,7 +579,7 @@ function timerCard(now) {
   const on = running();
   const phase = on ? timer.phase : timer.next;
   const paused = Boolean(timer.pausedAt);
-  const total = on ? F.remaining(timer, now) : s[phase] * MIN;
+  const total = on ? F.remaining(timer, now) : F.nextLength(timer, s) * MIN;
   const title = on ? `${F.PHASES[phase]}${paused ? ' · paused' : ''}`
     : phase === 'focus' ? 'Ready to focus' : `Time for a ${phase === 'long' ? 'long' : 'short'} break`;
   const doneInSet = Math.min(timer.done, s.longEvery);
@@ -576,6 +604,7 @@ function timerCard(now) {
       <div class="fx-phase"><span class="dot" aria-hidden="true"></span>${title}</div>
       <div class="fx-clock" id="fx-clock" role="timer" aria-live="off">${clock(total)}</div>
       <div class="fx-track" aria-hidden="true"><div class="fx-bar" id="fx-bar" style="transform:scaleX(${on ? F.progress(timer, now) : 0})"></div></div>
+      ${adjustRow(on, phase, s)}
       <div class="fx-cycle" title="${doneInSet} of ${s.longEvery} focus sessions before a long break" aria-label="${doneInSet} of ${s.longEvery} before a long break">
         ${Array.from({ length: s.longEvery }, (_, i) => `<i class="${i < doneInSet ? 'on' : ''}"></i>`).join('')}
       </div>
@@ -838,7 +867,8 @@ export function paletteItems() {
 }
 
 export const SHORTCUTS = [[['F'], 'Start, pause or resume the focus timer'], [['S'], 'Focus page: take a break, or skip it'], [['X'], 'Focus page: stop the timer'],
-  [['Space'], 'Focus page: start or pause'], [['N'], 'Focus page: new task'], [['T'], 'Focus page: new tag']];
+  [['Space'], 'Focus page: start or pause'], [['−'], 'Focus page: 5 minutes less'], [['+'], 'Focus page: 5 minutes more'],
+  [['N'], 'Focus page: new task'], [['T'], 'Focus page: new tag']];
 
 // Keys on the Focus page (single keys, never while typing). Returns true when handled.
 export function onPageKey(e) {
@@ -848,6 +878,8 @@ export function onPageKey(e) {
   if (k === 'x') { e.preventDefault(); stop(); return true; }
   if (k === 'n') { e.preventDefault(); openInline('task'); return true; }
   if (k === 't') { e.preventDefault(); openInline('tag'); return true; }
+  if (k === '-' || k === '_') { e.preventDefault(); adjustBy(-5); return true; }
+  if (k === '+' || k === '=') { e.preventDefault(); adjustBy(5); return true; }
   return false;
 }
 
@@ -863,6 +895,10 @@ export function onKeydown(e) {
 
 export function onClick(e) {
   const t = e.target;
+  const adj = t.closest('[data-fx-adjust]');
+  if (adj) { adjustBy(Number(adj.dataset.fxAdjust)); return true; }
+  const len = t.closest('[data-fx-length]');
+  if (len) { setLength(Number(len.dataset.fxLength)); return true; }
   const fx = t.closest('[data-fx]');
   if (fx) { ({ toggle, skip, stop })[fx.dataset.fx]?.(); return true; }
   const hwFocus = t.closest('[data-hw-focus]');

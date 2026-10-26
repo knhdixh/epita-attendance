@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quick-focus sheet: what you're working on (or a new task), tags, the time, and Start. See QuickFocusActivity. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="12dp">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+        <TextView android:id="@+id/qf_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="Focus" android:textAppearance="?android:attr/textAppearanceLarge" android:textStyle="bold" />
+        <TextView android:id="@+id/qf_status" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    </LinearLayout>
+
+    <TextView style="@style/QuickFocusLabel" android:text="Working on" />
+    <ScrollView android:id="@+id/qf_scroll" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <RadioGroup android:id="@+id/qf_targets" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </ScrollView>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+        <EditText android:id="@+id/qf_new_task" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:hint="New task, e.g. Thesis: literature review" android:imeOptions="actionDone" android:inputType="textCapSentences"
+            android:maxLength="80" android:singleLine="true" />
+        <Button android:id="@+id/qf_add" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Add" />
+    </LinearLayout>
+
+    <TextView android:id="@+id/qf_tags_label" style="@style/QuickFocusLabel" android:text="Tags" />
+    <HorizontalScrollView android:id="@+id/qf_tags_scroll" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:scrollbars="none">
+        <LinearLayout android:id="@+id/qf_tags" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    </HorizontalScrollView>
+
+    <TextView android:id="@+id/qf_time_label" style="@style/QuickFocusLabel" android:text="Time" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+        <Button android:id="@+id/qf_minus" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="−5" />
+        <TextView android:id="@+id/qf_minutes" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:minWidth="96dp" android:gravity="center" android:textAppearance="?android:attr/textAppearanceMedium" android:textStyle="bold" />
+        <Button android:id="@+id/qf_plus" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="+5" />
+        <HorizontalScrollView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:scrollbars="none">
+            <LinearLayout android:id="@+id/qf_presets" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+        android:gravity="end|center_vertical">
+        <Button android:id="@+id/qf_stop" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Stop" />
+        <Button android:id="@+id/qf_pause" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Pause" />
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <Button android:id="@+id/qf_cancel" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Cancel" />
+        <Button android:id="@+id/qf_go" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Start focus" />
+    </LinearLayout>
+</LinearLayout>

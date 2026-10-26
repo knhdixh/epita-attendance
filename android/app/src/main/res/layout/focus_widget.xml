@@ -122,6 +122,14 @@
             android:maxLines="1"
             android:textColor="@color/widget_muted"
             android:textSize="12sp" />
+        <ImageView
+            android:id="@+id/timer_edit"
+            android:layout_width="36dp"
+            android:layout_height="32dp"
+            android:contentDescription="Choose task and time"
+            android:padding="7dp"
+            android:src="@drawable/ic_edit"
+            android:tint="@color/widget_muted" />
         <TextView
             android:id="@+id/timer_button"
             android:layout_width="wrap_content"

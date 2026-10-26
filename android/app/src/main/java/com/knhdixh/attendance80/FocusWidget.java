@@ -108,12 +108,18 @@ public class FocusWidget extends AppWidgetProvider {
         } else {
             v.setTextViewText(R.id.timer_phase, "focus".equals(t.next) ? "Focus" : FocusNotifications.phaseName(t.next));
             v.setViewVisibility(R.id.timer_clock, View.GONE);
-            v.setTextViewText(R.id.timer_text, store.settings().lengthMs(t.next) / FocusTimer.MIN + " min");
+            String label = t.label();
+            v.setTextViewText(R.id.timer_text, t.nextLength(store.settings()) + " min" + (label != null ? " · " + label : ""));
             v.setTextViewText(R.id.timer_button, "Start");
         }
 
         v.setOnClickPendingIntent(R.id.timer_button, FocusNotifications.action(c, FocusController.ACTION_TOGGLE, 30));
-        v.setOnClickPendingIntent(R.id.timer_box, FocusNotifications.openApp(c, "focus", 31));
+        // The timer row opens the quick-focus sheet (task, tags, time), like Todoist's quick add.
+        PendingIntent sheet = PendingIntent.getActivity(c, 34,
+                new Intent(c, QuickFocusActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        v.setOnClickPendingIntent(R.id.timer_box, sheet);
+        v.setOnClickPendingIntent(R.id.timer_edit, sheet);
         v.setOnClickPendingIntent(R.id.class_box, FocusNotifications.openApp(c, "upcoming", 32));
         v.setOnClickPendingIntent(R.id.todo_box, FocusNotifications.openApp(c, "today", 33));
 

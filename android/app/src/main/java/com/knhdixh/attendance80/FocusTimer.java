@@ -15,9 +15,11 @@ final class FocusTimer {
     static final long MIN = 60_000L;
     private static final long STALE_MS = 5 * MIN;      // a phase that ended longer ago doesn't start the next one
     private static final long MIN_LOGGED_MS = MIN;     // a shorter focus isn't recorded
+    static final int MAX_PHASE_MIN = 180;
 
     String phase = "idle";   // idle | focus | short | long
     String next = "focus";   // what Start begins when idle
+    Integer custom;          // idle: minutes for that next phase instead of the setting (null = the setting)
     String run;              // random id: the server records a session once per run
     long startedAt, endsAt, pausedMs;
     Long pausedAt;           // null when not paused
@@ -43,10 +45,8 @@ final class FocusTimer {
             return s;
         }
 
-        long lengthMs(String phase) {
-            int min = "focus".equals(phase) ? focus : "long".equals(phase) ? longBreak : shortBreak;
-            return min * MIN;
-        }
+        long lengthMs(String phase) { return minutes(phase) * MIN; }
+        int minutes(String phase) { return "focus".equals(phase) ? focus : "long".equals(phase) ? longBreak : shortBreak; }
     }
 
     /** What a change produced: the session to record (or null) and the timer that follows. */
@@ -77,8 +77,36 @@ final class FocusTimer {
         t.next = t.phase;
         t.run = newRun();
         t.startedAt = now;
-        t.endsAt = now + s.lengthMs(t.phase);
+        t.endsAt = now + (!running() && custom != null ? custom * MIN : s.lengthMs(t.phase));
         t.done = done;
+        t.target = target;
+        return t;
+    }
+
+    /** Minutes of the next phase (idle) or of this one (running). */
+    int nextLength(Settings s) { return running() ? (int) Math.round(length() / (double) MIN) : custom != null ? custom : s.minutes(next); }
+
+    /** Idle only: the length of the next phase. */
+    FocusTimer setLength(Settings s, int minutes) {
+        if (running()) return this;
+        int m = Math.max(1, Math.min(MAX_PHASE_MIN, minutes));
+        FocusTimer t = copy();
+        t.custom = m == s.minutes(next) ? null : m;
+        return t;
+    }
+
+    /** Idle: the next length; running: moves the end, keeping at least a minute left and MAX_PHASE_MIN in all. */
+    FocusTimer adjust(Settings s, int deltaMin, long now) {
+        if (!running()) return setLength(s, nextLength(s) + deltaMin);
+        FocusTimer t = copy();
+        long floor = (pausedAt != null ? pausedAt : now) + MIN;
+        long ceiling = startedAt + pausedMs + MAX_PHASE_MIN * MIN;
+        t.endsAt = Math.max(floor, Math.min(ceiling, endsAt + deltaMin * MIN));
+        return t;
+    }
+
+    FocusTimer withTarget(JSONObject target) {
+        FocusTimer t = copy();
         t.target = target;
         return t;
     }
@@ -147,6 +175,7 @@ final class FocusTimer {
         FocusTimer t = new FocusTimer();
         t.phase = phase; t.next = next; t.run = run; t.startedAt = startedAt; t.endsAt = endsAt;
         t.pausedMs = pausedMs; t.pausedAt = pausedAt; t.done = done; t.target = target; t.updatedAt = updatedAt;
+        t.custom = custom;
         return t;
     }
 
@@ -169,6 +198,7 @@ final class FocusTimer {
             o.put("done", done);
             o.put("target", target != null ? target : JSONObject.NULL);
             o.put("updatedAt", updatedAt);
+            if (!running() && custom != null) o.put("custom", custom);
             if (running()) {
                 o.put("run", run);
                 o.put("startedAt", startedAt);
@@ -191,6 +221,7 @@ final class FocusTimer {
         t.done = o.optInt("done", 0);
         t.target = o.optJSONObject("target");
         t.updatedAt = o.optLong("updatedAt", 0);
+        if (!t.running() && o.optInt("custom", 0) > 0) t.custom = o.optInt("custom");
         if (t.running()) {
             t.run = o.optString("run", newRun());
             t.startedAt = o.optLong("startedAt");

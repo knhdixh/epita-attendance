@@ -1034,3 +1034,7 @@ main.enter .fx-bar-v { animation: grow-y .8s var(--ease) backwards .15s; }
 .tag-chip.static button { width: 20px; height: 20px; border: 0; border-radius: 50%; background: none; color: var(--text-3); font-size: 14px; line-height: 1; cursor: pointer; }
 .tag-chip.static button:hover { background: var(--active); color: var(--red); }
 .fx-tag { margin-left: 6px; color: var(--accent); font-size: 12px; }
+
+/* focus: time adjustments */
+.fx-adjust { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 2px; }
+.fx-adjust .tag-chip { font-variant-numeric: tabular-nums; }

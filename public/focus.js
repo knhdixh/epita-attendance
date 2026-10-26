@@ -4,7 +4,7 @@
 // The timer is a small state object kept in localStorage, so a reload or a second tab carries on with the same
 // timer. It stores instants, not a countdown, so a throttled background tab still ends the phase on time:
 //   { phase: 'idle' | 'focus' | 'short' | 'long', next, run, startedAt, endsAt, pausedAt, pausedMs, done, target }
-// `next` is the phase Start begins when idle, `done` counts focus sessions since the last long break, `run` is a
+// `next` is the phase Start begins when idle (`custom` minutes instead of the setting, if you changed it), `done` counts focus sessions since the last long break, `run` is a
 // random id the server uses to record a session once (several tabs may finish the same one), and `target` is what
 // the focus is for: { homework_id, course_id, label }, each optional.
 
@@ -54,10 +54,31 @@ export const idle = (done = 0, next = 'focus', target = null) => ({ phase: 'idle
 
 export function start(t, settings, now, run) {
   const phase = t.phase === 'idle' ? t.next : t.phase;
+  const minutes = t.phase === 'idle' && t.custom ? t.custom : settings[phase];
   return {
-    phase, next: phase, run, startedAt: now, endsAt: now + settings[phase] * MIN, pausedAt: null, pausedMs: 0,
+    phase, next: phase, run, startedAt: now, endsAt: now + minutes * MIN, pausedAt: null, pausedMs: 0,
     done: t.done, target: t.target,
   };
+}
+
+// Time adjustments. Idle: the length of the next phase (for that phase only). Running: moves its end, keeping at
+// least a minute left and at most MAX_PHASE_MIN in all.
+export const MAX_PHASE_MIN = 180;
+const clampMin = (m) => Math.min(MAX_PHASE_MIN, Math.max(1, Math.round(m)));
+export const nextLength = (t, settings) => (t.phase === 'idle' ? t.custom || settings[t.next] : Math.round(length(t) / MIN));
+
+export function setLength(t, settings, minutes) {
+  if (t.phase !== 'idle') return t;
+  const m = clampMin(minutes);
+  const { custom: _, ...rest } = t;
+  return m === settings[t.next] ? rest : { ...rest, custom: m };
+}
+
+export function adjust(t, settings, deltaMin, now) {
+  if (t.phase === 'idle') return setLength(t, settings, nextLength(t, settings) + deltaMin);
+  const floor = (t.pausedAt ?? now) + MIN;
+  const ceiling = t.startedAt + t.pausedMs + MAX_PHASE_MIN * MIN;
+  return { ...t, endsAt: Math.max(floor, Math.min(ceiling, t.endsAt + deltaMin * MIN)) };
 }
 
 export const pause = (t, now) => (t.phase === 'idle' || t.pausedAt ? t : { ...t, pausedAt: now });
