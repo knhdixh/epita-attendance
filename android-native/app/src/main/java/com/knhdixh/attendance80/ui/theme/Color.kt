@@ -1,0 +1,37 @@
+package com.knhdixh.attendance80.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val BgLight = Color(0xFFFFFFFF)
+val SidebarLight = Color(0xFFFCFAF8)
+val RaisedLight = Color(0xFFFFFFFF)
+val TextLight = Color(0xFF202020)
+val Text2Light = Color(0xFF666666)
+val Text3Light = Color(0xFF999999)
+val LineLight = Color(0xFFF0F0F0)
+val Line2Light = Color(0xFFE5E5E5)
+val AccentLight = Color(0xFF2A6AE0)
+val AccentSoftLight = Color(0xFFEEF3FD)
+val GreenLight = Color(0xFF058527)
+val OrangeLight = Color(0xFFAD6200)
+val RedLight = Color(0xFFD1453B)
+val PurpleLight = Color(0xFF692FC2)
+
+val BgDark = Color(0xFF1E1E1E)
+val SidebarDark = Color(0xFF262626)
+val RaisedDark = Color(0xFF2A2A2A)
+val TextDark = Color(0xFFE8E8E8)
+val Text2Dark = Color(0xFFA3A3A3)
+val Text3Dark = Color(0xFF737373)
+val LineDark = Color(0xFF2E2E2E)
+val Line2Dark = Color(0xFF3A3A3A)
+val AccentDark = Color(0xFF5D8FF0)
+// AccentSoftDark: 5D8FF0 with 14% opacity on #1E1E1E:
+// R = 0.14 * 0x5D + 0.86 * 0x1E = 13 + 26 = 39 (0x27)
+// G = 0.14 * 0x8F + 0.86 * 0x1E = 20 + 26 = 46 (0x2E)
+// B = 0.14 * 0xF0 + 0.86 * 0x1E = 34 + 26 = 60 (0x3C)
+val AccentSoftDark = Color(0xFF272E3C)
+val GreenDark = Color(0xFF4FB26B)
+val OrangeDark = Color(0xFFE3A03F)
+val RedDark = Color(0xFFFF6F61)
+val PurpleDark = Color(0xFFA882FF)
