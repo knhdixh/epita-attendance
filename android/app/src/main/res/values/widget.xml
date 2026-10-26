@@ -1,0 +1,9 @@
+<resources>
+    <color name="widget_bg">#FFFFFFFF</color>
+    <color name="widget_text">#FF202020</color>
+    <color name="widget_muted">#FF6B6B6B</color>
+    <color name="widget_accent">#FF2A6AE0</color>
+    <color name="widget_soft">#FFEEF3FD</color>
+    <color name="widget_break">#FF058527</color>
+    <string name="widget_description">Your next class, what to do next and the focus timer</string>
+</resources>

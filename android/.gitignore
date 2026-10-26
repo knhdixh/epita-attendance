@@ -1,6 +1,14 @@
-# Everything Bubblewrap generates is rebuilt from twa-manifest.json. The keystore is the app's identity:
-# back it up somewhere safe, never commit it.
-*
-!.gitignore
-!twa-manifest.json
-!README.md
+# The Android project started from Bubblewrap and now has native code (focus timer notification, widget, tile):
+# don't run `bubblewrap update`, it would overwrite app/src. Build with ./build.sh (see README.md).
+# Never commit the signing key or its password: back them up somewhere safe.
+android.keystore
+signing.txt
+keystore.properties
+*.apk
+*.aab
+*.idsig
+build/
+app/build/
+.gradle/
+local.properties
+manifest-checksum.txt
