@@ -1,0 +1,7563 @@
+{
+  "timers": [
+    {
+      "name": "idle_fresh",
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "idle_with_custom",
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "running_focus",
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "paused_focus",
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "resumed_focus",
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "running_short_break",
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "running_long_break",
+      "timer": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000
+    },
+    {
+      "name": "due_focus",
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "now": 1792576801000
+    },
+    {
+      "name": "stale_focus",
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "now": 1792576800000
+    }
+  ],
+  "yearSessions": [
+    {
+      "id": 1,
+      "client_id": "run-y-364-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1761075000000,
+      "ended_at": 1761076500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 2,
+      "client_id": "run-y-364-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1761091200000,
+      "ended_at": 1761094200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 3,
+      "client_id": "run-y-362-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1761247800000,
+      "ended_at": 1761249300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 4,
+      "client_id": "run-y-362-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1761264000000,
+      "ended_at": 1761267000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 5,
+      "client_id": "run-y-361-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1761334200000,
+      "ended_at": 1761335700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 6,
+      "client_id": "run-y-360-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1761420600000,
+      "ended_at": 1761422100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 7,
+      "client_id": "run-y-360-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1761436800000,
+      "ended_at": 1761439800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 8,
+      "client_id": "run-y-359-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1761507000000,
+      "ended_at": 1761508500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 9,
+      "client_id": "run-y-358-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1761593400000,
+      "ended_at": 1761594900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 10,
+      "client_id": "run-y-358-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1761609600000,
+      "ended_at": 1761612600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 11,
+      "client_id": "run-y-357-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1761679800000,
+      "ended_at": 1761681300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 12,
+      "client_id": "run-y-355-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1761852600000,
+      "ended_at": 1761854100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 13,
+      "client_id": "run-y-354-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1761939000000,
+      "ended_at": 1761940500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 14,
+      "client_id": "run-y-354-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1761955200000,
+      "ended_at": 1761958200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 15,
+      "client_id": "run-y-353-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1762025400000,
+      "ended_at": 1762026900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 16,
+      "client_id": "run-y-352-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1762111800000,
+      "ended_at": 1762113300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 17,
+      "client_id": "run-y-352-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1762128000000,
+      "ended_at": 1762131000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 18,
+      "client_id": "run-y-351-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1762198200000,
+      "ended_at": 1762199700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 19,
+      "client_id": "run-y-350-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1762284600000,
+      "ended_at": 1762286100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 20,
+      "client_id": "run-y-350-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1762300800000,
+      "ended_at": 1762303800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 21,
+      "client_id": "run-y-348-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1762457400000,
+      "ended_at": 1762458900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 22,
+      "client_id": "run-y-348-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1762473600000,
+      "ended_at": 1762476600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 23,
+      "client_id": "run-y-347-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1762543800000,
+      "ended_at": 1762545300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 24,
+      "client_id": "run-y-346-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1762630200000,
+      "ended_at": 1762631700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 25,
+      "client_id": "run-y-346-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1762646400000,
+      "ended_at": 1762649400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 26,
+      "client_id": "run-y-345-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1762716600000,
+      "ended_at": 1762718100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 27,
+      "client_id": "run-y-344-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1762803000000,
+      "ended_at": 1762804500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 28,
+      "client_id": "run-y-344-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1762819200000,
+      "ended_at": 1762822200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 29,
+      "client_id": "run-y-343-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1762889400000,
+      "ended_at": 1762890900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 30,
+      "client_id": "run-y-341-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1763062200000,
+      "ended_at": 1763063700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 31,
+      "client_id": "run-y-340-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1763148600000,
+      "ended_at": 1763150100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 32,
+      "client_id": "run-y-340-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1763164800000,
+      "ended_at": 1763167800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 33,
+      "client_id": "run-y-339-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1763235000000,
+      "ended_at": 1763236500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 34,
+      "client_id": "run-y-338-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1763321400000,
+      "ended_at": 1763322900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 35,
+      "client_id": "run-y-338-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1763337600000,
+      "ended_at": 1763340600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 36,
+      "client_id": "run-y-337-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1763407800000,
+      "ended_at": 1763409300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 37,
+      "client_id": "run-y-336-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1763494200000,
+      "ended_at": 1763495700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 38,
+      "client_id": "run-y-336-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1763510400000,
+      "ended_at": 1763513400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 39,
+      "client_id": "run-y-334-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1763667000000,
+      "ended_at": 1763668500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 40,
+      "client_id": "run-y-334-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1763683200000,
+      "ended_at": 1763686200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 41,
+      "client_id": "run-y-333-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1763753400000,
+      "ended_at": 1763754900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 42,
+      "client_id": "run-y-332-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1763839800000,
+      "ended_at": 1763841300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 43,
+      "client_id": "run-y-332-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1763856000000,
+      "ended_at": 1763859000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 44,
+      "client_id": "run-y-331-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1763926200000,
+      "ended_at": 1763927700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 45,
+      "client_id": "run-y-330-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1764012600000,
+      "ended_at": 1764014100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 46,
+      "client_id": "run-y-330-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1764028800000,
+      "ended_at": 1764031800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 47,
+      "client_id": "run-y-329-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1764099000000,
+      "ended_at": 1764100500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 48,
+      "client_id": "run-y-327-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1764271800000,
+      "ended_at": 1764273300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 49,
+      "client_id": "run-y-326-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1764358200000,
+      "ended_at": 1764359700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 50,
+      "client_id": "run-y-326-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1764374400000,
+      "ended_at": 1764377400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 51,
+      "client_id": "run-y-325-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1764444600000,
+      "ended_at": 1764446100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 52,
+      "client_id": "run-y-324-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1764531000000,
+      "ended_at": 1764532500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 53,
+      "client_id": "run-y-324-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1764547200000,
+      "ended_at": 1764550200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 54,
+      "client_id": "run-y-323-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1764617400000,
+      "ended_at": 1764618900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 55,
+      "client_id": "run-y-322-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1764703800000,
+      "ended_at": 1764705300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 56,
+      "client_id": "run-y-322-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1764720000000,
+      "ended_at": 1764723000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 57,
+      "client_id": "run-y-320-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1764876600000,
+      "ended_at": 1764878100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 58,
+      "client_id": "run-y-320-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1764892800000,
+      "ended_at": 1764895800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 59,
+      "client_id": "run-y-319-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1764963000000,
+      "ended_at": 1764964500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 60,
+      "client_id": "run-y-318-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1765049400000,
+      "ended_at": 1765050900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 61,
+      "client_id": "run-y-318-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1765065600000,
+      "ended_at": 1765068600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 62,
+      "client_id": "run-y-317-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1765135800000,
+      "ended_at": 1765137300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 63,
+      "client_id": "run-y-316-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1765222200000,
+      "ended_at": 1765223700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 64,
+      "client_id": "run-y-316-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1765238400000,
+      "ended_at": 1765241400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 65,
+      "client_id": "run-y-315-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1765308600000,
+      "ended_at": 1765310100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 66,
+      "client_id": "run-y-313-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1765481400000,
+      "ended_at": 1765482900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 67,
+      "client_id": "run-y-312-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1765567800000,
+      "ended_at": 1765569300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 68,
+      "client_id": "run-y-312-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1765584000000,
+      "ended_at": 1765587000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 69,
+      "client_id": "run-y-311-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1765654200000,
+      "ended_at": 1765655700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 70,
+      "client_id": "run-y-310-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1765740600000,
+      "ended_at": 1765742100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 71,
+      "client_id": "run-y-310-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1765756800000,
+      "ended_at": 1765759800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 72,
+      "client_id": "run-y-309-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1765827000000,
+      "ended_at": 1765828500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 73,
+      "client_id": "run-y-308-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1765913400000,
+      "ended_at": 1765914900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 74,
+      "client_id": "run-y-308-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1765929600000,
+      "ended_at": 1765932600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 75,
+      "client_id": "run-y-306-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1766086200000,
+      "ended_at": 1766087700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 76,
+      "client_id": "run-y-306-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1766102400000,
+      "ended_at": 1766105400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 77,
+      "client_id": "run-y-305-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1766172600000,
+      "ended_at": 1766174100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 78,
+      "client_id": "run-y-304-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1766259000000,
+      "ended_at": 1766260500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 79,
+      "client_id": "run-y-304-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1766275200000,
+      "ended_at": 1766278200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 80,
+      "client_id": "run-y-303-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1766345400000,
+      "ended_at": 1766346900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 81,
+      "client_id": "run-y-302-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1766431800000,
+      "ended_at": 1766433300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 82,
+      "client_id": "run-y-302-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1766448000000,
+      "ended_at": 1766451000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 83,
+      "client_id": "run-y-301-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1766518200000,
+      "ended_at": 1766519700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 84,
+      "client_id": "run-y-299-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1766691000000,
+      "ended_at": 1766692500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 85,
+      "client_id": "run-y-298-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1766777400000,
+      "ended_at": 1766778900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 86,
+      "client_id": "run-y-298-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1766793600000,
+      "ended_at": 1766796600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 87,
+      "client_id": "run-y-297-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1766863800000,
+      "ended_at": 1766865300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 88,
+      "client_id": "run-y-296-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1766950200000,
+      "ended_at": 1766951700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 89,
+      "client_id": "run-y-296-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1766966400000,
+      "ended_at": 1766969400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 90,
+      "client_id": "run-y-295-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1767036600000,
+      "ended_at": 1767038100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 91,
+      "client_id": "run-y-294-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1767123000000,
+      "ended_at": 1767124500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 92,
+      "client_id": "run-y-294-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1767139200000,
+      "ended_at": 1767142200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 93,
+      "client_id": "run-y-292-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1767295800000,
+      "ended_at": 1767297300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 94,
+      "client_id": "run-y-292-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1767312000000,
+      "ended_at": 1767315000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 95,
+      "client_id": "run-y-291-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1767382200000,
+      "ended_at": 1767383700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 96,
+      "client_id": "run-y-290-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1767468600000,
+      "ended_at": 1767470100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 97,
+      "client_id": "run-y-290-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1767484800000,
+      "ended_at": 1767487800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 98,
+      "client_id": "run-y-289-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1767555000000,
+      "ended_at": 1767556500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 99,
+      "client_id": "run-y-288-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1767641400000,
+      "ended_at": 1767642900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 100,
+      "client_id": "run-y-288-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1767657600000,
+      "ended_at": 1767660600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 101,
+      "client_id": "run-y-287-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1767727800000,
+      "ended_at": 1767729300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 102,
+      "client_id": "run-y-285-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1767900600000,
+      "ended_at": 1767902100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 103,
+      "client_id": "run-y-284-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1767987000000,
+      "ended_at": 1767988500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 104,
+      "client_id": "run-y-284-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768003200000,
+      "ended_at": 1768006200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 105,
+      "client_id": "run-y-283-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1768073400000,
+      "ended_at": 1768074900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 106,
+      "client_id": "run-y-282-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1768159800000,
+      "ended_at": 1768161300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 107,
+      "client_id": "run-y-282-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768176000000,
+      "ended_at": 1768179000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 108,
+      "client_id": "run-y-281-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1768246200000,
+      "ended_at": 1768247700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 109,
+      "client_id": "run-y-280-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1768332600000,
+      "ended_at": 1768334100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 110,
+      "client_id": "run-y-280-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768348800000,
+      "ended_at": 1768351800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 111,
+      "client_id": "run-y-278-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1768505400000,
+      "ended_at": 1768506900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 112,
+      "client_id": "run-y-278-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768521600000,
+      "ended_at": 1768524600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 113,
+      "client_id": "run-y-277-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1768591800000,
+      "ended_at": 1768593300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 114,
+      "client_id": "run-y-276-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1768678200000,
+      "ended_at": 1768679700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 115,
+      "client_id": "run-y-276-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768694400000,
+      "ended_at": 1768697400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 116,
+      "client_id": "run-y-275-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1768764600000,
+      "ended_at": 1768766100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 117,
+      "client_id": "run-y-274-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1768851000000,
+      "ended_at": 1768852500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 118,
+      "client_id": "run-y-274-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1768867200000,
+      "ended_at": 1768870200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 119,
+      "client_id": "run-y-273-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1768937400000,
+      "ended_at": 1768938900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 120,
+      "client_id": "run-y-271-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1769110200000,
+      "ended_at": 1769111700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 121,
+      "client_id": "run-y-270-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1769196600000,
+      "ended_at": 1769198100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 122,
+      "client_id": "run-y-270-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1769212800000,
+      "ended_at": 1769215800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 123,
+      "client_id": "run-y-269-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1769283000000,
+      "ended_at": 1769284500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 124,
+      "client_id": "run-y-268-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1769369400000,
+      "ended_at": 1769370900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 125,
+      "client_id": "run-y-268-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1769385600000,
+      "ended_at": 1769388600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 126,
+      "client_id": "run-y-267-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1769455800000,
+      "ended_at": 1769457300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 127,
+      "client_id": "run-y-266-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1769542200000,
+      "ended_at": 1769543700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 128,
+      "client_id": "run-y-266-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1769558400000,
+      "ended_at": 1769561400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 129,
+      "client_id": "run-y-264-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1769715000000,
+      "ended_at": 1769716500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 130,
+      "client_id": "run-y-264-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1769731200000,
+      "ended_at": 1769734200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 131,
+      "client_id": "run-y-263-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1769801400000,
+      "ended_at": 1769802900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 132,
+      "client_id": "run-y-262-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1769887800000,
+      "ended_at": 1769889300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 133,
+      "client_id": "run-y-262-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1769904000000,
+      "ended_at": 1769907000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 134,
+      "client_id": "run-y-261-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1769974200000,
+      "ended_at": 1769975700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 135,
+      "client_id": "run-y-260-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1770060600000,
+      "ended_at": 1770062100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 136,
+      "client_id": "run-y-260-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1770076800000,
+      "ended_at": 1770079800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 137,
+      "client_id": "run-y-259-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1770147000000,
+      "ended_at": 1770148500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 138,
+      "client_id": "run-y-257-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1770319800000,
+      "ended_at": 1770321300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 139,
+      "client_id": "run-y-256-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1770406200000,
+      "ended_at": 1770407700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 140,
+      "client_id": "run-y-256-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1770422400000,
+      "ended_at": 1770425400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 141,
+      "client_id": "run-y-255-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1770492600000,
+      "ended_at": 1770494100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 142,
+      "client_id": "run-y-254-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1770579000000,
+      "ended_at": 1770580500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 143,
+      "client_id": "run-y-254-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1770595200000,
+      "ended_at": 1770598200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 144,
+      "client_id": "run-y-253-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1770665400000,
+      "ended_at": 1770666900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 145,
+      "client_id": "run-y-252-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1770751800000,
+      "ended_at": 1770753300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 146,
+      "client_id": "run-y-252-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1770768000000,
+      "ended_at": 1770771000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 147,
+      "client_id": "run-y-250-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1770924600000,
+      "ended_at": 1770926100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 148,
+      "client_id": "run-y-250-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1770940800000,
+      "ended_at": 1770943800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 149,
+      "client_id": "run-y-249-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1771011000000,
+      "ended_at": 1771012500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 150,
+      "client_id": "run-y-248-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1771097400000,
+      "ended_at": 1771098900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 151,
+      "client_id": "run-y-248-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1771113600000,
+      "ended_at": 1771116600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 152,
+      "client_id": "run-y-247-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1771183800000,
+      "ended_at": 1771185300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 153,
+      "client_id": "run-y-246-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1771270200000,
+      "ended_at": 1771271700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 154,
+      "client_id": "run-y-246-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1771286400000,
+      "ended_at": 1771289400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 155,
+      "client_id": "run-y-245-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1771356600000,
+      "ended_at": 1771358100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 156,
+      "client_id": "run-y-243-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1771529400000,
+      "ended_at": 1771530900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 157,
+      "client_id": "run-y-242-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1771615800000,
+      "ended_at": 1771617300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 158,
+      "client_id": "run-y-242-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1771632000000,
+      "ended_at": 1771635000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 159,
+      "client_id": "run-y-241-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1771702200000,
+      "ended_at": 1771703700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 160,
+      "client_id": "run-y-240-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1771788600000,
+      "ended_at": 1771790100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 161,
+      "client_id": "run-y-240-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1771804800000,
+      "ended_at": 1771807800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 162,
+      "client_id": "run-y-239-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1771875000000,
+      "ended_at": 1771876500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 163,
+      "client_id": "run-y-238-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1771961400000,
+      "ended_at": 1771962900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 164,
+      "client_id": "run-y-238-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1771977600000,
+      "ended_at": 1771980600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 165,
+      "client_id": "run-y-236-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1772134200000,
+      "ended_at": 1772135700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 166,
+      "client_id": "run-y-236-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1772150400000,
+      "ended_at": 1772153400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 167,
+      "client_id": "run-y-235-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1772220600000,
+      "ended_at": 1772222100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 168,
+      "client_id": "run-y-234-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1772307000000,
+      "ended_at": 1772308500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 169,
+      "client_id": "run-y-234-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1772323200000,
+      "ended_at": 1772326200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 170,
+      "client_id": "run-y-233-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1772393400000,
+      "ended_at": 1772394900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 171,
+      "client_id": "run-y-232-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1772479800000,
+      "ended_at": 1772481300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 172,
+      "client_id": "run-y-232-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1772496000000,
+      "ended_at": 1772499000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 173,
+      "client_id": "run-y-231-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1772566200000,
+      "ended_at": 1772567700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 174,
+      "client_id": "run-y-229-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1772739000000,
+      "ended_at": 1772740500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 175,
+      "client_id": "run-y-228-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1772825400000,
+      "ended_at": 1772826900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 176,
+      "client_id": "run-y-228-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1772841600000,
+      "ended_at": 1772844600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 177,
+      "client_id": "run-y-227-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1772911800000,
+      "ended_at": 1772913300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 178,
+      "client_id": "run-y-226-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1772998200000,
+      "ended_at": 1772999700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 179,
+      "client_id": "run-y-226-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1773014400000,
+      "ended_at": 1773017400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 180,
+      "client_id": "run-y-225-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1773084600000,
+      "ended_at": 1773086100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 181,
+      "client_id": "run-y-224-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1773171000000,
+      "ended_at": 1773172500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 182,
+      "client_id": "run-y-224-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1773187200000,
+      "ended_at": 1773190200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 183,
+      "client_id": "run-y-222-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1773343800000,
+      "ended_at": 1773345300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 184,
+      "client_id": "run-y-222-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1773360000000,
+      "ended_at": 1773363000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 185,
+      "client_id": "run-y-221-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1773430200000,
+      "ended_at": 1773431700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 186,
+      "client_id": "run-y-220-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1773516600000,
+      "ended_at": 1773518100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 187,
+      "client_id": "run-y-220-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1773532800000,
+      "ended_at": 1773535800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 188,
+      "client_id": "run-y-219-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1773603000000,
+      "ended_at": 1773604500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 189,
+      "client_id": "run-y-218-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1773689400000,
+      "ended_at": 1773690900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 190,
+      "client_id": "run-y-218-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1773705600000,
+      "ended_at": 1773708600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 191,
+      "client_id": "run-y-217-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1773775800000,
+      "ended_at": 1773777300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 192,
+      "client_id": "run-y-215-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1773948600000,
+      "ended_at": 1773950100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 193,
+      "client_id": "run-y-214-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1774035000000,
+      "ended_at": 1774036500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 194,
+      "client_id": "run-y-214-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774051200000,
+      "ended_at": 1774054200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 195,
+      "client_id": "run-y-213-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1774121400000,
+      "ended_at": 1774122900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 196,
+      "client_id": "run-y-212-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1774207800000,
+      "ended_at": 1774209300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 197,
+      "client_id": "run-y-212-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774224000000,
+      "ended_at": 1774227000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 198,
+      "client_id": "run-y-211-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1774294200000,
+      "ended_at": 1774295700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 199,
+      "client_id": "run-y-210-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1774380600000,
+      "ended_at": 1774382100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 200,
+      "client_id": "run-y-210-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774396800000,
+      "ended_at": 1774399800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 201,
+      "client_id": "run-y-208-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1774553400000,
+      "ended_at": 1774554900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 202,
+      "client_id": "run-y-208-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774569600000,
+      "ended_at": 1774572600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 203,
+      "client_id": "run-y-207-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1774639800000,
+      "ended_at": 1774641300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 204,
+      "client_id": "run-y-206-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1774726200000,
+      "ended_at": 1774727700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 205,
+      "client_id": "run-y-206-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774742400000,
+      "ended_at": 1774745400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 206,
+      "client_id": "run-y-205-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1774812600000,
+      "ended_at": 1774814100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 207,
+      "client_id": "run-y-204-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1774899000000,
+      "ended_at": 1774900500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 208,
+      "client_id": "run-y-204-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1774915200000,
+      "ended_at": 1774918200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 209,
+      "client_id": "run-y-203-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1774985400000,
+      "ended_at": 1774986900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 210,
+      "client_id": "run-y-201-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1775158200000,
+      "ended_at": 1775159700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 211,
+      "client_id": "run-y-200-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1775244600000,
+      "ended_at": 1775246100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 212,
+      "client_id": "run-y-200-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1775260800000,
+      "ended_at": 1775263800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 213,
+      "client_id": "run-y-199-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1775331000000,
+      "ended_at": 1775332500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 214,
+      "client_id": "run-y-198-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1775417400000,
+      "ended_at": 1775418900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 215,
+      "client_id": "run-y-198-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1775433600000,
+      "ended_at": 1775436600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 216,
+      "client_id": "run-y-197-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1775503800000,
+      "ended_at": 1775505300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 217,
+      "client_id": "run-y-196-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1775590200000,
+      "ended_at": 1775591700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 218,
+      "client_id": "run-y-196-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1775606400000,
+      "ended_at": 1775609400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 219,
+      "client_id": "run-y-194-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1775763000000,
+      "ended_at": 1775764500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 220,
+      "client_id": "run-y-194-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1775779200000,
+      "ended_at": 1775782200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 221,
+      "client_id": "run-y-193-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1775849400000,
+      "ended_at": 1775850900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 222,
+      "client_id": "run-y-192-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1775935800000,
+      "ended_at": 1775937300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 223,
+      "client_id": "run-y-192-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1775952000000,
+      "ended_at": 1775955000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 224,
+      "client_id": "run-y-191-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1776022200000,
+      "ended_at": 1776023700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 225,
+      "client_id": "run-y-190-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1776108600000,
+      "ended_at": 1776110100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 226,
+      "client_id": "run-y-190-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1776124800000,
+      "ended_at": 1776127800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 227,
+      "client_id": "run-y-189-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1776195000000,
+      "ended_at": 1776196500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 228,
+      "client_id": "run-y-187-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1776367800000,
+      "ended_at": 1776369300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 229,
+      "client_id": "run-y-186-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1776454200000,
+      "ended_at": 1776455700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 230,
+      "client_id": "run-y-186-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1776470400000,
+      "ended_at": 1776473400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 231,
+      "client_id": "run-y-185-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1776540600000,
+      "ended_at": 1776542100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 232,
+      "client_id": "run-y-184-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1776627000000,
+      "ended_at": 1776628500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 233,
+      "client_id": "run-y-184-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1776643200000,
+      "ended_at": 1776646200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 234,
+      "client_id": "run-y-183-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1776713400000,
+      "ended_at": 1776714900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 235,
+      "client_id": "run-y-182-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1776799800000,
+      "ended_at": 1776801300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 236,
+      "client_id": "run-y-182-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1776816000000,
+      "ended_at": 1776819000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 237,
+      "client_id": "run-y-180-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1776972600000,
+      "ended_at": 1776974100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 238,
+      "client_id": "run-y-180-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1776988800000,
+      "ended_at": 1776991800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 239,
+      "client_id": "run-y-179-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1777059000000,
+      "ended_at": 1777060500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 240,
+      "client_id": "run-y-178-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1777145400000,
+      "ended_at": 1777146900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 241,
+      "client_id": "run-y-178-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1777161600000,
+      "ended_at": 1777164600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 242,
+      "client_id": "run-y-177-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1777231800000,
+      "ended_at": 1777233300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 243,
+      "client_id": "run-y-176-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1777318200000,
+      "ended_at": 1777319700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 244,
+      "client_id": "run-y-176-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1777334400000,
+      "ended_at": 1777337400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 245,
+      "client_id": "run-y-175-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1777404600000,
+      "ended_at": 1777406100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 246,
+      "client_id": "run-y-173-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1777577400000,
+      "ended_at": 1777578900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 247,
+      "client_id": "run-y-172-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1777663800000,
+      "ended_at": 1777665300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 248,
+      "client_id": "run-y-172-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1777680000000,
+      "ended_at": 1777683000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 249,
+      "client_id": "run-y-171-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1777750200000,
+      "ended_at": 1777751700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 250,
+      "client_id": "run-y-170-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1777836600000,
+      "ended_at": 1777838100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 251,
+      "client_id": "run-y-170-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1777852800000,
+      "ended_at": 1777855800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 252,
+      "client_id": "run-y-169-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1777923000000,
+      "ended_at": 1777924500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 253,
+      "client_id": "run-y-168-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1778009400000,
+      "ended_at": 1778010900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 254,
+      "client_id": "run-y-168-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1778025600000,
+      "ended_at": 1778028600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 255,
+      "client_id": "run-y-166-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1778182200000,
+      "ended_at": 1778183700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 256,
+      "client_id": "run-y-166-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1778198400000,
+      "ended_at": 1778201400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 257,
+      "client_id": "run-y-165-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1778268600000,
+      "ended_at": 1778270100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 258,
+      "client_id": "run-y-164-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1778355000000,
+      "ended_at": 1778356500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 259,
+      "client_id": "run-y-164-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1778371200000,
+      "ended_at": 1778374200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 260,
+      "client_id": "run-y-163-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1778441400000,
+      "ended_at": 1778442900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 261,
+      "client_id": "run-y-162-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1778527800000,
+      "ended_at": 1778529300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 262,
+      "client_id": "run-y-162-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1778544000000,
+      "ended_at": 1778547000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 263,
+      "client_id": "run-y-161-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1778614200000,
+      "ended_at": 1778615700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 264,
+      "client_id": "run-y-159-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1778787000000,
+      "ended_at": 1778788500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 265,
+      "client_id": "run-y-158-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1778873400000,
+      "ended_at": 1778874900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 266,
+      "client_id": "run-y-158-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1778889600000,
+      "ended_at": 1778892600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 267,
+      "client_id": "run-y-157-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1778959800000,
+      "ended_at": 1778961300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 268,
+      "client_id": "run-y-156-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1779046200000,
+      "ended_at": 1779047700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 269,
+      "client_id": "run-y-156-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1779062400000,
+      "ended_at": 1779065400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 270,
+      "client_id": "run-y-155-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1779132600000,
+      "ended_at": 1779134100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 271,
+      "client_id": "run-y-154-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1779219000000,
+      "ended_at": 1779220500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 272,
+      "client_id": "run-y-154-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1779235200000,
+      "ended_at": 1779238200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 273,
+      "client_id": "run-y-152-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1779391800000,
+      "ended_at": 1779393300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 274,
+      "client_id": "run-y-152-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1779408000000,
+      "ended_at": 1779411000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 275,
+      "client_id": "run-y-151-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1779478200000,
+      "ended_at": 1779479700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 276,
+      "client_id": "run-y-150-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1779564600000,
+      "ended_at": 1779566100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 277,
+      "client_id": "run-y-150-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1779580800000,
+      "ended_at": 1779583800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 278,
+      "client_id": "run-y-149-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1779651000000,
+      "ended_at": 1779652500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 279,
+      "client_id": "run-y-148-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1779737400000,
+      "ended_at": 1779738900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 280,
+      "client_id": "run-y-148-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1779753600000,
+      "ended_at": 1779756600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 281,
+      "client_id": "run-y-147-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1779823800000,
+      "ended_at": 1779825300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 282,
+      "client_id": "run-y-145-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1779996600000,
+      "ended_at": 1779998100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 283,
+      "client_id": "run-y-144-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1780083000000,
+      "ended_at": 1780084500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 284,
+      "client_id": "run-y-144-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780099200000,
+      "ended_at": 1780102200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 285,
+      "client_id": "run-y-143-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1780169400000,
+      "ended_at": 1780170900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 286,
+      "client_id": "run-y-142-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1780255800000,
+      "ended_at": 1780257300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 287,
+      "client_id": "run-y-142-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780272000000,
+      "ended_at": 1780275000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 288,
+      "client_id": "run-y-141-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1780342200000,
+      "ended_at": 1780343700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 289,
+      "client_id": "run-y-140-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1780428600000,
+      "ended_at": 1780430100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 290,
+      "client_id": "run-y-140-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780444800000,
+      "ended_at": 1780447800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 291,
+      "client_id": "run-y-138-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1780601400000,
+      "ended_at": 1780602900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 292,
+      "client_id": "run-y-138-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780617600000,
+      "ended_at": 1780620600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 293,
+      "client_id": "run-y-137-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1780687800000,
+      "ended_at": 1780689300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 294,
+      "client_id": "run-y-136-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1780774200000,
+      "ended_at": 1780775700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 295,
+      "client_id": "run-y-136-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780790400000,
+      "ended_at": 1780793400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 296,
+      "client_id": "run-y-135-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1780860600000,
+      "ended_at": 1780862100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 297,
+      "client_id": "run-y-134-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1780947000000,
+      "ended_at": 1780948500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 298,
+      "client_id": "run-y-134-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1780963200000,
+      "ended_at": 1780966200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 299,
+      "client_id": "run-y-133-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1781033400000,
+      "ended_at": 1781034900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 300,
+      "client_id": "run-y-131-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1781206200000,
+      "ended_at": 1781207700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 301,
+      "client_id": "run-y-130-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1781292600000,
+      "ended_at": 1781294100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 302,
+      "client_id": "run-y-130-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1781308800000,
+      "ended_at": 1781311800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 303,
+      "client_id": "run-y-129-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1781379000000,
+      "ended_at": 1781380500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 304,
+      "client_id": "run-y-128-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1781465400000,
+      "ended_at": 1781466900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 305,
+      "client_id": "run-y-128-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1781481600000,
+      "ended_at": 1781484600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 306,
+      "client_id": "run-y-127-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1781551800000,
+      "ended_at": 1781553300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 307,
+      "client_id": "run-y-126-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1781638200000,
+      "ended_at": 1781639700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 308,
+      "client_id": "run-y-126-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1781654400000,
+      "ended_at": 1781657400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 309,
+      "client_id": "run-y-124-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1781811000000,
+      "ended_at": 1781812500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 310,
+      "client_id": "run-y-124-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1781827200000,
+      "ended_at": 1781830200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 311,
+      "client_id": "run-y-123-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1781897400000,
+      "ended_at": 1781898900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 312,
+      "client_id": "run-y-122-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1781983800000,
+      "ended_at": 1781985300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 313,
+      "client_id": "run-y-122-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1782000000000,
+      "ended_at": 1782003000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 314,
+      "client_id": "run-y-121-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1782070200000,
+      "ended_at": 1782071700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 315,
+      "client_id": "run-y-120-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1782156600000,
+      "ended_at": 1782158100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 316,
+      "client_id": "run-y-120-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1782172800000,
+      "ended_at": 1782175800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 317,
+      "client_id": "run-y-119-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1782243000000,
+      "ended_at": 1782244500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 318,
+      "client_id": "run-y-117-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1782415800000,
+      "ended_at": 1782417300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 319,
+      "client_id": "run-y-116-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1782502200000,
+      "ended_at": 1782503700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 320,
+      "client_id": "run-y-116-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1782518400000,
+      "ended_at": 1782521400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 321,
+      "client_id": "run-y-115-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1782588600000,
+      "ended_at": 1782590100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 322,
+      "client_id": "run-y-114-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1782675000000,
+      "ended_at": 1782676500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 323,
+      "client_id": "run-y-114-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1782691200000,
+      "ended_at": 1782694200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 324,
+      "client_id": "run-y-113-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1782761400000,
+      "ended_at": 1782762900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 325,
+      "client_id": "run-y-112-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1782847800000,
+      "ended_at": 1782849300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 326,
+      "client_id": "run-y-112-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1782864000000,
+      "ended_at": 1782867000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 327,
+      "client_id": "run-y-110-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1783020600000,
+      "ended_at": 1783022100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 328,
+      "client_id": "run-y-110-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1783036800000,
+      "ended_at": 1783039800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 329,
+      "client_id": "run-y-109-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1783107000000,
+      "ended_at": 1783108500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 330,
+      "client_id": "run-y-108-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1783193400000,
+      "ended_at": 1783194900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 331,
+      "client_id": "run-y-108-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1783209600000,
+      "ended_at": 1783212600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 332,
+      "client_id": "run-y-107-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1783279800000,
+      "ended_at": 1783281300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 333,
+      "client_id": "run-y-106-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1783366200000,
+      "ended_at": 1783367700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 334,
+      "client_id": "run-y-106-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1783382400000,
+      "ended_at": 1783385400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 335,
+      "client_id": "run-y-105-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1783452600000,
+      "ended_at": 1783454100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 336,
+      "client_id": "run-y-103-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1783625400000,
+      "ended_at": 1783626900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 337,
+      "client_id": "run-y-102-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1783711800000,
+      "ended_at": 1783713300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 338,
+      "client_id": "run-y-102-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1783728000000,
+      "ended_at": 1783731000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 339,
+      "client_id": "run-y-101-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1783798200000,
+      "ended_at": 1783799700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 340,
+      "client_id": "run-y-100-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1783884600000,
+      "ended_at": 1783886100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 341,
+      "client_id": "run-y-100-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1783900800000,
+      "ended_at": 1783903800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 342,
+      "client_id": "run-y-99-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1783971000000,
+      "ended_at": 1783972500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 343,
+      "client_id": "run-y-98-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1784057400000,
+      "ended_at": 1784058900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 344,
+      "client_id": "run-y-98-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1784073600000,
+      "ended_at": 1784076600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 345,
+      "client_id": "run-y-96-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1784230200000,
+      "ended_at": 1784231700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 346,
+      "client_id": "run-y-96-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1784246400000,
+      "ended_at": 1784249400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 347,
+      "client_id": "run-y-95-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1784316600000,
+      "ended_at": 1784318100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 348,
+      "client_id": "run-y-94-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1784403000000,
+      "ended_at": 1784404500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 349,
+      "client_id": "run-y-94-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1784419200000,
+      "ended_at": 1784422200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 350,
+      "client_id": "run-y-93-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1784489400000,
+      "ended_at": 1784490900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 351,
+      "client_id": "run-y-92-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1784575800000,
+      "ended_at": 1784577300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 352,
+      "client_id": "run-y-92-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1784592000000,
+      "ended_at": 1784595000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 353,
+      "client_id": "run-y-91-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1784662200000,
+      "ended_at": 1784663700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 354,
+      "client_id": "run-y-89-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1784835000000,
+      "ended_at": 1784836500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 355,
+      "client_id": "run-y-88-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1784921400000,
+      "ended_at": 1784922900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 356,
+      "client_id": "run-y-88-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1784937600000,
+      "ended_at": 1784940600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 357,
+      "client_id": "run-y-87-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1785007800000,
+      "ended_at": 1785009300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 358,
+      "client_id": "run-y-86-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1785094200000,
+      "ended_at": 1785095700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 359,
+      "client_id": "run-y-86-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1785110400000,
+      "ended_at": 1785113400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 360,
+      "client_id": "run-y-85-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1785180600000,
+      "ended_at": 1785182100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 361,
+      "client_id": "run-y-84-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1785267000000,
+      "ended_at": 1785268500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 362,
+      "client_id": "run-y-84-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1785283200000,
+      "ended_at": 1785286200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 363,
+      "client_id": "run-y-82-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1785439800000,
+      "ended_at": 1785441300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 364,
+      "client_id": "run-y-82-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1785456000000,
+      "ended_at": 1785459000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 365,
+      "client_id": "run-y-81-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1785526200000,
+      "ended_at": 1785527700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 366,
+      "client_id": "run-y-80-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1785612600000,
+      "ended_at": 1785614100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 367,
+      "client_id": "run-y-80-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1785628800000,
+      "ended_at": 1785631800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 368,
+      "client_id": "run-y-79-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1785699000000,
+      "ended_at": 1785700500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 369,
+      "client_id": "run-y-78-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1785785400000,
+      "ended_at": 1785786900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 370,
+      "client_id": "run-y-78-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1785801600000,
+      "ended_at": 1785804600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 371,
+      "client_id": "run-y-77-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1785871800000,
+      "ended_at": 1785873300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 372,
+      "client_id": "run-y-75-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1786044600000,
+      "ended_at": 1786046100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 373,
+      "client_id": "run-y-74-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1786131000000,
+      "ended_at": 1786132500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 374,
+      "client_id": "run-y-74-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1786147200000,
+      "ended_at": 1786150200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 375,
+      "client_id": "run-y-73-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1786217400000,
+      "ended_at": 1786218900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 376,
+      "client_id": "run-y-72-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1786303800000,
+      "ended_at": 1786305300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 377,
+      "client_id": "run-y-72-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1786320000000,
+      "ended_at": 1786323000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 378,
+      "client_id": "run-y-71-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1786390200000,
+      "ended_at": 1786391700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 379,
+      "client_id": "run-y-70-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1786476600000,
+      "ended_at": 1786478100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 380,
+      "client_id": "run-y-70-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1786492800000,
+      "ended_at": 1786495800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 381,
+      "client_id": "run-y-68-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1786649400000,
+      "ended_at": 1786650900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 382,
+      "client_id": "run-y-68-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1786665600000,
+      "ended_at": 1786668600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 383,
+      "client_id": "run-y-67-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1786735800000,
+      "ended_at": 1786737300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 384,
+      "client_id": "run-y-66-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1786822200000,
+      "ended_at": 1786823700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 385,
+      "client_id": "run-y-66-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1786838400000,
+      "ended_at": 1786841400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 386,
+      "client_id": "run-y-65-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1786908600000,
+      "ended_at": 1786910100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 387,
+      "client_id": "run-y-64-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1786995000000,
+      "ended_at": 1786996500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 388,
+      "client_id": "run-y-64-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1787011200000,
+      "ended_at": 1787014200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 389,
+      "client_id": "run-y-63-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1787081400000,
+      "ended_at": 1787082900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 390,
+      "client_id": "run-y-61-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1787254200000,
+      "ended_at": 1787255700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 391,
+      "client_id": "run-y-60-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1787340600000,
+      "ended_at": 1787342100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 392,
+      "client_id": "run-y-60-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1787356800000,
+      "ended_at": 1787359800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 393,
+      "client_id": "run-y-59-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1787427000000,
+      "ended_at": 1787428500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 394,
+      "client_id": "run-y-58-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1787513400000,
+      "ended_at": 1787514900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 395,
+      "client_id": "run-y-58-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1787529600000,
+      "ended_at": 1787532600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 396,
+      "client_id": "run-y-57-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1787599800000,
+      "ended_at": 1787601300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 397,
+      "client_id": "run-y-56-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1787686200000,
+      "ended_at": 1787687700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 398,
+      "client_id": "run-y-56-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1787702400000,
+      "ended_at": 1787705400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 399,
+      "client_id": "run-y-54-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1787859000000,
+      "ended_at": 1787860500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 400,
+      "client_id": "run-y-54-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1787875200000,
+      "ended_at": 1787878200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 401,
+      "client_id": "run-y-53-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1787945400000,
+      "ended_at": 1787946900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 402,
+      "client_id": "run-y-52-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1788031800000,
+      "ended_at": 1788033300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 403,
+      "client_id": "run-y-52-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1788048000000,
+      "ended_at": 1788051000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 404,
+      "client_id": "run-y-51-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1788118200000,
+      "ended_at": 1788119700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 405,
+      "client_id": "run-y-50-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1788204600000,
+      "ended_at": 1788206100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 406,
+      "client_id": "run-y-50-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1788220800000,
+      "ended_at": 1788223800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 407,
+      "client_id": "run-y-49-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1788291000000,
+      "ended_at": 1788292500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 408,
+      "client_id": "run-y-47-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1788463800000,
+      "ended_at": 1788465300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 409,
+      "client_id": "run-y-46-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1788550200000,
+      "ended_at": 1788551700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 410,
+      "client_id": "run-y-46-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1788566400000,
+      "ended_at": 1788569400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 411,
+      "client_id": "run-y-45-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1788636600000,
+      "ended_at": 1788638100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 412,
+      "client_id": "run-y-44-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1788723000000,
+      "ended_at": 1788724500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 413,
+      "client_id": "run-y-44-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1788739200000,
+      "ended_at": 1788742200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 414,
+      "client_id": "run-y-43-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1788809400000,
+      "ended_at": 1788810900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 415,
+      "client_id": "run-y-42-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1788895800000,
+      "ended_at": 1788897300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 416,
+      "client_id": "run-y-42-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1788912000000,
+      "ended_at": 1788915000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 417,
+      "client_id": "run-y-40-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1789068600000,
+      "ended_at": 1789070100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 418,
+      "client_id": "run-y-40-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1789084800000,
+      "ended_at": 1789087800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 419,
+      "client_id": "run-y-39-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1789155000000,
+      "ended_at": 1789156500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 420,
+      "client_id": "run-y-38-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1789241400000,
+      "ended_at": 1789242900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 421,
+      "client_id": "run-y-38-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1789257600000,
+      "ended_at": 1789260600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 422,
+      "client_id": "run-y-37-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1789327800000,
+      "ended_at": 1789329300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 423,
+      "client_id": "run-y-36-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1789414200000,
+      "ended_at": 1789415700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 424,
+      "client_id": "run-y-36-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1789430400000,
+      "ended_at": 1789433400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 425,
+      "client_id": "run-y-35-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1789500600000,
+      "ended_at": 1789502100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 426,
+      "client_id": "run-y-33-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1789673400000,
+      "ended_at": 1789674900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 427,
+      "client_id": "run-y-32-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1789759800000,
+      "ended_at": 1789761300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 428,
+      "client_id": "run-y-32-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1789776000000,
+      "ended_at": 1789779000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 429,
+      "client_id": "run-y-31-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1789846200000,
+      "ended_at": 1789847700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 430,
+      "client_id": "run-y-30-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1789932600000,
+      "ended_at": 1789934100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 431,
+      "client_id": "run-y-30-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1789948800000,
+      "ended_at": 1789951800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 432,
+      "client_id": "run-y-29-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1790019000000,
+      "ended_at": 1790020500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 433,
+      "client_id": "run-y-28-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1790105400000,
+      "ended_at": 1790106900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 434,
+      "client_id": "run-y-28-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1790121600000,
+      "ended_at": 1790124600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 435,
+      "client_id": "run-y-26-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1790278200000,
+      "ended_at": 1790279700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 436,
+      "client_id": "run-y-26-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1790294400000,
+      "ended_at": 1790297400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 437,
+      "client_id": "run-y-25-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1790364600000,
+      "ended_at": 1790366100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 438,
+      "client_id": "run-y-24-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1790451000000,
+      "ended_at": 1790452500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 439,
+      "client_id": "run-y-24-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1790467200000,
+      "ended_at": 1790470200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 440,
+      "client_id": "run-y-23-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1790537400000,
+      "ended_at": 1790538900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 441,
+      "client_id": "run-y-22-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1790623800000,
+      "ended_at": 1790625300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 442,
+      "client_id": "run-y-22-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1790640000000,
+      "ended_at": 1790643000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 443,
+      "client_id": "run-y-21-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1790710200000,
+      "ended_at": 1790711700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 444,
+      "client_id": "run-y-19-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1790883000000,
+      "ended_at": 1790884500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 445,
+      "client_id": "run-y-18-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1790969400000,
+      "ended_at": 1790970900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 446,
+      "client_id": "run-y-18-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1790985600000,
+      "ended_at": 1790988600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 447,
+      "client_id": "run-y-17-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1791055800000,
+      "ended_at": 1791057300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 448,
+      "client_id": "run-y-16-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1791142200000,
+      "ended_at": 1791143700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 449,
+      "client_id": "run-y-16-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1791158400000,
+      "ended_at": 1791161400000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 450,
+      "client_id": "run-y-15-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1791228600000,
+      "ended_at": 1791230100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 451,
+      "client_id": "run-y-14-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1791315000000,
+      "ended_at": 1791316500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 452,
+      "client_id": "run-y-14-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1791331200000,
+      "ended_at": 1791334200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 453,
+      "client_id": "run-y-12-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1791487800000,
+      "ended_at": 1791489300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 454,
+      "client_id": "run-y-12-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1791504000000,
+      "ended_at": 1791507000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 455,
+      "client_id": "run-y-11-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1791574200000,
+      "ended_at": 1791575700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 456,
+      "client_id": "run-y-10-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1791660600000,
+      "ended_at": 1791662100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 457,
+      "client_id": "run-y-10-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1791676800000,
+      "ended_at": 1791679800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 458,
+      "client_id": "run-y-9-1",
+      "homework_id": 1,
+      "course_id": 2,
+      "label": "Algo Exercise",
+      "started_at": 1791747000000,
+      "ended_at": 1791748500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 459,
+      "client_id": "run-y-8-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1791833400000,
+      "ended_at": 1791834900000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 460,
+      "client_id": "run-y-8-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1791849600000,
+      "ended_at": 1791852600000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 461,
+      "client_id": "run-y-7-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1791919800000,
+      "ended_at": 1791921300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 462,
+      "client_id": "run-y-5-1",
+      "homework_id": null,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1792092600000,
+      "ended_at": 1792094100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 463,
+      "client_id": "run-y-4-1",
+      "homework_id": 2,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1792179000000,
+      "ended_at": 1792180500000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 464,
+      "client_id": "run-y-4-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1792195200000,
+      "ended_at": 1792198200000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 465,
+      "client_id": "run-y-2-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Web Coding",
+      "started_at": 1792351800000,
+      "ended_at": 1792353300000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 466,
+      "client_id": "run-y-2-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1792368000000,
+      "ended_at": 1792371000000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": true,
+      "tags": [
+        "revision"
+      ]
+    },
+    {
+      "id": 467,
+      "client_id": "run-y-1-1",
+      "homework_id": 2,
+      "course_id": 2,
+      "label": "Web Coding",
+      "started_at": 1792438200000,
+      "ended_at": 1792439700000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 468,
+      "client_id": "run-y-0-1",
+      "homework_id": 1,
+      "course_id": 1,
+      "label": "Algo Exercise",
+      "started_at": 1792524600000,
+      "ended_at": 1792526100000,
+      "planned_seconds": 1500,
+      "focus_seconds": 1500,
+      "completed": true,
+      "tags": [
+        "study",
+        "epita"
+      ]
+    },
+    {
+      "id": 469,
+      "client_id": "run-y-0-2",
+      "homework_id": null,
+      "course_id": 1,
+      "label": "Revision",
+      "started_at": 1792540800000,
+      "ended_at": 1792543800000,
+      "planned_seconds": 3000,
+      "focus_seconds": 3000,
+      "completed": false,
+      "tags": [
+        "revision"
+      ]
+    }
+  ],
+  "rawSettingsCases": [
+    {
+      "name": "null_raw",
+      "raw": null
+    },
+    {
+      "name": "empty_raw",
+      "raw": {}
+    },
+    {
+      "name": "custom_valid",
+      "raw": {
+        "focus": 50,
+        "short": 10,
+        "long": 20,
+        "longEvery": 3,
+        "goal": 10,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": true,
+        "tasks": [
+          "Task A",
+          "Task B"
+        ],
+        "tags": [
+          "coding",
+          "reading"
+        ]
+      }
+    },
+    {
+      "name": "out_of_bounds",
+      "raw": {
+        "focus": 500,
+        "short": 0,
+        "long": -5,
+        "longEvery": 100,
+        "goal": 0,
+        "autoBreaks": "not_a_bool",
+        "extra_field": 42,
+        "tasks": [
+          "T1",
+          "  T1  ",
+          "#invalid#tag"
+        ],
+        "tags": [
+          "#TAG1",
+          "TAG1",
+          "TAG2"
+        ]
+      }
+    }
+  ],
+  "refNow": 1792576800000
+}

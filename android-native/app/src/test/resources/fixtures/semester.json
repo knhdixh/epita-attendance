@@ -1,0 +1,1720 @@
+{
+  "courses": [
+    {
+      "id": 1,
+      "name": "Algorithms & Data Structures",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 2,
+      "name": "Web Development",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 3,
+      "name": "GR1 - Computer Architecture",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 4,
+      "name": "GR2 - Computer Architecture",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 5,
+      "name": "Vacances de la Toussaint",
+      "tracked": 0,
+      "tag": "normal",
+      "attendance": 0
+    },
+    {
+      "id": 6,
+      "name": "Sisu - Academic Orientation",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 0
+    },
+    {
+      "id": 7,
+      "name": "GR10 - French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 8,
+      "name": "GR2 - French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 9,
+      "name": "Optional Workshop",
+      "tracked": 1,
+      "tag": "optional",
+      "attendance": 1
+    }
+  ],
+  "calendars": [
+    {
+      "id": 101,
+      "kind": "ics",
+      "name": "SE1",
+      "attendance": 1
+    },
+    {
+      "id": 102,
+      "kind": "ics",
+      "name": "SE2",
+      "attendance": 1
+    },
+    {
+      "id": 103,
+      "kind": "ics",
+      "name": "SE3",
+      "attendance": 1
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1788764400000,
+      "end_at": 1788771600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 2,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1788849000000,
+      "end_at": 1788854400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 3,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1788856200000,
+      "end_at": 1788861600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 4,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1788940800000,
+      "end_at": 1788948000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 5,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1789041600000,
+      "end_at": 1789052400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 6,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1789117200000,
+      "end_at": 1789120800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 7,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1789135200000,
+      "end_at": 1789142400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 8,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1789142400000,
+      "end_at": 1789149600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 9,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1789369200000,
+      "end_at": 1789376400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 10,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1789453800000,
+      "end_at": 1789459200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 11,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1789461000000,
+      "end_at": 1789466400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 12,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1789545600000,
+      "end_at": 1789552800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 13,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1789646400000,
+      "end_at": 1789657200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 14,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1789722000000,
+      "end_at": 1789725600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 15,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1789740000000,
+      "end_at": 1789747200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 16,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1789747200000,
+      "end_at": 1789754400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 17,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1789974000000,
+      "end_at": 1789981200000,
+      "status": "absent",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 18,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1790058600000,
+      "end_at": 1790064000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 19,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1790065800000,
+      "end_at": 1790071200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 20,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1790150400000,
+      "end_at": 1790157600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 21,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1790251200000,
+      "end_at": 1790262000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 22,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1790326800000,
+      "end_at": 1790330400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 23,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1790344800000,
+      "end_at": 1790352000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 24,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1790352000000,
+      "end_at": 1790359200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 25,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1790578800000,
+      "end_at": 1790586000000,
+      "status": "excused",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 26,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1790663400000,
+      "end_at": 1790668800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 27,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1790670600000,
+      "end_at": 1790676000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 28,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1790755200000,
+      "end_at": 1790762400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 29,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1790856000000,
+      "end_at": 1790866800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 30,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1790931600000,
+      "end_at": 1790935200000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 31,
+      "course_id": 9,
+      "summary": "Career Workshop",
+      "location": "Room 10",
+      "description": "",
+      "start_at": 1790942400000,
+      "end_at": 1790947800000,
+      "status": null,
+      "tag": "optional",
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 32,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1790949600000,
+      "end_at": 1790956800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 33,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1790956800000,
+      "end_at": 1790964000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 34,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1791183600000,
+      "end_at": 1791190800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 35,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1791268200000,
+      "end_at": 1791273600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 36,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1791275400000,
+      "end_at": 1791280800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 37,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1791360000000,
+      "end_at": 1791367200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 38,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1791460800000,
+      "end_at": 1791471600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 39,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1791536400000,
+      "end_at": 1791540000000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 40,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1791554400000,
+      "end_at": 1791561600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 41,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1791561600000,
+      "end_at": 1791568800000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 42,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1791788400000,
+      "end_at": 1791795600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 43,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1791873000000,
+      "end_at": 1791878400000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 44,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1791880200000,
+      "end_at": 1791885600000,
+      "status": "present",
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 45,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1791964800000,
+      "end_at": 1791972000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 46,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1792065600000,
+      "end_at": 1792076400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 47,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1792141200000,
+      "end_at": 1792144800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 48,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1792159200000,
+      "end_at": 1792166400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 49,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1792166400000,
+      "end_at": 1792173600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 50,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1792393200000,
+      "end_at": 1792400400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 51,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1792477800000,
+      "end_at": 1792483200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 52,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1792485000000,
+      "end_at": 1792490400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 53,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1792569600000,
+      "end_at": 1792576800000,
+      "status": "absent",
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 54,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1792670400000,
+      "end_at": 1792681200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 55,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1792746000000,
+      "end_at": 1792749600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 56,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1792764000000,
+      "end_at": 1792771200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 57,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1792771200000,
+      "end_at": 1792778400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 58,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1793602800000,
+      "end_at": 1793610000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 59,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1793687400000,
+      "end_at": 1793692800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 60,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1793694600000,
+      "end_at": 1793700000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 61,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1793779200000,
+      "end_at": 1793786400000,
+      "status": null,
+      "tag": "mandatory",
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 62,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1793880000000,
+      "end_at": 1793890800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 63,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1793955600000,
+      "end_at": 1793959200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 64,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1793973600000,
+      "end_at": 1793980800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 65,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1793980800000,
+      "end_at": 1793988000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 66,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1794207600000,
+      "end_at": 1794214800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 67,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1794292200000,
+      "end_at": 1794297600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 68,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1794299400000,
+      "end_at": 1794304800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 69,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1794384000000,
+      "end_at": 1794391200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 70,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1794484800000,
+      "end_at": 1794495600000,
+      "status": null,
+      "tag": "exam",
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 71,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1794560400000,
+      "end_at": 1794564000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 72,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1794578400000,
+      "end_at": 1794585600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 73,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1794585600000,
+      "end_at": 1794592800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 74,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1794812400000,
+      "end_at": 1794819600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 75,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1794897000000,
+      "end_at": 1794902400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 76,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1794904200000,
+      "end_at": 1794909600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 77,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1794988800000,
+      "end_at": 1794996000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 78,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1795089600000,
+      "end_at": 1795100400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 79,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1795165200000,
+      "end_at": 1795168800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 80,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1795183200000,
+      "end_at": 1795190400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 81,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1795190400000,
+      "end_at": 1795197600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 82,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1795417200000,
+      "end_at": 1795424400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 83,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1795501800000,
+      "end_at": 1795507200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 84,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1795509000000,
+      "end_at": 1795514400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 85,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1795593600000,
+      "end_at": 1795600800000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 86,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1795694400000,
+      "end_at": 1795705200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 87,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1795770000000,
+      "end_at": 1795773600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 88,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1795788000000,
+      "end_at": 1795795200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 89,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1795795200000,
+      "end_at": 1795802400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 90,
+      "course_id": 1,
+      "summary": "Algo Lecture",
+      "location": "Amphi A",
+      "description": "",
+      "start_at": 1796022000000,
+      "end_at": 1796029200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 91,
+      "course_id": 3,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1796106600000,
+      "end_at": 1796112000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 92,
+      "course_id": 4,
+      "summary": "Architecture Lab",
+      "location": "Lab 3",
+      "description": "",
+      "start_at": 1796113800000,
+      "end_at": 1796119200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 93,
+      "course_id": 2,
+      "summary": "Web Dev TP",
+      "location": "Lab 1",
+      "description": "",
+      "start_at": 1796198400000,
+      "end_at": 1796205600000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 94,
+      "course_id": 1,
+      "summary": "Algo Practical",
+      "location": "Lab 2",
+      "description": "",
+      "start_at": 1796299200000,
+      "end_at": 1796310000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 95,
+      "course_id": 6,
+      "summary": "Sisu Orientation",
+      "location": "Online",
+      "description": "",
+      "start_at": 1796374800000,
+      "end_at": 1796378400000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    },
+    {
+      "id": 96,
+      "course_id": 7,
+      "summary": "French Class",
+      "location": "Room 4",
+      "description": "",
+      "start_at": 1796392800000,
+      "end_at": 1796400000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        101
+      ]
+    },
+    {
+      "id": 97,
+      "course_id": 8,
+      "summary": "French Class",
+      "location": "Room 5",
+      "description": "",
+      "start_at": 1796400000000,
+      "end_at": 1796407200000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": [
+        102
+      ]
+    },
+    {
+      "id": 98,
+      "course_id": 5,
+      "summary": "Vacances de la Toussaint",
+      "location": "",
+      "description": "",
+      "start_at": 1792965600000,
+      "end_at": 1793574000000,
+      "status": null,
+      "tag": null,
+      "note": "",
+      "cals": []
+    }
+  ],
+  "homework": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "title": "Algo Assignment 1",
+      "notes": "Graph traversals",
+      "due_date": "2026-10-10",
+      "due_time": "20:00",
+      "tz": "Europe/Paris",
+      "due_at": 1791655200000,
+      "remind_minutes": 60,
+      "done": 0,
+      "kind": null,
+      "effort_minutes": 60
+    },
+    {
+      "id": 2,
+      "course_id": 2,
+      "title": "Web TP 2",
+      "notes": "REST API",
+      "due_date": "2026-10-15",
+      "due_time": "10:00",
+      "tz": "Europe/Paris",
+      "due_at": 1792051200000,
+      "remind_minutes": 120,
+      "done": 0,
+      "kind": null,
+      "effort_minutes": 120
+    },
+    {
+      "id": 3,
+      "course_id": 3,
+      "title": "Architecture Lab Report",
+      "notes": "RISC-V pipeline",
+      "due_date": "2026-10-16",
+      "due_time": "23:59",
+      "tz": "Europe/Paris",
+      "due_at": 1792187940000,
+      "remind_minutes": 60,
+      "done": 0,
+      "kind": null,
+      "effort_minutes": 90
+    },
+    {
+      "id": 4,
+      "course_id": 7,
+      "title": "French Essay",
+      "notes": "Cultural differences",
+      "due_date": "2026-10-19",
+      "due_time": "18:00",
+      "tz": "Europe/Paris",
+      "due_at": 1792425600000,
+      "remind_minutes": 60,
+      "done": 0,
+      "kind": null,
+      "effort_minutes": 60
+    },
+    {
+      "id": 5,
+      "course_id": 1,
+      "title": "Final Project Proposal",
+      "notes": "Team of 3",
+      "due_date": "2026-11-10",
+      "due_time": "23:59",
+      "tz": "Europe/Paris",
+      "due_at": 1794351540000,
+      "remind_minutes": 60,
+      "done": 0,
+      "kind": null,
+      "effort_minutes": 180
+    },
+    {
+      "id": 6,
+      "course_id": 1,
+      "title": "Catch-up: Algo missed lecture",
+      "notes": "Trees and heaps",
+      "due_date": null,
+      "due_time": null,
+      "tz": "Europe/Paris",
+      "due_at": 1792065600000,
+      "remind_minutes": 0,
+      "done": 0,
+      "kind": "catchup",
+      "event_id": 3,
+      "effort_minutes": null
+    },
+    {
+      "id": 7,
+      "course_id": 1,
+      "title": "Algo Quiz 1",
+      "notes": "Complexity",
+      "due_date": "2026-09-15",
+      "due_time": "12:00",
+      "tz": "Europe/Paris",
+      "due_at": 1789466400000,
+      "remind_minutes": 30,
+      "done": 1,
+      "kind": null,
+      "effort_minutes": 30
+    }
+  ],
+  "timePoints": [
+    {
+      "name": "normal_day_paris",
+      "now": 1791964800000,
+      "tz": "Europe/Paris"
+    },
+    {
+      "name": "normal_day_helsinki",
+      "now": 1791961200000,
+      "tz": "Europe/Helsinki"
+    },
+    {
+      "name": "dst_spring_paris_night",
+      "now": 1774744200000,
+      "tz": "Europe/Paris"
+    },
+    {
+      "name": "dst_spring_paris_day",
+      "now": 1774785600000,
+      "tz": "Europe/Paris"
+    },
+    {
+      "name": "dst_spring_helsinki_night",
+      "now": 1774744200000,
+      "tz": "Europe/Helsinki"
+    },
+    {
+      "name": "dst_spring_helsinki_day",
+      "now": 1774785600000,
+      "tz": "Europe/Helsinki"
+    },
+    {
+      "name": "dst_fall_paris_night",
+      "now": 1792888200000,
+      "tz": "Europe/Paris"
+    },
+    {
+      "name": "dst_fall_paris_day",
+      "now": 1792929600000,
+      "tz": "Europe/Paris"
+    },
+    {
+      "name": "dst_fall_helsinki_night",
+      "now": 1792888200000,
+      "tz": "Europe/Helsinki"
+    },
+    {
+      "name": "dst_fall_helsinki_day",
+      "now": 1792929600000,
+      "tz": "Europe/Helsinki"
+    }
+  ]
+}
