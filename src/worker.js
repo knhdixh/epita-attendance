@@ -13,7 +13,7 @@ import { createCatchup, setRecordingUrl } from './catchups.js';
 import { userFromToken, tokenAllows, listTokens, createToken, revokeToken } from './tokens.js';
 import { buildPlan } from '../public/plan.js';
 import { focusSummary } from '../public/focus.js';
-import { FOCUS_COLUMNS, focusSettings, saveFocusSettings, logFocus, listFocus, deleteFocus } from './focus.js';
+import { FOCUS_COLUMNS, focusRow, focusSettings, saveFocusSettings, logFocus, listFocus, deleteFocus } from './focus.js';
 import { isValidTimeZone } from './homework.js';
 import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
@@ -257,7 +257,8 @@ function assetLinks(env) {
   const fingerprints = (env.ANDROID_CERT_SHA256 || '').split(',').map((f) => f.trim().toUpperCase()).filter(Boolean);
   if (!env.ANDROID_PACKAGE || !fingerprints.length) return new Response('Not found', { status: 404 });
   return json([{
-    relation: ['delegate_permission/common.handle_all_urls'],
+    // use_as_origin: the app may open a postMessage channel to the page as this origin (the focus timer bridge).
+    relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.use_as_origin'],
     target: { namespace: 'android_app', package_name: env.ANDROID_PACKAGE, sha256_cert_fingerprints: fingerprints },
   }], { headers: { 'Cache-Control': 'public, max-age=3600' } });
 }
@@ -303,7 +304,7 @@ async function handleApi(request, env, url, user) {
       assistant: env.AI ? await aiUsage(env, user) : null,
       calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
-      focus: { settings: focusSettings(user), sessions: focus.results, since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
+      focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
     });
   }
 
@@ -330,7 +331,7 @@ async function handleApi(request, env, url, user) {
       sessions: evs, homework: hw,
       attendance: { threshold: user.threshold, unit: user.unit },
       // Focus (Pomodoro) time in the days of tz; the sessions themselves are at GET /api/focus.
-      focus: { settings: focusSettings(user), ...focusSummary(focus.results, { now, tz }) },
+      focus: { settings: focusSettings(user), ...focusSummary(focus.results.map(focusRow), { now, tz }) },
     });
   }
 

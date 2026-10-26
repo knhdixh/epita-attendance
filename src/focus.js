@@ -1,13 +1,16 @@
 // Focus (Pomodoro) sessions and timer settings. The timer runs in the browser (public/focus-ui.js); the server
 // records finished focus phases and serves them back for the stats. Recording is idempotent on the timer's run id.
 import { HttpError } from './http.js';
-import { cleanSettings } from '../public/focus.js';
+import { cleanSettings, cleanTags } from '../public/focus.js';
 
-export const FOCUS_COLUMNS = 'id, client_id, homework_id, course_id, label, started_at, ended_at, planned_seconds, focus_seconds, completed';
+export const FOCUS_COLUMNS = 'id, client_id, homework_id, course_id, label, started_at, ended_at, planned_seconds, focus_seconds, completed, tags';
 const MIN = 60000;
 const MAX_FOCUS_S = 4 * 3600;
 const MAX_AGE = 30 * 86400000;   // sessions queued offline are accepted for a month
 const MAX_PER_DAY = 150;         // keeps a runaway client from using up the D1 write allowance
+
+// Rows as the browser and scripts see them: tags as an array.
+export const focusRow = (r) => r && { ...r, tags: (() => { try { return JSON.parse(r.tags || '[]'); } catch { return []; } })() };
 
 export const focusSettings = (user) => {
   try { return cleanSettings(JSON.parse(user.focus_settings || 'null')); } catch { return cleanSettings(null); }
@@ -28,6 +31,8 @@ export async function logFocus(env, user, b, now = Date.now()) {
   if (!(started > now - MAX_AGE && ended >= started && ended <= now + 5 * MIN)) throw new HttpError(400, 'Invalid start or end time.');
   if (!(focus >= 60 && focus <= MAX_FOCUS_S && focus * 1000 <= ended - started + 5000)) throw new HttpError(400, 'Invalid focus time.');
   if (!(planned >= 60 && planned <= MAX_FOCUS_S)) throw new HttpError(400, 'Invalid planned time.');
+  if (b.tags != null && !Array.isArray(b.tags)) throw new HttpError(400, 'tags must be a list.');
+  const tags = cleanTags(b.tags);
 
   // Homework can be deleted while a session waits offline: the session is then kept without it.
   let homeworkId = null, courseId = null, label = typeof b.label === 'string' ? b.label.trim().slice(0, 200) || null : null;
@@ -45,16 +50,17 @@ export async function logFocus(env, user, b, now = Date.now()) {
   if (n >= MAX_PER_DAY) throw new HttpError(429, 'That\'s a lot of focus sessions for one day. Try again tomorrow.');
 
   const row = await env.DB.prepare(`INSERT INTO focus_sessions (user_id, client_id, homework_id, course_id, label, started_at, ended_at,
-      planned_seconds, focus_seconds, completed, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      planned_seconds, focus_seconds, completed, created_at, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (user_id, client_id) DO NOTHING RETURNING ${FOCUS_COLUMNS}`)
-    .bind(user.id, clientId, homeworkId, courseId, label, started, ended, planned, focus, b.completed ? 1 : 0, now).first();
-  return row ?? env.DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND client_id = ?`).bind(user.id, clientId).first();
+    .bind(user.id, clientId, homeworkId, courseId, label, started, ended, planned, focus, b.completed ? 1 : 0, now,
+      tags.length ? JSON.stringify(tags) : null).first();
+  return focusRow(row ?? await env.DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND client_id = ?`).bind(user.id, clientId).first());
 }
 
 export async function listFocus(env, user, since) {
   const r = await env.DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
     .bind(user.id, since).all();
-  return r.results;
+  return r.results.map(focusRow);
 }
 
 export async function deleteFocus(env, user, id) {

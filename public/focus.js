@@ -14,9 +14,23 @@ const MIN = 60000;
 export const PHASES = { focus: 'Focus', short: 'Short break', long: 'Long break' };
 export const DEFAULT_SETTINGS = {
   focus: 25, short: 5, long: 15, longEvery: 4, goal: 8, autoBreaks: true, autoFocus: false, sound: true, notify: true,
+  tasks: [], tags: [],   // your own things to work on ("Thesis: literature review") and tags ("reading")
 };
 const LIMITS = { focus: [1, 180], short: [1, 60], long: [1, 90], longEvery: [2, 12], goal: [1, 24] };
 const FLAGS = ['autoBreaks', 'autoFocus', 'sound', 'notify'];
+export const MAX_TASKS = 30, MAX_TAGS = 20, TAGS_PER_SESSION = 5;
+const TASK_LEN = 80, TAG_LEN = 24;
+
+// Tags are lower case; tasks keep their case. Both are trimmed, and duplicates (ignoring case) dropped.
+export const cleanTag = (t) => (typeof t === 'string' ? t.trim().replace(/^#+/, '').replace(/\s+/g, ' ').toLowerCase().slice(0, TAG_LEN) : '');
+export const cleanTask = (t) => (typeof t === 'string' ? t.trim().replace(/\s+/g, ' ').slice(0, TASK_LEN) : '');
+function uniqueList(list, clean, max) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set(), out = [];
+  for (const x of list.map(clean)) if (x && !seen.has(x.toLowerCase()) && out.length < max) { seen.add(x.toLowerCase()); out.push(x); }
+  return out;
+}
+export const cleanTags = (list, max = TAGS_PER_SESSION) => uniqueList(list, cleanTag, max);
 export const MIN_LOGGED_MS = MIN; // a focus shorter than this isn't recorded
 const STALE_MS = 5 * MIN;          // a phase that ended longer ago than this doesn't start the next one by itself
 
@@ -29,6 +43,8 @@ export function cleanSettings(raw) {
     if (raw[k] !== null && raw[k] !== '' && Number.isInteger(n) && n >= lo && n <= hi) s[k] = n;
   }
   for (const k of FLAGS) if (typeof raw[k] === 'boolean') s[k] = raw[k];
+  s.tasks = uniqueList(raw.tasks, cleanTask, MAX_TASKS);
+  s.tags = uniqueList(raw.tags, cleanTag, MAX_TAGS);
   return s;
 }
 
@@ -67,6 +83,7 @@ function entry(t, now, completed) {
     client_id: t.run, started_at: t.startedAt, ended_at: Math.min(now, t.endsAt),
     planned_seconds: Math.round(length(t) / 1000), focus_seconds: Math.round(focusMs / 1000), completed,
     homework_id: t.target?.homework_id ?? null, course_id: t.target?.course_id ?? null, label: t.target?.label ?? null,
+    tags: cleanTags(t.target?.tags),
   };
 }
 
@@ -133,10 +150,11 @@ export function focusStats(sessions, { now, range = 7 } = {}) {
 
   const from = addDays(today0, -(range - 1));
   const inRange = sessions.filter((s) => s.started_at >= from);
-  const courses = new Map(), homework = new Map(), hours = new Array(24).fill(0);
+  const courses = new Map(), homework = new Map(), tags = new Map(), hours = new Array(24).fill(0);
   for (const s of inRange) {
     const m = s.focus_seconds / 60;
     courses.set(s.course_id ?? null, (courses.get(s.course_id ?? null) || 0) + m);
+    for (const tag of s.tags || []) tags.set(tag, (tags.get(tag) || 0) + m);
     if (s.homework_id != null || s.label) {
       const key = s.homework_id ?? `label:${s.label}`;
       const h = homework.get(key) || { homework_id: s.homework_id ?? null, label: s.label, course_id: s.course_id ?? null, minutes: 0, count: 0 };
@@ -159,6 +177,7 @@ export function focusStats(sessions, { now, range = 7 } = {}) {
       perActiveDay: activeDays ? rangeMinutes / activeDays : 0, peakHour: peak, hours,
       courses: [...courses].map(([course_id, minutes]) => ({ course_id, minutes })).sort((a, b) => b.minutes - a.minutes),
       homework: [...homework.values()].sort((a, b) => b.minutes - a.minutes),
+      tags: [...tags].map(([tag, minutes]) => ({ tag, minutes })).sort((a, b) => b.minutes - a.minutes),
     },
     best, day,
   };
@@ -184,7 +203,11 @@ export function focusSummary(sessions, { now, tz }) {
   const week = new Set(days(7));
   const last7 = sessions.filter((s) => week.has(key(s.started_at)));
   const courses = new Map();
-  for (const s of last7) courses.set(s.course_id ?? null, (courses.get(s.course_id ?? null) || 0) + s.focus_seconds / 60);
+  const tags = new Map();
+  for (const s of last7) {
+    courses.set(s.course_id ?? null, (courses.get(s.course_id ?? null) || 0) + s.focus_seconds / 60);
+    for (const tag of s.tags || []) tags.set(tag, (tags.get(tag) || 0) + s.focus_seconds / 60);
+  }
   const round = (m) => Math.round(m);
   return {
     today: { minutes: round(today.minutes), pomodoros: today.count },
@@ -194,6 +217,7 @@ export function focusSummary(sessions, { now, tz }) {
       pomodoros: last7.filter((s) => s.completed).length,
       byDay: days(7).reverse().map((date) => ({ date, minutes: round(byDay.get(date)?.minutes || 0) })),
       byCourse: [...courses].map(([course_id, m]) => ({ course_id, minutes: round(m) })).sort((a, b) => b.minutes - a.minutes),
+      byTag: [...tags].map(([tag, m]) => ({ tag, minutes: round(m) })).sort((a, b) => b.minutes - a.minutes),
     },
   };
 }

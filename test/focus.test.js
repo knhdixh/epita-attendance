@@ -38,7 +38,7 @@ test('timer: pauses are not counted, and a finished focus is recorded once with 
   const { log, next } = F.finish(t, S, T0 + 35 * MIN + 500, 'run2');
   assert.deepEqual(log, {
     client_id: 'run1', started_at: T0, ended_at: T0 + 35 * MIN, planned_seconds: 1500, focus_seconds: 1500, completed: true,
-    homework_id: 7, course_id: 3, label: 'TP 3',
+    homework_id: 7, course_id: 3, label: 'TP 3', tags: [],
   });
   assert.equal(next.phase, 'short', 'breaks start by themselves by default');
   assert.equal(next.run, 'run2');
@@ -212,7 +212,35 @@ test('assetlinks.json: only once the app\'s key fingerprint is set', async () =>
   assert.equal((await get({ ANDROID_PACKAGE: 'com.knhdixh.attendance80', ANDROID_CERT_SHA256: '' })).status, 404);
   const res = await get({ ANDROID_PACKAGE: 'com.knhdixh.attendance80', ANDROID_CERT_SHA256: 'aa:bb, CC:DD' });
   assert.deepEqual(await res.json(), [{
-    relation: ['delegate_permission/common.handle_all_urls'],
+    relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.use_as_origin'],
     target: { namespace: 'android_app', package_name: 'com.knhdixh.attendance80', sha256_cert_fingerprints: ['AA:BB', 'CC:DD'] },
   }]);
+});
+
+test('tasks and tags: cleaned in settings, recorded with the session, and counted in the stats', async () => {
+  const s = F.cleanSettings({ tasks: ['  Thesis:  reading ', 'thesis: READING', '', 42, 'Gym'], tags: ['#Reading', 'reading', ' deep  work ', 'x'.repeat(40)] });
+  assert.deepEqual(s.tasks, ['Thesis: reading', 'Gym']);
+  assert.deepEqual(s.tags, ['reading', 'deep work', 'x'.repeat(24)]);
+  assert.equal(F.cleanSettings({ tags: Array.from({ length: 30 }, (_, i) => `t${i}`) }).tags.length, F.MAX_TAGS);
+
+  let t = F.start({ ...F.idle(), target: { label: 'Thesis: reading', tags: ['Reading', 'reading', 'deep work'] } }, S, T0, 'run-tags');
+  const { log } = F.finish(t, S, t.endsAt, 'next');
+  assert.deepEqual(log.tags, ['reading', 'deep work']);
+  assert.equal(log.homework_id, null);
+
+  const st = F.focusStats([
+    { started_at: T0, focus_seconds: 1500, completed: 1, label: 'Thesis: reading', tags: ['reading', 'deep work'] },
+    { started_at: T0 + 3600000, focus_seconds: 600, completed: 0, label: 'Gym', tags: ['reading'] },
+  ], { now: T0 + 4 * 3600000 });
+  assert.deepEqual(st.range.tags, [{ tag: 'reading', minutes: 35 }, { tag: 'deep work', minutes: 25 }]);
+  assert.deepEqual(st.range.homework.map((h) => h.label), ['Thesis: reading', 'Gym']);
+
+  const { env, user } = setup();
+  const row = await logFocus(env, user, entry({ client_id: 'tags-run-12345', homework_id: null, label: 'Thesis: reading', tags: ['#Reading', 'a', 'b', 'c', 'd', 'e'] }));
+  assert.deepEqual(row.tags, ['reading', 'a', 'b', 'c', 'd'], 'cleaned, five at most');
+  assert.deepEqual((await listFocus(env, user, 0))[0].tags, ['reading', 'a', 'b', 'c', 'd']);
+  await assert.rejects(logFocus(env, user, entry({ client_id: 'tags-run-67890', tags: 'reading' })), { status: 400 });
+  const saved = await saveFocusSettings(env, user, { tasks: ['Thesis'], tags: ['Reading'] });
+  assert.deepEqual([saved.tasks, saved.tags, saved.focus], [['Thesis'], ['reading'], 25]);
+  assert.deepEqual((await saveFocusSettings(env, { ...user, focus_settings: JSON.stringify(saved) }, { goal: 6 })).tasks, ['Thesis'], 'other settings keep the lists');
 });

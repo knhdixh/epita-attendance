@@ -252,6 +252,7 @@ function render() {
   }
   first = false;
   fx.paint();
+  fx.afterRender();
 }
 
 let lastView = null;
@@ -1113,7 +1114,7 @@ document.addEventListener('keydown', (e) => {
     return palette.isOpen() ? palette.close() : palette.open();
   }
   if (palette.isOpen()) return;
-  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e)) return;
+  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e) || fx.onKeydown(e)) return;
   if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
   if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
   if (!signedIn || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;

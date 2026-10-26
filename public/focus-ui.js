@@ -4,6 +4,7 @@
 // the sidebar on every page; the tab title counts down too.
 import { state, esc, api, toast, render, courseById, fmtTime } from './app.js';
 import * as F from './focus.js';
+import { buildPlan } from './plan.js';
 
 const $app = document.getElementById('app');
 const TIMER_KEY = 'a80-focus';
@@ -47,7 +48,12 @@ function loadTimer() {
   return ok ? t : F.idle();
 }
 let timer = loadTimer();
-const save = (t) => { timer = t; write(TIMER_KEY, t); };
+// Every change is stamped, so the page and the Android app can tell whose timer is newer (see the bridge below).
+const save = (t, { stamp = true } = {}) => {
+  timer = stamp ? { ...t, updatedAt: Date.now() } : t;
+  write(TIMER_KEY, timer);
+  if (stamp) toApp();
+};
 const newRun = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`);
 
 export const running = () => timer.phase !== 'idle';
@@ -154,6 +160,7 @@ function askNotify() {
 // A system notification while the page is hidden, a toast otherwise. Through the service worker when there is
 // one (Android only shows notifications that way); clicking it opens the Focus page (see public/sw.js).
 async function announce(title, body) {
+  if (app.port) { if (!document.hidden) toast(`${title} ${body}`); return; } // the app rings and notifies
   if (document.hidden && settings().notify && canNotify() && Notification.permission === 'granted') {
     const opts = { body, tag: 'a80-focus', renotify: true, icon: '/img/icon-192.png', badge: '/img/icon-192.png' };
     try {
@@ -212,7 +219,11 @@ export function stop() {
   if (r.log) toast(`Stopped. ${dur(r.log.focus_seconds / 60)} recorded.`);
 }
 
-const targetOf = (h) => ({ homework_id: h.id, course_id: h.course_id ?? null, label: h.title });
+// What a focus is for. Tags stay with the timer when the target changes.
+const tagsNow = () => timer.target?.tags || [];
+const targetOf = (h) => ({ homework_id: h.id, course_id: h.course_id ?? null, label: h.title, tags: tagsNow() });
+const taskTarget = (label) => ({ homework_id: null, course_id: null, label, tags: tagsNow() });
+const isTask = (t) => Boolean(t?.label && t.homework_id == null);
 
 // "Focus on this" from a homework row, Today or the palette. A focus already running on something else is
 // stopped (and recorded) first.
@@ -223,19 +234,97 @@ export function focusOn(hwId) {
     if (timer.pausedAt) toggle();
     return toast(`Already focusing on “${h.title}”.`);
   }
+  startOn(targetOf(h));
+}
+
+// The same for one of your own tasks (the palette).
+export function focusOnTask(label) {
+  if (timer.phase === 'focus' && isTask(timer.target) && timer.target.label === label) {
+    if (timer.pausedAt) toggle();
+    return toast(`Already focusing on “${label}”.`);
+  }
+  startOn(taskTarget(label));
+}
+
+function startOn(target) {
   if (timer.phase === 'focus') commit(F.stop(timer, Date.now()));
-  save({ ...F.idle(timer.done, 'focus'), target: targetOf(h) });
+  save({ ...F.idle(timer.done, 'focus'), target });
   begin();
-  toast(`Focusing on “${h.title}” for ${settings().focus} min.`);
+  toast(`Focusing on “${target.label}” for ${settings().focus} min.`);
 }
 
 function setTarget(value) {
-  let target = null;
+  if (value === 'new') return openInline('task');
+  if (value === 'current') return;
+  let target = tagsNow().length ? { homework_id: null, course_id: null, label: null, tags: tagsNow() } : null;
   const [kind, id] = value.split(':');
   if (kind === 'hw') { const h = state.data.homework.find((x) => x.id === Number(id)); if (h) target = targetOf(h); }
-  if (kind === 'course') { const c = courseById()[Number(id)]; if (c) target = { homework_id: null, course_id: c.id, label: null }; }
+  if (kind === 'course') { const c = courseById()[Number(id)]; if (c) target = { homework_id: null, course_id: c.id, label: null, tags: tagsNow() }; }
+  if (kind === 'task') { const label = settings().tasks[Number(id)]; if (label) target = taskTarget(label); }
   save({ ...timer, target });
   changed();
+}
+
+// Tags apply to the whole focus they're set on, even when changed halfway through.
+function toggleTag(tag) {
+  const tags = tagsNow();
+  let next;
+  if (tags.includes(tag)) next = tags.filter((x) => x !== tag);
+  else if (tags.length >= F.TAGS_PER_SESSION) return toast(`Up to ${F.TAGS_PER_SESSION} tags on one focus.`, true);
+  else next = [...tags, tag];
+  save({ ...timer, target: { homework_id: null, course_id: null, label: null, ...timer.target, tags: next } });
+  changed();
+}
+
+// The small "new task" and "new tag" forms in the timer card.
+function openInline(kind) {
+  state.fxInline = kind;
+  if (state.tab !== 'focus') return;
+  changed();
+  document.querySelector(`#fx-${kind}-form input`)?.focus();
+}
+function closeInline() {
+  state.fxInline = null;
+  document.activeElement?.blur();
+  changed();
+}
+
+// Tasks and tags are part of the timer settings: saved at once, kept on the account.
+async function saveSettings(patch) {
+  const before = settings();
+  state.data.focus.settings = F.cleanSettings({ ...before, ...patch });
+  try {
+    state.data.focus.settings = (await api('/api/focus/settings', { method: 'PUT', body: patch })).settings;
+    toApp();
+  } catch (err) {
+    state.data.focus.settings = before;
+    toast(err.message, true);
+  }
+  changed();
+}
+
+function addTask(raw) {
+  const label = F.cleanTask(raw);
+  if (!label) return;
+  const tasks = settings().tasks;
+  if (!tasks.some((x) => x.toLowerCase() === label.toLowerCase()) && tasks.length >= F.MAX_TASKS) {
+    return toast(`You can keep ${F.MAX_TASKS} tasks. Remove some in Timer settings.`, true);
+  }
+  state.fxInline = null;
+  save({ ...timer, target: taskTarget(tasks.find((x) => x.toLowerCase() === label.toLowerCase()) ?? label) });
+  saveSettings({ tasks: [label, ...tasks.filter((x) => x.toLowerCase() !== label.toLowerCase())] });
+}
+
+function addTag(raw) {
+  const tag = F.cleanTag(raw);
+  if (!tag) return;
+  const tags = settings().tags;
+  if (!tags.includes(tag) && tags.length >= F.MAX_TAGS) return toast(`You can keep ${F.MAX_TAGS} tags. Remove some in Timer settings.`, true);
+  state.fxInline = null;
+  if (!tagsNow().includes(tag) && tagsNow().length < F.TAGS_PER_SESSION) {
+    save({ ...timer, target: { homework_id: null, course_id: null, label: null, ...timer.target, tags: [...tagsNow(), tag] } });
+  }
+  saveSettings({ tags: tags.includes(tag) ? tags : [...tags, tag] });
 }
 
 // ---------------------------------------------------------------- ticking
@@ -281,6 +370,9 @@ function tick() {
 }
 
 function phaseEnded(now) {
+  // In the Android app, the app ends the phase (on an exact alarm) and sends the next timer; the page only steps in
+  // if that hasn't arrived a few seconds later.
+  if (app.port && now - timer.endsAt < APP_GRACE_MS) return;
   // Another tab may already have moved on.
   const stored = loadTimer();
   if (stored.run !== timer.run || stored.phase !== timer.phase) { timer = stored; return changed(); }
@@ -291,12 +383,12 @@ function phaseEnded(now) {
   const nextLen = next.phase === 'idle' ? s[next.next] : s[next.phase];
   if (ended === 'focus') {
     if (r.log && target?.homework_id) state.fxLast = { homework_id: target.homework_id, at: now };
-    chime(true);
+    if (!app.port) chime(true);
     const brk = (next.phase === 'idle' ? next.next : next.phase) === 'long' ? 'long' : 'short';
     announce(`Focus done${target?.label ? `: ${target.label}` : ''}.`,
       next.phase === 'idle' ? `Time for a ${nextLen}-minute ${brk} break.` : `${nextLen}-minute ${brk} break started.`);
   } else {
-    chime(false);
+    if (!app.port) chime(false);
     announce('Break over.', next.phase === 'idle' ? 'Press F when you’re ready to focus.' : `Focusing for ${nextLen} minutes.`);
   }
 }
@@ -360,6 +452,68 @@ window.addEventListener('online', () => flush());
 // The browser only allows sound after a gesture: after a reload, the first click or key unlocks it.
 for (const ev of ['pointerdown', 'keydown']) document.addEventListener(ev, () => { if (running()) unlockAudio(); }, { capture: true, passive: true });
 
+// ---------------------------------------------------------------- Android app bridge
+// In the Android app (a Trusted Web Activity, android/), the app opens a message channel to this page over Chrome's
+// postMessage. The page sends its timer and settings (the app shows the lock-screen countdown, rings at the end
+// on an exact alarm, and runs the tile and widget) and a plan snapshot for the widget. The app sends timer changes
+// made from the notification, tile or widget, and focus sessions it finished, which the page records like its own
+// (the server ignores duplicates) and acknowledges. Messages are JSON strings; see android/.../Bridge.java.
+
+const APP_GRACE_MS = 4000;
+const app = { port: null, plan: '' };
+
+function toApp(extra) {
+  if (!app.port) return;
+  try { app.port.postMessage(JSON.stringify({ type: 'timer', timer, settings: settings(), ...extra })); } catch { app.port = null; }
+}
+
+function fromApp(raw) {
+  let m;
+  try { m = JSON.parse(raw); } catch { return; }
+  if (m.timer && (m.timer.updatedAt || 0) > (timer.updatedAt || 0)) {
+    const t = m.timer;
+    const ok = t.phase === 'idle' ? t.next in F.PHASES : t.phase in F.PHASES && Number.isFinite(t.endsAt);
+    if (ok) { save(t, { stamp: false }); changed(); }
+  } else if (m.type === 'hello') toApp();
+  if (Array.isArray(m.logs) && m.logs.length) {
+    for (const entry of m.logs) if (entry?.client_id) record(entry);
+    app.port?.postMessage(JSON.stringify({ type: 'logs-ack', ids: m.logs.map((x) => x?.client_id) }));
+    if (state.tab === 'focus' && safeToRender()) render();
+  }
+  if (m.type === 'hello') sendPlan(true);
+}
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || typeof e.data !== 'string') return;
+  if (e.ports?.[0] && e.ports[0] !== app.port) {
+    app.port = e.ports[0];
+    app.port.onmessage = (m) => fromApp(m.data);
+  }
+  if (app.port) fromApp(e.data);
+});
+
+// What the widget shows: the next classes (it moves on by itself as they end) and the top of "Do next".
+function sendPlan(force = false) {
+  if (!app.port || !state.data) return;
+  const { courses, events, homework } = state.data;
+  const now = Date.now();
+  const tracked = new Set(courses.filter((c) => c.tracked).map((c) => c.id));
+  const classes = events.filter((e) => tracked.has(e.course_id) && e.end_at > now && e.start_at < now + 8 * 86400000 && e.status !== 'absent')
+    .slice(0, 24).map((e) => ({ title: e.summary, start: e.start_at, end: e.end_at, where: e.location || '' }));
+  const todo = buildPlan({ courses, events, homework, now }).todo.slice(0, 3).map((h) => ({ title: h.title, due: h.due_at }));
+  const msg = JSON.stringify({ type: 'plan', classes, todo });
+  if (!force && msg === app.plan) return;
+  app.plan = msg;
+  try { app.port.postMessage(msg); } catch { app.port = null; }
+}
+
+let planTimer;
+export function afterRender() {
+  if (!app.port) return;
+  clearTimeout(planTimer);
+  planTimer = setTimeout(sendPlan, 1500);
+}
+
 // ---------------------------------------------------------------- views
 
 const trackedIds = () => new Set(state.data.courses.filter((c) => c.tracked).map((c) => c.id));
@@ -380,9 +534,14 @@ function targetOptions() {
   }
   const byId = courseById();
   const courses = state.data.courses.filter((c) => c.tracked).sort((a, b) => a.name.localeCompare(b.name));
-  const sel = t?.homework_id ? `hw:${t.homework_id}` : t?.course_id ? `course:${t.course_id}` : '';
+  const tasks = settings().tasks;
+  const taskIndex = isTask(t) ? tasks.indexOf(t.label) : -1;
+  const sel = t?.homework_id ? `hw:${t.homework_id}` : taskIndex >= 0 ? `task:${taskIndex}` : isTask(t) ? 'current'
+    : t?.course_id ? `course:${t.course_id}` : '';
   const opt = (v, label) => `<option value="${v}" ${v === sel ? 'selected' : ''}>${esc(label)}</option>`;
   return `${opt('', 'Nothing in particular')}
+    ${sel === 'current' ? opt('current', t.label) : ''}
+    <optgroup label="My tasks">${tasks.map((x, i) => opt(`task:${i}`, x)).join('')}${opt('new', '+ New task…')}</optgroup>
     ${open.length ? `<optgroup label="Homework and catch-ups">${open.map((h) => opt(`hw:${h.id}`, `${h.title}${byId[h.course_id] ? ` · ${byId[h.course_id].name}` : ''}`)).join('')}</optgroup>` : ''}
     ${courses.length ? `<optgroup label="Courses">${courses.map((c) => opt(`course:${c.id}`, c.name)).join('')}</optgroup>` : ''}`;
 }
@@ -420,9 +579,16 @@ function timerCard(now) {
       <div class="fx-cycle" title="${doneInSet} of ${s.longEvery} focus sessions before a long break" aria-label="${doneInSet} of ${s.longEvery} before a long break">
         ${Array.from({ length: s.longEvery }, (_, i) => `<i class="${i < doneInSet ? 'on' : ''}"></i>`).join('')}
       </div>
+      ${state.fxInline === 'task' ? `
+      <form class="fx-inline" id="fx-task-form" autocomplete="off">
+        <input class="field" name="value" maxlength="80" required placeholder="New task, e.g. Thesis: literature review" aria-label="New task">
+        <button class="btn btn-primary btn-small" type="submit">Add</button>
+        <button class="btn btn-small" type="button" data-fx-cancel>Cancel</button>
+      </form>` : `
       <label class="fx-target"><span>Working on</span>
         <div class="select"><select id="fx-target" aria-label="What this focus is for">${targetOptions()}</select></div>
-      </label>
+      </label>`}
+      ${tagRow()}
       <div class="fx-actions">
         <button class="btn btn-primary btn-large" data-fx="toggle"><svg class="ic sm" aria-hidden="true"><use href="#${icon}"/></svg>${main}<kbd>F</kbd></button>
         ${on || phase !== 'focus' ? `<button class="btn btn-large" data-fx="skip" title="${phase === 'focus' ? 'End this focus now and take the break' : 'Skip the break'} (S)">${phase === 'focus' ? 'Take a break' : 'Skip break'}<kbd>S</kbd></button>` : ''}
@@ -431,6 +597,20 @@ function timerCard(now) {
       ${note}
       ${lastHw ? `<p class="fx-done">Finished “${esc(lastHw.title)}”? <button class="btn btn-small" data-fx-done="${lastHw.id}">Mark done</button></p>` : ''}
     </section>`;
+}
+
+function tagRow() {
+  const on = new Set(tagsNow());
+  const all = [...new Set([...settings().tags, ...on])];
+  return `
+      <div class="fx-tags" role="group" aria-label="Tags for this focus">
+        ${all.map((tag) => `<button class="tag-chip" data-fx-tag="${esc(tag)}" aria-pressed="${on.has(tag)}">#${esc(tag)}</button>`).join('')}
+        ${state.fxInline === 'tag' ? `
+        <form class="fx-inline small" id="fx-tag-form" autocomplete="off">
+          <input class="field" name="value" maxlength="24" required placeholder="new tag" aria-label="New tag">
+          <button class="btn btn-small" type="submit">Add</button>
+        </form>` : `<button class="tag-chip add" data-fx-newtag title="Add a tag (T)">+ Tag</button>`}
+      </div>`;
 }
 
 const tile = (n, l, extra = '') => `<div class="stat"><span class="n">${n}</span><span class="l">${l}</span>${extra}</div>`;
@@ -494,6 +674,8 @@ function breakdown(st) {
   const r = st.range;
   const top = Math.max(1, ...r.courses.map((c) => c.minutes));
   const open = new Set(state.data.homework.filter((h) => !h.done).map((h) => h.id));
+  const tasks = settings().tasks;
+  const again = (attr) => `<button class="btn btn-borderless btn-small fx-again" ${attr} title="Focus on it again" aria-label="Focus on it again"><svg class="ic sm" aria-hidden="true"><use href="#i-play"/></svg></button>`;
   const bars = (rows) => rows.map((row) => `
     <div class="fx-row">
       <span class="fx-name">${row.name}</span>
@@ -507,11 +689,14 @@ function breakdown(st) {
       <div class="fx-rows">${bars(r.courses.slice(0, 8).map((c) => ({
         name: c.course_id != null && byId[c.course_id] ? esc(byId[c.course_id].name) : '<span class="muted">No course</span>', minutes: c.minutes, top,
       })))}</div>` : ''}
-    ${r.homework.length ? `<h4 class="fx-sub">By homework</h4>
+    ${r.tags.length ? `<h4 class="fx-sub">By tag</h4>
+      <div class="fx-rows">${bars(r.tags.slice(0, 8).map((x) => ({ name: `#${esc(x.tag)}`, minutes: x.minutes, top: r.tags[0].minutes })))}</div>` : ''}
+    ${r.homework.length ? `<h4 class="fx-sub">By task</h4>
       <div class="fx-rows">${bars(r.homework.slice(0, 6).map((h) => ({
         name: `${esc(h.label || 'Untitled')}${h.count ? ` <span class="muted small">${plural(h.count, 'pomodoro')}</span>` : ''}`,
         minutes: h.minutes, top: r.homework[0].minutes,
-        action: h.homework_id && open.has(h.homework_id) ? `<button class="btn btn-borderless btn-small fx-again" data-hw-focus-id="${h.homework_id}" title="Focus on it again" aria-label="Focus on it again"><svg class="ic sm" aria-hidden="true"><use href="#i-play"/></svg></button>` : '<span></span>',
+        action: h.homework_id && open.has(h.homework_id) ? again(`data-hw-focus-id="${h.homework_id}"`)
+          : !h.homework_id && tasks.includes(h.label) ? again(`data-fx-task-again="${esc(h.label)}"`) : '<span></span>',
       })))}</div>` : ''}`;
 }
 
@@ -523,7 +708,8 @@ function recent() {
     <div class="fx-log${x.completed ? '' : ' partial'}">
       <span class="when">${esc(dayLabel(x.started_at))}<span>${fmtTime(x.started_at)}–${fmtTime(x.ended_at)}</span></span>
       <span class="what">${esc(x.label || (x.course_id != null && byId[x.course_id]?.name) || 'Focus')}
-        ${x.label && byId[x.course_id] ? `<span class="muted small"> · ${esc(byId[x.course_id].name)}</span>` : ''}</span>
+        ${x.label && byId[x.course_id] ? `<span class="muted small"> · ${esc(byId[x.course_id].name)}</span>` : ''}
+        ${(x.tags || []).map((tag) => `<span class="fx-tag">#${esc(tag)}</span>`).join('')}</span>
       <span class="fx-val">${dur(x.focus_seconds / 60)}${x.completed ? '' : '<span class="chip">stopped early</span>'}${x.id ? '' : '<span class="chip">saving…</span>'}</span>
       ${x.id ? `<button class="btn btn-borderless btn-small" data-fx-delete="${x.id}" title="Delete this session" aria-label="Delete this session"><svg class="ic sm" aria-hidden="true"><use href="#i-trash"/></svg></button>` : '<span></span>'}
     </div>`).join('')}</div>`;
@@ -555,8 +741,16 @@ function settingsForm() {
         <button class="btn btn-primary" type="submit">Save</button>
       </form>
       <p class="hint">Changes apply from the next phase. Settings follow your account on every device.</p>
+      <h4 class="fx-sub">Your tasks</h4>
+      ${listEditor(s.tasks, 'task', 'No tasks yet. Pick “+ New task…” under Working on, or press N.')}
+      <h4 class="fx-sub">Tags</h4>
+      ${listEditor(s.tags.map((t) => `#${t}`), 'tag', 'No tags yet. Press “+ Tag” on the timer, or T.')}
     </details>`;
 }
+
+const listEditor = (items, kind, empty) => (items.length ? `<div class="fx-chips">${items.map((x, i) => `
+  <span class="tag-chip static">${esc(x)}<button type="button" data-fx-rm-${kind}="${i}" title="Remove" aria-label="Remove ${esc(x)}">×</button></span>`).join('')}</div>`
+  : `<p class="hint">${empty}</p>`);
 
 export function subtitle() {
   const st = F.focusStats(sessions(), { now: Date.now() });
@@ -638,11 +832,13 @@ export function paletteItems() {
   for (const h of state.data.homework.filter((x) => !x.done).slice(0, 12)) {
     add(`hw:${h.id}`, `Focus on: ${h.title}`, 'i-focus', () => focusOn(h.id), { recentId: '', sub: courseById()[h.course_id]?.name });
   }
+  for (const label of settings().tasks.slice(0, 12)) add(`task:${label}`, `Focus on: ${label}`, 'i-focus', () => focusOnTask(label), { recentId: '', sub: 'your task' });
+  add('new-task', 'New focus task', 'i-plus', () => { if (state.tab !== 'focus') document.querySelector('[data-tab="focus"]')?.click(); openInline('task'); }, { keys: ['N'] });
   return items;
 }
 
 export const SHORTCUTS = [[['F'], 'Start, pause or resume the focus timer'], [['S'], 'Focus page: take a break, or skip it'], [['X'], 'Focus page: stop the timer'],
-  [['Space'], 'Focus page: start or pause']];
+  [['Space'], 'Focus page: start or pause'], [['N'], 'Focus page: new task'], [['T'], 'Focus page: new tag']];
 
 // Keys on the Focus page (single keys, never while typing). Returns true when handled.
 export function onPageKey(e) {
@@ -650,7 +846,17 @@ export function onPageKey(e) {
   if (k === ' ' && !e.target.closest('button, a, summary, label')) { e.preventDefault(); if (!e.repeat) toggle(); return true; }
   if (k === 's') { e.preventDefault(); skip(); return true; }
   if (k === 'x') { e.preventDefault(); stop(); return true; }
+  if (k === 'n') { e.preventDefault(); openInline('task'); return true; }
+  if (k === 't') { e.preventDefault(); openInline('tag'); return true; }
   return false;
+}
+
+// Esc closes the new task / new tag form.
+export function onKeydown(e) {
+  if (e.key !== 'Escape' || !e.target.closest?.('#fx-task-form, #fx-tag-form')) return false;
+  e.preventDefault();
+  closeInline();
+  return true;
 }
 
 // ---------------------------------------------------------------- events
@@ -663,6 +869,16 @@ export function onClick(e) {
   if (hwFocus) { focusOn(Number(hwFocus.closest('[data-hw]').dataset.hw)); return true; }
   const again = t.closest('[data-hw-focus-id]');
   if (again) { focusOn(Number(again.dataset.hwFocusId)); return true; }
+  const tag = t.closest('[data-fx-tag]');
+  if (tag) { toggleTag(tag.dataset.fxTag); return true; }
+  if (t.closest('[data-fx-newtag]')) { openInline('tag'); return true; }
+  if (t.closest('[data-fx-cancel]')) { closeInline(); return true; }
+  const taskAgain = t.closest('[data-fx-task-again]');
+  if (taskAgain) { focusOnTask(taskAgain.dataset.fxTaskAgain); return true; }
+  const rmTask = t.closest('[data-fx-rm-task]');
+  if (rmTask) { saveSettings({ tasks: settings().tasks.filter((_, i) => i !== Number(rmTask.dataset.fxRmTask)) }); return true; }
+  const rmTag = t.closest('[data-fx-rm-tag]');
+  if (rmTag) { saveSettings({ tags: settings().tags.filter((_, i) => i !== Number(rmTag.dataset.fxRmTag)) }); return true; }
   const range = t.closest('[data-fx-range]');
   if (range) { state.fxRange = range.dataset.fxRange; render(); return true; }
   if (t.closest('[data-fx-notify]')) {
@@ -703,6 +919,13 @@ export function onChange(e) {
 }
 
 export function onSubmit(e) {
+  if (e.target.id === 'fx-task-form' || e.target.id === 'fx-tag-form') {
+    e.preventDefault();
+    const value = new FormData(e.target).get('value');
+    document.activeElement?.blur();
+    (e.target.id === 'fx-task-form' ? addTask : addTag)(value);
+    return true;
+  }
   if (e.target.id !== 'fx-settings-form') return false;
   e.preventDefault();
   const fd = new FormData(e.target);
@@ -712,6 +935,7 @@ export function onSubmit(e) {
   btn.disabled = true;
   api('/api/focus/settings', { method: 'PUT', body }).then(({ settings: saved }) => {
     state.data.focus.settings = saved;
+    toApp();
     if (saved.notify) askNotify();
     document.activeElement?.blur();
     render();
