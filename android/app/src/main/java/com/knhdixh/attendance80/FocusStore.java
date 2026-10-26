@@ -71,7 +71,7 @@ final class FocusStore {
         return false;
     }
 
-        JSONArray logs() {
+    JSONArray logs() {
         try { return new JSONArray(prefs.getString("logs", "[]")); } catch (JSONException e) { return new JSONArray(); }
     }
 

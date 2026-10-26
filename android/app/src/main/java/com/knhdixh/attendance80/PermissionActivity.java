@@ -9,8 +9,9 @@ import android.os.Build;
 import android.os.Bundle;
 
 /**
- * Asks for the notification permission (Android 13+) the first time a focus starts, so the lock-screen countdown
- * can show. A see-through activity that closes once the system dialog is answered; asked at most once.
+ * Asks for the notification permission (Android 13+) the first time a focus starts from the quick-focus sheet, so
+ * the lock-screen countdown can show (from the page, Chrome asks on the app's behalf). A see-through activity that
+ * closes once the system dialog is answered; asked at most once. Only start it from a visible activity.
  */
 public class PermissionActivity extends Activity {
     private static final String ASKED = "notifications_asked";

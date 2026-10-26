@@ -60,8 +60,8 @@ android {
         applicationId "com.knhdixh.attendance80"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 3
-        versionName "1.2.0"
+        versionCode 4
+        versionName "1.2.1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name

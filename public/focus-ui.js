@@ -495,7 +495,7 @@ function fromApp(raw) {
     const t = m.timer;
     const ok = t.phase === 'idle' ? t.next in F.PHASES : t.phase in F.PHASES && Number.isFinite(t.endsAt);
     if (ok) { save(t, { stamp: false }); changed(); }
-  } else if (m.type === 'hello') toApp();
+  }
   if (Array.isArray(m.logs) && m.logs.length) {
     for (const entry of m.logs) if (entry?.client_id) record(entry);
     app.port?.postMessage(JSON.stringify({ type: 'logs-ack', ids: m.logs.map((x) => x?.client_id) }));
@@ -504,7 +504,8 @@ function fromApp(raw) {
   // Tasks added in the app's quick-focus sheet: kept on the account like ones added here.
   const added = (m.addTasks || []).map(F.cleanTask).filter((x) => x && !settings().tasks.some((y) => y.toLowerCase() === x.toLowerCase()));
   if (added.length && state.data) saveSettings({ tasks: [...added, ...settings().tasks].slice(0, F.MAX_TASKS) });
-  if (m.type === 'hello') sendPlan(true);
+  // On connecting, the app always gets the settings (lengths, tasks, tags), even when it had the newer timer.
+  if (m.type === 'hello') { toApp(); sendPlan(true); }
 }
 
 window.addEventListener('message', (e) => {

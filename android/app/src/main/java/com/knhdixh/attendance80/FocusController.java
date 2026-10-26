@@ -38,11 +38,9 @@ final class FocusController {
         FocusStore store = new FocusStore(c);
         store.saveSettings(settings);
         FocusTimer t = FocusTimer.fromJson(timer);
-        if (t.updatedAt >= store.timer().updatedAt) {
-            boolean started = t.running() && !store.timer().running();
-            apply(c, t, null, true);
-            if (started) PermissionActivity.askOnce(c);
-        }
+        // No permission prompt from here: Android blocks activities started from the background, and the page's own
+        // notification request already reaches the app (Chrome delegates it).
+        if (t.updatedAt >= store.timer().updatedAt) apply(c, t, null, true);
     }
 
     static void toggle(Context c) {
