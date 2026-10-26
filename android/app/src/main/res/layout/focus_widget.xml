@@ -131,7 +131,7 @@
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:text="Start"
-            android:textColor="#FFFFFFFF"
+            android:textColor="@color/widget_on_accent"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>

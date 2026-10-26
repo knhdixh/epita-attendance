@@ -1,0 +1,7 @@
+<!-- "80", drawn in strokes on the 108dp adaptive-icon grid (inside the 66dp safe zone). Also the monochrome
+     layer, which Android 13+ tints with the wallpaper colours (themed icons). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="5.5"
+        android:pathData="M32.5,46a7.5,7.5 0,1 0,15 0a7.5,7.5 0,1 0,-15 0M31,61.5a9,9 0,1 0,18 0a9,9 0,1 0,-18 0M59.25,54.5a9.25,15.5 0,1 0,18.5 0a9.25,15.5 0,1 0,-18.5 0"/>
+</vector>

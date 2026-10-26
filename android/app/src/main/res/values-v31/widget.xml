@@ -1,0 +1,10 @@
+<!-- Android 12+: the widget takes the wallpaper colours (Material You). -->
+<resources>
+    <color name="widget_bg">@android:color/system_neutral1_50</color>
+    <color name="widget_text">@android:color/system_neutral1_900</color>
+    <color name="widget_muted">@android:color/system_neutral2_700</color>
+    <color name="widget_on_accent">@android:color/system_accent1_0</color>
+    <color name="widget_accent">@android:color/system_accent1_600</color>
+    <color name="widget_soft">@android:color/system_accent1_100</color>
+    <color name="widget_break">@android:color/system_accent3_600</color>
+</resources>

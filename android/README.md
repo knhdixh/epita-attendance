@@ -1,28 +1,36 @@
 # Android app
 
-A Trusted Web Activity: a small Android app that opens epita.knhdixh.com in Chrome, full screen, with its own
-icon. Passkeys, Google sign-in, notifications and the Focus timer work as on the website, and every deploy
-updates the app; a new APK is only needed when `twa-manifest.json` changes. Built with
-[Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap).
+A Trusted Web Activity (the site in Chrome, full screen, with its own icon) plus native pieces for the focus
+timer:
 
-Needs JDK 17 (Bubblewrap downloads the Android SDK the first time). The production site must already serve
-`/manifest.webmanifest` and the icons.
+- **Lock-screen countdown**: an ongoing notification that counts down by itself, with Pause, Skip and Stop. The end
+  of each phase is an exact alarm, so it rings on time even if Chrome or the page is asleep.
+- **Home-screen widget**: the class you're in or the next one, the top of "Do next", and the timer with Start/Pause.
+- **Quick-settings tile**: start, pause or resume the timer.
+- **Themed icon**: the launcher icon has a monochrome layer, so Android 13+ tints it with your wallpaper colours;
+  on Android 12+ the widget uses them too.
+
+The page and the app share the timer over Chrome's postMessage (`Bridge.java`, and the bridge section of
+`public/focus-ui.js`): the newer timer wins, sessions the app finishes are recorded by the page, and the page sends
+the widget a plan snapshot. The site must list `use_as_origin` for the app in `/.well-known/assetlinks.json`
+(the Worker does, from `ANDROID_CERT_SHA256`).
+
+The project started from [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap) but is maintained by hand
+now: **don't run `bubblewrap update`**, it would overwrite `app/src`. `twa-manifest.json` is kept for reference.
+
+## Build
+
+Needs JDK 17 and the Android SDK (build-tools 36.1.0, platform 36), e.g. in `~/.bubblewrap/android_sdk`.
 
 ```bash
 cd android
-# Once: the signing key. Keep android.keystore and its passwords safe: updates must be signed with the same key.
-keytool -genkeypair -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000
-npx @bubblewrap/cli update --skipVersionUpgrade   # generates the Android project from twa-manifest.json
-npx @bubblewrap/cli build                         # app-release-signed.apk (sideload) and app-release-bundle.aab (Play)
+echo "sdk.dir=$HOME/.bubblewrap/android_sdk" > local.properties
+# keystore.properties (never commit it): storeFile=android.keystore, storePassword, keyAlias=android, keyPassword
+./build.sh            # attendance80.apk, for epita.knhdixh.com
+./build.sh staging    # attendance80-staging.apk, for epita-staging.knhdixh.com (same package: replaces the app)
+adb install -r attendance80.apk
 ```
 
-To open full screen (no URL bar), the site must vouch for the key. Get its SHA-256 fingerprint:
-
-```bash
-keytool -list -v -keystore android.keystore -alias android | grep SHA256
-```
-
-Put it in `ANDROID_CERT_SHA256` in `wrangler.jsonc` (both environments; comma-separate several, e.g. the Play
-upload key too) and deploy. The Worker then serves `/.well-known/assetlinks.json`.
-
-For a new version, bump `appVersionCode` (and `appVersionName`) in `twa-manifest.json`, then `update` and `build`.
+Keep `android.keystore` and its password (`signing.txt`) backed up: every update must be signed with the same key.
+Its SHA-256 fingerprint is `ANDROID_CERT_SHA256` in `wrangler.jsonc`. For a new version, bump `versionCode` and
+`versionName` in `app/build.gradle`.
