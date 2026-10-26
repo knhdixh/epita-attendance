@@ -228,6 +228,9 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true"/>
         </service>
 
+        <!-- Chrome binds to this to open the postMessage channel to the page (Bridge.java). -->
+        <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true"/>
+
         <!-- Quick-focus sheet: from the widget, and by long-pressing the quick-settings tile. Its own task, so the
              app doesn't come up behind it. -->
         <activity android:name=".QuickFocusActivity"

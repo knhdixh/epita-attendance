@@ -32,6 +32,7 @@ final class Bridge extends CustomTabsCallback {
     private static final String TAG = "A80Bridge";
     private static CustomTabsSession session;
     private static volatile boolean ready;
+    private static CustomTabsSession requested;   // the session the channel was asked for (Chrome re-validates on it)
     private static Context app;
     private static Uri origin;
 
@@ -46,12 +47,17 @@ final class Bridge extends CustomTabsCallback {
 
     /** Finds the session (it's created asynchronously) and asks Chrome to validate the origin. */
     static void attach(Activity launcher) {
+        Log.i(TAG, "attach");
         Handler h = new Handler(Looper.getMainLooper());
         final int[] tries = {0};
         h.post(new Runnable() {
             @Override public void run() {
                 CustomTabsSession s = findSession(launcher);
-                if (s == null) { if (++tries[0] < 50) h.postDelayed(this, 200); return; }
+                if (s == null) {
+                    if (++tries[0] < 50) h.postDelayed(this, 200);
+                    else Log.w(TAG, "no Custom Tabs session after 10 s");
+                    return;
+                }
                 if (s == session) return;
                 session = s;
                 ready = false;
@@ -82,8 +88,10 @@ final class Bridge extends CustomTabsCallback {
 
     @Override
     public void onRelationshipValidationResult(int relation, Uri requestedOrigin, boolean result, Bundle extras) {
-        Log.i(TAG, "origin validated: " + result);
-        if (result && session != null) session.requestPostMessageChannel(origin, origin, new Bundle());
+        if (!result || session == null || requested == session) return;
+        Log.i(TAG, "origin validated");
+        requested = session;
+        session.requestPostMessageChannel(origin, origin, new Bundle());
     }
 
     @Override
