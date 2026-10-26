@@ -91,7 +91,23 @@ final class Bridge extends CustomTabsCallback {
         if (!result || session == null || requested == session) return;
         Log.i(TAG, "origin validated");
         requested = session;
-        session.requestPostMessageChannel(origin, origin, new Bundle());
+        requestChannel();
+    }
+
+    private static boolean validated() { return requested != null && requested == session; }
+
+    private static void requestChannel() {
+        boolean ok = session.requestPostMessageChannel(origin, origin, new Bundle());
+        Log.i(TAG, "channel requested: " + ok);
+    }
+
+    // Chrome opens the channel to a loaded page: ask again when a page load finishes (the first one may not have
+    // been ready, and a reload or a navigation drops the old channel).
+    @Override
+    public void onNavigationEvent(int navigationEvent, Bundle extras) {
+        if (navigationEvent != NAVIGATION_FINISHED || session == null || !validated()) return;
+        ready = false;
+        requestChannel();
     }
 
     @Override
@@ -115,6 +131,7 @@ final class Bridge extends CustomTabsCallback {
         if (app == null) return;
         try {
             JSONObject m = new JSONObject(message);
+            Log.i(TAG, "from page: " + m.optString("type"));
             switch (m.optString("type")) {
                 case "timer": FocusController.fromPage(app, m.optJSONObject("timer"), m.optJSONObject("settings")); break;
                 case "plan": new FocusStore(app).saveSnapshot(m); FocusWidget.updateAll(app); break;
@@ -152,6 +169,7 @@ final class Bridge extends CustomTabsCallback {
         if (!ready || s == null) return;
         try {
             int r = s.postMessage(m.toString(), null);
+            Log.i(TAG, "to page: " + m.optString("type") + " -> " + r);
             if (r != CustomTabsService.RESULT_SUCCESS) { ready = false; Log.i(TAG, "channel closed: " + r); }
         } catch (RuntimeException e) {
             ready = false;

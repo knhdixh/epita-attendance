@@ -508,8 +508,11 @@ function fromApp(raw) {
   if (m.type === 'hello') { toApp(); sendPlan(true); }
 }
 
+// Chrome delivers the channel (an empty first message with the port) from "android-app://<this host>", once it has
+// checked /.well-known/assetlinks.json; the app's messages then come through the port.
+const APP_ORIGINS = [`android-app://${location.host}`, location.origin];
 window.addEventListener('message', (e) => {
-  if (e.origin !== location.origin || typeof e.data !== 'string') return;
+  if (!APP_ORIGINS.includes(e.origin) || typeof e.data !== 'string') return;
   if (e.ports?.[0] && e.ports[0] !== app.port) {
     app.port = e.ports[0];
     app.port.onmessage = (m) => fromApp(m.data);
