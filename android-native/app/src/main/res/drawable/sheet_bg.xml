@@ -1,0 +1,5 @@
+<!-- The quick-focus sheet: rounded at the top, in the theme's background colour. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?android:attr/colorBackground"/>
+    <corners android:topLeftRadius="24dp" android:topRightRadius="24dp"/>
+</shape>
