@@ -1,12 +1,14 @@
 #!/usr/bin/env node
+process.env.TZ = 'Europe/Paris';
+
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-import * as stats from '../../public/stats.js';
-import * as breaks from '../../public/breaks.js';
-import * as plan from '../../public/plan.js';
-import * as focus from '../../public/focus.js';
+const stats = await import('../../public/stats.js');
+const breaks = await import('../../public/breaks.js');
+const plan = await import('../../public/plan.js');
+const focus = await import('../../public/focus.js');
 
 const ROOT_DIR = process.cwd();
 const FIXTURES_DIR = path.join(ROOT_DIR, 'android-native/tools/fixtures');
@@ -390,36 +392,54 @@ fs.writeFileSync(path.join(GOLDEN_DIR, 'focus_timer_golden.json'), JSON.stringif
 console.log('Generating focus_stats_golden.json...');
 const refNow = focusFixture.refNow;
 
-const dailyTotalsObj = {};
-for (const [k, v] of focus.dailyTotals(focusFixture.yearSessions)) {
-  dailyTotalsObj[k] = v;
+function generateFocusStatsForZone(zone) {
+  process.env.TZ = zone;
+  const dailyTotalsObj = {};
+  for (const [k, v] of focus.dailyTotals(focusFixture.yearSessions)) {
+    dailyTotalsObj[k] = v;
+  }
+
+  const minutesByHwObj = {};
+  for (const [k, v] of focus.minutesByHomework(focusFixture.yearSessions)) {
+    minutesByHwObj[k] = v;
+  }
+
+  const focusStats7 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 7 });
+  const focusStats30 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 30 });
+  const focusStats365 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 365 });
+
+  // Remove non-serializable 'day' function
+  delete focusStats7.day;
+  delete focusStats30.day;
+  delete focusStats365.day;
+
+  return {
+    zone,
+    dailyTotals: dailyTotalsObj,
+    minutesByHomework: minutesByHwObj,
+    focusStats7,
+    focusStats30,
+    focusStats365
+  };
 }
 
-const minutesByHwObj = {};
-for (const [k, v] of focus.minutesByHomework(focusFixture.yearSessions)) {
-  minutesByHwObj[k] = v;
-}
-
-const focusStats7 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 7 });
-const focusStats30 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 30 });
-const focusStats365 = focus.focusStats(focusFixture.yearSessions, { now: refNow, range: 365 });
-
-// Remove non-serializable 'day' function
-delete focusStats7.day;
-delete focusStats30.day;
-delete focusStats365.day;
+const parisRun = generateFocusStatsForZone('Europe/Paris');
+const helsinkiRun = generateFocusStatsForZone('Europe/Helsinki');
+process.env.TZ = 'Europe/Paris';
 
 const focusSummaryParis = focus.focusSummary(focusFixture.yearSessions, { now: refNow, tz: 'Europe/Paris' });
 const focusSummaryHelsinki = focus.focusSummary(focusFixture.yearSessions, { now: refNow, tz: 'Europe/Helsinki' });
 
 const focusStatsGolden = {
-  dailyTotals: dailyTotalsObj,
-  minutesByHomework: minutesByHwObj,
-  focusStats7,
-  focusStats30,
-  focusStats365,
+  zone: 'Europe/Paris',
+  dailyTotals: parisRun.dailyTotals,
+  minutesByHomework: parisRun.minutesByHomework,
+  focusStats7: parisRun.focusStats7,
+  focusStats30: parisRun.focusStats30,
+  focusStats365: parisRun.focusStats365,
   focusSummaryParis,
-  focusSummaryHelsinki
+  focusSummaryHelsinki,
+  runs: [parisRun, helsinkiRun]
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'focus_stats_golden.json'), JSON.stringify(focusStatsGolden, null, 2));
 

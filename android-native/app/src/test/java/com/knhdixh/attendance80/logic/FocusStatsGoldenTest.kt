@@ -28,7 +28,18 @@ class FocusStatsGoldenTest {
     }
 
     @Serializable
+    private data class FocusStatsRun(
+        val zone: String,
+        val dailyTotals: Map<String, DayTotal>,
+        val minutesByHomework: Map<String, Double>,
+        val focusStats7: FocusStatsResult,
+        val focusStats30: FocusStatsResult,
+        val focusStats365: FocusStatsResult,
+    )
+
+    @Serializable
     private data class FocusStatsGoldenData(
+        val zone: String = "Europe/Paris",
         val dailyTotals: Map<String, DayTotal>,
         val minutesByHomework: Map<String, Double>,
         val focusStats7: FocusStatsResult,
@@ -36,6 +47,7 @@ class FocusStatsGoldenTest {
         val focusStats365: FocusStatsResult,
         val focusSummaryParis: FocusSummaryResult,
         val focusSummaryHelsinki: FocusSummaryResult,
+        val runs: List<FocusStatsRun> = emptyList(),
     )
 
     @Serializable
@@ -49,22 +61,36 @@ class FocusStatsGoldenTest {
         val golden = json.decodeFromString<FocusStatsGoldenData>(loadResource("golden/focus_stats_golden.json"))
         val fixture = json.decodeFromString<FocusFixture>(loadResource("fixtures/focus.json"))
 
-        // Daily totals
-        val actTotals = dailyTotals(fixture.yearSessions, ZoneId.systemDefault())
-        for ((k, exp) in golden.dailyTotals) {
-            val act = actTotals[k]
-            assertTrue("Key $k should be in dailyTotals", act != null)
-            assertClose(exp.minutes, act!!.minutes, "dailyTotal($k) minutes")
-            assertEquals("dailyTotal($k) count", exp.count, act.count)
+        val runs = golden.runs.ifEmpty {
+            listOf(
+                FocusStatsRun(
+                    zone = golden.zone,
+                    dailyTotals = golden.dailyTotals,
+                    minutesByHomework = golden.minutesByHomework,
+                    focusStats7 = golden.focusStats7,
+                    focusStats30 = golden.focusStats30,
+                    focusStats365 = golden.focusStats365,
+                )
+            )
         }
 
-        // Minutes by homework
-        val actHw = minutesByHomework(fixture.yearSessions)
-        for ((kStr, expMin) in golden.minutesByHomework) {
-            val k = kStr.toLong()
-            val actMin = actHw[k]
-            assertTrue("Homework $k should be in minutesByHomework", actMin != null)
-            assertClose(expMin, actMin, "minutesByHomework($k)")
+        for (run in runs) {
+            val zoneId = ZoneId.of(run.zone)
+            val actTotals = dailyTotals(fixture.yearSessions, zoneId)
+            for ((k, exp) in run.dailyTotals) {
+                val act = actTotals[k]
+                assertTrue("Key $k should be in dailyTotals for zone ${run.zone}", act != null)
+                assertClose(exp.minutes, act!!.minutes, "dailyTotal($k) minutes [${run.zone}]")
+                assertEquals("dailyTotal($k) count [${run.zone}]", exp.count, act.count)
+            }
+
+            val actHw = minutesByHomework(fixture.yearSessions)
+            for ((kStr, expMin) in run.minutesByHomework) {
+                val k = kStr.toLong()
+                val actMin = actHw[k]
+                assertTrue("Homework $k should be in minutesByHomework", actMin != null)
+                assertClose(expMin, actMin, "minutesByHomework($k) [${run.zone}]")
+            }
         }
     }
 
@@ -73,34 +99,49 @@ class FocusStatsGoldenTest {
         val golden = json.decodeFromString<FocusStatsGoldenData>(loadResource("golden/focus_stats_golden.json"))
         val fixture = json.decodeFromString<FocusFixture>(loadResource("fixtures/focus.json"))
 
-        for ((range, exp) in listOf(7 to golden.focusStats7, 30 to golden.focusStats30, 365 to golden.focusStats365)) {
-            val act = focusStats(fixture.yearSessions, now = fixture.refNow, range = range, zoneId = ZoneId.systemDefault())
-            val tag = "range_$range"
+        val runs = golden.runs.ifEmpty {
+            listOf(
+                FocusStatsRun(
+                    zone = golden.zone,
+                    dailyTotals = golden.dailyTotals,
+                    minutesByHomework = golden.minutesByHomework,
+                    focusStats7 = golden.focusStats7,
+                    focusStats30 = golden.focusStats30,
+                    focusStats365 = golden.focusStats365,
+                )
+            )
+        }
 
-            assertClose(exp.today.minutes, act.today.minutes, "$tag: today minutes")
-            assertEquals("$tag: today count", exp.today.count, act.today.count)
-            assertEquals("$tag: streak", exp.streak, act.streak)
-            assertClose(exp.thisWeek, act.thisWeek, "$tag: thisWeek")
-            assertClose(exp.lastWeek, act.lastWeek, "$tag: lastWeek")
+        for (run in runs) {
+            val zoneId = ZoneId.of(run.zone)
+            for ((range, exp) in listOf(7 to run.focusStats7, 30 to run.focusStats30, 365 to run.focusStats365)) {
+                val act = focusStats(fixture.yearSessions, now = fixture.refNow, range = range, zoneId = zoneId)
+                val tag = "zone_${run.zone}_range_$range"
 
-            // Week
-            assertEquals("$tag: week size", exp.week.size, act.week.size)
-            for (i in exp.week.indices) {
-                val ew = exp.week[i]
-                val aw = act.week[i]
-                assertEquals("$tag: week[$i] ms", ew.ms, aw.ms)
-                assertClose(ew.minutes, aw.minutes, "$tag: week[$i] minutes")
-                assertEquals("$tag: week[$i] count", ew.count, aw.count)
-                assertEquals("$tag: week[$i] future", ew.future, aw.future)
-            }
+                assertClose(exp.today.minutes, act.today.minutes, "$tag: today minutes")
+                assertEquals("$tag: today count", exp.today.count, act.today.count)
+                assertEquals("$tag: streak", exp.streak, act.streak)
+                assertClose(exp.thisWeek, act.thisWeek, "$tag: thisWeek")
+                assertClose(exp.lastWeek, act.lastWeek, "$tag: lastWeek")
 
-            // Range breakdown
-            val er = exp.range
-            val ar = act.range
-            assertEquals("$tag: range days", er.days, ar.days)
-            assertClose(er.minutes, ar.minutes, "$tag: range minutes")
-            assertEquals("$tag: range count", er.count, ar.count)
-            assertEquals("$tag: range activeDays", er.activeDays, ar.activeDays)
+                // Week
+                assertEquals("$tag: week size", exp.week.size, act.week.size)
+                for (i in exp.week.indices) {
+                    val ew = exp.week[i]
+                    val aw = act.week[i]
+                    assertEquals("$tag: week[$i] ms", ew.ms, aw.ms)
+                    assertClose(ew.minutes, aw.minutes, "$tag: week[$i] minutes")
+                    assertEquals("$tag: week[$i] count", ew.count, aw.count)
+                    assertEquals("$tag: week[$i] future", ew.future, aw.future)
+                }
+
+                // Range breakdown
+                val er = exp.range
+                val ar = act.range
+                assertEquals("$tag: range days", er.days, ar.days)
+                assertClose(er.minutes, ar.minutes, "$tag: range minutes")
+                assertEquals("$tag: range count", er.count, ar.count)
+                assertEquals("$tag: range activeDays", er.activeDays, ar.activeDays)
             assertClose(er.perActiveDay, ar.perActiveDay, "$tag: range perActiveDay")
             assertEquals("$tag: range peakHour", er.peakHour, ar.peakHour)
 
@@ -112,6 +153,7 @@ class FocusStatsGoldenTest {
             }
         }
     }
+}
 
     @Test
     fun testFocusSummaryGolden() {
