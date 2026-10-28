@@ -39,7 +39,9 @@ class DefaultAppContainer(
     override val api: Api by lazy {
         ApiClient.createApi(
             baseUrl = baseUrl,
-            tokenProvider = { tokenStore.currentToken() },
+            tokenProvider = {
+                kotlinx.coroutines.runBlocking { tokenStore.awaitToken() }
+            },
             onUnauthorized = {
                 scope.launch { tokenStore.clearToken() }
             },

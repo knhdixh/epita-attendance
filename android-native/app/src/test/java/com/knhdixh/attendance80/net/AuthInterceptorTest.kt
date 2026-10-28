@@ -99,4 +99,57 @@ class AuthInterceptorTest {
         assertTrue(unauthorizedCalled.get())
         assertNull(token)
     }
+
+    @Test
+    fun unauthorized401WithoutBearerDoesNotClearToken() {
+        var token: String? = "a80s_real_token_not_yet_loaded"
+        val unauthorizedCalled = AtomicBoolean(false)
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(
+                tokenProvider = { null }, // simulated request sent before token was loaded
+                onUnauthorized = {
+                    token = null
+                    unauthorizedCalled.set(true)
+                },
+            ))
+            .build()
+
+        server.enqueue(MockResponse().setResponseCode(401).setBody("{\"error\":\"Not signed in.\"}"))
+
+        val req = Request.Builder()
+            .url(server.url("/api/data"))
+            .build()
+        val res = client.newCall(req).execute()
+
+        assertEquals(401, res.code)
+        assertTrue(!unauthorizedCalled.get())
+        assertEquals("a80s_real_token_not_yet_loaded", token)
+    }
+
+    @Test
+    fun tokenProviderAwaitsTokenBeforeRequest() {
+        val unauthorizedCalled = AtomicBoolean(false)
+        val client = OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(
+                tokenProvider = {
+                    Thread.sleep(50) // simulate async token store load
+                    "a80s_loaded_token"
+                },
+                onUnauthorized = { unauthorizedCalled.set(true) },
+            ))
+            .build()
+
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"ok\":true}"))
+
+        val req = Request.Builder()
+            .url(server.url("/api/data"))
+            .build()
+        val res = client.newCall(req).execute()
+
+        assertEquals(200, res.code)
+        val recorded = server.takeRequest()
+        assertEquals("Bearer a80s_loaded_token", recorded.getHeader("Authorization"))
+        assertTrue(!unauthorizedCalled.get())
+    }
 }

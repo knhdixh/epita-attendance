@@ -53,11 +53,14 @@ class MainActivity : ComponentActivity() {
             Attendance80Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val app = application as App
+                    val isLoaded by app.container.tokenStore.isLoaded.collectAsState()
                     val token by app.container.tokenStore.token.collectAsState()
-                    AppNav(
-                        token = token,
-                        signInViewModel = signInViewModel,
-                    )
+                    if (isLoaded) {
+                        AppNav(
+                            token = token,
+                            signInViewModel = signInViewModel,
+                        )
+                    }
                 }
             }
         }

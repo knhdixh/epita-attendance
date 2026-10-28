@@ -27,6 +27,8 @@ val Context.authDataStore: DataStore<Preferences> by preferencesDataStore(name =
 
 interface TokenStore {
     val token: StateFlow<String?>
+    val isLoaded: StateFlow<Boolean>
+    suspend fun awaitToken(): String?
     fun currentToken(): String? = token.value
     suspend fun setToken(token: String)
     suspend fun clearToken()
@@ -95,18 +97,25 @@ class EncryptedTokenStore(
     private val _token = MutableStateFlow<String?>(null)
     override val token: StateFlow<String?> = _token.asStateFlow()
 
-    init {
-        scope.launch {
-            val encrypted = dataStore.data.map { it[keySessionToken] }.firstOrNull()
-            if (!encrypted.isNullOrBlank()) {
-                try {
-                    _token.value = cipher.decrypt(encrypted)
-                } catch (_: Exception) {
-                    _token.value = null
-                    clearToken()
-                }
+    private val _isLoaded = MutableStateFlow(false)
+    override val isLoaded: StateFlow<Boolean> = _isLoaded.asStateFlow()
+
+    private val initJob: kotlinx.coroutines.Job = scope.launch {
+        val encrypted = dataStore.data.map { it[keySessionToken] }.firstOrNull()
+        if (!encrypted.isNullOrBlank()) {
+            try {
+                _token.value = cipher.decrypt(encrypted)
+            } catch (_: Exception) {
+                _token.value = null
+                clearToken()
             }
         }
+        _isLoaded.value = true
+    }
+
+    override suspend fun awaitToken(): String? {
+        initJob.join()
+        return _token.value
     }
 
     override suspend fun setToken(token: String) {
@@ -115,6 +124,7 @@ class EncryptedTokenStore(
             prefs[keySessionToken] = encrypted
         }
         _token.value = token
+        _isLoaded.value = true
     }
 
     override suspend fun clearToken() {
@@ -122,5 +132,6 @@ class EncryptedTokenStore(
             prefs.remove(keySessionToken)
         }
         _token.value = null
+        _isLoaded.value = true
     }
 }
