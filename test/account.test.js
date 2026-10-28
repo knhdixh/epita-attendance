@@ -13,8 +13,6 @@ test('deleting an account removes every row belonging to the user, and only thei
       INSERT INTO events (user_id, course_id, uid, summary, start_at, end_at) VALUES (${id}, ${id}, 'e${id}', 'E', 0, 1);
       INSERT INTO homework (user_id, title, due_date, tz, due_at, created_at, updated_at) VALUES (${id}, 'H', '2026-10-20', 'UTC', 0, 0, 0);
       INSERT INTO breaks (user_id, start_date, end_date, created_at) VALUES (${id}, '2026-10-20', '2026-10-21', 0);
-      INSERT INTO ai_usage (user_id, day) VALUES (${id}, '2026-10-13');
-      INSERT INTO ai_keys (user_id, provider, api_key, key_hint, model, created_at) VALUES (${id}, 'groq', 'enc', 'abcd', 'm', 0);
       INSERT INTO passkeys (id, user_id, public_key, created_at) VALUES ('pk${id}', ${id}, 'k', 0);
       INSERT INTO auth_challenges (id, challenge, kind, user_id, expires_at) VALUES ('ch${id}', 'x', 'register', ${id}, 9e15);`);
   }

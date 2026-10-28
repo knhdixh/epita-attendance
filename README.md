@@ -1,6 +1,6 @@
 # Attendance80
 
-**Stay above the attendance minimum without counting by hand.** Import your university calendar (`.ics`), tick off each session, and always know how many classes you can still miss in every course. It also tracks homework, plans holidays, and has an AI assistant.
+**Stay above the attendance minimum without counting by hand.** Import your university calendar (`.ics`), tick off each session, and always know how many classes you can still miss in every course. It also tracks homework, focus time, habits and countdowns, and plans holidays.
 
 Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudflare Worker + D1 · No runtime dependencies
 
@@ -26,14 +26,8 @@ Live at **[epita.knhdixh.com](https://epita.knhdixh.com)** · Runs on one Cloudf
 | ↺ **Catch-ups** | Missed a class? Marking it absent (or ↺ on any past session) adds "Catch up: …" to your list, due before the course meets again, with the course's recordings link (set it in Courses). |
 | 📱 **Install it** | The site is an installable app (Chrome: *Install app*; Safari: *Add to Home Screen*), and [`android/`](android) builds an Android APK that opens it full screen. Notifications go through a small service worker that caches nothing. |
 | 🔑 **Claude Code access** | Personal tokens (read, or read and write) for `GET /api/plan` (which includes focus, habit and countdown summaries), `GET /api/focus` and the homework, catch-up and attendance endpoints, so a script or Claude Code can plan with your data. |
-| 🤖 **AI assistant** | "Can I take next week off?", "I missed French today", "add TP4 due friday", "make my weekly plan". All maths and dates are done by the app, not the model, and every change it makes can be undone. |
 
-<table>
-<tr>
-<td><img src="docs/breaks.png" alt="Break planner"></td>
-<td><img src="docs/assistant.png" alt="AI assistant"></td>
-</tr>
-</table>
+![Break planner](docs/breaks.png)
 
 ## How the numbers work
 
@@ -52,7 +46,6 @@ A course turns amber when it has less than one skip left or a missed exam, and r
 
 - **Cloudflare Worker**: the API, Google OAuth and static frontend in one deployment ([`src/worker.js`](src/worker.js))
 - **D1** (SQLite) for storage; schema in [`migrations/`](migrations)
-- **Workers AI** (Gemma 4) for the assistant. It uses Cloudflare's free daily allocation, and prompts are not used for training
 - **Plain JavaScript** frontend with no build step. The attendance and break-planning maths ([`public/stats.js`](public/stats.js), [`public/breaks.js`](public/breaks.js)) is shared by the browser and the Worker
 
 ```
@@ -61,7 +54,6 @@ src/
   calendars.js       calendars (links and files), ICS import, scheduled link refresh
   calendar-link.js   calendar link validation (Zeus and other .ics links) and download
   ics.js             iCalendar parser (folding, escaping, TZID/UTC/all-day)
-  assistant.js       AI assistant: context, tools, chat loop, daily limit
   gcal.js            Google Calendar sync (encrypted refresh tokens)
   homework*.js       homework validation, persistence, .ics feed
   breaks-store.js    saving/removing breaks
@@ -70,7 +62,7 @@ src/
   countdowns.js      countdowns
 public/
   app.js             UI shell: overview, sessions, courses, settings
-  *-ui.js            homework, breaks, focus, habits, countdowns and assistant tabs
+  *-ui.js            homework, breaks, focus, habits, countdowns, calendars and Today pages
   stats.js, breaks.js, focus.js, habits.js, countdowns.js  shared maths (attendance, breaks, the focus timer, habit streaks,
                      countdown display) and the quick-add parsers
 test/                node:test suites (no network, D1 shimmed with node:sqlite)
@@ -137,7 +129,7 @@ A separate Worker, `epita-attendance-staging`, serves **[epita-staging.knhdixh.c
 npm run deploy:staging    # applies migrations to the staging DB, then deploys the staging Worker
 ```
 
-Pushes to the `design` branch deploy it automatically through a second Workers Builds connection on the staging Worker (branch `design`, deploy command `npm run deploy:staging`). Staging's assistant budget is kept small because Workers AI's free neurons are shared across the account.
+Pushes to the `design` branch deploy it automatically through a second Workers Builds connection on the staging Worker (branch `design`, deploy command `npm run deploy:staging`).
 
 Settings in `wrangler.jsonc`:
 
@@ -145,12 +137,9 @@ Settings in `wrangler.jsonc`:
 |---|---|---|
 | `ALLOWED_DOMAIN` | *(empty)* | Only allow sign-in from this email domain, e.g. `epita.fr` |
 | `CANONICAL_HOST` | `epita.knhdixh.com` | Redirects `*.workers.dev` to this host |
-| `AI_DAILY_LIMIT` | `40` | Assistant messages per user per day |
-| `AI_MODEL` | `@cf/google/gemma-4-26b-a4b-it` | Workers AI model with function calling |
 
 Never set `DEV_LOGIN` in production.
 
 ## Limitations
 
 - Recurring events (`RRULE`) are imported once, not expanded. The school's export doesn't use them.
-- The free Workers AI allocation (10,000 neurons/day) covers roughly 100–150 assistant messages a day across all users.

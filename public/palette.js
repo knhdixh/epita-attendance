@@ -7,7 +7,7 @@ const $wrap = document.getElementById('palette');
 const $q = document.getElementById('palette-q');
 const $list = document.getElementById('palette-list');
 
-const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Focus', 'Habits', 'Countdowns', 'Courses', 'Homework', 'Sessions', 'Assistant'];
+const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Focus', 'Habits', 'Countdowns', 'Courses', 'Homework', 'Sessions'];
 const PER_SECTION = { Focus: 6, Habits: 6, Countdowns: 6, Courses: 6, Homework: 6, Sessions: 6 };
 const RECENT_KEY = 'a80-palette-recent';
 
@@ -92,7 +92,7 @@ function update() {
     const scored = all.map((it) => [it, score(it, q)]).filter(([, sc]) => sc > 0);
     groups = SECTIONS.map((s) => [s, scored.filter(([it]) => it.section === s)
       .sort((a, b) => b[1] - a[1]).slice(0, PER_SECTION[s] || 8).map(([it]) => it)]);
-    // Below the matches: quick adds ("Add countdown: …") and the assistant, each under its own heading.
+    // Below the matches: quick adds ("Add countdown: …") and a session search, each under its own heading.
     const fb = source.fallback(raw);
     for (const s of new Set(fb.map((it) => it.section))) groups.push([s, fb.filter((it) => it.section === s)]);
   }
@@ -106,7 +106,7 @@ function update() {
       const i = n++;
       return `<div class="pal-item" role="option" id="pal-${i}" data-i="${i}" aria-selected="false">
         <svg class="ic ${it.tone || ''}" aria-hidden="true"><use href="#${it.icon}"/></svg>
-        <span class="pal-label">${highlight(it.label, it.section === 'Assistant' ? '' : q)}${it.sub ? `<span class="pal-sub">${esc(it.sub)}</span>` : ''}</span>
+        <span class="pal-label">${highlight(it.label, it.section === 'Search' ? '' : q)}${it.sub ? `<span class="pal-sub">${esc(it.sub)}</span>` : ''}</span>
         ${it.keys ? `<span class="pal-hint">${it.keys.map((k) => (k === 'then' ? '<span class="then">then</span>' : `<kbd>${esc(k)}</kbd>`)).join('')}</span>` : ''}
       </div>`;
     }).join('')}`).join('') || `<div class="pal-empty">Nothing found for “${esc(raw)}”.</div>`;

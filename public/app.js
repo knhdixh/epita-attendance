@@ -1,8 +1,6 @@
 import { TAGS, splitGroup, effectiveTag, statsByCourse, computeStats, countsAttendance } from './stats.js';
 import * as hw from './homework-ui.js';
-import * as ai from './assistant-ui.js';
 import * as brk from './breaks-ui.js';
-import * as byok from './byok-ui.js';
 import * as cal from './calendars-ui.js';
 import * as today from './today-ui.js';
 import * as tokens from './tokens-ui.js';
@@ -241,7 +239,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, countdowns: cd.renderCountdowns, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, countdowns: cd.renderCountdowns, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -261,7 +259,7 @@ let lastView = null;
 // Pages that work before a timetable is added.
 const NO_TIMETABLE = ['settings', 'focus', 'habits', 'countdowns'];
 let first = true;
-const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', countdowns: 'Countdowns', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', countdowns: 'Countdowns', breaks: 'Breaks', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
@@ -351,7 +349,7 @@ function setCount(tab, n, tone, title) {
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 const randGlyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
-const ROWS = '.row, .hw-item, .card, .method, .family, .brk-window, .msg, .byok-option, .stat, table.courses tbody tr';
+const ROWS = '.row, .hw-item, .card, .method, .family, .brk-window, .stat, table.courses tbody tr';
 
 function maskedWord(word) {
   return [...word].map((c, i) => `<span class="mask"><span class="ch" style="--c:${i}" data-c="${esc(c)}">${esc(c)}</span></span>`).join('');
@@ -741,7 +739,6 @@ function renderSettings() {
     ${cal.settingsPanel()}
     ${signInMethodsPanel()}
     ${tokens.settingsPanel()}
-    ${byok.settingsPanel()}
     ${hw.integrationsPanel()}
     <section class="panel narrow danger-zone">
       <h3>Delete data</h3>
@@ -749,7 +746,7 @@ function renderSettings() {
       <button class="btn btn-destructive" data-action="wipe">Delete all my data</button>
       <h3 class="danger-title">Delete my account</h3>
       <p>Permanently delete your account and everything in it: calendar, attendance, homework, breaks, passkeys,
-        AI key and Google Calendar connection (access is revoked; the "Homework (Attendance80)" calendar stays in your
+        habits, countdowns and Google Calendar connection (access is revoked; the "Homework (Attendance80)" calendar stays in your
         Google account for you to delete).</p>
       <button class="btn btn-destructive" data-action="delete-account">Delete my account</button>
     </section>
@@ -869,7 +866,7 @@ async function setTracked(updates) {
 // [tab, label, icon, key after G]
 const NAV = [
   ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
-  ['focus', 'Focus', 'i-focus', 'F'], ['habits', 'Habits', 'i-habits', 'R'], ['countdowns', 'Countdowns', 'i-countdown', 'D'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
+  ['focus', 'Focus', 'i-focus', 'F'], ['habits', 'Habits', 'i-habits', 'R'], ['countdowns', 'Countdowns', 'i-countdown', 'D'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
 const SIDEBAR_KEY = 'a80-sidebar';
@@ -930,7 +927,6 @@ function paletteItems() {
 
   const act = (id, label, icon, run, extra = {}) => items.push({ id: `act:${id}`, section: 'Actions', label, icon, run, home: true, ...extra });
   act('add-homework', 'Add homework', 'i-plus', hw.openForm, { tone: 'accent', keys: ['Q'] });
-  if (state.data.assistant && hasData) act('ask', 'Ask the assistant', 'i-assistant', () => go('assistant'), { keywords: 'ai chat question' });
   const unmarked = unmarkedEvents();
   if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
   if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
@@ -970,16 +966,12 @@ function paletteItems() {
   return items;
 }
 
-// Always offered below the matches: send the text to the assistant, or search the session list for it.
+// Always offered below the matches: quick adds, and a search of the session list.
 function paletteFallback(q) {
   if (!state.data) return [];
   const out = [...cd.fallback(q, go), ...hb.fallback(q, go)];
   if (!state.data.events.length) return out;
-  if (state.data.assistant) {
-    out.push({ id: 'ask:q', recentId: 'act:ask', section: 'Assistant', label: `Ask: “${q}”`, icon: 'i-assistant', tone: 'accent',
-      run: () => { go('assistant'); ai.ask(q); } });
-  }
-  out.push({ id: 'find:q', recentId: '', section: 'Assistant', label: `Search all sessions for “${q}”`, icon: 'i-search',
+  out.push({ id: 'find:q', recentId: '', section: 'Search', label: `Search all sessions for “${q}”`, icon: 'i-search',
     run: () => { Object.assign(state.filter, { course: 'all', when: 'all', q }); go('sessions'); } });
   return out;
 }
@@ -1018,7 +1010,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (byok.onClick(e) || fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1130,7 +1122,7 @@ document.addEventListener('keydown', (e) => {
     return palette.isOpen() ? palette.close() : palette.open();
   }
   if (palette.isOpen()) return;
-  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e) || fx.onKeydown(e) || hb.onKeydown(e) || cd.onKeydown(e)) return;
+  if (hw.onKeydown(e) || cal.onKeydown(e) || fx.onKeydown(e) || hb.onKeydown(e) || cd.onKeydown(e)) return;
   if (e.key === 'Escape' && state.tab === 'habits' && state.hbOpen && !isTyping(e.target) && $accountMenu.hidden) { hb.onPageKey(e); return; }
   if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
   if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
@@ -1162,7 +1154,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (byok.onChange(e) || fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -1187,7 +1179,7 @@ document.addEventListener('change', (e) => {
 
 let searchTimer;
 document.addEventListener('input', (e) => {
-  if (ai.onInput(e) || hw.onInput(e) || brk.onInput(e) || hb.onInput(e) || cd.onInput(e)) return;
+  if (hw.onInput(e) || brk.onInput(e) || hb.onInput(e) || cd.onInput(e)) return;
   if (e.target.id !== 'f-q') return;
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
@@ -1199,7 +1191,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e) || hb.onSubmit(e) || cd.onSubmit(e)) return;
+  if (hw.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e) || hb.onSubmit(e) || cd.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');

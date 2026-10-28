@@ -15,7 +15,7 @@
   <main class="legal">
     <a class="back small" href="/">← Back to Attendance80</a>
     <h1>Privacy policy</h1>
-    <p class="updated">Effective 19 October 2026</p>
+    <p class="updated">Effective 28 October 2026</p>
 
     <p>Attendance80 (<a href="https://epita.knhdixh.com">epita.knhdixh.com</a>, “the app”, “we”) helps students track class
       attendance, homework and breaks from their timetable. It's an independent project, <b>not affiliated with EPITA,
@@ -26,7 +26,6 @@
     <ul>
       <li>We only collect what the app needs to work. No ads, no analytics, no tracking, and we never sell data.</li>
       <li>Your data is stored with Cloudflare in Western Europe.</li>
-      <li>The AI assistant sends your question and the relevant parts of your schedule to an AI provider only when you use it.</li>
       <li>You can delete your account and all its data at any time in Settings.</li>
     </ul>
 
@@ -43,16 +42,11 @@
       <dd>The calendar links you add (your Zeus link, or any other <code>.ics</code> link), a name for each, and for Zeus
         the date your classes start. The app uses them only to download those calendars every few days, from the site
         each link points to. Removing a calendar in Settings deletes its link.</dd>
-      <dt>Homework and breaks</dt>
-      <dd>Homework you add (title, notes, due date, reminder) and breaks you save. If you use the homework calendar feed,
+      <dt>Homework, breaks, habits and countdowns</dt>
+      <dd>Homework you add (title, notes, due date, reminder), breaks you save, your habits with the days you checked
+        them off, and your countdowns. If you use the homework calendar feed,
         anyone with that private link can read your homework; the same goes for the timetable feed and your timetable.
         You can reset both links in Settings at any time.</dd>
-      <dt>Assistant usage</dt>
-      <dd>How many assistant messages you send per day and how much of the AI allowance they use, to enforce fair-use limits.
-        <b>Conversations are kept only in your browser</b>, not on our servers.</dd>
-      <dt>Your own AI key (optional)</dt>
-      <dd>If you add one, the API key (and Cloudflare account ID), stored encrypted. It's never shown again or sent back
-        to your browser.</dd>
       <dt>Google Calendar connection (optional)</dt>
       <dd>If you connect it, an encrypted access token, the email of the connected Google account, and the ID of the
         “Homework (Attendance80)” calendar the app creates.</dd>
@@ -63,20 +57,9 @@
 
     <h2>How we use it</h2>
     <p>Only to provide the app's features: showing your attendance and how many classes you can still miss, homework
-      reminders, break planning, the assistant, calendar sync and the homework calendar feed. The legal basis is
-      performing the service you asked for (GDPR Art. 6(1)(b)), and for optional features (Google Calendar, your own AI key),
+      reminders, break planning, focus, habit and countdown tracking, calendar sync and the calendar feeds. The legal basis is
+      performing the service you asked for (GDPR Art. 6(1)(b)), and for optional features (Google Calendar),
       your consent, which you can withdraw by disconnecting them.</p>
-
-    <h2>The AI assistant</h2>
-    <p>When you send a message, the app sends your message and the context needed to answer it to an AI model.
-      That context is your courses and attendance numbers, sessions for the coming weeks, homework, and saved breaks.</p>
-    <ul>
-      <li><b>Shared allowance:</b> processed by Cloudflare Workers AI. Cloudflare doesn't use it to train models.</li>
-      <li><b>Your own key:</b> processed by the provider you chose (Cloudflare, Groq or OpenRouter) under your account
-        with them and their privacy terms. Some free OpenRouter models may log or train on prompts; the
-        <a href="/byok-guide">guide</a> explains the differences.</li>
-    </ul>
-    <p>The assistant only acts on your own data, and every change it makes can be undone.</p>
 
     <h2>Google user data</h2>
     <p>If you sign in with Google, the app requests only your basic profile and email (<code>openid email profile</code>)
@@ -93,9 +76,8 @@
 
     <h2>Who processes your data</h2>
     <ul>
-      <li><b>Cloudflare</b>: hosting, database (stored in Western Europe) and the shared AI assistant.</li>
+      <li><b>Cloudflare</b>: hosting and database (stored in Western Europe).</li>
       <li><b>Google</b>: only if you sign in with Google or connect Google Calendar.</li>
-      <li><b>Your chosen AI provider</b>: only if you add your own key.</li>
     </ul>
     <p>Some of these companies may process data outside the EU under the European Commission's standard contractual
       clauses or adequacy decisions.</p>
@@ -107,7 +89,7 @@
 
     <h2>Cookies and browser storage</h2>
     <p>We only use cookies that are strictly necessary: <code>sid</code> keeps you signed in, and short-lived cookies protect
-      Google and passkey sign-in. The app also saves your assistant conversation and a few display preferences in your
+      Google and passkey sign-in. The app also saves the focus timer and a few display preferences in your
       browser's storage. We use no advertising or analytics cookies, so there's no cookie banner.</p>
 
     <h2>Your rights</h2>
@@ -118,12 +100,11 @@
       authority (in France, the <a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL</a>).</p>
 
     <h2>Security</h2>
-    <p>All traffic uses HTTPS. API keys and Google tokens are encrypted (AES-GCM) before they're stored. Sign-in uses passkeys
+    <p>All traffic uses HTTPS. Google tokens are encrypted (AES-GCM) before they're stored. Sign-in uses passkeys
       or Google, so we never store passwords. Every request is checked so you can only access your own data.</p>
 
     <h2>Age</h2>
-    <p>The app is meant for university students and isn't directed at children under 15. Some optional AI providers require
-      you to be 18 or older.</p>
+    <p>The app is meant for university students and isn't directed at children under 15.</p>
 
     <h2>Changes</h2>
     <p>If this policy changes, we'll update the date above. Significant changes will be announced in the app.</p>

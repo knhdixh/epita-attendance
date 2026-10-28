@@ -4,8 +4,6 @@ import { buildTimetableFeed } from './timetable-feed.js';
 import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal.js';
 import { HttpError } from './http.js';
 import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
-import { chat, usage as aiUsage } from './assistant.js';
-import { saveAiKey, deleteAiKey } from './llm.js';
 import { deleteAccount } from './account.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
@@ -336,7 +334,6 @@ async function handleApi(request, env, url, user) {
         gcalAvailable: googleEnabled(env) && Boolean(env.TOKEN_KEY),
         gcal: gcal ? { email: gcal.email, calendarId: gcal.calendar_id, error: gcal.last_error } : null,
       },
-      assistant: env.AI ? await aiUsage(env, user) : null,
       calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
       focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
@@ -403,20 +400,6 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/tokens' && method === 'GET') return json({ tokens: await listTokens(env, user) });
   if (path === '/api/tokens' && method === 'POST') return json(await createToken(env, user, await readJson(request), randomToken));
   if ((m = path.match(/^\/api\/tokens\/(\d+)$/)) && method === 'DELETE') return json(await revokeToken(env, user, Number(m[1])));
-
-  if (path === '/api/ai-key' && method === 'PUT') {
-    // Tests the key against the provider before saving it (encrypted).
-    return json({ key: await saveAiKey(env, user, await readJson(request)), usage: await aiUsage(env, user) });
-  }
-
-  if (path === '/api/ai-key' && method === 'DELETE') {
-    await deleteAiKey(env, user);
-    return json({ usage: await aiUsage(env, user) });
-  }
-
-  if (path === '/api/assistant/chat' && method === 'POST') {
-    return json(await chat(env, user, await readJson(request, 128 * 1024), url.origin));
-  }
 
   if ((m = path.match(/^\/api\/passkeys\/([A-Za-z0-9_-]{8,})$/)) && method === 'DELETE') {
     return json(await deletePasskey(env, user, m[1]));

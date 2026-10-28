@@ -1,4 +1,4 @@
-// Saving/removing breaks: shared by the REST API and the AI assistant.
+// Saving/removing breaks: used by the REST API.
 import { HttpError } from './http.js';
 import { breakModel, simulateBreak, isDate } from '../public/breaks.js';
 import { isValidTimeZone } from './homework.js';

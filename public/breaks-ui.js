@@ -109,8 +109,7 @@ function panelView(sim, s, unit) {
     <p class="brk-step">${!s.from ? 'Click your first day off on the calendar.'
       : s.phase === 'end' ? 'Now click your last day off, or keep it to one day.' : 'Click a day to start a new break.'}</p>`;
   if (!sim) {
-    return `<div class="brk-card">${head}
-      <p class="hint brk-ask">Or ask the <a href="#assistant" data-goto="assistant">Assistant</a>, e.g. “when could I go home for a week in November?”</p></div>`;
+    return `<div class="brk-card">${head}</div>`;
   }
   const level = sim.sessions.length || sim.conflicts.length ? sim.level : 'free';
   const facts = [plural(sim.days, 'day'), sim.sessions.length ? `skips ${plural(sim.sessions.length, 'session')}` : 'no classes missed'];

@@ -1,4 +1,4 @@
-// Homework persistence shared by the REST API and the AI assistant.
+// Homework persistence, used by the REST API and catch-ups.
 import { HttpError } from './http.js';
 import { REMIND_OPTIONS, isValidTimeZone, dueInstant } from './homework.js';
 import { syncHomework } from './gcal.js';
