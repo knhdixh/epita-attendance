@@ -7,8 +7,8 @@ const $wrap = document.getElementById('palette');
 const $q = document.getElementById('palette-q');
 const $list = document.getElementById('palette-list');
 
-const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Focus', 'Courses', 'Homework', 'Sessions', 'Assistant'];
-const PER_SECTION = { Focus: 6, Courses: 6, Homework: 6, Sessions: 6 };
+const SECTIONS = ['Recent', 'Navigation', 'Actions', 'Focus', 'Habits', 'Countdowns', 'Courses', 'Homework', 'Sessions', 'Assistant'];
+const PER_SECTION = { Focus: 6, Habits: 6, Countdowns: 6, Courses: 6, Homework: 6, Sessions: 6 };
 const RECENT_KEY = 'a80-palette-recent';
 
 let source = { items: () => [], fallback: () => [], help: () => '' };
@@ -92,7 +92,9 @@ function update() {
     const scored = all.map((it) => [it, score(it, q)]).filter(([, sc]) => sc > 0);
     groups = SECTIONS.map((s) => [s, scored.filter(([it]) => it.section === s)
       .sort((a, b) => b[1] - a[1]).slice(0, PER_SECTION[s] || 8).map(([it]) => it)]);
-    groups.push(['Assistant', source.fallback(raw)]);
+    // Below the matches: quick adds ("Add countdown: …") and the assistant, each under its own heading.
+    const fb = source.fallback(raw);
+    for (const s of new Set(fb.map((it) => it.section))) groups.push([s, fb.filter((it) => it.section === s)]);
   }
   groups = groups.filter(([, items]) => items.length);
   shown = groups.flatMap(([, items]) => items);

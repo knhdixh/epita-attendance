@@ -3,6 +3,8 @@ import { state, esc, fmtTime, courseById, sessionRow } from './app.js';
 import { buildPlan, DAY_START, DAY_END } from './plan.js';
 import * as hw from './homework-ui.js';
 import { todayPanel } from './focus-ui.js';
+import * as hb from './habits-ui.js';
+import { todayStrip } from './countdowns-ui.js';
 
 const $app = document.getElementById('app');
 
@@ -41,6 +43,7 @@ export function renderToday() {
 
   $app.innerHTML = `
     <p class="today-line">${headline(plan, ev, byId)}</p>
+    ${todayStrip()}
 
     ${clash.length ? `<div class="banner warn"><span>${clash.length === 1 ? 'Two sessions overlap' : `${clash.length} overlaps`} this week:
       ${clash.slice(0, 3).map(([a, b]) => `${esc(byId[a.course_id]?.name)} and ${esc(byId[b.course_id]?.name)} on ${esc(new Date(a.start_at).toLocaleDateString([], { weekday: 'short' }))} ${fmtTime(Math.max(a.start_at, b.start_at))}`).join('; ')}.</span></div>` : ''}
@@ -51,6 +54,8 @@ export function renderToday() {
         : '<p class="empty">Nothing due in the next 7 days.</p>'}
       ${plan.later ? `<p class="muted small">${plan.later} more due later.</p>` : ''}
     </section>
+
+    ${hb.todayPanel()}
 
     ${todayPanel()}
 

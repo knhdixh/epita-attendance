@@ -15,6 +15,10 @@ import { buildPlan } from '../public/plan.js';
 import { focusSummary } from '../public/focus.js';
 import { FOCUS_COLUMNS, focusRow, focusSettings, saveFocusSettings, logFocus, listFocus, deleteFocus } from './focus.js';
 import { isValidTimeZone } from './homework.js';
+import { habitQueries, habitRow, createHabit, updateHabit, deleteHabit, logHabit, reorderHabits, LOG_DAYS } from './habits.js';
+import { COUNTDOWN_COLUMNS, createCountdown, updateCountdown, deleteCountdown } from './countdowns.js';
+import { habitStats, scheduleLabel, keyInZone, diffDays, addDays } from '../public/habits.js';
+import { occurrence } from '../public/countdowns.js';
 import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
   syncDueCalendars, wipeCalendars,
@@ -263,6 +267,35 @@ function assetLinks(env) {
   }], { headers: { 'Cache-Control': 'public, max-age=3600' } });
 }
 
+// Habit check-ins are kept by local day; a day early covers every time zone.
+const logsSince = () => new Date(Date.now() - (LOG_DAYS + 1) * 86400000).toISOString().slice(0, 10);
+
+// For /api/plan: each active habit as of today in tz.
+function planHabits(habits, logs, { now, tz }) {
+  const today = keyInZone(now, tz);
+  return habits.filter((h) => !h.archived).map((h) => {
+    const counts = new Map(logs.filter((l) => l.habit_id === h.id).map((l) => [l.day, l.count]));
+    const s = habitStats(h, counts, { today, start: keyInZone(h.created_at, tz) });
+    return {
+      id: h.id, name: h.name, schedule: scheduleLabel(h.schedule), target: h.target, unit: h.unit,
+      today: s.today, done: s.todayDone, due: s.due, streak: s.streak, streakUnit: s.unit, best: s.best,
+      rate30: s.rate == null ? null : Math.round(s.rate * 100) / 100, progress: s.progress,
+      last7: Array.from({ length: 7 }, (_, i) => addDays(today, i - 6)).map((day) => ({ day, count: counts.get(day) || 0 })),
+    };
+  });
+}
+
+// For /api/plan: countdowns with their next date and the days to it (negative: days since) in tz. All-day dates are
+// the user's local midnight; reading them six hours later keeps them on their day across DST changes.
+function planCountdowns(list, { now, tz }) {
+  const today = keyInZone(now, tz);
+  return list.map((c) => {
+    const { at } = occurrence(c, now);
+    const date = keyInZone(c.all_day ? at + 6 * 3600000 : at, tz);
+    return { id: c.id, title: c.title, date, at, allDay: Boolean(c.all_day), repeat: c.repeat, pinned: Boolean(c.pinned), days: diffDays(date, today), note: c.note };
+  }).sort((a, b) => (a.days < 0) - (b.days < 0) || Math.abs(a.days) - Math.abs(b.days));
+}
+
 const validTag = (t) => Object.hasOwn(TAGS, t);
 const validStatus = (s) => s === null || STATUSES.includes(s);
 
@@ -273,7 +306,7 @@ async function handleApi(request, env, url, user) {
   let m;
 
   if (path === '/api/data' && method === 'GET') {
-    const [courses, events, homework, link, breaks, syncs, focus] = await DB.batch([
+    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -286,6 +319,8 @@ async function handleApi(request, env, url, user) {
       // The last eight weeks of focus (Today, homework totals, the week chart); the Focus page loads the year.
       DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
         .bind(user.id, Date.now() - FOCUS_DATA_DAYS * 86400000),
+      ...habitQueries(env, user, logsSince()),
+      DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
     ]);
     const gcal = link.results[0];
     return json({
@@ -305,6 +340,8 @@ async function handleApi(request, env, url, user) {
       calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
       focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
+      habits: { list: habits.results.map(habitRow), logs: habitLogs.results, since: logsSince() },
+      countdowns: countdowns.results,
     });
   }
 
@@ -313,7 +350,7 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/plan' && method === 'GET') {
     const tz = [url.searchParams.get('tz'), request.cf?.timezone, 'Europe/Paris'].find((z) => z && isValidTimeZone(z));
     const now = Date.now();
-    const [courses, events, homework, cals, focus] = await DB.batch([
+    const [courses, events, homework, cals, focus, habits, habitLogs, countdowns] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -322,6 +359,8 @@ async function handleApi(request, env, url, user) {
       DB.prepare('SELECT id, name, attendance FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id').bind(user.id),
       DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
         .bind(user.id, now - FOCUS_DATA_DAYS * 86400000),
+      ...habitQueries(env, user, logsSince()),
+      DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
     ]);
     const evs = events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals) }));
     const hw = homework.results.map(({ gcal_event_id: _, sync_error: __, ...h }) => h);
@@ -332,6 +371,8 @@ async function handleApi(request, env, url, user) {
       attendance: { threshold: user.threshold, unit: user.unit },
       // Focus (Pomodoro) time in the days of tz; the sessions themselves are at GET /api/focus.
       focus: { settings: focusSettings(user), ...focusSummary(focus.results.map(focusRow), { now, tz }) },
+      habits: planHabits(habits.results.map(habitRow), habitLogs.results, { now, tz }),
+      countdowns: planCountdowns(countdowns.results, { now, tz }),
     });
   }
 
@@ -343,6 +384,17 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/focus' && method === 'POST') return json(await logFocus(env, user, await readJson(request)));
   if ((m = path.match(/^\/api\/focus\/(\d+)$/)) && method === 'DELETE') return json(await deleteFocus(env, user, Number(m[1])));
   if (path === '/api/focus/settings' && method === 'PUT') return json({ settings: await saveFocusSettings(env, user, await readJson(request)) });
+
+  // Habits: check-ins are PUT per local day ({ day: 'YYYY-MM-DD', count }, 0 clears the day).
+  if (path === '/api/habits' && method === 'POST') return json(await createHabit(env, user, await readJson(request)));
+  if (path === '/api/habits/order' && method === 'POST') return json(await reorderHabits(env, user, await readJson(request)));
+  if ((m = path.match(/^\/api\/habits\/(\d+)$/)) && method === 'PATCH') return json(await updateHabit(env, user, Number(m[1]), await readJson(request)));
+  if ((m = path.match(/^\/api\/habits\/(\d+)$/)) && method === 'DELETE') return json(await deleteHabit(env, user, Number(m[1])));
+  if ((m = path.match(/^\/api\/habits\/(\d+)\/log$/)) && method === 'PUT') return json(await logHabit(env, user, Number(m[1]), await readJson(request)));
+
+  if (path === '/api/countdowns' && method === 'POST') return json(await createCountdown(env, user, await readJson(request)));
+  if ((m = path.match(/^\/api\/countdowns\/(\d+)$/)) && method === 'PATCH') return json(await updateCountdown(env, user, Number(m[1]), await readJson(request)));
+  if ((m = path.match(/^\/api\/countdowns\/(\d+)$/)) && method === 'DELETE') return json(await deleteCountdown(env, user, Number(m[1])));
 
   if (path === '/api/catchups' && method === 'POST') {
     return json(await createCatchup(env, user, await readJson(request), url.origin));

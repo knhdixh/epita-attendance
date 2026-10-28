@@ -7,6 +7,8 @@ import * as cal from './calendars-ui.js';
 import * as today from './today-ui.js';
 import * as tokens from './tokens-ui.js';
 import * as fx from './focus-ui.js';
+import * as hb from './habits-ui.js';
+import * as cd from './countdowns-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -231,7 +233,7 @@ function render() {
   document.getElementById('fluid')?.remove();
 
   // Entrance animation only when the view changes, never on the re-render after a click.
-  const view = state.data.events.length || state.tab === 'settings' || state.tab === 'focus' ? state.tab : 'empty';
+  const view = state.data.events.length || NO_TIMETABLE.includes(state.tab) ? state.tab : 'empty';
   const changed = view !== lastView;
   lastView = view;
 
@@ -239,7 +241,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, countdowns: cd.renderCountdowns, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -256,8 +258,10 @@ function render() {
 }
 
 let lastView = null;
+// Pages that work before a timetable is added.
+const NO_TIMETABLE = ['settings', 'focus', 'habits', 'countdowns'];
 let first = true;
-const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', countdowns: 'Countdowns', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
@@ -270,6 +274,8 @@ function pageSub() {
     if (open) parts.push(`${open} open`);
   }
   if (state.tab === 'focus') parts.push(fx.subtitle());
+  if (state.tab === 'habits') parts.push(hb.subtitle());
+  if (state.tab === 'countdowns') parts.push(cd.subtitle());
   if (state.tab === 'upcoming' && state.weekCount != null) parts.push(`${state.weekCount} session${state.weekCount === 1 ? '' : 's'} this week`);
   if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
@@ -299,6 +305,7 @@ function renderSidebar(view) {
   const endOfDay = new Date(now).setHours(23, 59, 59, 999);
   const dueToday = open.filter((h) => h.due_at <= endOfDay).length;
   setCount('today', dueToday, overdue ? 'bad' : 'warn', `${dueToday} due today or overdue`);
+  sidebarExtras();
 
   const { perCourse } = statsByCourse(courses, events, opts());
   const tracked = perCourse.filter((p) => countsAttendance(p.course) && p.stats.sessions)
@@ -320,6 +327,14 @@ function renderSidebar(view) {
     const on = b.dataset.tab === state.tab && !(courseFocus && b.dataset.tab === 'sessions');
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
+}
+
+// Habits left today and the nearest countdown; also shown before a timetable is added.
+function sidebarExtras() {
+  const left = hb.leftToday();
+  setCount('habits', left, '', `${left} habit${left === 1 ? '' : 's'} left today`);
+  const next = cd.nearest();
+  setCount('countdowns', next ? cd.short(next) : '', next?.pinned ? 'pin' : '', next ? `${next.title}: ${cd.short(next)}` : '');
 }
 
 function setCount(tab, n, tone, title) {
@@ -854,7 +869,7 @@ async function setTracked(updates) {
 // [tab, label, icon, key after G]
 const NAV = [
   ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
-  ['focus', 'Focus', 'i-focus', 'F'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
+  ['focus', 'Focus', 'i-focus', 'F'], ['habits', 'Habits', 'i-habits', 'R'], ['countdowns', 'Countdowns', 'i-countdown', 'D'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
 const SIDEBAR_KEY = 'a80-sidebar';
@@ -909,7 +924,7 @@ function paletteItems() {
   const { courses, events, homework, user } = state.data;
   const hasData = events.length > 0;
   const now = Date.now();
-  const items = NAV.filter(([tab]) => hasData || tab === 'settings' || tab === 'focus').map(([tab, label, icon, key]) => ({
+  const items = NAV.filter(([tab]) => hasData || NO_TIMETABLE.includes(tab)).map(([tab, label, icon, key]) => ({
     id: `nav:${tab}`, section: 'Navigation', label: `Go to ${label}`, icon, keys: ['G', 'then', key], home: true, run: () => go(tab),
   }));
 
@@ -919,7 +934,7 @@ function paletteItems() {
   const unmarked = unmarkedEvents();
   if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
   if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
-  items.push(...cal.paletteItems(go), ...fx.paletteItems());
+  items.push(...cal.paletteItems(go), ...fx.paletteItems(), ...hb.paletteItems(go), ...cd.paletteItems(go));
   if (state.data.integrations?.feedUrl) act('copy-feed', 'Copy timetable calendar link', 'i-link', copyTimetableFeed, { home: false, keywords: 'feed ics subscribe google apple outlook' });
   act('sidebar', 'Toggle sidebar', 'i-panel', toggleSidebar, { keys: ['M'], home: false });
   act('shortcuts', 'Keyboard shortcuts', 'i-keyboard', () => palette.open('?'), { keys: ['?'], home: false, keywords: 'keys help' });
@@ -957,8 +972,9 @@ function paletteItems() {
 
 // Always offered below the matches: send the text to the assistant, or search the session list for it.
 function paletteFallback(q) {
-  if (!state.data?.events.length) return [];
-  const out = [];
+  if (!state.data) return [];
+  const out = [...cd.fallback(q, go), ...hb.fallback(q, go)];
+  if (!state.data.events.length) return out;
   if (state.data.assistant) {
     out.push({ id: 'ask:q', recentId: 'act:ask', section: 'Assistant', label: `Ask: “${q}”`, icon: 'i-assistant', tone: 'accent',
       run: () => { go('assistant'); ai.ask(q); } });
@@ -971,7 +987,7 @@ function paletteFallback(q) {
 function shortcutsHelp() {
   const rows = [
     [['/'], 'Search and commands'], [['⌘', 'K'], 'Search and commands, even while typing'], [['Q'], 'Add homework'],
-    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'], ...fx.SHORTCUTS,
+    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'], ...fx.SHORTCUTS, ...hb.SHORTCUTS,
     ...NAV.map(([, label, , key]) => [['G', 'then', key], `Go to ${label}`]),
     [['Esc'], 'Close, or cancel the homework form'], [['⌘', '↵'], 'Save homework from the notes'],
   ];
@@ -1002,7 +1018,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (byok.onClick(e) || fx.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (byok.onClick(e) || fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1114,7 +1130,8 @@ document.addEventListener('keydown', (e) => {
     return palette.isOpen() ? palette.close() : palette.open();
   }
   if (palette.isOpen()) return;
-  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e) || fx.onKeydown(e)) return;
+  if (hw.onKeydown(e) || cal.onKeydown(e) || ai.onKeydown(e) || fx.onKeydown(e) || hb.onKeydown(e) || cd.onKeydown(e)) return;
+  if (e.key === 'Escape' && state.tab === 'habits' && state.hbOpen && !isTyping(e.target) && $accountMenu.hidden) { hb.onPageKey(e); return; }
   if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
   if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
   if (!signedIn || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
@@ -1127,6 +1144,8 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (state.tab === 'focus' && fx.onPageKey(e)) return;
+  if (state.tab === 'habits' && hb.onPageKey(e)) return;
+  if (state.tab === 'countdowns' && cd.onPageKey(e)) return;
   if (k === '/') { e.preventDefault(); palette.open(); }
   else if (e.key === '?') { e.preventDefault(); palette.open('?'); }
   else if (k === 'g') gAt = Date.now();
@@ -1143,7 +1162,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (byok.onChange(e) || fx.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (byok.onChange(e) || fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -1168,7 +1187,7 @@ document.addEventListener('change', (e) => {
 
 let searchTimer;
 document.addEventListener('input', (e) => {
-  if (ai.onInput(e) || hw.onInput(e) || brk.onInput(e)) return;
+  if (ai.onInput(e) || hw.onInput(e) || brk.onInput(e) || hb.onInput(e) || cd.onInput(e)) return;
   if (e.target.id !== 'f-q') return;
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
@@ -1180,7 +1199,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e) || hb.onSubmit(e) || cd.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');

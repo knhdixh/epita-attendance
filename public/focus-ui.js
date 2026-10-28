@@ -355,6 +355,7 @@ function addTag(raw) {
 function safeToRender() {
   if (!state.data || document.body.classList.contains('signed-out')) return false;
   if (['assistant', 'settings', 'breaks'].includes(state.tab) || state.hwFormOpen || state.hwEditing) return false;
+  if (state.hbEditing || state.hbAdding || state.cdEditing || state.cdAdding) return false;
   return !document.activeElement?.closest('input, textarea, select, [contenteditable="true"]');
 }
 
