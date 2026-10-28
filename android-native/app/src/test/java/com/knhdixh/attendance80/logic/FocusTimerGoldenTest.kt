@@ -3,6 +3,7 @@ package com.knhdixh.attendance80.logic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,7 +11,11 @@ import kotlin.math.abs
 
 class FocusTimerGoldenTest {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
 
     private fun loadResource(name: String): String {
         val stream = javaClass.classLoader?.getResourceAsStream(name)
@@ -80,6 +85,15 @@ class FocusTimerGoldenTest {
     fun testCleanHelpersGolden() {
         val golden = json.decodeFromString<FocusTimerGoldenData>(loadResource("golden/focus_timer_golden.json"))
 
+        for (item in golden.cleanSettingsResults) {
+            val act = cleanSettings(item.input)
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(item.output),
+                actual = json.encodeToJsonElement(act),
+                path = "cleanSettings(${item.name})"
+            )
+        }
+
         for (item in golden.cleanTagsResults) {
             val act = cleanTags(item.input)
             assertEquals("cleanTags(${item.input})", item.output, act)
@@ -109,65 +123,17 @@ class FocusTimerGoldenTest {
             assertEquals("$tag: isDueNow", op.isDueNow, isDue(t, now))
             assertEquals("$tag: nextLength", op.nextLength, nextLength(t, settings))
 
-            // Start
-            val actStart = start(t, settings, now, "new-run-start")
-            assertEquals("$tag: start phase", op.start.phase, actStart.phase)
-            assertEquals("$tag: start next", op.start.next, actStart.next)
-            assertEquals("$tag: start endsAt", op.start.endsAt, actStart.endsAt)
-            assertEquals("$tag: start done", op.start.done, actStart.done)
-
-            // Pause & Resume
-            val actPause = pause(t, now)
-            assertEquals("$tag: pause pausedAt", op.pause.pausedAt, actPause.pausedAt)
-
-            val actResume = resume(t, now + 5 * 60000L)
-            assertEquals("$tag: resume endsAt", op.resume.endsAt, actResume.endsAt)
-            assertEquals("$tag: resume pausedMs", op.resume.pausedMs, actResume.pausedMs)
-
-            // Adjust
-            val actAdjPlus = adjust(t, settings, 5, now)
-            assertEquals("$tag: adjust +5 endsAt", op.adjustPlus5.endsAt, actAdjPlus.endsAt)
-            assertEquals("$tag: adjust +5 custom", op.adjustPlus5.custom, actAdjPlus.custom)
-
-            val actAdjMinus = adjust(t, settings, -5, now)
-            assertEquals("$tag: adjust -5 endsAt", op.adjustMinus5.endsAt, actAdjMinus.endsAt)
-            assertEquals("$tag: adjust -5 custom", op.adjustMinus5.custom, actAdjMinus.custom)
-
-            // SetLength
-            val actSetLen = setLength(t, settings, 30)
-            assertEquals("$tag: setLength30 custom", op.setLength30.custom, actSetLen.custom)
-
-            // Finish normal
-            val actFinNorm = finish(t, settings, now, "finish-run-1", early = false)
-            assertEquals("$tag: finish normal next phase", op.finishNormal.next.phase, actFinNorm.next.phase)
-            assertEquals("$tag: finish normal next done", op.finishNormal.next.done, actFinNorm.next.done)
-            assertEquals("$tag: finish normal next next", op.finishNormal.next.next, actFinNorm.next.next)
-            if (op.finishNormal.log != null) {
-                assertEquals("$tag: finish normal log planned_seconds", op.finishNormal.log.planned_seconds, actFinNorm.log?.planned_seconds)
-                assertEquals("$tag: finish normal log focus_seconds", op.finishNormal.log.focus_seconds, actFinNorm.log?.focus_seconds)
-                assertEquals("$tag: finish normal log completed", op.finishNormal.log.completed, actFinNorm.log?.completed)
-            } else {
-                assertEquals("$tag: finish normal log null", null, actFinNorm.log)
-            }
-
-            // Finish early
-            val actFinEarly = finish(t, settings, now, "finish-run-2", early = true)
-            assertEquals("$tag: finish early next phase", op.finishEarly.next.phase, actFinEarly.next.phase)
-            assertEquals("$tag: finish early next done", op.finishEarly.next.done, actFinEarly.next.done)
-            if (op.finishEarly.log != null) {
-                assertEquals("$tag: finish early log completed", op.finishEarly.log.completed, actFinEarly.log?.completed)
-            }
-
-            // Stop
-            val actStop = stop(t, now)
-            assertEquals("$tag: stop next phase", op.stop.next.phase, actStop.next.phase)
-            assertEquals("$tag: stop next next", op.stop.next.next, actStop.next.next)
-            if (op.stop.log != null) {
-                assertEquals("$tag: stop log focus_seconds", op.stop.log.focus_seconds, actStop.log?.focus_seconds)
-                assertEquals("$tag: stop log completed", op.stop.log.completed, actStop.log?.completed)
-            } else {
-                assertEquals("$tag: stop log null", null, actStop.log)
-            }
+            // Operations deep comparison (updatedAt is an Android-native UI bookkeeping field not present in JS focus.js)
+            val ignored = setOf("updatedAt")
+            assertJsonEquals(json.encodeToJsonElement(op.start), json.encodeToJsonElement(start(t, settings, now, "new-run-start")), "$tag.start", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.pause), json.encodeToJsonElement(pause(t, now)), "$tag.pause", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.resume), json.encodeToJsonElement(resume(t, now + 5 * 60000L)), "$tag.resume", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.adjustPlus5), json.encodeToJsonElement(adjust(t, settings, 5, now)), "$tag.adjustPlus5", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.adjustMinus5), json.encodeToJsonElement(adjust(t, settings, -5, now)), "$tag.adjustMinus5", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.setLength30), json.encodeToJsonElement(setLength(t, settings, 30)), "$tag.setLength30", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.finishNormal), json.encodeToJsonElement(finish(t, settings, now, "finish-run-1", early = false)), "$tag.finishNormal", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.finishEarly), json.encodeToJsonElement(finish(t, settings, now, "finish-run-2", early = true)), "$tag.finishEarly", ignored)
+            assertJsonEquals(json.encodeToJsonElement(op.stop), json.encodeToJsonElement(stop(t, now)), "$tag.stop", ignored)
         }
     }
 }

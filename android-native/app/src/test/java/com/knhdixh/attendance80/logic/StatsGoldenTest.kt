@@ -5,6 +5,7 @@ import com.knhdixh.attendance80.net.EventDto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,7 +13,11 @@ import kotlin.math.abs
 
 class StatsGoldenTest {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
 
     private fun loadResource(name: String): String {
         val stream = javaClass.classLoader?.getResourceAsStream(name)
@@ -94,27 +99,11 @@ class StatsGoldenTest {
                 now = case.now,
             )
 
-            val exp = case.result
-            val desc = case.description
-            assertClose(exp.total, actual.total, "$desc: total")
-            assertClose(exp.present, actual.present, "$desc: present")
-            assertClose(exp.absent, actual.absent, "$desc: absent")
-            assertClose(exp.plannedAbsent, actual.plannedAbsent, "$desc: plannedAbsent")
-            assertClose(exp.excused, actual.excused, "$desc: excused")
-            assertClose(exp.optional, actual.optional, "$desc: optional")
-            assertClose(exp.pastMarked, actual.pastMarked, "$desc: pastMarked")
-            assertClose(exp.pastPresent, actual.pastPresent, "$desc: pastPresent")
-            assertEquals("$desc: unmarkedPast", exp.unmarkedPast, actual.unmarkedPast)
-            assertEquals("$desc: upcoming", exp.upcoming, actual.upcoming)
-            assertEquals("$desc: sessions", exp.sessions, actual.sessions)
-            assertEquals("$desc: missedMustAttend count", exp.missedMustAttend.size, actual.missedMustAttend.size)
-            assertClose(exp.maxWeight, actual.maxWeight, "$desc: maxWeight")
-            assertClose(exp.allowedAbsence, actual.allowedAbsence, "$desc: allowedAbsence")
-            assertClose(exp.remaining, actual.remaining, "$desc: remaining")
-            assertClose(exp.remainingDisplay, actual.remainingDisplay, "$desc: remainingDisplay")
-            assertClose(exp.projectedRate, actual.projectedRate, "$desc: projectedRate")
-            assertClose(exp.currentRate, actual.currentRate, "$desc: currentRate")
-            assertEquals("$desc: level", exp.level, actual.level)
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.result),
+                actual = json.encodeToJsonElement(actual),
+                path = case.description
+            )
         }
     }
 
@@ -132,21 +121,11 @@ class StatsGoldenTest {
                 now = case.now,
             )
 
-            // Compare overall
-            assertClose(case.result.overall.total, actual.overall.total, "overall: total")
-            assertClose(case.result.overall.remaining, actual.overall.remaining, "overall: remaining")
-            assertEquals("overall: level", case.result.overall.level, actual.overall.level)
-
-            // Compare perCourse
-            assertEquals("perCourse size", case.result.perCourse.size, actual.perCourse.size)
-            for (i in case.result.perCourse.indices) {
-                val exp = case.result.perCourse[i]
-                val act = actual.perCourse[i]
-                assertEquals("course id at $i", exp.course.id, act.course.id)
-                assertClose(exp.stats.total, act.stats.total, "course ${exp.course.name}: total")
-                assertClose(exp.stats.remaining, act.stats.remaining, "course ${exp.course.name}: remaining")
-                assertEquals("course ${exp.course.name}: level", exp.stats.level, act.stats.level)
-            }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.result),
+                actual = json.encodeToJsonElement(actual),
+                path = "statsByCourse(threshold=${case.threshold}, unit=${case.unit})"
+            )
         }
     }
 }

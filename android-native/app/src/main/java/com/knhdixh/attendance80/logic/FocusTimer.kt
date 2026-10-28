@@ -1,6 +1,13 @@
 package com.knhdixh.attendance80.logic
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -90,6 +97,57 @@ fun cleanTasks(list: List<String>?, max: Int = MAX_TASKS): List<String> {
         }
     }
     return out
+}
+
+fun cleanSettings(raw: JsonElement?): FocusSettings {
+    if (raw == null || raw !is JsonObject) return DEFAULT_SETTINGS
+    fun intVal(key: String, min: Int, max: Int, default: Int): Int {
+        val elem = raw[key] ?: return default
+        if (elem is JsonNull) return default
+        val prim = elem as? JsonPrimitive ?: return default
+        if (prim.isString) {
+            val content = prim.content
+            if (content.isEmpty()) return default
+            val n = content.toDoubleOrNull() ?: return default
+            if (n % 1.0 != 0.0) return default
+            val intVal = n.toInt()
+            return if (intVal in min..max) intVal else default
+        }
+        val bool = prim.booleanOrNull
+        if (bool != null) {
+            val intVal = if (bool) 1 else 0
+            return if (intVal in min..max) intVal else default
+        }
+        val n = prim.intOrNull ?: return default
+        return if (n in min..max) n else default
+    }
+    fun boolVal(key: String, default: Boolean): Boolean {
+        val elem = raw[key] ?: return default
+        val prim = elem as? JsonPrimitive ?: return default
+        return prim.booleanOrNull ?: default
+    }
+    fun listVal(key: String): List<String>? {
+        val elem = raw[key] ?: return null
+        val arr = elem as? JsonArray ?: return null
+        return arr.mapNotNull { item ->
+            if (item is JsonNull) null
+            else (item as? JsonPrimitive)?.takeIf { it.isString }?.content
+        }
+    }
+    val d = DEFAULT_SETTINGS
+    return FocusSettings(
+        focus = intVal("focus", 1, 180, d.focus),
+        short = intVal("short", 1, 60, d.short),
+        long = intVal("long", 1, 90, d.long),
+        longEvery = intVal("longEvery", 2, 12, d.longEvery),
+        goal = intVal("goal", 1, 24, d.goal),
+        autoBreaks = boolVal("autoBreaks", d.autoBreaks),
+        autoFocus = boolVal("autoFocus", d.autoFocus),
+        sound = boolVal("sound", d.sound),
+        notify = boolVal("notify", d.notify),
+        tasks = cleanTasks(listVal("tasks"), MAX_TASKS),
+        tags = cleanTags(listVal("tags"), MAX_TAGS),
+    )
 }
 
 fun cleanSettings(

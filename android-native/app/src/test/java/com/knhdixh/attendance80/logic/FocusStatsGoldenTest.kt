@@ -3,6 +3,7 @@ package com.knhdixh.attendance80.logic
 import com.knhdixh.attendance80.net.FocusSessionDto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,7 +12,11 @@ import kotlin.math.abs
 
 class FocusStatsGoldenTest {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
 
     private fun loadResource(name: String): String {
         val stream = javaClass.classLoader?.getResourceAsStream(name)
@@ -77,20 +82,18 @@ class FocusStatsGoldenTest {
         for (run in runs) {
             val zoneId = ZoneId.of(run.zone)
             val actTotals = dailyTotals(fixture.yearSessions, zoneId)
-            for ((k, exp) in run.dailyTotals) {
-                val act = actTotals[k]
-                assertTrue("Key $k should be in dailyTotals for zone ${run.zone}", act != null)
-                assertClose(exp.minutes, act!!.minutes, "dailyTotal($k) minutes [${run.zone}]")
-                assertEquals("dailyTotal($k) count [${run.zone}]", exp.count, act.count)
-            }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(run.dailyTotals),
+                actual = json.encodeToJsonElement(actTotals),
+                path = "dailyTotals[${run.zone}]"
+            )
 
-            val actHw = minutesByHomework(fixture.yearSessions)
-            for ((kStr, expMin) in run.minutesByHomework) {
-                val k = kStr.toLong()
-                val actMin = actHw[k]
-                assertTrue("Homework $k should be in minutesByHomework", actMin != null)
-                assertClose(expMin, actMin, "minutesByHomework($k) [${run.zone}]")
-            }
+            val actHw = minutesByHomework(fixture.yearSessions).mapKeys { it.key.toString() }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(run.minutesByHomework),
+                actual = json.encodeToJsonElement(actHw),
+                path = "minutesByHomework[${run.zone}]"
+            )
         }
     }
 
@@ -116,44 +119,14 @@ class FocusStatsGoldenTest {
             val zoneId = ZoneId.of(run.zone)
             for ((range, exp) in listOf(7 to run.focusStats7, 30 to run.focusStats30, 365 to run.focusStats365)) {
                 val act = focusStats(fixture.yearSessions, now = fixture.refNow, range = range, zoneId = zoneId)
-                val tag = "zone_${run.zone}_range_$range"
-
-                assertClose(exp.today.minutes, act.today.minutes, "$tag: today minutes")
-                assertEquals("$tag: today count", exp.today.count, act.today.count)
-                assertEquals("$tag: streak", exp.streak, act.streak)
-                assertClose(exp.thisWeek, act.thisWeek, "$tag: thisWeek")
-                assertClose(exp.lastWeek, act.lastWeek, "$tag: lastWeek")
-
-                // Week
-                assertEquals("$tag: week size", exp.week.size, act.week.size)
-                for (i in exp.week.indices) {
-                    val ew = exp.week[i]
-                    val aw = act.week[i]
-                    assertEquals("$tag: week[$i] ms", ew.ms, aw.ms)
-                    assertClose(ew.minutes, aw.minutes, "$tag: week[$i] minutes")
-                    assertEquals("$tag: week[$i] count", ew.count, aw.count)
-                    assertEquals("$tag: week[$i] future", ew.future, aw.future)
-                }
-
-                // Range breakdown
-                val er = exp.range
-                val ar = act.range
-                assertEquals("$tag: range days", er.days, ar.days)
-                assertClose(er.minutes, ar.minutes, "$tag: range minutes")
-                assertEquals("$tag: range count", er.count, ar.count)
-                assertEquals("$tag: range activeDays", er.activeDays, ar.activeDays)
-            assertClose(er.perActiveDay, ar.perActiveDay, "$tag: range perActiveDay")
-            assertEquals("$tag: range peakHour", er.peakHour, ar.peakHour)
-
-            // Best day
-            if (exp.best != null) {
-                assertEquals("$tag: best key", exp.best.key, act.best?.key)
-                assertClose(exp.best.minutes, act.best?.minutes, "$tag: best minutes")
-                assertEquals("$tag: best count", exp.best.count, act.best?.count)
+                assertJsonEquals(
+                    expected = json.encodeToJsonElement(exp),
+                    actual = json.encodeToJsonElement(act),
+                    path = "focusStats(zone=${run.zone}, range=$range)"
+                )
             }
         }
     }
-}
 
     @Test
     fun testFocusSummaryGolden() {
@@ -162,25 +135,34 @@ class FocusStatsGoldenTest {
 
         for ((tz, exp) in listOf("Europe/Paris" to golden.focusSummaryParis, "Europe/Helsinki" to golden.focusSummaryHelsinki)) {
             val act = focusSummary(fixture.yearSessions, now = fixture.refNow, tz = tz)
-            val tag = "tz_$tz"
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(exp),
+                actual = json.encodeToJsonElement(act),
+                path = "focusSummary(tz=$tz)"
+            )
+        }
+    }
 
-            assertEquals("$tag: today minutes", exp.today.minutes, act.today.minutes)
-            assertEquals("$tag: today pomodoros", exp.today.pomodoros, act.today.pomodoros)
-            assertEquals("$tag: streak", exp.streak, act.streak)
-            assertEquals("$tag: last7 minutes", exp.last7.minutes, act.last7.minutes)
-            assertEquals("$tag: last7 pomodoros", exp.last7.pomodoros, act.last7.pomodoros)
+    @Test
+    fun testDayGolden() {
+        val golden = json.decodeFromString<FocusStatsGoldenData>(loadResource("golden/focus_stats_golden.json"))
+        val fixture = json.decodeFromString<FocusFixture>(loadResource("fixtures/focus.json"))
+        val zoneId = ZoneId.of(golden.zone)
+        val totals = dailyTotals(fixture.yearSessions, zoneId)
 
-            assertEquals("$tag: last7 byDay size", exp.last7.byDay.size, act.last7.byDay.size)
-            for (i in exp.last7.byDay.indices) {
-                assertEquals("$tag: last7 byDay[$i] date", exp.last7.byDay[i].date, act.last7.byDay[i].date)
-                assertEquals("$tag: last7 byDay[$i] minutes", exp.last7.byDay[i].minutes, act.last7.byDay[i].minutes)
-            }
+        val testTimestamps = listOf(
+            fixture.refNow,
+            fixture.refNow - 86400000L,
+            fixture.yearSessions.first().started_at,
+            fixture.yearSessions.last().started_at,
+            fixture.refNow + 30 * 86400000L
+        )
 
-            assertEquals("$tag: last7 byCourse size", exp.last7.byCourse.size, act.last7.byCourse.size)
-            for (i in exp.last7.byCourse.indices) {
-                assertEquals("$tag: last7 byCourse[$i] id", exp.last7.byCourse[i].course_id, act.last7.byCourse[i].course_id)
-                assertEquals("$tag: last7 byCourse[$i] minutes", exp.last7.byCourse[i].minutes, act.last7.byCourse[i].minutes)
-            }
+        for (ts in testTimestamps) {
+            val expected = totals[dayKey(ts, zoneId)] ?: DayTotal(0.0, 0)
+            val actual = day(ts, fixture.yearSessions, zoneId)
+            assertEquals("day($ts) minutes", expected.minutes, actual.minutes, 1e-9)
+            assertEquals("day($ts) count", expected.count, actual.count)
         }
     }
 }

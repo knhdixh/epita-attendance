@@ -4,27 +4,22 @@ import com.knhdixh.attendance80.net.CourseDto
 import com.knhdixh.attendance80.net.EventDto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.abs
 
 class BreaksGoldenTest {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
 
     private fun loadResource(name: String): String {
         val stream = javaClass.classLoader?.getResourceAsStream(name)
             ?: throw IllegalArgumentException("Resource not found: $name")
         return stream.bufferedReader().use { it.readText() }
-    }
-
-    private fun assertClose(expected: Double?, actual: Double?, msg: String = "") {
-        if (expected == null && actual == null) return
-        if (expected == null || actual == null) {
-            throw AssertionError("Mismatch: expected=$expected, actual=$actual. $msg")
-        }
-        assertTrue("Expected $expected but got $actual (diff ${abs(expected - actual)} > 1e-9). $msg", abs(expected - actual) <= 1e-9)
     }
 
     @Serializable
@@ -167,85 +162,60 @@ class BreaksGoldenTest {
             // Test simulations
             for (simCase in case.simulations) {
                 val act = simulateBreak(m, simCase.from, simCase.to)
-                val exp = simCase.result
                 val simTag = "$tag: sim [${simCase.from}, ${simCase.to}]"
-                assertEquals("$simTag from", exp.from, act.from)
-                assertEquals("$simTag to", exp.to, act.to)
-                assertEquals("$simTag days", exp.days, act.days)
-                assertEquals("$simTag level", exp.level, act.level)
-                assertEquals("$simTag sessions count", exp.sessions.size, act.sessions.size)
-                assertEquals("$simTag conflicts count", exp.conflicts.size, act.conflicts.size)
-                assertEquals("$simTag holidayDays", exp.holidayDays, act.holidayDays)
-                assertEquals("$simTag courses count", exp.courses.size, act.courses.size)
-                for (ci in exp.courses.indices) {
-                    val expC = exp.courses[ci]
-                    val actC = act.courses[ci]
-                    assertEquals("$simTag course ${expC.course.name} skipped", expC.skipped, actC.skipped)
-                    assertEquals("$simTag course ${expC.course.name} level", expC.level, actC.level)
-                    assertClose(expC.after.remaining, actC.after.remaining, "$simTag course ${expC.course.name} remaining")
-                }
+                assertJsonEquals(
+                    expected = json.encodeToJsonElement(simCase.result),
+                    actual = json.encodeToJsonElement(act),
+                    path = simTag
+                )
             }
 
             // Test window searches
             for (wsCase in case.windowSearches) {
                 val act = findBreakWindows(m, days = wsCase.params.days, from = wsCase.params.from, to = wsCase.params.to)
-                val exp = wsCase.result
                 val wsTag = "$tag: window search days=${wsCase.params.days}"
-                assertEquals("$wsTag windows count", exp.windows.size, act.windows.size)
-                for (wi in exp.windows.indices) {
-                    val expW = exp.windows[wi]
-                    val actW = act.windows[wi]
-                    assertEquals("$wsTag window $wi from", expW.from, actW.from)
-                    assertEquals("$wsTag window $wi to", expW.to, actW.to)
-                    assertEquals("$wsTag window $wi days", expW.days, actW.days)
-                    assertEquals("$wsTag window $wi sessions", expW.sessions, actW.sessions)
-                    assertEquals("$wsTag window $wi level", expW.level, actW.level)
-                    if (expW.margin == null) {
-                        assertTrue("$wsTag window $wi margin should be infinite", actW.margin == null || actW.margin == Double.POSITIVE_INFINITY)
-                    } else {
-                        assertClose(expW.margin, actW.margin, "$wsTag window $wi margin")
-                    }
-                }
-                if (exp.longest != null) {
-                    assertEquals("$wsTag longest days", exp.longest.days, act.longest?.days)
-                    assertEquals("$wsTag longest from", exp.longest.from, act.longest?.from)
-                    assertEquals("$wsTag longest to", exp.longest.to, act.longest?.to)
-                }
+                assertJsonEquals(
+                    expected = json.encodeToJsonElement(wsCase.result),
+                    actual = json.encodeToJsonElement(act),
+                    path = wsTag
+                )
             }
 
             // Test longest safe
             val actLongest = longestSafe(m, "2026-10-15", "2026-12-04")
-            if (case.longest != null) {
-                assertEquals("$tag longestSafe days", case.longest.days, actLongest?.days)
-                assertEquals("$tag longestSafe from", case.longest.from, actLongest?.from)
-                assertEquals("$tag longestSafe to", case.longest.to, actLongest?.to)
-            }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.longest),
+                actual = json.encodeToJsonElement(actLongest),
+                path = "$tag: longestSafe"
+            )
 
             // Test weekOverview (4 and 12 weeks)
             val actWo4 = weekOverview(m, 4)
-            assertEquals("$tag weekOverview4 size", case.weekOverview4.size, actWo4.size)
-            for (wi in case.weekOverview4.indices) {
-                val expW = case.weekOverview4[wi]
-                val actW = actWo4[wi]
-                assertEquals("$tag weekOverview4[$wi] from", expW.from, actW.from)
-                assertEquals("$tag weekOverview4[$wi] level", expW.level, actW.level)
-                assertEquals("$tag weekOverview4[$wi] sessions", expW.sessions, actW.sessions)
-            }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.weekOverview4),
+                actual = json.encodeToJsonElement(actWo4),
+                path = "$tag: weekOverview4"
+            )
+            val actWo12 = weekOverview(m, 12)
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.weekOverview12),
+                actual = json.encodeToJsonElement(actWo12),
+                path = "$tag: weekOverview12"
+            )
 
-            // Test startDayGrid
+            // Test startDayGrid (3 and 7 days)
             val actGrid3 = startDayGrid(m, 3)
-            assertEquals("$tag grid3 weeks", case.grid3.size, actGrid3.size)
-            for (wi in case.grid3.indices) {
-                for (di in case.grid3[wi].indices) {
-                    val expCell = case.grid3[wi][di]
-                    val actCell = actGrid3[wi][di]
-                    assertEquals("$tag grid3[$wi][$di] date", expCell.date, actCell.date)
-                    assertEquals("$tag grid3[$wi][$di] level", expCell.level, actCell.level)
-                    assertEquals("$tag grid3[$wi][$di] sessions", expCell.sessions, actCell.sessions)
-                    assertEquals("$tag grid3[$wi][$di] past", expCell.past, actCell.past)
-                    assertEquals("$tag grid3[$wi][$di] beyond", expCell.beyond, actCell.beyond)
-                }
-            }
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.grid3),
+                actual = json.encodeToJsonElement(actGrid3),
+                path = "$tag: grid3"
+            )
+            val actGrid7 = startDayGrid(m, 7)
+            assertJsonEquals(
+                expected = json.encodeToJsonElement(case.grid7),
+                actual = json.encodeToJsonElement(actGrid7),
+                path = "$tag: grid7"
+            )
         }
     }
 }

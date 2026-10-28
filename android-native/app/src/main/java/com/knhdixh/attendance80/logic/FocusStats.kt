@@ -112,6 +112,15 @@ fun minutesByHomework(sessions: List<FocusSessionDto>): Map<Long, Double> {
     return map
 }
 
+fun day(
+    ms: Long,
+    sessions: List<FocusSessionDto>,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): DayTotal {
+    val totals = dailyTotals(sessions, zoneId)
+    return totals[dayKey(ms, zoneId)] ?: DayTotal()
+}
+
 fun focusStats(
     sessions: List<FocusSessionDto>,
     now: Long,
