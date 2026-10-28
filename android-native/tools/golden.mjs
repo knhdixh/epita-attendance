@@ -117,6 +117,25 @@ fs.writeFileSync(path.join(GOLDEN_DIR, 'stats_golden.json'), JSON.stringify(stat
 // 2. BREAKS GOLDEN
 // -------------------------------------------------------------
 console.log('Generating breaks_golden.json...');
+const holidayReCases = [
+  'Jour férié',
+  'JOUR FÉRIÉ',
+  'Congés',
+  'CONGÉS',
+  'Fériés',
+  'Holiday',
+  'Bank holiday',
+  'Vacances de Noël',
+  'vacances',
+  'holidays',
+  'jour ferie',
+  'JOUR FERIE',
+  'Mathématiques',
+  'Algorithmique'
+].map((s) => ({
+  input: s,
+  output: breaks.HOLIDAY_RE.test(s)
+}));
 const testDates = ['2026-09-01', '2026-10-14', '2026-10-25', '2026-10-26', '2026-11-01', '2026-12-04', 'invalid-date', '2026-02-30'];
 const dateHelperResults = {
   isDate: testDates.map((d) => ({ input: d, output: breaks.isDate(d) })),
@@ -215,6 +234,7 @@ for (const tp of [
 
 const breaksGolden = {
   dateHelperResults,
+  holidayReCases,
   breaksCases
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'breaks_golden.json'), JSON.stringify(breaksGolden, null, 2));

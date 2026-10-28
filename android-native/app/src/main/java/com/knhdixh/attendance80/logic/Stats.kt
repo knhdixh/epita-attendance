@@ -28,13 +28,20 @@ data class GroupSplit(
     val family: String,
 )
 
-private val GROUP_SPLIT_REGEX = Regex("""^(GR?\s?\d+)\s*[-–—]\s*(.+)$""", RegexOption.IGNORE_CASE)
+private const val JS_WS = """[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]"""
+private val GROUP_SPLIT_REGEX = Regex("""^(GR?$JS_WS?\d+)$JS_WS*[-–—]$JS_WS*(.+)$""", RegexOption.IGNORE_CASE)
+private val JS_WS_REGEX = Regex(JS_WS)
+
+private fun String.trimJs(): String = trim {
+    it.isWhitespace() || it == '\u00A0' || it in '\u2000'..'\u200A' || it == '\u2028' || it == '\u2029' || it == '\u202F' || it == '\u205F' || it == '\u3000' || it == '\uFEFF'
+}
 
 // "GR3 - French for Fall 26 T1" -> GroupSplit(group = "GR3", family = "French for Fall 26 T1")
 fun splitGroup(name: String): GroupSplit? {
-    val m = GROUP_SPLIT_REGEX.find(name.trim()) ?: return null
-    val group = m.groupValues[1].uppercase().replace("\\s".toRegex(), "")
-    val family = m.groupValues[2].trim()
+    val trimmed = name.trimJs()
+    val m = GROUP_SPLIT_REGEX.find(trimmed) ?: return null
+    val group = m.groupValues[1].uppercase().replace(JS_WS_REGEX, "")
+    val family = m.groupValues[2].trimJs()
     return GroupSplit(group = group, family = family)
 }
 

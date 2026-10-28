@@ -97,8 +97,12 @@ class BreaksGoldenTest {
     )
 
     @Serializable
+    private data class HolidayReItem(val input: String, val output: Boolean)
+
+    @Serializable
     private data class BreaksGoldenData(
         val dateHelperResults: DateHelperResults,
+        val holidayReCases: List<HolidayReItem> = emptyList(),
         val breaksCases: List<BreakCase>,
     )
 
@@ -132,6 +136,10 @@ class BreaksGoldenTest {
         for (item in helpers.makeDayKey) {
             val keyFn = makeDayKey(item.tz)
             assertEquals("makeDayKey(${item.tz})(${item.ms})", item.output, keyFn(item.ms))
+        }
+
+        for (item in golden.holidayReCases) {
+            assertEquals("HOLIDAY_RE(${item.input})", item.output, HOLIDAY_RE.containsMatchIn(item.input))
         }
     }
 

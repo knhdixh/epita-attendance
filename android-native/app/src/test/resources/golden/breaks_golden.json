@@ -347,6 +347,64 @@
       }
     ]
   },
+  "holidayReCases": [
+    {
+      "input": "Jour férié",
+      "output": false
+    },
+    {
+      "input": "JOUR FÉRIÉ",
+      "output": false
+    },
+    {
+      "input": "Congés",
+      "output": true
+    },
+    {
+      "input": "CONGÉS",
+      "output": true
+    },
+    {
+      "input": "Fériés",
+      "output": true
+    },
+    {
+      "input": "Holiday",
+      "output": true
+    },
+    {
+      "input": "Bank holiday",
+      "output": true
+    },
+    {
+      "input": "Vacances de Noël",
+      "output": true
+    },
+    {
+      "input": "vacances",
+      "output": true
+    },
+    {
+      "input": "holidays",
+      "output": true
+    },
+    {
+      "input": "jour ferie",
+      "output": true
+    },
+    {
+      "input": "JOUR FERIE",
+      "output": true
+    },
+    {
+      "input": "Mathématiques",
+      "output": false
+    },
+    {
+      "input": "Algorithmique",
+      "output": false
+    }
+  ],
   "breaksCases": [
     {
       "timePoint": "normal_day_paris",

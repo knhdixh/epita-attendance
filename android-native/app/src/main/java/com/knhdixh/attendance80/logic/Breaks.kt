@@ -9,9 +9,10 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
 
+private const val JS_WORD_BOUNDARY = """(?:(?<=[A-Za-z0-9_])(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])(?=[A-Za-z0-9_]))"""
+
 val HOLIDAY_RE = Regex(
-    """\b(vacances|holidays?|bank holiday|jour f[ée]ri[ée]|f[ée]ri[ée]|cong[ée]s?)\b""",
-    RegexOption.IGNORE_CASE
+    """(?i)$JS_WORD_BOUNDARY(vacances|holidays?|bank holiday|jour f[eéEÉ]ri[eéEÉ]|f[eéEÉ]ri[eéEÉ]|cong[eéEÉ]s?)$JS_WORD_BOUNDARY"""
 )
 
 private const val DAY_MS = 86400000L

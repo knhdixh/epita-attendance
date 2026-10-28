@@ -42,6 +42,70 @@
         "group": "GR5",
         "family": "Physics"
       }
+    },
+    {
+      "input": "gr3",
+      "output": null
+    },
+    {
+      "input": "G 12",
+      "output": null
+    },
+    {
+      "input": "gr3 - English",
+      "output": {
+        "group": "GR3",
+        "family": "English"
+      }
+    },
+    {
+      "input": "G 12 - English",
+      "output": {
+        "group": "G12",
+        "family": "English"
+      }
+    },
+    {
+      "input": "GR 3 - English",
+      "output": {
+        "group": "GR3",
+        "family": "English"
+      }
+    },
+    {
+      "input": "G 12 - English",
+      "output": {
+        "group": "G12",
+        "family": "English"
+      }
+    },
+    {
+      "input": "GR1 – Architecture",
+      "output": {
+        "group": "GR1",
+        "family": "Architecture"
+      }
+    },
+    {
+      "input": "GR1 — Biology",
+      "output": {
+        "group": "GR1",
+        "family": "Biology"
+      }
+    },
+    {
+      "input": "gr3 – English",
+      "output": {
+        "group": "GR3",
+        "family": "English"
+      }
+    },
+    {
+      "input": "gr3 — English",
+      "output": {
+        "group": "GR3",
+        "family": "English"
+      }
     }
   ],
   "computeStatsCases": [
