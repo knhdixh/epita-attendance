@@ -1,0 +1,213 @@
+{
+  "user": {
+    "email": "student@epita.fr",
+    "name": "student",
+    "picture": null,
+    "threshold": 0.8,
+    "unit": "sessions"
+  },
+  "account": {
+    "google": true,
+    "passkeys": []
+  },
+  "courses": [
+    {
+      "id": 2,
+      "name": "Algorithmique",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1,
+      "recording_url": null
+    },
+    {
+      "id": 1,
+      "name": "Mathématiques",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1,
+      "recording_url": null
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "summary": "Mathématiques",
+      "location": "Amphi 1",
+      "description": "",
+      "start_at": 1793606400000,
+      "end_at": 1793613600000,
+      "status": "absent",
+      "tag": null,
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "course_id": 2,
+      "summary": "Algorithmique",
+      "location": "Salle 302",
+      "description": "",
+      "start_at": 1793710800000,
+      "end_at": 1793718000000,
+      "status": "absent",
+      "tag": null,
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2,
+      "course_id": 1,
+      "summary": "Mathématiques",
+      "location": "Amphi 1",
+      "description": "",
+      "start_at": 1793779200000,
+      "end_at": 1793786400000,
+      "status": "absent",
+      "tag": null,
+      "note": "",
+      "cals": [
+        1
+      ]
+    }
+  ],
+  "homework": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "title": "Maths Exercise 4",
+      "notes": "Do problems 1 to 5",
+      "due_date": "2026-11-15",
+      "due_time": null,
+      "tz": "Europe/Paris",
+      "due_at": 1794783599999,
+      "remind_minutes": null,
+      "done": 0,
+      "gcal_event_id": null,
+      "sync_error": null,
+      "created_at": 1793188471298,
+      "updated_at": 1793188471298,
+      "kind": "homework",
+      "event_id": null,
+      "effort_minutes": null
+    },
+    {
+      "id": 2,
+      "course_id": 2,
+      "title": "Algo Binary Trees",
+      "notes": "Implement AVL rotation",
+      "due_date": "2026-11-18",
+      "due_time": "17:00",
+      "tz": "Europe/Paris",
+      "due_at": 1795017600000,
+      "remind_minutes": 60,
+      "done": 0,
+      "gcal_event_id": null,
+      "sync_error": null,
+      "created_at": 1793188471299,
+      "updated_at": 1793188471299,
+      "kind": "homework",
+      "event_id": null,
+      "effort_minutes": 120
+    }
+  ],
+  "breaks": [
+    {
+      "id": 1,
+      "label": "All Saints Break",
+      "start_date": "2026-11-02",
+      "end_date": "2026-11-06",
+      "created_at": 1793188471300,
+      "sessions": 3
+    }
+  ],
+  "integrations": {
+    "feedUrl": "https://app.test/feed/Af3SdJePcuWu3g7Cf0TiRQsY_TGc7Z3N.ics",
+    "gcalAvailable": false,
+    "gcal": null
+  },
+  "assistant": null,
+  "calendars": [
+    {
+      "id": 1,
+      "kind": "file",
+      "name": "epita_classes",
+      "site": null,
+      "from": null,
+      "fileName": "epita_classes.ics",
+      "checkedAt": null,
+      "okAt": 1793188471282,
+      "error": null,
+      "sessions": 3,
+      "createdAt": 1793188471279,
+      "attendance": true
+    }
+  ],
+  "calendarSyncs": [
+    {
+      "source_id": 1,
+      "at": 1793188471279,
+      "source": "upload",
+      "ok": 1,
+      "http_status": null,
+      "duration_ms": 3,
+      "sessions": 3,
+      "added": 3,
+      "removed": 0,
+      "error": null
+    }
+  ],
+  "focus": {
+    "settings": {
+      "focus": 25,
+      "short": 5,
+      "long": 15,
+      "longEvery": 4,
+      "goal": 8,
+      "autoBreaks": true,
+      "autoFocus": false,
+      "sound": true,
+      "notify": true,
+      "tasks": [],
+      "tags": []
+    },
+    "sessions": [
+      {
+        "id": 2,
+        "client_id": "client-focus-with-label-12345",
+        "homework_id": null,
+        "course_id": 2,
+        "label": "Algorithms revision",
+        "started_at": 1793180800000,
+        "ended_at": 1793182600000,
+        "planned_seconds": 1800,
+        "focus_seconds": 1800,
+        "completed": 1,
+        "tags": [
+          "algo",
+          "exam"
+        ]
+      },
+      {
+        "id": 1,
+        "client_id": "client-focus-no-label-12345",
+        "homework_id": null,
+        "course_id": null,
+        "label": null,
+        "started_at": 1793184400000,
+        "ended_at": 1793186200000,
+        "planned_seconds": 1800,
+        "focus_seconds": 1800,
+        "completed": 1,
+        "tags": [
+          "study"
+        ]
+      }
+    ],
+    "since": 1788350071302
+  }
+}

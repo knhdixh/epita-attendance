@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.net
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
@@ -125,7 +126,7 @@ data class HomeworkDto(
     val due_time: String? = null,
     val tz: String? = null,
     val due_at: Long? = null,
-    val remind_minutes: Int = 0,
+    val remind_minutes: Int? = null,
     @Serializable(with = IntBooleanSerializer::class) val done: Boolean = false,
     val gcal_event_id: String? = null,
     val sync_error: String? = null,
@@ -150,34 +151,33 @@ data class BreakDto(
 data class GcalIntegrationDto(
     val email: String? = null,
     val calendarId: String? = null,
-    val lastError: String? = null,
+    val error: String? = null,
 )
 
 @Serializable
 data class IntegrationsDto(
     val feedUrl: String,
-    val timetableFeedUrl: String,
+    val gcalAvailable: Boolean = false,
     val gcal: GcalIntegrationDto? = null,
 )
 
 @Serializable
-data class AiKeyDto(
+data class AiByokDto(
     val provider: String,
-    val accountId: String? = null,
+    val label: String? = null,
     val model: String? = null,
-)
-
-@Serializable
-data class AiUsageDto(
-    val used: Int = 0,
-    val limit: Int = 0,
-    val owner: Boolean = false,
+    val keyHint: String? = null,
+    val accountId: String? = null,
+    val lastError: String? = null,
+    val lastUsedAt: Long? = null,
 )
 
 @Serializable
 data class AssistantDto(
-    val key: AiKeyDto? = null,
-    val usage: AiUsageDto? = null,
+    val used: Int = 0,
+    val limit: Int = 0,
+    val owner: Boolean = false,
+    val byok: AiByokDto? = null,
 )
 
 @Serializable
@@ -198,31 +198,31 @@ data class CalendarDto(
 
 @Serializable
 data class CalendarSyncDto(
-    val source_id: Long,
+    val source_id: Long? = null,
     val at: Long,
     val source: String? = null,
     val ok: Int = 1,
     val http_status: Int? = null,
     val duration_ms: Long? = null,
-    val sessions: Int = 0,
-    val added: Int = 0,
-    val removed: Int = 0,
+    val sessions: Int? = null,
+    val added: Int? = null,
+    val removed: Int? = null,
     val error: String? = null,
 )
 
 @Serializable
 data class FocusSettingsDto(
-    val focus: Int = 25,
-    val shortBreak: Int = 5,
-    val longBreak: Int = 15,
-    val longEvery: Int = 4,
-    val dailyGoal: Int = 8,
-    val autoBreaks: Boolean = false,
-    val autoFocus: Boolean = false,
-    val sound: Boolean = true,
-    val notify: Boolean = true,
-    val tasks: List<String> = emptyList(),
-    val tags: List<String> = emptyList(),
+    @SerialName("focus") val focus: Int = 25,
+    @SerialName("short") val short: Int = 5,
+    @SerialName("long") val long: Int = 15,
+    @SerialName("longEvery") val longEvery: Int = 4,
+    @SerialName("goal") val goal: Int = 8,
+    @SerialName("autoBreaks") val autoBreaks: Boolean = true,
+    @SerialName("autoFocus") val autoFocus: Boolean = false,
+    @SerialName("sound") val sound: Boolean = true,
+    @SerialName("notify") val notify: Boolean = true,
+    @SerialName("tasks") val tasks: List<String> = emptyList(),
+    @SerialName("tags") val tags: List<String> = emptyList(),
 )
 
 @Serializable
@@ -231,7 +231,7 @@ data class FocusSessionDto(
     val client_id: String,
     val homework_id: Long? = null,
     val course_id: Long? = null,
-    val label: String = "",
+    val label: String? = null,
     val started_at: Long,
     val ended_at: Long,
     val planned_seconds: Int = 0,
@@ -273,7 +273,7 @@ data class FocusLogRequest(
     val client_id: String,
     val homework_id: Long? = null,
     val course_id: Long? = null,
-    val label: String = "",
+    val label: String? = null,
     val started_at: Long,
     val ended_at: Long,
     val planned_seconds: Int,
@@ -336,7 +336,7 @@ data class HomeworkCreateRequest(
     val due_date: String? = null,
     val due_time: String? = null,
     val tz: String,
-    val remind_minutes: Int = 0,
+    val remind_minutes: Int? = null,
     val effort_minutes: Int? = null,
     val notes: String = "",
 )
@@ -473,13 +473,13 @@ data class AiKeyRequest(
 
 @Serializable
 data class AiKeyResponse(
-    val key: AiKeyDto,
-    val usage: AiUsageDto,
+    val key: AiByokDto? = null,
+    val usage: AssistantDto,
 )
 
 @Serializable
 data class AiUsageResponse(
-    val usage: AiUsageDto,
+    val usage: AssistantDto,
 )
 
 @Serializable
@@ -498,7 +498,7 @@ data class ChatRequest(
 data class ChatResponse(
     val reply: String,
     val actions: List<JsonElement> = emptyList(),
-    val usage: AiUsageDto? = null,
+    val usage: AssistantDto? = null,
 )
 
 @Serializable

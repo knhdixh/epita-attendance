@@ -89,7 +89,7 @@ data class PlanTodoItem(
     val due_time: String? = null,
     val tz: String? = null,
     val due_at: Long = 0L,
-    val remind_minutes: Int = 0,
+    val remind_minutes: Int? = null,
     @Serializable(with = IntBooleanSerializer::class) val done: Boolean = false,
     val gcal_event_id: String? = null,
     val sync_error: String? = null,

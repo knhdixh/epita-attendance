@@ -162,12 +162,13 @@ fun focusStats(
         for (tag in s.tags) {
             tagsMap[tag] = (tagsMap[tag] ?: 0.0) + m
         }
-        if (s.homework_id != null || s.label.isNotBlank()) {
+        val hasLabel = s.label != null && s.label != ""
+        if (s.homework_id != null || hasLabel) {
             val key = s.homework_id?.toString() ?: "label:${s.label}"
             val h = hwMap.getOrPut(key) {
                 HomeworkFocusBreakdown(
                     homework_id = s.homework_id,
-                    label = s.label.ifBlank { null },
+                    label = if (hasLabel) s.label else null,
                     course_id = s.course_id,
                 )
             }
