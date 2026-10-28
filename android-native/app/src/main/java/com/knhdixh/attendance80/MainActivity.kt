@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,14 +31,13 @@ import com.knhdixh.attendance80.ui.theme.Attendance80Theme
 
 class MainActivity : ComponentActivity() {
     private val signInViewModel: SignInViewModel by viewModels {
-        val app = application as App
-        object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SignInViewModel(
+        viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as App
+                SignInViewModel(
                     authRepository = app.container.authRepository,
-                    savedStateHandle = SavedStateHandle(),
-                ) as T
+                    savedStateHandle = createSavedStateHandle(),
+                )
             }
         }
     }
