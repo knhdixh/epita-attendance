@@ -38,8 +38,9 @@ class TokenCipherTest {
         }
     }
 
+    // JVM unit test using software AES-GCM cipher (AndroidKeystoreCipher instrumented test to be added in Phase 8)
     @Test
-    fun encryptDecryptRoundTrip() {
+    fun softwareAesGcmCipher_encryptDecryptRoundTrip() {
         val keyGen = KeyGenerator.getInstance("AES")
         keyGen.init(256, SecureRandom())
         val key = keyGen.generateKey()
