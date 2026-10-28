@@ -48,6 +48,7 @@ class FocusTimerGoldenTest {
     @Serializable
     private data class TimerOpItem(
         val name: String,
+        val settings: FocusSettings = DEFAULT_SETTINGS,
         val timer: FocusTimer,
         val now: Long,
         val remainingNow: Long,
@@ -93,9 +94,9 @@ class FocusTimerGoldenTest {
     @Test
     fun testTimerOperationsGolden() {
         val golden = json.decodeFromString<FocusTimerGoldenData>(loadResource("golden/focus_timer_golden.json"))
-        val settings = DEFAULT_SETTINGS
 
         for (op in golden.timerOperations) {
+            val settings = op.settings
             val t = op.timer
             val now = op.now
             val tag = op.name

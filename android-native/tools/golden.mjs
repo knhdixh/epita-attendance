@@ -13,9 +13,16 @@ const focus = await import('../../public/focus.js');
 const ROOT_DIR = process.cwd();
 const FIXTURES_DIR = path.join(ROOT_DIR, 'android-native/tools/fixtures');
 const GOLDEN_DIR = path.join(ROOT_DIR, 'android-native/app/src/test/resources/golden');
+const TARGET_FIXTURES_DIR = path.join(ROOT_DIR, 'android-native/app/src/test/resources/fixtures');
 
 if (!fs.existsSync(GOLDEN_DIR)) {
   fs.mkdirSync(GOLDEN_DIR, { recursive: true });
+}
+if (!fs.existsSync(TARGET_FIXTURES_DIR)) {
+  fs.mkdirSync(TARGET_FIXTURES_DIR, { recursive: true });
+}
+for (const file of fs.readdirSync(FIXTURES_DIR)) {
+  fs.copyFileSync(path.join(FIXTURES_DIR, file), path.join(TARGET_FIXTURES_DIR, file));
 }
 
 // -------------------------------------------------------------
@@ -160,8 +167,11 @@ const breaksCases = [];
 for (const tp of [
   semesterFixture.timePoints.find((x) => x.name === 'normal_day_paris'),
   semesterFixture.timePoints.find((x) => x.name === 'normal_day_helsinki'),
-  semesterFixture.timePoints.find((x) => x.name === 'dst_fall_paris_day')
-]) {
+  semesterFixture.timePoints.find((x) => x.name === 'dst_fall_paris_day'),
+  semesterFixture.timePoints.find((x) => x.name === 'dst_spring_paris_day'),
+  semesterFixture.timePoints.find((x) => x.name === 'dst_spring_helsinki_day'),
+  semesterFixture.timePoints.find((x) => x.name === 'dst_fall_helsinki_day')
+].filter(Boolean)) {
   for (const threshold of [0.8, 0.7]) {
     for (const unit of ['sessions', 'hours']) {
       const m = breaks.breakModel({
@@ -256,32 +266,27 @@ for (const tp of semesterFixture.timePoints) {
   });
 }
 
-const atHourResults = [];
-for (const tp of semesterFixture.timePoints) {
-  const mid = plan.localMidnight(tp.now, tp.tz);
-  atHourResults.push({
-    name: tp.name,
-    tz: tp.tz,
-    midnight: mid,
-    at8: plan.localMidnight(mid, tp.tz) /* internal atHour via buildPlan testing below */
-  });
-}
-
 const effortOfResults = semesterFixture.homework.map((h) => ({
   id: h.id,
   title: h.title,
   effort: plan.effortOf(h)
 }));
 
+const planTimePoints = [
+  'normal_day_paris',
+  'normal_day_helsinki',
+  'dst_spring_paris_night',
+  'dst_spring_paris_day',
+  'dst_spring_helsinki_night',
+  'dst_spring_helsinki_day',
+  'dst_fall_paris_night',
+  'dst_fall_paris_day',
+  'dst_fall_helsinki_night',
+  'dst_fall_helsinki_day'
+].map((name) => semesterFixture.timePoints.find((x) => x.name === name)).filter(Boolean);
+
 const buildPlanCases = [];
-for (const tp of [
-  semesterFixture.timePoints.find((x) => x.name === 'normal_day_paris'),
-  semesterFixture.timePoints.find((x) => x.name === 'normal_day_helsinki'),
-  semesterFixture.timePoints.find((x) => x.name === 'dst_spring_paris_night'),
-  semesterFixture.timePoints.find((x) => x.name === 'dst_spring_paris_day'),
-  semesterFixture.timePoints.find((x) => x.name === 'dst_fall_paris_night'),
-  semesterFixture.timePoints.find((x) => x.name === 'dst_fall_paris_day')
-]) {
+for (const tp of planTimePoints) {
   const p = plan.buildPlan({
     courses: semesterFixture.courses,
     events: semesterFixture.events,
@@ -332,50 +337,71 @@ const cleanTasksResults = [
   output: tasks ? focus.cleanSettings({ tasks }).tasks : []
 }));
 
-const defaultSettings = focus.DEFAULT_SETTINGS;
+const settingsProfiles = [
+  { name: 'default', settings: focus.DEFAULT_SETTINGS },
+  {
+    name: 'custom',
+    settings: focus.cleanSettings({
+      focus: 45,
+      short: 10,
+      long: 25,
+      longEvery: 2,
+      goal: 6,
+      autoBreaks: false,
+      autoFocus: true,
+      sound: false,
+      notify: false
+    })
+  }
+];
+
 const timerOperations = [];
 
-for (const tf of focusFixture.timers) {
-  const t = tf.timer;
-  const now = tf.now;
+for (const profile of settingsProfiles) {
+  const s = profile.settings;
+  for (const tf of focusFixture.timers) {
+    const t = tf.timer;
+    const now = tf.now;
 
-  const remNow = focus.remaining(t, now);
-  const rem5m = focus.remaining(t, now + 5 * 60000);
-  const len = focus.length(t);
-  const progNow = focus.progress(t, now);
-  const dueNow = focus.isDue(t, now);
-  const nextLen = focus.nextLength(t, defaultSettings);
+    const remNow = focus.remaining(t, now);
+    const rem5m = focus.remaining(t, now + 5 * 60000);
+    const len = focus.length(t);
+    const progNow = focus.progress(t, now);
+    const dueNow = focus.isDue(t, now);
+    const nextLen = focus.nextLength(t, s);
 
-  const startRes = focus.start(t, defaultSettings, now, 'new-run-start');
-  const pauseRes = focus.pause(t, now);
-  const resumeRes = focus.resume(t, now + 5 * 60000);
-  const adjustPlus5 = focus.adjust(t, defaultSettings, 5, now);
-  const adjustMinus5 = focus.adjust(t, defaultSettings, -5, now);
-  const setLength30 = focus.setLength(t, defaultSettings, 30);
-  const finishNormal = focus.finish(t, defaultSettings, now, 'finish-run-1', { early: false });
-  const finishEarly = focus.finish(t, defaultSettings, now, 'finish-run-2', { early: true });
-  const stopRes = focus.stop(t, now);
+    const startRes = focus.start(t, s, now, 'new-run-start');
+    const pauseRes = focus.pause(t, now);
+    const resumeRes = focus.resume(t, now + 5 * 60000);
+    const adjustPlus5 = focus.adjust(t, s, 5, now);
+    const adjustMinus5 = focus.adjust(t, s, -5, now);
+    const setLength30 = focus.setLength(t, s, 30);
+    const finishNormal = focus.finish(t, s, now, 'finish-run-1', { early: false });
+    const finishEarly = focus.finish(t, s, now, 'finish-run-2', { early: true });
+    const stopRes = focus.stop(t, now);
 
-  timerOperations.push({
-    name: tf.name,
-    timer: t,
-    now,
-    remainingNow: remNow,
-    remaining5m: rem5m,
-    length: len,
-    progressNow: progNow,
-    isDueNow: dueNow,
-    nextLength: nextLen,
-    start: startRes,
-    pause: pauseRes,
-    resume: resumeRes,
-    adjustPlus5,
-    adjustMinus5,
-    setLength30,
-    finishNormal,
-    finishEarly,
-    stop: stopRes
-  });
+    timerOperations.push({
+      name: `${tf.name}_${profile.name}`,
+      settings: s,
+      timer: t,
+      now,
+      remainingNow: remNow,
+      remaining5m: rem5m,
+      length: len,
+      progressNow: progNow,
+      isDueNow: dueNow,
+      nextLength: nextLen,
+      start: startRes,
+      pause: pauseRes,
+      resume: resumeRes,
+      adjustPlus5,
+      adjustMinus5,
+      setLength30,
+      finishNormal,
+      finishEarly,
+      stop: stopRes
+    });
+  }
 }
 
 const focusTimerGolden = {

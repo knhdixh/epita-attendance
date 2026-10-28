@@ -20,7 +20,7 @@ private const val HOMEWORK_EFFORT = 60
 private const val SOON_MS = 7 * DAY_MS
 
 fun effortOf(h: HomeworkDto): Int =
-    h.effort_minutes ?: if (h.kind == "catchup") 90 else HOMEWORK_EFFORT
+    h.effort_minutes?.takeIf { it > 0 } ?: if (h.kind == "catchup") 90 else HOMEWORK_EFFORT
 
 fun localMidnight(ms: Long, tz: String): Long {
     val zone = ZoneId.of(tz)

@@ -178,7 +178,7 @@ fun isDue(t: FocusTimer, now: Long): Boolean =
     t.phase != "idle" && t.pausedAt == null && now >= t.endsAt
 
 fun nextLength(t: FocusTimer, settings: FocusSettings): Int =
-    if (t.phase == "idle") t.custom ?: settings.minutes(t.next) else ((length(t).toDouble() / MIN_MS.toDouble()).roundToInt())
+    if (t.phase == "idle") (t.custom?.takeIf { it > 0 } ?: settings.minutes(t.next)) else ((length(t).toDouble() / MIN_MS.toDouble()).roundToInt())
 
 fun setLength(t: FocusTimer, settings: FocusSettings, minutes: Int): FocusTimer {
     if (t.phase != "idle") return t
@@ -213,7 +213,7 @@ fun resume(t: FocusTimer, now: Long): FocusTimer {
 
 fun start(t: FocusTimer, settings: FocusSettings, now: Long, run: String): FocusTimer {
     val phase = if (t.phase == "idle") t.next else t.phase
-    val minutes = if (t.phase == "idle" && t.custom != null) t.custom else settings.minutes(phase)
+    val minutes = if (t.phase == "idle" && (t.custom ?: 0) > 0) t.custom!! else settings.minutes(phase)
     return FocusTimer(
         phase = phase,
         next = phase,

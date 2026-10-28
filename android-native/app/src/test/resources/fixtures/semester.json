@@ -62,6 +62,14 @@
       "tracked": 1,
       "tag": "optional",
       "attendance": 1
+    },
+    {
+      "id": 10,
+      "name": "Strict Seminar",
+      "tracked": 1,
+      "tag": "mandatory",
+      "attendance": 1,
+      "recording_url": null
     }
   ],
   "calendars": [
@@ -1562,6 +1570,216 @@
       "tag": null,
       "note": "",
       "cals": []
+    },
+    {
+      "id": 1001,
+      "course_id": 10,
+      "summary": "Strict Seminar",
+      "start_at": 1791187200000,
+      "end_at": 1791194400000,
+      "status": "absent",
+      "tag": "mandatory",
+      "location": "Room 101",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 1002,
+      "course_id": 10,
+      "summary": "Strict Seminar",
+      "start_at": 1791446400000,
+      "end_at": 1791453600000,
+      "status": "absent",
+      "tag": "mandatory",
+      "location": "Room 101",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 1003,
+      "course_id": 10,
+      "summary": "Strict Seminar",
+      "start_at": 1792396800000,
+      "end_at": 1792404000000,
+      "status": null,
+      "tag": "mandatory",
+      "location": "Room 101",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 1004,
+      "course_id": 10,
+      "summary": "Strict Seminar",
+      "start_at": 1792656000000,
+      "end_at": 1792663200000,
+      "status": null,
+      "tag": "mandatory",
+      "location": "Room 101",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2001,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1774256400000,
+      "end_at": 1774263600000,
+      "status": "present",
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2002,
+      "course_id": 2,
+      "summary": "Web Development",
+      "start_at": 1774357200000,
+      "end_at": 1774364400000,
+      "status": "present",
+      "tag": "normal",
+      "location": "Salle 302",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2003,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1774429200000,
+      "end_at": 1774436400000,
+      "status": null,
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2004,
+      "course_id": 2,
+      "summary": "Web Development",
+      "start_at": 1774530000000,
+      "end_at": 1774537200000,
+      "status": "excused",
+      "tag": "normal",
+      "location": "Salle 302",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2005,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1774602000000,
+      "end_at": 1774609200000,
+      "status": "present",
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2006,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1774857600000,
+      "end_at": 1774864800000,
+      "status": null,
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2007,
+      "course_id": 2,
+      "summary": "Web Development",
+      "start_at": 1774958400000,
+      "end_at": 1774965600000,
+      "status": null,
+      "tag": "normal",
+      "location": "Salle 302",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2008,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1775030400000,
+      "end_at": 1775037600000,
+      "status": null,
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2009,
+      "course_id": 2,
+      "summary": "Web Development",
+      "start_at": 1775131200000,
+      "end_at": 1775138400000,
+      "status": null,
+      "tag": "normal",
+      "location": "Salle 302",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
+    },
+    {
+      "id": 2010,
+      "course_id": 1,
+      "summary": "Algorithms & Data Structures",
+      "start_at": 1775203200000,
+      "end_at": 1775210400000,
+      "status": null,
+      "tag": "normal",
+      "location": "Amphi 1",
+      "description": "",
+      "note": "",
+      "cals": [
+        1
+      ]
     }
   ],
   "homework": [
@@ -1663,6 +1881,44 @@
       "done": 1,
       "kind": null,
       "effort_minutes": 30
+    },
+    {
+      "id": 101,
+      "course_id": 1,
+      "title": "Spring DST Algo Assignment",
+      "due_date": "2026-03-30",
+      "due_time": "18:00",
+      "tz": "Europe/Paris",
+      "due_at": 1774886400000,
+      "remind_minutes": 60,
+      "done": 0,
+      "effort_minutes": 90,
+      "kind": "homework",
+      "notes": "",
+      "gcal_event_id": null,
+      "sync_error": null,
+      "created_at": 1774200000000,
+      "updated_at": 1774200000000,
+      "event_id": null
+    },
+    {
+      "id": 102,
+      "course_id": 2,
+      "title": "Spring DST Web Project",
+      "due_date": "2026-04-02",
+      "due_time": null,
+      "tz": "Europe/Paris",
+      "due_at": 1775167199999,
+      "remind_minutes": null,
+      "done": 0,
+      "effort_minutes": 120,
+      "kind": "homework",
+      "notes": "",
+      "gcal_event_id": null,
+      "sync_error": null,
+      "created_at": 1774200000000,
+      "updated_at": 1774200000000,
+      "event_id": null
     }
   ],
   "timePoints": [

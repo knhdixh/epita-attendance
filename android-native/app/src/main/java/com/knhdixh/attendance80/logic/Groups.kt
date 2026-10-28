@@ -5,6 +5,10 @@ import com.knhdixh.attendance80.net.CourseDto
 import com.knhdixh.attendance80.net.EventDto
 import com.knhdixh.attendance80.net.IntBooleanSerializer
 import kotlinx.serialization.Serializable
+import java.text.Collator
+import java.util.Locale
+
+private val FAMILY_COLLATOR = Collator.getInstance(Locale.ROOT)
 
 @Serializable
 data class CourseWithGroup(
@@ -67,7 +71,7 @@ fun groupFamilies(courses: List<CourseDto>): List<GroupFamily> {
     for (list in fam.values) {
         list.sortWith { a, b -> NATURAL_SORT_COMPARATOR.compare(a.group, b.group) }
     }
-    return fam.entries.sortedBy { it.key }.map {
+    return fam.entries.sortedWith { a, b -> FAMILY_COLLATOR.compare(a.key, b.key) }.map {
         GroupFamily(family = it.key, courses = it.value.toList())
     }
 }

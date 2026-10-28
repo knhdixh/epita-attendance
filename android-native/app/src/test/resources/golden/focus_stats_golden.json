@@ -1358,8 +1358,8 @@
       "count": 1
     },
     "2026-10-21": {
-      "minutes": 50,
-      "count": 0
+      "minutes": 110,
+      "count": 2
     }
   },
   "minutesByHomework": {
@@ -1368,8 +1368,8 @@
   },
   "focusStats7": {
     "today": {
-      "minutes": 50,
-      "count": 0
+      "minutes": 110,
+      "count": 2
     },
     "streak": 7,
     "week": [
@@ -1387,8 +1387,8 @@
       },
       {
         "ms": 1792533600000,
-        "minutes": 50,
-        "count": 0,
+        "minutes": 110,
+        "count": 2,
         "future": false
       },
       {
@@ -1416,14 +1416,14 @@
         "future": true
       }
     ],
-    "thisWeek": 150,
+    "thisWeek": 210,
     "lastWeek": 100,
     "range": {
       "days": 7,
-      "minutes": 275,
-      "count": 6,
+      "minutes": 335,
+      "count": 8,
       "activeDays": 7,
-      "perActiveDay": 39.285714285714285,
+      "perActiveDay": 47.857142857142854,
       "peakHour": 2,
       "hours": [
         0,
@@ -1435,8 +1435,8 @@
         0,
         0,
         0,
-        0,
-        0,
+        30,
+        30,
         0,
         0,
         0,
@@ -1454,11 +1454,15 @@
       "courses": [
         {
           "course_id": 1,
-          "minutes": 225
+          "minutes": 255
         },
         {
           "course_id": 2,
           "minutes": 50
+        },
+        {
+          "course_id": null,
+          "minutes": 30
         }
       ],
       "homework": [
@@ -1493,29 +1497,37 @@
       ],
       "tags": [
         {
+          "tag": "study",
+          "minutes": 155
+        },
+        {
           "tag": "revision",
           "minutes": 150
         },
         {
-          "tag": "study",
+          "tag": "epita",
           "minutes": 125
         },
         {
-          "tag": "epita",
-          "minutes": 125
+          "tag": "reading",
+          "minutes": 30
+        },
+        {
+          "tag": "quick-task",
+          "minutes": 30
         }
       ]
     },
     "best": {
-      "key": "2025-10-24",
-      "minutes": 75,
+      "key": "2026-10-21",
+      "minutes": 110,
       "count": 2
     }
   },
   "focusStats30": {
     "today": {
-      "minutes": 50,
-      "count": 0
+      "minutes": 110,
+      "count": 2
     },
     "streak": 7,
     "week": [
@@ -1533,8 +1545,8 @@
       },
       {
         "ms": 1792533600000,
-        "minutes": 50,
-        "count": 0,
+        "minutes": 110,
+        "count": 2,
         "future": false
       },
       {
@@ -1562,14 +1574,14 @@
         "future": true
       }
     ],
-    "thisWeek": 150,
+    "thisWeek": 210,
     "lastWeek": 100,
     "range": {
       "days": 30,
-      "minutes": 1250,
-      "count": 30,
+      "minutes": 1310,
+      "count": 32,
       "activeDays": 28,
-      "perActiveDay": 44.642857142857146,
+      "perActiveDay": 46.785714285714285,
       "peakHour": 2,
       "hours": [
         0,
@@ -1581,8 +1593,8 @@
         0,
         0,
         0,
-        0,
-        0,
+        30,
+        30,
         0,
         0,
         0,
@@ -1600,11 +1612,15 @@
       "courses": [
         {
           "course_id": 1,
-          "minutes": 975
+          "minutes": 1005
         },
         {
           "course_id": 2,
           "minutes": 275
+        },
+        {
+          "course_id": null,
+          "minutes": 30
         }
       ],
       "homework": [
@@ -1644,24 +1660,32 @@
         },
         {
           "tag": "study",
-          "minutes": 600
+          "minutes": 630
         },
         {
           "tag": "epita",
           "minutes": 600
+        },
+        {
+          "tag": "reading",
+          "minutes": 30
+        },
+        {
+          "tag": "quick-task",
+          "minutes": 30
         }
       ]
     },
     "best": {
-      "key": "2025-10-24",
-      "minutes": 75,
+      "key": "2026-10-21",
+      "minutes": 110,
       "count": 2
     }
   },
   "focusStats365": {
     "today": {
-      "minutes": 50,
-      "count": 0
+      "minutes": 110,
+      "count": 2
     },
     "streak": 7,
     "week": [
@@ -1679,8 +1703,8 @@
       },
       {
         "ms": 1792533600000,
-        "minutes": 50,
-        "count": 0,
+        "minutes": 110,
+        "count": 2,
         "future": false
       },
       {
@@ -1708,14 +1732,14 @@
         "future": true
       }
     ],
-    "thisWeek": 150,
+    "thisWeek": 210,
     "lastWeek": 100,
     "range": {
       "days": 365,
-      "minutes": 15625,
-      "count": 389,
+      "minutes": 15685,
+      "count": 391,
       "activeDays": 339,
-      "perActiveDay": 46.091445427728615,
+      "perActiveDay": 46.26843657817109,
       "peakHour": 2,
       "hours": [
         0,
@@ -1727,8 +1751,8 @@
         0,
         0,
         0,
-        0,
-        0,
+        30,
+        30,
         0,
         0,
         0,
@@ -1746,11 +1770,15 @@
       "courses": [
         {
           "course_id": 1,
-          "minutes": 11750
+          "minutes": 11780
         },
         {
           "course_id": 2,
           "minutes": 3875
+        },
+        {
+          "course_id": null,
+          "minutes": 30
         }
       ],
       "homework": [
@@ -1790,29 +1818,37 @@
         },
         {
           "tag": "study",
-          "minutes": 7775
+          "minutes": 7805
         },
         {
           "tag": "epita",
           "minutes": 7775
+        },
+        {
+          "tag": "reading",
+          "minutes": 30
+        },
+        {
+          "tag": "quick-task",
+          "minutes": 30
         }
       ]
     },
     "best": {
-      "key": "2025-10-24",
-      "minutes": 75,
+      "key": "2026-10-21",
+      "minutes": 110,
       "count": 2
     }
   },
   "focusSummaryParis": {
     "today": {
-      "minutes": 50,
-      "pomodoros": 0
+      "minutes": 110,
+      "pomodoros": 2
     },
     "streak": 7,
     "last7": {
-      "minutes": 275,
-      "pomodoros": 6,
+      "minutes": 335,
+      "pomodoros": 8,
       "byDay": [
         {
           "date": "2026-10-15",
@@ -1840,44 +1876,56 @@
         },
         {
           "date": "2026-10-21",
-          "minutes": 50
+          "minutes": 110
         }
       ],
       "byCourse": [
         {
           "course_id": 1,
-          "minutes": 225
+          "minutes": 255
         },
         {
           "course_id": 2,
           "minutes": 50
+        },
+        {
+          "course_id": null,
+          "minutes": 30
         }
       ],
       "byTag": [
+        {
+          "tag": "study",
+          "minutes": 155
+        },
         {
           "tag": "revision",
           "minutes": 150
         },
         {
-          "tag": "study",
+          "tag": "epita",
           "minutes": 125
         },
         {
-          "tag": "epita",
-          "minutes": 125
+          "tag": "reading",
+          "minutes": 30
+        },
+        {
+          "tag": "quick-task",
+          "minutes": 30
         }
       ]
     }
   },
   "focusSummaryHelsinki": {
     "today": {
-      "minutes": 50,
-      "pomodoros": 0
+      "minutes": 110,
+      "pomodoros": 2
     },
     "streak": 7,
     "last7": {
-      "minutes": 275,
-      "pomodoros": 6,
+      "minutes": 335,
+      "pomodoros": 8,
       "byDay": [
         {
           "date": "2026-10-15",
@@ -1905,31 +1953,43 @@
         },
         {
           "date": "2026-10-21",
-          "minutes": 50
+          "minutes": 110
         }
       ],
       "byCourse": [
         {
           "course_id": 1,
-          "minutes": 225
+          "minutes": 255
         },
         {
           "course_id": 2,
           "minutes": 50
+        },
+        {
+          "course_id": null,
+          "minutes": 30
         }
       ],
       "byTag": [
+        {
+          "tag": "study",
+          "minutes": 155
+        },
         {
           "tag": "revision",
           "minutes": 150
         },
         {
-          "tag": "study",
+          "tag": "epita",
           "minutes": 125
         },
         {
-          "tag": "epita",
-          "minutes": 125
+          "tag": "reading",
+          "minutes": 30
+        },
+        {
+          "tag": "quick-task",
+          "minutes": 30
         }
       ]
     }
@@ -3295,8 +3355,8 @@
           "count": 1
         },
         "2026-10-21": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         }
       },
       "minutesByHomework": {
@@ -3305,8 +3365,8 @@
       },
       "focusStats7": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -3324,8 +3384,8 @@
           },
           {
             "ms": 1792533600000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -3353,14 +3413,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 7,
-          "minutes": 275,
-          "count": 6,
+          "minutes": 335,
+          "count": 8,
           "activeDays": 7,
-          "perActiveDay": 39.285714285714285,
+          "perActiveDay": 47.857142857142854,
           "peakHour": 2,
           "hours": [
             0,
@@ -3372,8 +3432,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -3391,11 +3451,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 225
+              "minutes": 255
             },
             {
               "course_id": 2,
               "minutes": 50
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -3430,29 +3494,37 @@
           ],
           "tags": [
             {
+              "tag": "study",
+              "minutes": 155
+            },
+            {
               "tag": "revision",
               "minutes": 150
             },
             {
-              "tag": "study",
+              "tag": "epita",
               "minutes": 125
             },
             {
-              "tag": "epita",
-              "minutes": 125
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       },
       "focusStats30": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -3470,8 +3542,8 @@
           },
           {
             "ms": 1792533600000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -3499,14 +3571,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 30,
-          "minutes": 1250,
-          "count": 30,
+          "minutes": 1310,
+          "count": 32,
           "activeDays": 28,
-          "perActiveDay": 44.642857142857146,
+          "perActiveDay": 46.785714285714285,
           "peakHour": 2,
           "hours": [
             0,
@@ -3518,8 +3590,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -3537,11 +3609,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 975
+              "minutes": 1005
             },
             {
               "course_id": 2,
               "minutes": 275
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -3581,24 +3657,32 @@
             },
             {
               "tag": "study",
-              "minutes": 600
+              "minutes": 630
             },
             {
               "tag": "epita",
               "minutes": 600
+            },
+            {
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       },
       "focusStats365": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -3616,8 +3700,8 @@
           },
           {
             "ms": 1792533600000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -3645,14 +3729,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 365,
-          "minutes": 15625,
-          "count": 389,
+          "minutes": 15685,
+          "count": 391,
           "activeDays": 339,
-          "perActiveDay": 46.091445427728615,
+          "perActiveDay": 46.26843657817109,
           "peakHour": 2,
           "hours": [
             0,
@@ -3664,8 +3748,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -3683,11 +3767,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 11750
+              "minutes": 11780
             },
             {
               "course_id": 2,
               "minutes": 3875
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -3727,17 +3815,25 @@
             },
             {
               "tag": "study",
-              "minutes": 7775
+              "minutes": 7805
             },
             {
               "tag": "epita",
               "minutes": 7775
+            },
+            {
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       }
@@ -5102,8 +5198,8 @@
           "count": 1
         },
         "2026-10-21": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         }
       },
       "minutesByHomework": {
@@ -5112,8 +5208,8 @@
       },
       "focusStats7": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -5131,8 +5227,8 @@
           },
           {
             "ms": 1792530000000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -5160,14 +5256,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 7,
-          "minutes": 275,
-          "count": 6,
+          "minutes": 335,
+          "count": 8,
           "activeDays": 7,
-          "perActiveDay": 39.285714285714285,
+          "perActiveDay": 47.857142857142854,
           "peakHour": 3,
           "hours": [
             0,
@@ -5180,8 +5276,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -5198,11 +5294,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 225
+              "minutes": 255
             },
             {
               "course_id": 2,
               "minutes": 50
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -5237,29 +5337,37 @@
           ],
           "tags": [
             {
+              "tag": "study",
+              "minutes": 155
+            },
+            {
               "tag": "revision",
               "minutes": 150
             },
             {
-              "tag": "study",
+              "tag": "epita",
               "minutes": 125
             },
             {
-              "tag": "epita",
-              "minutes": 125
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       },
       "focusStats30": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -5277,8 +5385,8 @@
           },
           {
             "ms": 1792530000000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -5306,14 +5414,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 30,
-          "minutes": 1250,
-          "count": 30,
+          "minutes": 1310,
+          "count": 32,
           "activeDays": 28,
-          "perActiveDay": 44.642857142857146,
+          "perActiveDay": 46.785714285714285,
           "peakHour": 3,
           "hours": [
             0,
@@ -5326,8 +5434,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -5344,11 +5452,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 975
+              "minutes": 1005
             },
             {
               "course_id": 2,
               "minutes": 275
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -5388,24 +5500,32 @@
             },
             {
               "tag": "study",
-              "minutes": 600
+              "minutes": 630
             },
             {
               "tag": "epita",
               "minutes": 600
+            },
+            {
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       },
       "focusStats365": {
         "today": {
-          "minutes": 50,
-          "count": 0
+          "minutes": 110,
+          "count": 2
         },
         "streak": 7,
         "week": [
@@ -5423,8 +5543,8 @@
           },
           {
             "ms": 1792530000000,
-            "minutes": 50,
-            "count": 0,
+            "minutes": 110,
+            "count": 2,
             "future": false
           },
           {
@@ -5452,14 +5572,14 @@
             "future": true
           }
         ],
-        "thisWeek": 150,
+        "thisWeek": 210,
         "lastWeek": 100,
         "range": {
           "days": 365,
-          "minutes": 15625,
-          "count": 389,
+          "minutes": 15685,
+          "count": 391,
           "activeDays": 339,
-          "perActiveDay": 46.091445427728615,
+          "perActiveDay": 46.26843657817109,
           "peakHour": 3,
           "hours": [
             0,
@@ -5472,8 +5592,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            30,
+            30,
             0,
             0,
             0,
@@ -5490,11 +5610,15 @@
           "courses": [
             {
               "course_id": 1,
-              "minutes": 11750
+              "minutes": 11780
             },
             {
               "course_id": 2,
               "minutes": 3875
+            },
+            {
+              "course_id": null,
+              "minutes": 30
             }
           ],
           "homework": [
@@ -5534,17 +5658,25 @@
             },
             {
               "tag": "study",
-              "minutes": 7775
+              "minutes": 7805
             },
             {
               "tag": "epita",
               "minutes": 7775
+            },
+            {
+              "tag": "reading",
+              "minutes": 30
+            },
+            {
+              "tag": "quick-task",
+              "minutes": 30
             }
           ]
         },
         "best": {
-          "key": "2025-10-24",
-          "minutes": 75,
+          "key": "2026-10-21",
+          "minutes": 110,
           "count": 2
         }
       }

@@ -154,6 +154,62 @@
         "updatedAt": 1792574400000
       },
       "now": 1792576800000
+    },
+    {
+      "name": "paused_short_break",
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "now": 1792576200000
+    },
+    {
+      "name": "stale_break",
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "now": 1792576200000
+    },
+    {
+      "name": "idle_next_short",
+      "timer": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000
+    },
+    {
+      "name": "idle_next_long",
+      "timer": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000
     }
   ],
   "yearSessions": [
@@ -7503,6 +7559,37 @@
       "tags": [
         "revision"
       ]
+    },
+    {
+      "id": 9001,
+      "client_id": "session-no-label-with-tags-1",
+      "homework_id": null,
+      "course_id": 1,
+      "label": null,
+      "started_at": 1792569000000,
+      "ended_at": 1792570800000,
+      "planned_seconds": 1800,
+      "focus_seconds": 1800,
+      "completed": true,
+      "tags": [
+        "study",
+        "reading"
+      ]
+    },
+    {
+      "id": 9002,
+      "client_id": "session-no-label-no-course-1",
+      "homework_id": null,
+      "course_id": null,
+      "label": null,
+      "started_at": 1792572600000,
+      "ended_at": 1792574400000,
+      "planned_seconds": 1800,
+      "focus_seconds": 1800,
+      "completed": true,
+      "tags": [
+        "quick-task"
+      ]
     }
   ],
   "rawSettingsCases": [
@@ -7557,7 +7644,79 @@
           "TAG2"
         ]
       }
+    },
+    {
+      "name": "junk_types",
+      "raw": {
+        "focus": "not_a_number",
+        "short": null,
+        "long": true,
+        "longEvery": "4",
+        "goal": [
+          8
+        ],
+        "autoBreaks": 1,
+        "autoFocus": "false",
+        "sound": "yes",
+        "notify": null,
+        "tasks": "not_an_array",
+        "tags": {
+          "a": "b"
+        }
+      }
+    },
+    {
+      "name": "out_of_range_extremes",
+      "raw": {
+        "focus": 0,
+        "short": 100,
+        "long": 1,
+        "longEvery": 1,
+        "goal": 30,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [
+          "Task 1",
+          "   ",
+          null,
+          "Task 1",
+          "Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task "
+        ],
+        "tags": [
+          "#TAG!",
+          "   ",
+          null,
+          "tag!",
+          "#TAG!"
+        ]
+      }
     }
   ],
-  "refNow": 1792576800000
+  "refNow": 1792576800000,
+  "settingsVariations": [
+    {
+      "name": "custom_variation",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [
+          "Lab report",
+          "Exam review"
+        ],
+        "tags": [
+          "deep-work",
+          "review"
+        ]
+      }
+    }
+  ]
 }
