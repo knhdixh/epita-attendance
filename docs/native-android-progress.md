@@ -129,3 +129,102 @@
 
 ### Open questions
 - None for Phase 2. Ready to begin Phase 3.
+
+## Review 1 Fixes (Phases 1 and 2)
+
+All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) from `docs/native-android-review-1.md` have been resolved in dedicated, isolated commits.
+
+### Fixed Items & Commits
+
+1. **DTO schemas and nullability (`net/Models.kt`)** (`dbb8531`)
+   - Removed `timetableFeedUrl` from `IntegrationsDto`.
+   - Corrected nullability on `HomeworkDto` (`remind_minutes`, `effort_minutes`, `due_time`, `course_id`, `event_id`, `gcal_event_id`, `sync_error`), `FocusSessionDto` (`label`, `homework_id`, `course_id`), and `CalendarSyncDto`.
+   - Aligned `FocusSettingsDto` names (`focus, short, long, longEvery, goal, autoBreaks, autoFocus, sound, notify, tasks, tags`) with defaults (`autoBreaks = true`).
+   - Flattened `AssistantDto` (`used, limit, owner, byok`) with `AiByokDto`.
+   - Added `android-native/tools/generate-api-fixtures.mjs` and generated `data.json` and `data_empty.json` from the local dev server.
+   - Added `DataDtoTest.kt` verifying full and empty data decoding.
+   - *Check*: `./gradlew :app:testProdDebugUnitTest --tests com.knhdixh.attendance80.net.DataDtoTest` PASSED.
+
+2. **Time zone independence** (`95f0c25`)
+   - Pinned `process.env.TZ = 'Europe/Paris'` in `golden.mjs` before imports, added dual run for `Europe/Paris` and `Europe/Helsinki` in `focus_stats_golden.json`.
+   - Updated `FocusStatsGoldenTest.kt` to run against explicit `ZoneId` from fixture runs instead of `ZoneId.systemDefault()`.
+   - *Check*: Ran against `TZ=UTC`, `TZ=America/New_York`, and `TZ=Europe/Helsinki`; all tests passed.
+
+3. **Regex differences JS vs JVM** (`11f15c9`)
+   - Aligned `HOLIDAY_RE` in `Breaks.kt` using simulated JS ASCII word boundaries and case folding for French accented characters (`[eéEÉ]`).
+   - Aligned `splitGroup` in `Stats.kt` to handle Unicode whitespaces (`\u00A0`, etc.) and dashes.
+   - Added unicode golden test cases in `groups.json` and `breaks_golden.json`.
+   - *Check*: `node android-native/tools/golden.mjs` and `./gradlew :app:testProdDebugUnitTest` PASSED.
+
+4. **Recursive deep JSON comparison in golden tests** (`50a8341`)
+   - Created `JsonAssertions.kt` with recursive `assertJsonEquals` handling floating point tolerance (`1e-9`) and JS `null` for `Infinity`/`NaN`.
+   - Added `cleanSettings(raw: JsonElement?)` to `FocusTimer.kt` and `day(ms, sessions, zoneId)` to `FocusStats.kt`.
+   - Replaced hand-picked field assertions with `assertJsonEquals` across `BreaksGoldenTest`, `PlanGoldenTest`, `FocusTimerGoldenTest`, `FocusStatsGoldenTest`, and `StatsGoldenTest`.
+   - *Check*: `TZ=UTC ./gradlew :app:testProdDebugUnitTest` and `TZ=Europe/Helsinki ./gradlew :app:testProdDebugUnitTest` PASSED.
+
+5. **Fixture gaps and logic nits** (`56e0a9c`)
+   - Added March 2026 sessions for spring DST coverage in Paris/Helsinki, course 10 (`Strict Seminar`) with `noSkip` active, and March homework.
+   - Added timer fixture variations: paused break, stale break, idle with next short/long, custom lengths, out-of-range/junk cleanSettings, and focus sessions with tags and without label.
+   - Addressed logic nits: `effortOf`, `nextLength`, `start` treating 0 as missing (`||`), `FocusStats.kt:165` JS truthiness (`label != null && label != ""`), `groupFamilies` sorting with `Collator.getInstance(Locale.ROOT)`, and removed unused `atHourResults` in `golden.mjs`.
+   - *Check*: `node android-native/tools/golden.mjs` and `./gradlew :app:testProdDebugUnitTest` PASSED.
+
+6. **PKCE verifier SavedStateHandle persistence** (`4a3c388`)
+   - Updated `MainActivity.kt` view model factory to use `viewModelFactory { initializer { SignInViewModel(..., createSavedStateHandle()) } }`.
+   - *Check*: `./gradlew :app:compileProdDebugKotlin` PASSED.
+
+7. **Auth deep link replay prevention** (`3181afe`)
+   - Updated `MainActivity.kt` to only process auth deep link when `savedInstanceState == null` and on `onNewIntent`, clearing `intent.data = null`.
+   - *Check*: `./gradlew :app:compileProdDebugKotlin` PASSED.
+
+8. **Startup token 401 race prevention** (`a3a6f71`)
+   - Added `isLoaded: StateFlow<Boolean>` and `awaitToken(): String?` to `TokenStore` and `EncryptedTokenStore`.
+   - Configured `AppContainer.kt` to await token before OkHttp requests.
+   - Updated `AuthInterceptor.kt` to only invoke `onUnauthorized()` on 401 if the request actually carried an `Authorization: Bearer ...` header.
+   - Updated `MainActivity.kt` to wait for `isLoaded` before rendering `AppNav` to prevent flash of sign-in screen.
+   - Added unit tests in `AuthInterceptorTest.kt` verifying unauthenticated 401 does not clear token and async token load is awaited.
+   - *Check*: `./gradlew :app:testProdDebugUnitTest --tests com.knhdixh.attendance80.net.AuthInterceptorTest` (5/5 tests PASSED).
+
+9. **Server auth fixes** (`ebd6b2b`)
+   - Enforced regex `/^[A-Za-z0-9_-]{43}$/` for PKCE challenges in `/auth/app/google` and `/auth/app/dev`.
+   - Cleaned up expired `app_codes` on new code insertion.
+   - Redirected `calendar-app` session errors to `com.knhdixh.attendance80:/gcal?error=session`.
+   - Added comprehensive tests in `test/app-auth.test.js` for Google callback app flow, error redirects, calendar-app redirects, and passkey app token verify. Cleaned leftover comments and unused imports.
+   - *Check*: `npm test` (88/88 tests PASSED).
+
+10. **Exclude token DataStore from backup and device transfer** (`a3a5782`)
+    - Added `res/xml/data_extraction_rules.xml` (API 31+) and `res/xml/backup_rules.xml` (API < 31) excluding `datastore/auth_prefs.preferences_pb`.
+    - Referenced both in `AndroidManifest.xml` under `<application>`.
+    - *Check*: `./gradlew :app:assembleProdDebug` PASSED.
+
+11. **Restrict `-PbaseUrl` to debug build types only** (`5b76f6b`)
+    - Moved `-PbaseUrl` override into `buildTypes.debug` in `android-native/app/build.gradle.kts`, ensuring release builds always point to the production/staging flavor host.
+    - *Check*: Generated `BuildConfig.java` for `prodDebug` and `prodRelease` with `-PbaseUrl=http://10.0.2.2:8787` and verified `prodRelease` retained `"https://epita.knhdixh.com"`.
+
+12. **`USE_EXACT_ALARM` permissions & Phase 5 fallback plan**
+    - `USE_EXACT_ALARM` and `SCHEDULE_EXACT_ALARM` are both declared in `AndroidManifest.xml`.
+    - Note recorded for Phase 5: Implement runtime check `canScheduleExactAlarms()` and fallback to `SCHEDULE_EXACT_ALARM` if `USE_EXACT_ALARM` is restricted.
+
+13. **Dev sign-in email URL-encoding** (`d856754`)
+    - URL-encoded email parameter in `SignInViewModel.startDevSignIn` using `java.net.URLEncoder.encode(email, "UTF-8")` and `generate-api-fixtures.mjs`.
+    - Added unit test in `SignInViewModelTest.kt` verifying URL encoding with `+` and special characters.
+    - *Check*: `./gradlew :app:testProdDebugUnitTest --tests com.knhdixh.attendance80.ui.signin.SignInViewModelTest` PASSED.
+
+14. **Library scoping and strict JSON decoding** (`43bf8fb`)
+    - Moved `okhttp-logging` from `implementation` to `debugImplementation` in `app/build.gradle.kts`.
+    - Removed `isLenient = true` from `ApiClient.json`.
+    - Confirmed `material-icons-extended` is not bundled in dependencies.
+    - *Check*: `./gradlew :app:assembleProdDebug :app:assembleProdRelease :app:testProdDebugUnitTest` PASSED.
+
+15. **Nit: Clarified `TokenCipherTest`** (`d1aa10f`)
+    - Renamed test in `TokenCipherTest.kt` to `softwareAesGcmCipher_encryptDecryptRoundTrip` and added comment noting instrumented `AndroidKeystoreCipher` test scheduled for Phase 8.
+    - *Check*: `./gradlew :app:testProdDebugUnitTest --tests com.knhdixh.attendance80.auth.TokenCipherTest` PASSED.
+
+### Final Verification Results
+
+- `npm test`: **88/88 passed** (0 failed, 589 ms)
+- `cd android-native && TZ=UTC ./gradlew :app:testProdDebugUnitTest --rerun-tasks`: **31/31 passed**
+- `cd android-native && TZ=America/New_York ./gradlew :app:testProdDebugUnitTest --rerun-tasks`: **31/31 passed**
+- `cd android-native && TZ=Europe/Helsinki ./gradlew :app:testProdDebugUnitTest --rerun-tasks`: **31/31 passed**
+- `cd android-native && ./gradlew :app:lintProdDebug`: **BUILD SUCCESSFUL** (0 errors)
+- `cd android-native && ./gradlew :app:assembleProdDebug :app:assembleProdRelease`: **BUILD SUCCESSFUL** (release R8 minification verified)
+
