@@ -13,7 +13,7 @@ async function createAccount(email) {
   const env = { DB: d1(), DEV_LOGIN: '1' };
   const verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
   const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
-  const devRes = await worker.fetch(new Request(`https://app.test/auth/app/dev?email=${email}&challenge=${challenge}`), env);
+  const devRes = await worker.fetch(new Request(`https://app.test/auth/app/dev?email=${encodeURIComponent(email)}&challenge=${challenge}`), env);
   const code = new URL(devRes.headers.get('Location')).searchParams.get('code');
   const tokenRes = await worker.fetch(new Request('https://app.test/auth/app/token', {
     method: 'POST',

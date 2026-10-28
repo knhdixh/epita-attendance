@@ -66,7 +66,8 @@ class SignInViewModel(
         val c = Pkce.computeChallenge(v)
         verifier = v
         val base = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
-        val url = "${base}auth/app/dev?email=$email&challenge=$c"
+        val encodedEmail = java.net.URLEncoder.encode(email, "UTF-8")
+        val url = "${base}auth/app/dev?email=$encodedEmail&challenge=$c"
         openCustomTab(url.toUri())
     }
 
