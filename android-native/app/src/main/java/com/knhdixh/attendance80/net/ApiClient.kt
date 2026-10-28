@@ -12,7 +12,6 @@ object ApiClient {
         ignoreUnknownKeys = true
         explicitNulls = false
         encodeDefaults = true
-        isLenient = true
     }
 
     fun createOkHttpClient(
