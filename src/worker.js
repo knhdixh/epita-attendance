@@ -15,6 +15,11 @@ import { buildPlan } from '../public/plan.js';
 import { focusSummary } from '../public/focus.js';
 import { FOCUS_COLUMNS, focusRow, focusSettings, saveFocusSettings, logFocus, listFocus, deleteFocus } from './focus.js';
 import { isValidTimeZone } from './homework.js';
+import { listHabits, createHabit, updateHabit, deleteHabit, checkHabit } from './habits.js';
+import {
+  notifySettings, saveNotifySettings, subscribe, unsubscribe, deviceCount, setFocusPush, sendTest, sendDueNotifications,
+} from './notify.js';
+import { pushEnabled } from './push.js';
 import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
   syncDueCalendars, wipeCalendars,
@@ -273,7 +278,7 @@ async function handleApi(request, env, url, user) {
   let m;
 
   if (path === '/api/data' && method === 'GET') {
-    const [courses, events, homework, link, breaks, syncs, focus] = await DB.batch([
+    const [courses, events, homework, link, breaks, syncs, focus, devices] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -286,6 +291,7 @@ async function handleApi(request, env, url, user) {
       // The last eight weeks of focus (Today, homework totals, the week chart); the Focus page loads the year.
       DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
         .bind(user.id, Date.now() - FOCUS_DATA_DAYS * 86400000),
+      DB.prepare('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?').bind(user.id),
     ]);
     const gcal = link.results[0];
     return json({
@@ -305,6 +311,9 @@ async function handleApi(request, env, url, user) {
       calendars: await listCalendars(env, user.id),
       calendarSyncs: syncs.results,
       focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
+      habits: await listHabits(env, user),
+      // key: the VAPID public key browsers subscribe with (null: push isn't set up here); devices: subscriptions.
+      notifications: { key: pushEnabled(env) ? env.VAPID_PUBLIC_KEY : null, settings: notifySettings(user), devices: devices.results[0].n },
     });
   }
 
@@ -343,6 +352,23 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/focus' && method === 'POST') return json(await logFocus(env, user, await readJson(request)));
   if ((m = path.match(/^\/api\/focus\/(\d+)$/)) && method === 'DELETE') return json(await deleteFocus(env, user, Number(m[1])));
   if (path === '/api/focus/settings' && method === 'PUT') return json({ settings: await saveFocusSettings(env, user, await readJson(request)) });
+
+  // Habits: the list comes with /api/data.
+  if (path === '/api/habits' && method === 'POST') return json({ habit: await createHabit(env, user, await readJson(request)) });
+  if ((m = path.match(/^\/api\/habits\/(\d+)$/)) && method === 'PATCH') return json({ habit: await updateHabit(env, user, Number(m[1]), await readJson(request)) });
+  if ((m = path.match(/^\/api\/habits\/(\d+)$/)) && method === 'DELETE') return json(await deleteHabit(env, user, Number(m[1])));
+  if ((m = path.match(/^\/api\/habits\/(\d+)\/checks\/([\d-]+)$/)) && (method === 'PUT' || method === 'DELETE')) {
+    return json(await checkHabit(env, user, Number(m[1]), m[2], method === 'PUT'));
+  }
+
+  // Notifications (Web Push): this device's subscription, what to be notified about, and the focus timer's end.
+  if (path === '/api/push/subscribe' && method === 'POST') return json(await subscribe(env, user, await readJson(request)));
+  if (path === '/api/push/unsubscribe' && method === 'POST') return json(await unsubscribe(env, user, await readJson(request)));
+  if (path === '/api/push/test' && method === 'POST') return json(await sendTest(env, user));
+  if (path === '/api/push/focus' && method === 'PUT') return json(await setFocusPush(env, user, await readJson(request)));
+  if (path === '/api/notify/settings' && method === 'PUT') {
+    return json({ settings: await saveNotifySettings(env, user, await readJson(request)), devices: await deviceCount(env, user) });
+  }
 
   if (path === '/api/catchups' && method === 'POST') {
     return json(await createCatchup(env, user, await readJson(request), url.origin));
@@ -567,8 +593,9 @@ export default {
     }
   },
 
-  // Cron (every minute): refresh the Zeus link that is most overdue, if any.
+  // Cron (every minute): refresh the Zeus link that is most overdue, if any, and send the notifications due.
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(syncDueCalendars(env).then((r) => r.due && console.log('calendar refresh', r)));
+    ctx.waitUntil(sendDueNotifications(env, controller.scheduledTime).then((r) => r.sent && console.log('notifications', r)));
   },
 };
