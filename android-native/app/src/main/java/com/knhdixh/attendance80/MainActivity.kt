@@ -45,7 +45,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        handleAuthIntent(intent)
+        if (savedInstanceState == null) {
+            handleAuthIntent(intent)
+        }
 
         setContent {
             Attendance80Theme {
@@ -77,6 +79,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        intent.data = null
     }
 }
 
