@@ -266,7 +266,6 @@ test('apk-key-hash origin computed correctly from a known fingerprint', () => {
   const fp = '30:8B:9E:2E:FD:D5:A7:79:32:66:B0:60:76:EF:8F:C3:73:EA:12:22:E6:CD:B9:3C:1D:10:A1:82:EF:A8:95:7D';
   // Compute independently using node:crypto
   const hex = fp.replace(/:/g, '');
-  const expectedB64 = crypto.createHash('sha256'); // Wait, the fp is already the sha256 bytes!
   const rawBytes = Buffer.from(hex, 'hex');
   const expectedOrigin = `android:apk-key-hash:${rawBytes.toString('base64url')}`;
 
@@ -311,4 +310,217 @@ test('GET /auth/app/dev sets up code and redirects to app custom scheme', async 
   const devUser = db.prepare("SELECT * FROM users WHERE email = 'devuser@epita.fr'").get();
   assert.ok(devUser);
   assert.equal(devUser.name, 'devuser');
+});
+
+test('challenge validation in /auth/app/google and /auth/app/dev', async () => {
+  const { env } = setup();
+  env.GOOGLE_CLIENT_ID = 'gid';
+  env.GOOGLE_CLIENT_SECRET = 'gsecret';
+
+  // Bad challenges (length != 43, invalid chars)
+  const badChallenges = [
+    'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjX.', // dot
+    'dBjftJeZ4CVP+mB92K27uhbUJU1p1r_wW1gFWFOEjXk', // plus
+    'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjX=', // equal
+    'too_short',
+  ];
+
+  for (const c of badChallenges) {
+    const resGoogle = await worker.fetch(new Request(`https://app.test/auth/app/google?challenge=${c}`), env);
+    assert.equal(resGoogle.status, 400);
+
+    const resDev = await worker.fetch(new Request(`https://app.test/auth/app/dev?challenge=${c}`), env);
+    assert.equal(resDev.status, 400);
+  }
+
+  // Valid 43-character base64url challenge
+  const validChal = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+  const resGoogleOk = await worker.fetch(new Request(`https://app.test/auth/app/google?challenge=${validChal}`), env);
+  assert.equal(resGoogleOk.status, 302);
+
+  const resDevOk = await worker.fetch(new Request(`https://app.test/auth/app/dev?challenge=${validChal}`), env);
+  assert.equal(resDevOk.status, 302);
+});
+
+test('expired app_codes are deleted on insert of a new code', async () => {
+  const { env, db } = setup();
+  db.exec(`INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES ('expired_code', 1, 'chal', ${Date.now() - 1000})`);
+  assert.ok(db.prepare("SELECT * FROM app_codes WHERE code = 'expired_code'").get());
+
+  const validChal = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+  const res = await worker.fetch(new Request(`https://app.test/auth/app/dev?challenge=${validChal}`), env);
+  assert.equal(res.status, 302);
+
+  assert.equal(db.prepare("SELECT * FROM app_codes WHERE code = 'expired_code'").get(), undefined);
+});
+
+test('google callback with purpose=app creates app_code with challenge and redirects to app', async () => {
+  const { env, db } = setup();
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      const u = new URL(url);
+      if (u.pathname === '/token') {
+        return new Response(JSON.stringify({ access_token: 'g_access_1', expires_in: 3600 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (u.pathname.endsWith('/userinfo')) {
+        return new Response(JSON.stringify({ sub: 'google:sub99', email: 'student99@epita.fr', email_verified: true, name: 'Student 99' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Not found', { status: 404 });
+    };
+
+    const challenge = 'test_challenge_1234567890123456789012345678';
+    const stateCookie = `oauth_state=app.expectedstate.${challenge}`;
+    const res = await worker.fetch(new Request('https://app.test/auth/google/callback?code=gcode123&state=expectedstate', {
+      headers: { Cookie: stateCookie },
+    }), env);
+
+    assert.equal(res.status, 302);
+    const loc = res.headers.get('Location');
+    assert.match(loc, /^com\.knhdixh\.attendance80:\/auth\?code=([A-Za-z0-9_-]{20,})$/);
+    const code = new URL(loc).searchParams.get('code');
+    const row = db.prepare('SELECT * FROM app_codes WHERE code = ?').get(code);
+    assert.ok(row);
+    assert.equal(row.challenge, challenge);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('google callback purpose=app redirects errors to app scheme', async () => {
+  const { env } = setup();
+  env.ALLOWED_DOMAIN = 'epita.fr';
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      const u = new URL(url);
+      if (u.pathname === '/token') {
+        return new Response(JSON.stringify({ access_token: 'g_access_2', expires_in: 3600 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (u.pathname.endsWith('/userinfo')) {
+        return new Response(JSON.stringify({ sub: 'google:subother', email: 'other@gmail.com', email_verified: true, name: 'Other' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Not found', { status: 404 });
+    };
+
+    // State mismatch
+    const resState = await worker.fetch(new Request('https://app.test/auth/google/callback?code=gcode123&state=wrongstate', {
+      headers: { Cookie: 'oauth_state=app.correctstate.chal1234567890123456789012345678901234567890' },
+    }), env);
+    assert.equal(resState.status, 302);
+    assert.equal(resState.headers.get('Location'), 'com.knhdixh.attendance80:/auth?error=state');
+
+    // Domain mismatch
+    const resDomain = await worker.fetch(new Request('https://app.test/auth/google/callback?code=gcode123&state=correctstate', {
+      headers: { Cookie: 'oauth_state=app.correctstate.chal1234567890123456789012345678901234567890' },
+    }), env);
+    assert.equal(resDomain.status, 302);
+    assert.equal(resDomain.headers.get('Location'), 'com.knhdixh.attendance80:/auth?error=domain');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('google callback calendar-app redirects to gcal custom scheme', async () => {
+  const { env } = setup();
+  env.TOKEN_KEY = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      const u = new URL(url);
+      if (u.pathname === '/token') {
+        return new Response(JSON.stringify({ access_token: 'g_access_3', refresh_token: 'ref1', scope: 'https://www.googleapis.com/auth/calendar.app.created', expires_in: 3600 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (u.pathname.endsWith('/userinfo')) {
+        return new Response(JSON.stringify({ sub: 'google:123', email: 'student@epita.fr', email_verified: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Not found', { status: 404 });
+    };
+
+    // With active session
+    const sid = 'a80s_validsessiontoken12345';
+    env.DB.raw.exec(`INSERT INTO sessions (id, user_id, expires_at) VALUES ('${sid}', 1, ${Date.now() + 60000})`);
+
+    const res = await worker.fetch(new Request('https://app.test/auth/google/callback?code=gcode123&state=st123', {
+      headers: {
+        Cookie: `oauth_state=calendar-app.st123; sid=${sid}`,
+      },
+    }), env);
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('Location'), 'com.knhdixh.attendance80:/gcal?result=connected');
+
+    // Without session -> redirects to gcal custom scheme with error=session
+    const resNoSession = await worker.fetch(new Request('https://app.test/auth/google/callback?code=gcode123&state=st123', {
+      headers: {
+        Cookie: 'oauth_state=calendar-app.st123',
+      },
+    }), env);
+    assert.equal(resNoSession.status, 302);
+    assert.equal(resNoSession.headers.get('Location'), 'com.knhdixh.attendance80:/gcal?error=session');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('passkey verify with X-A80-App: 1 returns app token and no session cookie', async () => {
+  const { env, db } = setup();
+  const rpID = 'app.test';
+  const origin = 'https://app.test';
+  const challenge = 'dGVzdC1jaGFsbGVuZ2UtMTIzNDU';
+
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const jwk = publicKey.export({ format: 'jwk' });
+  const x = Buffer.from(jwk.x, 'base64url');
+  const y = Buffer.from(jwk.y, 'base64url');
+  const coseKey = Buffer.concat([
+    Buffer.from([0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20]),
+    x,
+    Buffer.from([0x22, 0x58, 0x20]),
+    y,
+  ]);
+
+  const credId = Buffer.from('cred_app_test').toString('base64url');
+  db.exec(`INSERT INTO passkeys (id, user_id, public_key, counter, transports, backed_up, name, created_at)
+    VALUES ('${credId}', 1, '${coseKey.toString('base64url')}', 0, '["internal"]', 0, 'Pixel', ${Date.now()})`);
+  db.exec(`INSERT INTO auth_challenges (id, challenge, kind, user_id, expires_at)
+    VALUES ('ch_login', '${challenge}', 'login', 1, ${Date.now() + 60000})`);
+
+  const rpIdHash = crypto.createHash('sha256').update(rpID).digest();
+  const flags = Buffer.from([0x01]);
+  const counter = Buffer.alloc(4);
+  counter.writeUInt32BE(1, 0);
+  const authenticatorData = Buffer.concat([rpIdHash, flags, counter]);
+
+  const clientDataJSON = Buffer.from(JSON.stringify({ type: 'webauthn.get', challenge, origin, crossOrigin: false }));
+  const clientDataHash = crypto.createHash('sha256').update(clientDataJSON).digest();
+  const signature = crypto.sign('sha256', Buffer.concat([authenticatorData, clientDataHash]), privateKey);
+
+  const res = await worker.fetch(new Request('https://app.test/auth/passkey/login/verify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-A80-App': '1',
+      'Cookie': 'pk_chal=ch_login',
+    },
+    body: JSON.stringify({
+      response: {
+        id: credId,
+        rawId: credId,
+        response: {
+          authenticatorData: authenticatorData.toString('base64url'),
+          clientDataJSON: clientDataJSON.toString('base64url'),
+          signature: signature.toString('base64url'),
+        },
+        type: 'public-key',
+      },
+    }),
+  }), env);
+
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.ok, true);
+  assert.match(body.token, /^a80s_/);
+  const setCookie = res.headers.get('Set-Cookie') || '';
+  assert.ok(!setCookie.includes('sid='));
+  assert.ok(!setCookie.includes('a80s='));
 });

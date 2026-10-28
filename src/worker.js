@@ -57,6 +57,14 @@ function redirect(location, cookies = []) {
 // ---------------------------------------------------------------- auth
 
 const APP_SESSION_PREFIX = 'a80s_';
+const PKCE_CHALLENGE_RE = /^[A-Za-z0-9_-]{43}$/;
+
+async function insertAppCode(db, code, userId, challenge, expiresAt) {
+  await db.batch([
+    db.prepare('DELETE FROM app_codes WHERE expires_at < ?').bind(Date.now()),
+    db.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)').bind(code, userId, challenge, expiresAt),
+  ]);
+}
 
 async function sha256Base64Url(str) {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -152,7 +160,7 @@ async function handleAuth(request, env, url) {
   if (url.pathname === '/auth/app/google') {
     if (!googleEnabled(env)) return new Response('Google sign-in is not configured.', { status: 503 });
     const challenge = url.searchParams.get('challenge');
-    if (!challenge || challenge.length !== 43) return new Response('Invalid challenge.', { status: 400 });
+    if (!challenge || !PKCE_CHALLENGE_RE.test(challenge)) return new Response('Invalid challenge.', { status: 400 });
     return startOAuth('app', { scope: 'openid email profile', prompt: 'select_account' }, challenge);
   }
 
@@ -199,7 +207,7 @@ async function handleAuth(request, env, url) {
 
       if (isGcal) {
         const user = await currentUser(request, env);
-        if (!user) return redirect('/', [clearState]);
+        if (!user) return redirect(purpose === 'calendar-app' ? 'com.knhdixh.attendance80:/gcal?error=session' : '/', [clearState]);
         if (!String(tokens.scope || '').split(' ').includes(GCAL_SCOPE)) return fail('scope');
         if (!tokens.refresh_token) return fail('refresh');
         // Reconnecting keeps calendar_id and event ids, so events aren't duplicated. Unsynced
@@ -220,8 +228,7 @@ async function handleAuth(request, env, url) {
       const user = await upsertUser(env, info);
       if (purpose === 'app') {
         const appCode = randomToken(24);
-        await env.DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
-          .bind(appCode, user.id, challenge, Date.now() + 2 * 60 * 1000).run();
+        await insertAppCode(env.DB, appCode, user.id, challenge, Date.now() + 2 * 60 * 1000);
         return redirect(`com.knhdixh.attendance80:/auth?code=${appCode}`, [clearState]);
       }
       return redirect('/', [clearState, await startSession(env, user.id, secure)]);
@@ -239,11 +246,10 @@ async function handleAuth(request, env, url) {
   if (url.pathname === '/auth/app/dev' && devLoginEnabled(env)) {
     const email = url.searchParams.get('email') || 'dev@example.com';
     const challenge = url.searchParams.get('challenge');
-    if (!challenge) return new Response('Missing challenge', { status: 400 });
+    if (!challenge || !PKCE_CHALLENGE_RE.test(challenge)) return new Response('Invalid challenge.', { status: 400 });
     const user = await upsertUser(env, { sub: 'dev:' + email, email, name: email.split('@')[0] });
     const code = randomToken(24);
-    await env.DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
-      .bind(code, user.id, challenge, Date.now() + 2 * 60 * 1000).run();
+    await insertAppCode(env.DB, code, user.id, challenge, Date.now() + 2 * 60 * 1000);
     return redirect(`com.knhdixh.attendance80:/auth?code=${code}`);
   }
 
@@ -462,8 +468,7 @@ async function handleApi(request, env, url, user) {
       throw new HttpError(400, 'Invalid destination.');
     }
     const code = randomToken(24);
-    await DB.prepare('INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES (?, ?, ?, ?)')
-      .bind(code, user.id, 'web:' + next, Date.now() + 60 * 1000).run();
+    await insertAppCode(DB, code, user.id, 'web:' + next, Date.now() + 60 * 1000);
     return json({ url: `/auth/app/web?code=${code}` });
   }
 
