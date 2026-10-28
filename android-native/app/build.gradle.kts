@@ -54,6 +54,10 @@ android {
         }
         debug {
             applicationIdSuffix = ""
+            val customBaseUrl = project.findProperty("baseUrl") as? String
+            if (customBaseUrl != null) {
+                buildConfigField("String", "BASE_URL", "\"$customBaseUrl\"")
+            }
         }
     }
 
@@ -62,14 +66,12 @@ android {
         create("prod") {
             dimension = "host"
             resValue("string", "app_name", "Attendance80")
-            val customBaseUrl = project.findProperty("baseUrl") as? String
-            buildConfigField("String", "BASE_URL", "\"${customBaseUrl ?: "https://epita.knhdixh.com"}\"")
+            buildConfigField("String", "BASE_URL", "\"https://epita.knhdixh.com\"")
         }
         create("staging") {
             dimension = "host"
             resValue("string", "app_name", "Attendance80 (staging)")
-            val customBaseUrl = project.findProperty("baseUrl") as? String
-            buildConfigField("String", "BASE_URL", "\"${customBaseUrl ?: "https://epita-staging.knhdixh.com"}\"")
+            buildConfigField("String", "BASE_URL", "\"https://epita-staging.knhdixh.com\"")
         }
     }
 
