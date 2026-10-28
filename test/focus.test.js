@@ -266,3 +266,18 @@ test('time adjustments: the next length while idle, the end of a running phase',
   // A break after an adjusted focus is the usual length again.
   assert.equal(F.finish(longer, S, longer.endsAt, 'n').next.endsAt - longer.endsAt, 5 * MIN);
 });
+
+test('timer: typed times, and the time left set to the second within the limits', () => {
+  assert.equal(F.parseClock('25'), 25 * MIN);
+  assert.equal(F.parseClock(' 12:30 '), 12 * MIN + 30000);
+  assert.equal(F.parseClock('1:05:00'), 65 * MIN);
+  for (const bad of ['', 'abc', '2:75', '1:2:3:4', '-5']) assert.equal(F.parseClock(bad), null, bad);
+
+  assert.equal(F.setRemaining(F.idle(), S, 37 * MIN, T0).custom, 37, 'idle: the next length, in minutes');
+  const t = F.start(F.idle(), S, T0, 'r');
+  assert.equal(F.setRemaining(t, S, 12 * MIN + 30000, T0 + MIN).endsAt, T0 + 13 * MIN + 30000);
+  assert.equal(F.setRemaining(t, S, 5000, T0 + MIN).endsAt, T0 + 2 * MIN, 'at least a minute left');
+  assert.equal(F.setRemaining(t, S, 500 * MIN, T0).endsAt, T0 + F.MAX_PHASE_MIN * MIN, 'at most MAX_PHASE_MIN in all');
+  const paused = F.pause(t, T0 + 10 * MIN);
+  assert.equal(F.remaining(F.setRemaining(paused, S, 3 * MIN, T0 + 20 * MIN), T0 + 30 * MIN), 3 * MIN, 'paused: counts from the pause');
+});

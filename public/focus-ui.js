@@ -5,6 +5,7 @@
 import { state, esc, api, toast, render, courseById, fmtTime } from './app.js';
 import * as F from './focus.js';
 import { buildPlan } from './plan.js';
+import * as notify from './notify-ui.js';
 
 const $app = document.getElementById('app');
 const TIMER_KEY = 'a80-focus';
@@ -53,6 +54,7 @@ const save = (t, { stamp = true } = {}) => {
   timer = stamp ? { ...t, updatedAt: Date.now() } : t;
   write(TIMER_KEY, timer);
   if (stamp) toApp();
+  pushLater();
 };
 const newRun = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`);
 
@@ -176,6 +178,25 @@ async function announce(title, body) {
   toast(`${title} ${body}`);
 }
 
+// The server sends the end of the running phase as a push notification (src/notify.js), for when no page is open
+// to ring. An open page moves the timer on at the end, which replaces it in time, so it's never shown twice.
+let pushed = '', pushTimer;
+const pushLater = () => { clearTimeout(pushTimer); pushTimer = setTimeout(pushFocus, 500); };
+function pushFocus() {
+  if (!state.data || !notify.wantsFocus()) return;
+  const on = running() && !timer.pausedAt;
+  let body = { at: null };
+  if (on && timer.phase === 'focus') {
+    const s = settings();
+    const brk = timer.done + 1 >= s.longEvery ? 'long' : 'short';
+    body = { at: timer.endsAt, title: `Focus done${timer.target?.label ? `: ${timer.target.label}` : ''}.`, body: `Time for a ${s[brk]}-minute ${brk} break.` };
+  } else if (on) body = { at: timer.endsAt, title: 'Break over.', body: 'Time to focus again.' };
+  const key = JSON.stringify(body);
+  if (key === pushed) return;
+  pushed = key;
+  api('/api/push/focus', { method: 'PUT', body }).catch(() => { pushed = ''; });
+}
+
 // ---------------------------------------------------------------- actions
 
 // F, Space and the main button: start, pause or resume.
@@ -202,7 +223,7 @@ function commit({ log, next }) {
 }
 
 // Skip: a focus ends now (recorded as stopped early) and its break follows; a break, running or next, is skipped.
-// −5 / +5 min (the keys − and +), and lengths to pick before starting.
+// −5, −1, +1, +5 min (the keys _ - = +), lengths to pick before starting, and the clock to type a time into.
 export function adjustBy(minutes) {
   save(F.adjust(timer, settings(), minutes, Date.now()));
   changed();
@@ -211,15 +232,24 @@ function setLength(minutes) {
   save(F.setLength(timer, settings(), minutes));
   changed();
 }
-const PRESETS = { focus: [15, 25, 45, 60, 90], short: [3, 5, 10], long: [10, 15, 20, 30] };
+function setClock(text) {
+  const ms = F.parseClock(text);
+  if (ms === null || ms < (running() ? 1000 : MIN)) return toast('Type a time like 25, 12:30 or 1:05:00.', true);
+  state.fxClock = false;
+  save(F.setRemaining(timer, settings(), ms, Date.now()));
+  changed();
+}
+const PRESETS = { focus: [15, 20, 25, 30, 45, 50, 60, 90], short: [3, 5, 10, 15], long: [10, 15, 20, 30] };
 function adjustRow(on, phase, s) {
   const cur = F.nextLength(timer, s);
   const presets = on ? [] : [...new Set([...PRESETS[phase], s[phase]])].sort((a, b) => a - b);
   return `
       <div class="fx-adjust" role="group" aria-label="${on ? 'Change the time left' : 'Length'}">
-        <button class="tag-chip" data-fx-adjust="-5" title="5 minutes less (−)">−5 min</button>
+        <button class="tag-chip" data-fx-adjust="-5" title="5 minutes less (_)">−5</button>
+        <button class="tag-chip" data-fx-adjust="-1" title="1 minute less (−)">−1</button>
         ${presets.map((m) => `<button class="tag-chip" data-fx-length="${m}" aria-pressed="${m === cur}">${m} min</button>`).join('')}
-        <button class="tag-chip" data-fx-adjust="5" title="5 minutes more (+)">+5 min</button>
+        <button class="tag-chip" data-fx-adjust="1" title="1 minute more (=)">+1</button>
+        <button class="tag-chip" data-fx-adjust="5" title="5 minutes more (+)">+5</button>
       </div>`;
 }
 
@@ -454,6 +484,7 @@ export function init() {
   if (F.isDue(timer, Date.now())) phaseEnded(Date.now());
   paint();
   flush();
+  pushLater();
 }
 
 window.addEventListener('storage', (e) => {
@@ -516,6 +547,7 @@ window.addEventListener('message', (e) => {
   if (e.ports?.[0] && e.ports[0] !== app.port) {
     app.port = e.ports[0];
     app.port.onmessage = (m) => fromApp(m.data);
+    notify.inApp();
   }
   if (app.port) fromApp(e.data);
 });
@@ -606,7 +638,13 @@ function timerCard(now) {
   return `
     <section class="fx-timer ${phase}${on ? ' on' : ''}${paused ? ' paused' : ''}" id="fx-timer" aria-label="Focus timer">
       <div class="fx-phase"><span class="dot" aria-hidden="true"></span>${title}</div>
-      <div class="fx-clock" id="fx-clock" role="timer" aria-live="off">${clock(total)}</div>
+      ${state.fxClock ? `
+      <form class="fx-clock-form" id="fx-clock-form" autocomplete="off">
+        <input class="fx-clock fx-clock-input" name="value" value="${on ? clock(total) : F.nextLength(timer, s)}" inputmode="numeric"
+          aria-label="${on ? 'Time left (minutes, or m:ss)' : 'Length in minutes'}" spellcheck="false">
+        <span class="muted small">${on ? 'Time left: 25, 12:30 or 1:05:00. Enter to set, Esc to cancel.' : 'Minutes. Enter to set, Esc to cancel.'}</span>
+      </form>` : `
+      <button class="fx-clock" id="fx-clock" role="timer" aria-live="off" data-fx-clock title="Type a time">${clock(total)}</button>`}
       <div class="fx-track" aria-hidden="true"><div class="fx-bar" id="fx-bar" style="transform:scaleX(${on ? F.progress(timer, now) : 0})"></div></div>
       ${adjustRow(on, phase, s)}
       <div class="fx-cycle" title="${doneInSet} of ${s.longEvery} focus sessions before a long break" aria-label="${doneInSet} of ${s.longEvery} before a long break">
@@ -871,7 +909,8 @@ export function paletteItems() {
 }
 
 export const SHORTCUTS = [[['F'], 'Start, pause or resume the focus timer'], [['S'], 'Focus page: take a break, or skip it'], [['X'], 'Focus page: stop the timer'],
-  [['Space'], 'Focus page: start or pause'], [['−'], 'Focus page: 5 minutes less'], [['+'], 'Focus page: 5 minutes more'],
+  [['Space'], 'Focus page: start or pause'], [['−'], 'Focus page: 1 minute less'], [['='], 'Focus page: 1 minute more'],
+  [['_'], 'Focus page: 5 minutes less'], [['+'], 'Focus page: 5 minutes more'], [['E'], 'Focus page: type the time'],
   [['N'], 'Focus page: new task'], [['T'], 'Focus page: new tag']];
 
 // Keys on the Focus page (single keys, never while typing). Returns true when handled.
@@ -882,15 +921,25 @@ export function onPageKey(e) {
   if (k === 'x') { e.preventDefault(); stop(); return true; }
   if (k === 'n') { e.preventDefault(); openInline('task'); return true; }
   if (k === 't') { e.preventDefault(); openInline('tag'); return true; }
-  if (k === '-' || k === '_') { e.preventDefault(); adjustBy(-5); return true; }
-  if (k === '+' || k === '=') { e.preventDefault(); adjustBy(5); return true; }
+  if (k === '-' || k === '_') { e.preventDefault(); adjustBy(k === '_' ? -5 : -1); return true; }
+  if (k === '+' || k === '=') { e.preventDefault(); adjustBy(k === '+' ? 5 : 1); return true; }
+  if (k === 'e') { e.preventDefault(); editClock(); return true; }
   return false;
 }
 
-// Esc closes the new task / new tag form.
+function editClock() {
+  state.fxClock = true;
+  changed();
+  const input = document.querySelector('#fx-clock-form input');
+  input?.focus();
+  input?.select();
+}
+
+// Esc closes the new task / new tag form and the typed time.
 export function onKeydown(e) {
-  if (e.key !== 'Escape' || !e.target.closest?.('#fx-task-form, #fx-tag-form')) return false;
+  if (e.key !== 'Escape' || !e.target.closest?.('#fx-task-form, #fx-tag-form, #fx-clock-form')) return false;
   e.preventDefault();
+  if (e.target.closest('#fx-clock-form')) { state.fxClock = false; document.activeElement?.blur(); changed(); return true; }
   closeInline();
   return true;
 }
@@ -903,6 +952,7 @@ export function onClick(e) {
   if (adj) { adjustBy(Number(adj.dataset.fxAdjust)); return true; }
   const len = t.closest('[data-fx-length]');
   if (len) { setLength(Number(len.dataset.fxLength)); return true; }
+  if (t.closest('[data-fx-clock]')) { editClock(); return true; }
   const fx = t.closest('[data-fx]');
   if (fx) { ({ toggle, skip, stop })[fx.dataset.fx]?.(); return true; }
   const hwFocus = t.closest('[data-hw-focus]');
@@ -959,6 +1009,13 @@ export function onChange(e) {
 }
 
 export function onSubmit(e) {
+  if (e.target.id === 'fx-clock-form') {
+    e.preventDefault();
+    const value = new FormData(e.target).get('value');
+    document.activeElement?.blur();
+    setClock(value);
+    return true;
+  }
   if (e.target.id === 'fx-task-form' || e.target.id === 'fx-tag-form') {
     e.preventDefault();
     const value = new FormData(e.target).get('value');

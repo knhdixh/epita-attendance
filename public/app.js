@@ -7,6 +7,8 @@ import * as cal from './calendars-ui.js';
 import * as today from './today-ui.js';
 import * as tokens from './tokens-ui.js';
 import * as fx from './focus-ui.js';
+import * as hb from './habits-ui.js';
+import * as nt from './notify-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -98,6 +100,7 @@ async function boot() {
   try { if (localStorage.getItem(SIDEBAR_KEY) === 'closed') document.body.classList.add('sidebar-closed'); } catch { /* storage unavailable */ }
   render();
   fx.init();
+  nt.init();
   hw.handleRedirectParams(params);
 }
 
@@ -231,7 +234,7 @@ function render() {
   document.getElementById('fluid')?.remove();
 
   // Entrance animation only when the view changes, never on the re-render after a click.
-  const view = state.data.events.length || state.tab === 'settings' || state.tab === 'focus' ? state.tab : 'empty';
+  const view = state.data.events.length || ['settings', 'focus', 'habits'].includes(state.tab) ? state.tab : 'empty';
   const changed = view !== lastView;
   lastView = view;
 
@@ -239,7 +242,7 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, assistant: ai.renderAssistant, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
@@ -257,7 +260,7 @@ function render() {
 
 let lastView = null;
 let first = true;
-const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', breaks: 'Breaks', assistant: 'Assistant', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
@@ -270,6 +273,7 @@ function pageSub() {
     if (open) parts.push(`${open} open`);
   }
   if (state.tab === 'focus') parts.push(fx.subtitle());
+  if (state.tab === 'habits') parts.push(hb.subtitle());
   if (state.tab === 'upcoming' && state.weekCount != null) parts.push(`${state.weekCount} session${state.weekCount === 1 ? '' : 's'} this week`);
   if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
@@ -289,6 +293,9 @@ function renderSidebar(view) {
   document.getElementById('account-email').textContent = user.email || '';
   $sbMain.hidden = view === 'empty';
   if (view === 'empty') return;
+
+  const habits = hb.todayCounts();
+  setCount('habits', habits.due - habits.done, '', `${habits.due - habits.done} habit${habits.due - habits.done === 1 ? '' : 's'} left today`);
 
   const now = Date.now();
   const unmarked = unmarkedEvents().length;
@@ -723,6 +730,7 @@ function renderSettings() {
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
     </section>
+    ${nt.settingsPanel()}
     ${cal.settingsPanel()}
     ${signInMethodsPanel()}
     ${tokens.settingsPanel()}
@@ -854,7 +862,7 @@ async function setTracked(updates) {
 // [tab, label, icon, key after G]
 const NAV = [
   ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
-  ['focus', 'Focus', 'i-focus', 'F'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
+  ['focus', 'Focus', 'i-focus', 'F'], ['habits', 'Habits', 'i-habits', 'I'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['assistant', 'Assistant', 'i-assistant', 'A'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
 const SIDEBAR_KEY = 'a80-sidebar';
@@ -909,7 +917,7 @@ function paletteItems() {
   const { courses, events, homework, user } = state.data;
   const hasData = events.length > 0;
   const now = Date.now();
-  const items = NAV.filter(([tab]) => hasData || tab === 'settings' || tab === 'focus').map(([tab, label, icon, key]) => ({
+  const items = NAV.filter(([tab]) => hasData || ['settings', 'focus', 'habits'].includes(tab)).map(([tab, label, icon, key]) => ({
     id: `nav:${tab}`, section: 'Navigation', label: `Go to ${label}`, icon, keys: ['G', 'then', key], home: true, run: () => go(tab),
   }));
 
@@ -1002,7 +1010,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (byok.onClick(e) || fx.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (byok.onClick(e) || fx.onClick(e) || hb.onClick(e) || nt.onClick(e) || await hw.onClick(e) || ai.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1143,7 +1151,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (byok.onChange(e) || fx.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (byok.onChange(e) || fx.onChange(e) || hb.onChange(e) || nt.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -1180,7 +1188,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (byok.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e)) return;
+  if (byok.onSubmit(e) || hb.onSubmit(e) || hw.onSubmit(e) || ai.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
