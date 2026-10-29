@@ -7,6 +7,7 @@ import * as tokens from './tokens-ui.js';
 import * as fx from './focus-ui.js';
 import * as hb from './habits-ui.js';
 import * as cd from './countdowns-ui.js';
+import * as nt from './notify-ui.js';
 import * as cv from './calendar-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
@@ -99,6 +100,7 @@ async function boot() {
   try { if (localStorage.getItem(SIDEBAR_KEY) === 'closed') document.body.classList.add('sidebar-closed'); } catch { /* storage unavailable */ }
   render();
   fx.init();
+  nt.init();
   hw.handleRedirectParams(params);
 }
 
@@ -296,6 +298,9 @@ function renderSidebar(view) {
   document.getElementById('account-email').textContent = user.email || '';
   $sbMain.hidden = view === 'empty';
   if (view === 'empty') return;
+
+  const habits = hb.todayCounts();
+  setCount('habits', habits.due - habits.done, '', `${habits.due - habits.done} habit${habits.due - habits.done === 1 ? '' : 's'} left today`);
 
   const now = Date.now();
   const unmarked = unmarkedEvents().length;
@@ -739,6 +744,7 @@ function renderSettings() {
       <p class="muted small">Unmarked future sessions are assumed attended. Mark a future session × to plan a skip and see its effect.
         Excused (E) sessions are removed from the total, as are sessions tagged Optional.</p>
     </section>
+    ${nt.settingsPanel()}
     ${cal.settingsPanel()}
     ${signInMethodsPanel()}
     ${tokens.settingsPanel()}
@@ -1014,7 +1020,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (cv.onClick(e) || fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (cv.onClick(e) || fx.onClick(e) || hb.onClick(e) || nt.onClick(e) || cd.onClick(e) || await hw.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1159,7 +1165,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (cv.onChange(e) || fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (cv.onChange(e) || fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || nt.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }

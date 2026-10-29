@@ -18,6 +18,10 @@ import { COUNTDOWN_COLUMNS, createCountdown, updateCountdown, deleteCountdown } 
 import { habitStats, scheduleLabel, keyInZone, diffDays, addDays } from '../public/habits.js';
 import { occurrence } from '../public/countdowns.js';
 import {
+  notifySettings, saveNotifySettings, subscribe, unsubscribe, deviceCount, setFocusPush, sendTest, sendDueNotifications,
+} from './notify.js';
+import { pushEnabled } from './push.js';
+import {
   MAX_ICS_BYTES, listCalendars, addLink, addFile, replaceFile, syncCalendar, updateCalendar, removeCalendar,
   syncDueCalendars, wipeCalendars,
 } from './calendars.js';
@@ -304,7 +308,7 @@ async function handleApi(request, env, url, user) {
   let m;
 
   if (path === '/api/data' && method === 'GET') {
-    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns] = await DB.batch([
+    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns, devices] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -319,6 +323,7 @@ async function handleApi(request, env, url, user) {
         .bind(user.id, Date.now() - FOCUS_DATA_DAYS * 86400000),
       ...habitQueries(env, user, logsSince()),
       DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
+      DB.prepare('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?').bind(user.id),
     ]);
     const gcal = link.results[0];
     return json({
@@ -339,6 +344,8 @@ async function handleApi(request, env, url, user) {
       focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
       habits: { list: habits.results.map(habitRow), logs: habitLogs.results, since: logsSince() },
       countdowns: countdowns.results,
+      // key: the VAPID public key browsers subscribe with (null: push isn't set up here); devices: subscriptions.
+      notifications: { key: pushEnabled(env) ? env.VAPID_PUBLIC_KEY : null, settings: notifySettings(user), devices: devices.results[0].n },
     });
   }
 
@@ -392,6 +399,15 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/countdowns' && method === 'POST') return json(await createCountdown(env, user, await readJson(request)));
   if ((m = path.match(/^\/api\/countdowns\/(\d+)$/)) && method === 'PATCH') return json(await updateCountdown(env, user, Number(m[1]), await readJson(request)));
   if ((m = path.match(/^\/api\/countdowns\/(\d+)$/)) && method === 'DELETE') return json(await deleteCountdown(env, user, Number(m[1])));
+
+  // Notifications (Web Push): this device's subscription, what to be notified about, and the focus timer's end.
+  if (path === '/api/push/subscribe' && method === 'POST') return json(await subscribe(env, user, await readJson(request)));
+  if (path === '/api/push/unsubscribe' && method === 'POST') return json(await unsubscribe(env, user, await readJson(request)));
+  if (path === '/api/push/test' && method === 'POST') return json(await sendTest(env, user));
+  if (path === '/api/push/focus' && method === 'PUT') return json(await setFocusPush(env, user, await readJson(request)));
+  if (path === '/api/notify/settings' && method === 'PUT') {
+    return json({ settings: await saveNotifySettings(env, user, await readJson(request)), devices: await deviceCount(env, user) });
+  }
 
   if (path === '/api/catchups' && method === 'POST') {
     return json(await createCatchup(env, user, await readJson(request), url.origin));
@@ -604,8 +620,9 @@ export default {
     }
   },
 
-  // Cron (every minute): refresh the Zeus link that is most overdue, if any.
+  // Cron (every minute): refresh the Zeus link that is most overdue, if any, and send the notifications due.
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(syncDueCalendars(env).then((r) => r.due && console.log('calendar refresh', r)));
+    ctx.waitUntil(sendDueNotifications(env, controller.scheduledTime).then((r) => r.sent && console.log('notifications', r)));
   },
 };

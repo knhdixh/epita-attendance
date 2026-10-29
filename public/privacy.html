@@ -43,10 +43,15 @@
         the date your classes start. The app uses them only to download those calendars every few days, from the site
         each link points to. Removing a calendar in Settings deletes its link.</dd>
       <dt>Homework, breaks, habits and countdowns</dt>
-      <dd>Homework you add (title, notes, due date, reminder), breaks you save, your habits with the days you checked
-        them off, and your countdowns. If you use the homework calendar feed,
+      <dd>Homework you add (title, notes, due date, reminder), breaks you save, your habits (with their reminder times) and the days you
+        checked them off, and your countdowns. If you use the homework calendar feed,
         anyone with that private link can read your homework; the same goes for the timetable feed and your timetable.
         You can reset both links in Settings at any time.</dd>
+      <dt>Notifications (optional)</dt>
+      <dd>If you turn them on in a browser or the Android app, its push address and encryption keys, what you want to be
+        notified about, your time zone, and the end time of a running focus timer. Notifications go through your browser
+        maker's push service (Google for Chrome and Android, Apple for Safari, Mozilla for Firefox); their content is
+        encrypted so only your device can read it. Turning notifications off for a device deletes its push address.</dd>
       <dt>Google Calendar connection (optional)</dt>
       <dd>If you connect it, an encrypted access token, the email of the connected Google account, and the ID of the
         “Homework (Attendance80)” calendar the app creates.</dd>
@@ -78,6 +83,8 @@
     <ul>
       <li><b>Cloudflare</b>: hosting and database (stored in Western Europe).</li>
       <li><b>Google</b>: only if you sign in with Google or connect Google Calendar.</li>
+      <li><b>Your browser's push service</b> (Google, Apple or Mozilla): only if you turn on notifications; it carries
+        them encrypted.</li>
     </ul>
     <p>Some of these companies may process data outside the EU under the European Commission's standard contractual
       clauses or adequacy decisions.</p>

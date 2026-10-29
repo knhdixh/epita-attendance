@@ -261,6 +261,10 @@ function form(h = null, preset = null) {
         <span class="input-suffix"><input class="field" type="number" name="target" min="1" max="99" value="${v.target || 1}" aria-label="Check-ins that complete a day">
           <input class="field hb-unit" name="unit" value="${esc(v.unit || '')}" maxlength="20" placeholder="times" aria-label="Unit, e.g. glasses"></span>
       </div>
+      <div class="hb-field"><span>Remind me</span>
+        <span class="input-suffix"><input class="field hb-time" type="time" name="remind_at" value="${esc(v.remind_at || '')}" aria-label="Reminder time (optional)">
+          <span class="muted small">on days it's due, if not done yet</span></span>
+      </div>
       <div class="hb-field"><span>Colour</span>
         <div class="swatches">${H.COLORS.map((c) => `<label class="swatch" style="--hc:var(--c-${c})" title="${c}"><input type="radio" name="color" value="${c}" ${v.color === c ? 'checked' : ''} aria-label="${c}"><span></span></label>`).join('')}</div>
       </div>
@@ -279,7 +283,7 @@ function readForm(f) {
   const type = fd.get('type');
   const n = Number(fd.get('n'));
   const schedule = type === 'days' ? { type, days: fd.getAll('days').map(Number) } : type === 'daily' ? { type } : { type, n };
-  return { name: fd.get('name'), icon: fd.get('icon'), color: fd.get('color'), schedule, target: Number(fd.get('target')), unit: fd.get('unit') };
+  return { name: fd.get('name'), icon: fd.get('icon'), color: fd.get('color'), schedule, target: Number(fd.get('target')), unit: fd.get('unit'), remind_at: fd.get('remind_at') || null };
 }
 
 // The Todoist-style add row: type a sentence, see what was understood, Enter adds it.

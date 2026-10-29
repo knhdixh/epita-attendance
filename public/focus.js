@@ -81,6 +81,25 @@ export function adjust(t, settings, deltaMin, now) {
   return { ...t, endsAt: Math.max(floor, Math.min(ceiling, t.endsAt + deltaMin * MIN)) };
 }
 
+// Typed time: "25" is minutes, "12:30" minutes and seconds, "1:05:00" hours too. Null if it isn't a time.
+export function parseClock(text) {
+  const parts = String(text).trim().split(':');
+  if (parts.length > 3 || !parts.every((p) => /^\d{1,3}$/.test(p))) return null;
+  const n = parts.map(Number);
+  if (n.slice(1).some((x) => x > 59)) return null;
+  const [h, m, sec] = n.length === 3 ? n : n.length === 2 ? [0, ...n] : [0, n[0], 0];
+  return ((h * 60 + m) * 60 + sec) * 1000;
+}
+
+// Running: sets the time left exactly (to the second), within the same limits as adjust. Idle: the length of the
+// next phase, in whole minutes.
+export function setRemaining(t, settings, ms, now) {
+  if (t.phase === 'idle') return setLength(t, settings, ms / MIN);
+  const from = t.pausedAt ?? now;
+  const ceiling = t.startedAt + t.pausedMs + MAX_PHASE_MIN * MIN;
+  return { ...t, endsAt: Math.max(from + MIN, Math.min(ceiling, from + ms)) };
+}
+
 export const pause = (t, now) => (t.phase === 'idle' || t.pausedAt ? t : { ...t, pausedAt: now });
 
 export function resume(t, now) {

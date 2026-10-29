@@ -37,15 +37,19 @@
     <TextView android:id="@+id/qf_time_label" style="@style/QuickFocusLabel" android:text="Time" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
         <Button android:id="@+id/qf_minus" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="−5" />
-        <TextView android:id="@+id/qf_minutes" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:minWidth="96dp" android:gravity="center" android:textAppearance="?android:attr/textAppearanceMedium" android:textStyle="bold" />
+            android:layout_height="wrap_content" android:minWidth="52dp" android:text="−5" />
+        <Button android:id="@+id/qf_minus1" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:minWidth="52dp" android:text="−1" />
+        <TextView android:id="@+id/qf_minutes" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:minWidth="88dp" android:gravity="center" android:textAppearance="?android:attr/textAppearanceMedium" android:textStyle="bold" />
+        <Button android:id="@+id/qf_plus1" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:minWidth="52dp" android:text="+1" />
         <Button android:id="@+id/qf_plus" style="?android:attr/buttonBarButtonStyle" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="+5" />
-        <HorizontalScrollView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:scrollbars="none">
-            <LinearLayout android:id="@+id/qf_presets" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-        </HorizontalScrollView>
+            android:layout_height="wrap_content" android:minWidth="52dp" android:text="+5" />
     </LinearLayout>
+    <HorizontalScrollView android:id="@+id/qf_presets_scroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
+        <LinearLayout android:id="@+id/qf_presets" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    </HorizontalScrollView>
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"
         android:gravity="end|center_vertical">

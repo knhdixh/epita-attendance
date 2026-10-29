@@ -3,7 +3,7 @@
 import { HttpError } from './http.js';
 import { cleanHabit, isKey, MAX_HABITS } from '../public/habits.js';
 
-const COLUMNS = 'id, name, icon, color, schedule, target, unit, position, archived, created_at';
+const COLUMNS = 'id, name, icon, color, schedule, target, unit, remind_at, position, archived, created_at';
 const MAX_COUNT = 999;
 export const LOG_DAYS = 400;   // how far back /api/data and /api/plan load check-ins
 
@@ -31,9 +31,9 @@ export async function createHabit(env, user, body, now = Date.now()) {
   const h = r.value;
   const { n, top } = await env.DB.prepare('SELECT COUNT(*) AS n, MAX(position) AS top FROM habits WHERE user_id = ?').bind(user.id).first();
   if (n >= MAX_HABITS) throw new HttpError(400, `You can have up to ${MAX_HABITS} habits. Archive or delete one first.`);
-  return habitRow(await env.DB.prepare(`INSERT INTO habits (user_id, name, icon, color, schedule, target, unit, position, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ${COLUMNS}`)
-    .bind(user.id, h.name, h.icon ?? null, h.color, JSON.stringify(h.schedule), h.target, h.unit ?? null, (top ?? -1) + 1, now, now).first());
+  return habitRow(await env.DB.prepare(`INSERT INTO habits (user_id, name, icon, color, schedule, target, unit, remind_at, position, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ${COLUMNS}`)
+    .bind(user.id, h.name, h.icon ?? null, h.color, JSON.stringify(h.schedule), h.target, h.unit ?? null, h.remind_at ?? null, (top ?? -1) + 1, now, now).first());
 }
 
 export async function updateHabit(env, user, id, body, now = Date.now()) {

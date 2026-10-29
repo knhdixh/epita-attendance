@@ -8,6 +8,7 @@
 export const COLORS = ['blue', 'green', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'gray'];
 export const MAX_HABITS = 50;
 const NAME_LEN = 60, UNIT_LEN = 20, ICON_LEN = 8, MAX_TARGET = 99;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY = 86400000;
 export const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -67,7 +68,26 @@ export function cleanHabit(raw, { partial = false } = {}) {
   }
   if (has('unit')) out.unit = text(raw.unit, UNIT_LEN) || null;
   if (has('archived')) out.archived = raw.archived ? 1 : 0;
+  if (has('remind_at')) {
+    out.remind_at = raw.remind_at || null;
+    if (out.remind_at !== null && !TIME_RE.test(out.remind_at)) return { ok: false, error: 'Invalid reminder time.' };
+  }
   return { ok: true, value: out };
+}
+
+// ---------------------------------------------------------------- reminders
+
+const minutesInZone = (ms, tz) => {
+  const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms)).split(':');
+  return Number(h) * 60 + Number(m);
+};
+
+// The local day a habit's reminder is for, if its time in `tz` passed less than `window` ms before `now`; else null.
+// Whether the habit is due that day and not done yet is up to habitStats, once its check-ins are loaded.
+export function reminderDay(habit, now, tz, window = 5 * 60000) {
+  if (!habit.remind_at) return null;
+  const late = minutesInZone(now, tz) - (Number(habit.remind_at.slice(0, 2)) * 60 + Number(habit.remind_at.slice(3)));
+  return late >= 0 && late * 60000 < window ? keyInZone(now, tz) : null;
 }
 
 // ---------------------------------------------------------------- schedules

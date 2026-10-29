@@ -32,7 +32,7 @@ import java.util.Set;
  * the account.
  */
 public class QuickFocusActivity extends Activity {
-    private static final int[] PRESETS = {15, 25, 45, 60, 90};
+    private static final int[] PRESETS = {15, 20, 25, 30, 45, 50, 60, 90};
     private static final int TAGS_PER_SESSION = 5;
 
     private FocusStore store;
@@ -187,7 +187,10 @@ public class QuickFocusActivity extends Activity {
             presetsRow.addView(b);
         }
         findViewById(R.id.qf_minus).setOnClickListener(v -> step(-5));
+        findViewById(R.id.qf_minus1).setOnClickListener(v -> step(-1));
+        findViewById(R.id.qf_plus1).setOnClickListener(v -> step(1));
         findViewById(R.id.qf_plus).setOnClickListener(v -> step(5));
+        findViewById(R.id.qf_presets_scroll).setVisibility(on ? View.GONE : View.VISIBLE);
         showTime();
     }
 

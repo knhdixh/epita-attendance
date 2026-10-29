@@ -1129,6 +1129,7 @@ main.enter .fx-bar-v { animation: grow-y .8s var(--ease) backwards .15s; }
 .hb-field .input-suffix { display: flex; align-items: center; gap: 8px; }
 .hb-field .input-suffix .field { width: 72px; }
 .hb-field .input-suffix .hb-unit { width: 140px; }
+.hb-field .input-suffix .hb-time { width: 110px; }
 .hb-when-days, .hb-when-n { display: none; }
 .hb-form:has(input[name=type][value=days]:checked) .hb-when-days { display: grid; }
 .hb-form:has(input[name=type][value=weekly]:checked) .hb-when-n,
@@ -1204,6 +1205,24 @@ main.enter .fx-bar-v { animation: grow-y .8s var(--ease) backwards .15s; }
 .cd-chip-fig b { color: var(--hc); font-size: 18px; font-weight: 700; }
 .cd-chip-t { display: grid; font-size: 13px; font-weight: 500; line-height: 1.25; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-chip-t small { color: var(--text-3); font-size: 11px; font-weight: 400; }
+
+/* focus: the clock is a button that turns into a field to type the time */
+button.fx-clock { border: 0; padding: 0 6px; border-radius: 10px; background: none; color: inherit; font-family: var(--font); cursor: text; }
+button.fx-clock:hover { background: var(--hover); }
+.fx-clock-form { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.fx-clock-input { width: 6ch; max-width: 100%; padding: 0; border: 0; border-bottom: 2px solid var(--accent); background: none; color: var(--text); font-family: var(--font); text-align: center; }
+.fx-clock-input:focus { outline: none; }
+
+/* notifications (Settings) */
+.notify-device { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.notify-device > div:first-child { flex: 1; min-width: 200px; }
+.notify-actions { display: flex; gap: 8px; }
+.notify-form { gap: 10px; margin-top: 14px; }
+.notify-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.notify-row .select { width: auto; }
+
+.notify-form label.checkbox { display: inline-flex; font-size: 13px; font-weight: 400; color: var(--text); }
+.notify-form .select { width: auto; }
 
 /* ---------- calendar: day, 3 days, week and month, with time blocks */
 main.cal-main { max-width: none; padding: 4px 24px 48px; }
