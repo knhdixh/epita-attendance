@@ -228,3 +228,15 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
 - `cd android-native && ./gradlew :app:lintProdDebug`: **BUILD SUCCESSFUL** (0 errors)
 - `cd android-native && ./gradlew :app:assembleProdDebug :app:assembleProdRelease`: **BUILD SUCCESSFUL** (release R8 minification verified)
 
+
+## Merge into main (2026-10-29, by Claude with the owner)
+
+- `native-android` (up to `acfe138`) was merged into `main` in `d67613b`, after `origin/main` (Web Push) was
+  merged onto the live habits and countdowns line in `9202b56`. See the plan, section 8.1.
+- `migrations/0015_app_auth.sql` was renamed to `0019_app_auth.sql`; the plan and this log were updated to match.
+- The plan was amended: section B now asks for a branch and a review stop per phase, the assistant is gone,
+  Phase 2b (catch up with `main`) comes next, and the Todoist phases 10–13 were added (section 9).
+- Checks after the merge: `npm test` 103 of 104 pass. The failure is the countdown `days` assertion in
+  `test/habits.test.js`, which depends on the time of day and fails on the live line too.
+  `./gradlew testProdDebugUnitTest` 31 tests, 0 failures. `node android-native/tools/golden.mjs` changes
+  `plan_golden.json` (the new `planned` list), so `Plan.kt` is behind `public/plan.js`; that's Phase 2b, task 1.

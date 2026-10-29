@@ -7,13 +7,17 @@ and signing key, so it installs over the TWA as an update.
 Work through the phases in order. Each phase ends with checks that must pass before you start the next one.
 **Read sections A, B and 0 before you write any code.**
 
+> **Amended 2026-10-29.** `native-android` is merged into `main`, along with features that landed meanwhile, and
+> the Todoist task model is added as Phases 10–13. **Read sections 8 and 9 before starting any phase.** Where
+> they disagree with an earlier section, they win.
+
 ---
 
 ## A. Context
 
 - **The product.** Attendance80 helps students stay above their university's attendance minimum (usually 80%).
   It imports timetables (`.ics` links from EPITA's Zeus or Finnish universities' Sisu, or uploaded files), lets
-  you mark each session, and adds homework, a break planner, a focus (Pomodoro) timer and an AI assistant. The
+  you mark each session, and adds homework, a break planner, a focus (Pomodoro) timer, a Calendar with time blocking, habits and countdowns. The
   README's feature table is the full list.
 - **The stack today.** One Cloudflare Worker (`src/worker.js`) serves the REST API and the static frontend in
   `public/` (plain JavaScript, no build step), with a D1 (SQLite) database (`migrations/`). The maths shared by
@@ -34,8 +38,9 @@ Work through the phases in order. Each phase ends with checks that must pass bef
 
 Your output is reviewed by another agent (Claude) and the owner before it is merged. Make that review easy:
 
-1. **Branch.** Work on a new branch `native-android` from the current `HEAD`. Never push to `main`, never force
-   push, never rewrite history that's already been reviewed.
+1. **Branch.** One branch per phase, from the latest `main`: `native/phase-<n>` (for example `native/phase-2b`).
+   Never push to `main`, never merge, never force push, never rewrite history that's already been reviewed.
+   The owner merges a phase after its review passes.
 2. **Commits.** At least one commit per numbered task in a phase, each building and passing tests on its own.
    Don't mix server changes and Android changes in one commit.
 3. **Progress log.** Keep `docs/native-android-progress.md` up to date, one section per phase:
@@ -45,9 +50,10 @@ Your output is reviewed by another agent (Claude) and the owner before it is mer
    - anything you couldn't verify (for example, needs a real device), marked **Unverified**;
    - open questions.
    Never write that something works unless you ran the check that shows it.
-4. **Stop for review** at the end of Phase 1 (server auth is security-sensitive), Phase 2 (the maths port),
-   Phase 5 (the timer) and Phase 9. At a stop, finish the progress log, commit, and end your turn with a short
-   summary pointing at it. Don't start the next phase until told to.
+4. **Stop for review at the end of every phase.** Finish the progress log, commit, and end your turn with a
+   short summary pointing at it. Don't start the next phase until told to. Each review is written to
+   `docs/native-android-review-<n>.md`. Fix every item in it on the same branch, record the fixes (with commit
+   hashes) in the progress log under "Review <n> fixes", and stop again.
 5. **Don't fake checks.** Don't weaken, skip, `@Ignore` or delete a test to make it pass, and don't regenerate
    golden files to match wrong Kotlin output. If a check fails and you can't fix it, stop and record it in the log.
 6. **Ask instead of guessing** when the plan and the code genuinely conflict in a way rule 3 below doesn't settle:
@@ -70,8 +76,7 @@ Your output is reviewed by another agent (Claude) and the owner before it is mer
 ## 0. Rules
 
 1. **The server is the source of truth.** The app reads with `GET /api/data` and writes through the REST API in
-   `src/worker.js`. It never computes server-side state on its own: no ICS parsing, no Google Calendar sync, no
-   assistant logic.
+   `src/worker.js`. It never computes server-side state on its own: no ICS parsing, no Google Calendar sync.
 2. **The maths is ported, not reinvented.** `public/stats.js`, `public/breaks.js`, `public/plan.js` and
    `public/focus.js` are pure functions. Port them to Kotlin line by line, keep the same names, and prove they
    match with the golden tests in Phase 2. If the Kotlin output differs from the JS output, the Kotlin is wrong.
@@ -130,7 +135,7 @@ GET /api/data ──► DataRepository ──► StateFlow<AppData?> ──► V
   the file atomically (write to a temp file, then rename), and emits the parsed `AppData`.
 - Mutations: update the in-memory `AppData` optimistically, call the API, then either apply the server's
   response or revert and show the error message from the response's `{ error }` body in a snackbar. After
-  mutations that change many rows (calendar add/sync/remove, breaks, bulk attendance, assistant actions) do a
+  mutations that change many rows (calendar add/sync/remove, breaks, bulk attendance) do a
   full reload, as the web does.
 - Derived values (scope-filtered sessions, per-course stats, today's plan, break model) are computed in the
   ViewModels from `AppData` with the ported maths, on `Dispatchers.Default`, and memoised per `AppData`
@@ -324,14 +329,14 @@ MockWebServer tests for the interceptor (bearer added, 401 clears the token) and
    computation, exactly like `applyScope` (sessions with no calendars always count; a scope covering every
    calendar is the same as none).
 3. Navigation. Phone: bottom bar with **Today, Attendance, Homework, Focus, More**. *More* lists Upcoming,
-   Sessions, Courses, Breaks, Assistant, Settings. On widths ≥ 600dp use a navigation rail with every
+   Sessions, Courses, Calendar, Breaks, Habits, Countdowns, Settings. On widths ≥ 600dp use a navigation rail with every
    destination. Top app bar on each screen: title, the scope chips (only when there are 2+ calendars), search.
 4. Deep links and routes: `a80://today`, `/focus`, `/homework`, `/homework/new`, `/session/{id}`,
    `/course/{id}` (internal routes; the custom scheme from section 2 is only for auth). App shortcuts
    (`res/xml/shortcuts.xml`): Focus, Today, Homework, Add homework.
 5. A global search sheet (the web's "/" command palette, `paletteItems` in `public/app.js`,
-   `public/focus-ui.js` and `public/calendars-ui.js`): search courses, sessions, homework and actions; an
-   "Ask the assistant: …" item at the bottom.
+   `public/focus-ui.js` and `public/calendars-ui.js`): search courses, sessions, homework, habits, countdowns and
+   actions.
 6. A periodic WorkManager job (every 60 minutes, network required) refreshes the snapshot and updates the widget.
 
 **Checks:** unit tests for the repository with MockWebServer (cache-then-network, atomic write, revert on a
@@ -352,8 +357,8 @@ Build them in this order. For each, read the named web module first, and reuse i
 | 4.7 | Homework | `public/homework-ui.js` | buckets Overdue/Today/Tomorrow/Next 7 days/Later, done toggle, add/edit sheet (title, course, due date, time or all day, "due at the next session of X", reminder `REMINDERS`, effort `EFFORTS`, notes), delete with undo snackbar, Google Calendar sync state per item, focus minutes per item, "Focus on this" |
 | 4.8 | Focus | `public/focus-ui.js` | big timer with phase, Start/Pause/Skip/Stop, ±time adjust and presets (`PRESETS`), target picker (homework, course, own tasks), tags, stats for week/30 days/year, week chart, year heatmap, per course/task/tag breakdown, recent sessions with delete, settings form (lengths, long break every, daily goal, auto breaks, auto focus, sound, notifications, own tasks and tags) saved with `PUT /api/focus/settings` |
 | 4.9 | Breaks | `public/breaks-ui.js` | length chips (`LENGTHS`), month calendar of start days coloured by verdict, tap two days for a custom range, verdict panel with per-course before/after, best-window suggestions, saved breaks with remove |
-| 4.10 | Assistant | `public/assistant-ui.js` | chat with markdown replies, suggestion chips (`SUGGESTIONS`), daily usage, undo per action (types `homework_added`, `homework_updated`, `break_saved`, `attendance`), clear chat; history kept on device (DataStore, last 50 messages), sends the device time zone |
-| 4.11 | Settings | `renderSettings` in `app.js`, `calendars-ui.js`, `homework-ui.js` (`integrationsPanel`), `tokens-ui.js`, `byok-ui.js` | account (name, email, avatar); minimum % and unit; calendars: add link (with Zeus help link `/ics-guide`), upload `.ics` via the system file picker, rename, attendance switch, first day, update now, replace file, remove, sync log; calendar feeds (copy/share timetable and homework links, pick groups, rotate link); Google Calendar connect (2.4)/resync/disconnect; personal tokens list/create (show once, copy)/revoke; assistant key (BYOK) add/remove; passkeys list/add/remove; sign out; delete all data; delete account (type DELETE); links to privacy, terms, `/byok-guide` |
+| 4.10 | ~~Assistant~~ | removed from the product (see section 8) | nothing to build |
+| 4.11 | Settings | `renderSettings` in `app.js`, `calendars-ui.js`, `homework-ui.js` (`integrationsPanel`), `tokens-ui.js`, `notify-ui.js` | account (name, email, avatar); minimum % and unit; calendars: add link (with Zeus help link `/ics-guide`), upload `.ics` via the system file picker, rename, attendance switch, first day, update now, replace file, remove, sync log; calendar feeds (copy/share timetable and homework links, pick groups, rotate link); Google Calendar connect (2.4)/resync/disconnect; personal tokens list/create (show once, copy)/revoke; notifications (8.5); passkeys list/add/remove; sign out; delete all data; delete account (type DELETE); links to privacy and terms |
 
 Shared rules for all screens:
 
@@ -472,7 +477,7 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | POST | `/auth/passkey/login/verify` | `{ response }` + `X-A80-App: 1` → `{ ok, token }` |
 | POST | `/auth/logout` | → `{ ok }` |
 | GET | `/api/me` | → `{ user }` |
-| GET | `/api/data` | → `{ user, account, courses, events, homework, breaks, integrations, assistant, calendars, calendarSyncs, focus }` |
+| GET | `/api/data` | → `{ user, account, courses, events, homework, breaks, integrations, calendars, calendarSyncs, focus, habits, countdowns, notifications }` |
 | GET | `/api/plan?tz=` | → plan for scripts (the app computes its own; not needed) |
 | GET | `/api/focus?since=` | → `{ sessions, since }` (Focus page loads a year) |
 | POST | `/api/focus` | focus log → session row |
@@ -499,8 +504,12 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | POST | `/api/app/web-link` | `{ next }` → `{ url }` |
 | GET/POST | `/api/tokens` | `{ name, scope }` → token row with `token` (shown once) |
 | DELETE | `/api/tokens/{id}` | → `{ ok }` |
-| PUT/DELETE | `/api/ai-key` | `{ provider, apiKey, accountId?, model? }` (see `byok-ui.js`) → `{ key, usage }` / `{ usage }` |
-| POST | `/api/assistant/chat` | `{ messages: [{ role, content }], tz }` → `{ reply, actions, usage }` |
+| POST | `/api/homework/plan` | time blocks: see `planHomework` in `src/homework-store.js` |
+| POST/PATCH/DELETE | `/api/habits`, `/api/habits/{id}` | habit input (`cleanHabit` in `public/habits.js`) → habit row / `{ ok }` |
+| PUT | `/api/habits/{id}/log` | `{ day: 'YYYY-MM-DD', count }` (0 clears the day) → `{ habit_id, day, count }` |
+| POST | `/api/habits/order` | `{ ids }` → `{ ok }` |
+| POST/PATCH/DELETE | `/api/countdowns`, `/api/countdowns/{id}` | countdown input (`src/countdowns.js`) → countdown row / `{ ok }` |
+| PUT | `/api/notify/settings` | `{ classes?, classLead?, habits?, focus?, tz? }` → `{ settings, devices }` |
 | DELETE | `/api/passkeys/{id}` | → `{ ok }` |
 | PATCH | `/api/settings` | `{ threshold, unit }` → `{ ok }` |
 | DELETE | `/api/data` | → `{ ok }` |
@@ -586,7 +595,7 @@ What that means on Android:
   heading over a hairline. Selected navigation item: `--accent-soft` background with `--accent` text, as the web
   sidebar. Few shadows (only menus and sheets).
 - **Icons:** Material Symbols (outlined) matching the web's stroke icons in `public/index.html` (today, home,
-  calendar, check circle, timer, sun for breaks, sparkle for assistant, grid for courses, gear).
+  calendar, check circle, timer, sun for breaks, grid for courses, flame for habits, hourglass for countdowns, gear).
 - **Motion:** short, transform/opacity only, one easing curve (`CubicBezierEasing(0.22f, 1f, 0.36f, 1f)`), and
   none when the system's "remove animations" setting is on.
 - Reuse the launcher icons (including the monochrome layer for themed icons) and the notification icon from
@@ -596,8 +605,191 @@ What that means on Android:
 
 ## 7. Definition of done
 
-- Every feature in the README's feature table that runs in the browser works in the app (Phase 4 table).
+- Every feature in the README's feature table that runs in the browser works in the app (Phase 4 table and 8.3).
+- After Phase 13: the Todoist features in section 9 work offline and sync once online.
 - `npm test` and `./gradlew testProdDebugUnitTest lintProdDebug assembleProdRelease` pass.
 - Golden tests cover stats, breaks, plan, focus timer and focus stats.
 - Installing over the TWA keeps the user's timer and sign-in works with Google and with a passkey.
 - No secrets in git; `git status` shows no keystore or properties files added.
+
+---
+
+## 8. Amendment 1 (2026-10-29): after the merge, and the Todoist task model
+
+### 8.1 What changed on `main`
+
+Three lines were merged into `main` on 2026-10-29 (merge commits `9202b56` and `d67613b`). Since this plan was
+written, `main` has gained:
+
+- **Removed: the AI assistant.** `src/assistant.js`, `src/llm.js`, `/api/assistant/*`, `/api/ai-key`, the BYOK
+  page and the `ai_*` tables are gone. Nothing in the app may refer to them.
+- **Calendar** (`public/calendar.js`, `public/calendar-ui.js`): day, 3-day, week and month views, time blocking
+  (`planned_at`, `planned_minutes` on homework, `POST /api/homework/plan`) and "Plan my week" (`autoPlan`).
+  `public/plan.js` now takes planned blocks out of free time and returns a `planned` list.
+- **Habits** (`public/habits.js`, `public/habits-ui.js`, `src/habits.js`): schedules, targets, check-ins per day,
+  streaks and stats (`habitStats`), sentence parsing (`parseHabit`), and a reminder time (`remind_at`).
+- **Countdowns** (`public/countdowns.js`, `public/countdowns-ui.js`, `src/countdowns.js`): occurrences, display
+  units, sentence parsing (`parseCountdown`).
+- **Web Push notifications** (`src/notify.js`, `src/push.js`, `public/notify-ui.js`): class reminders, habit
+  reminders, end of a focus phase. **The native app doesn't use Web Push.** It posts the same reminders itself as
+  local notifications (8.5).
+- `public/focus.js` gained ±1 min adjustments and more lengths.
+- Your app-auth migration is now `0019_app_auth.sql`. **The next free migration number is 0020.**
+
+### 8.2 Phase 2b: catch up with `main` (do this next, before Phase 3)
+
+1. Run `node android-native/tools/golden.mjs`. `plan_golden.json` changes (the new `planned` list). Port the
+   `plannedBlock` and `planned` changes from `public/plan.js` into `Plan.kt` until the golden test passes again.
+   Diff `public/focus.js` against `1243884` and port what changed into `FocusTimer.kt` too, with fixtures.
+2. Port, with golden fixtures generated from the JS (extend `golden.mjs`, keeping each module in its own golden
+   file):
+   - `Habits.kt` from `public/habits.js`: `cleanSchedule`, `cleanHabit`, `scheduleLabel`, `habitStats`,
+     `monthTotals`, `streakLabel`, `parseHabit`, `reminderDay`, and the day-key helpers. Fixtures: every schedule
+     type, targets above 1, backfilled days, a habit created mid-week, DST weeks, and parse inputs from
+     `test/habits.test.js`.
+   - `Countdowns.kt` from `public/countdowns.js`: `cleanCountdown`, `occurrence`, `workdaysBetween`, `view`,
+     `sortCountdowns`, `parseCountdown`. Fixtures: every unit, every repeat, `after` up and past, all-day and timed,
+     month ends (31 Jan + 1 month), DST, and parse inputs from the tests.
+   - `CalendarMath.kt` from `public/calendar.js`: `period`, `shift`, `isoWeek`, `layout`, `courseColors`,
+     `autoPlan`.
+3. Regenerate the `/api/data` fixtures (`android-native/tools/generate-api-fixtures.mjs`) and update the DTOs:
+   add `habits`, `countdowns` and `notifications`, and the homework fields `planned_at` and `planned_minutes`.
+   Remove anything for the assistant.
+4. Update section 4 of this plan if you find an endpoint that's missing or wrong. That's the one edit to this
+   file you may make: list it in the progress log.
+
+**Checks:** `npm test`; `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug`. All golden tests
+pass, and the new ones fail if you change one expected value by hand (try it once, then revert).
+
+Known, not yours to fix: the countdown `days` assertion in `test/habits.test.js` ("habits and countdowns API…")
+depends on the time of day and fails at some hours. Note it in the log if you see it.
+
+### 8.3 Additions to Phase 4 (screens)
+
+| # | Screen | Web source | Has |
+|---|---|---|---|
+| 4.12 | Calendar | `public/calendar-ui.js`, `calendar.js` | day / 3-day / week / month, sessions in course colours with attendance (tap to mark), overlaps side by side, deadlines, countdowns, breaks, focus time, a line at now; "To plan" list, long-press and drag a to-do onto the grid, move and resize blocks, tick off, "Plan my week" preview with keep / discard; tap an empty slot to add a to-do. On phones it opens on 3 days and swipes between periods |
+| 4.13 | Habits | `public/habits-ui.js` | list with today's check (tap; long-press to take one off), the last 7 days per habit, grid view (6 months), per-habit page with streaks, 30-day rate, year heatmap, per month and per weekday; add by sentence (`parseHabit`) or form, including the reminder time; reorder, archive, delete |
+| 4.14 | Countdowns | `public/countdowns-ui.js` | list (upcoming, counting up, past), add by sentence (`parseCountdown`) or form (units, repeat, after, progress bar, colour, pin, note), suggestions from exams in the timetable, pinned ones on Today |
+
+Today (4.1) also shows habits due today and pinned countdowns, as `public/today-ui.js` does now.
+
+### 8.4 Phase 7 additions
+
+6. **Class reminders**: the web's `classes` / `classLead` notification settings, posted locally. Same rule as
+   `collectDue` in `src/notify.js`: tracked courses only, sessions marked present or unmarked.
+7. **Habit reminders**: at `remind_at`, only if `habitStats` says the habit is due and not done that day.
+   Action **Done** fills the day's target through `PUT /api/habits/{id}/log` (the outbox, so it works offline).
+
+### 8.5 Notifications settings in the app
+
+Settings › Notifications in the app edits the same `notify_settings` (`PUT /api/notify/settings`), so the
+website and the app agree. The app also sends the device time zone as `tz`. It never registers a Web Push
+subscription, so the server sends it nothing, and nothing arrives twice.
+
+---
+
+## 9. Phases 10–13: the Todoist task model
+
+The goal: everyday task management as good as Todoist, merged with the school features. Homework becomes one
+kind of task (a task with a course). This comes after Phase 9: the app replaces the TWA first, then grows.
+
+**Out of scope:** shared projects, collaborators and assignees, Todoist AI, templates, integrations, karma.
+
+**Principle:** the task logic is written **in JavaScript first** (`public/*.js`, pure functions, `node:test`
+tests), used by the server and the website, then ported to Kotlin with golden tests, exactly like Phase 2. Never
+the other way round.
+
+### Phase 10: server, tasks (stop for review: data model and migration)
+
+1. Migration `0020_tasks.sql`. **Extend `homework` rather than adding a `tasks` table**, so the website, `/api/plan`,
+   the feeds, Google Calendar sync and the `plate` CLI keep working:
+   - `homework`: add `project_id` (NULL = Inbox), `section_id`, `parent_id` (subtasks, one level is enough for the
+     UI, but don't forbid more), `priority` (1–4, 4 = p1 as in Todoist's API, default 1), `position`, `recurrence`
+     (TEXT, see 3), `deadline_date` (`YYYY-MM-DD`, separate from the due date), `completed_at`, `client_id`
+     (UNIQUE per user, for safe retries).
+   - New tables: `projects` (`parent_id`, `name`, `color`, `view` list | board, `position`, `favorite`,
+     `archived`), `sections` (`project_id`, `name`, `position`), `labels` (`name` unique per user, `color`,
+     `position`, `favorite`), `task_labels` (`homework_id`, `label_id`), `comments` (`homework_id`, `body`,
+     `created_at`, `updated_at`), `task_reminders` (`homework_id`, `at` epoch ms, or `before_minutes` relative to
+     the due time), `filters` (`name`, `query`, `color`, `position`, `favorite`). All with `user_id`,
+     `ON DELETE CASCADE`, and indexes for the queries `/api/data` runs. Check them with `EXPLAIN QUERY PLAN`.
+   - Existing homework: `project_id` NULL, `priority` 1. A task with a `course_id` shows in its course and in
+     the School view.
+2. REST endpoints in the style of the existing ones (validation in a `clean…` function, `HttpError` messages
+   in plain English): CRUD for projects, sections, labels, filters, comments and reminders;
+   `POST /api/homework/move` (`{ ids, project_id, section_id, parent_id, position }`);
+   `POST /api/homework/{id}/complete` and `/uncomplete`. Creates accept `client_id`, and a repeated `client_id`
+   returns the existing row (as `POST /api/focus` does).
+   `/api/data` adds `projects`, `sections`, `labels`, `filters`, and on each homework row `labels: [ids]`,
+   `comment_count` and `reminders`.
+3. `public/recurrence.js`: parse and step Todoist-style recurrence (`every day`, `every weekday`,
+   `every other week`, `every mon, wed`, `every 3rd friday`, `every month on the 15th`, `every last day`,
+   `every year`, `every 3 months starting 1 jan`, `… until 1 jun`, `every!` = from completion). Completing a
+   recurring task moves its due date to the next occurrence instead of marking it done, and adds a
+   `completions` row (new table: `homework_id`, `completed_at`) so history and stats still see it.
+4. `public/quickadd.js`: parse quick-add text into `{ title, due_date, due_time, recurrence, project, section,
+   labels, priority, deadline, reminder, duration }`, with the matched ranges so the UI can highlight them:
+   natural dates (`today`, `tom`, `fri`, `next week`, `in 3 days`, `jan 27`, `27/1`, `at 9am`, `9:30`),
+   `#project`, `/section`, `@label`, `p1`–`p4`, `!30m` or `!2h` reminder, `{deadline}`, and `for 45m` duration.
+   Reuse the date words already in `public/habits.js` and `public/countdowns.js`, and don't contradict them.
+5. `public/filters.js`: parse and run Todoist's filter language subset: `today`, `tomorrow`, `overdue`,
+   `no date`, `date: <date>`, `due before: <date>`, `due after: <date>`, `next 7 days`, `p1`–`p4`, `#project`,
+   `##project` (with subprojects), `/section`, `@label`, `no labels`, `subtask`, `recurring`, `search: text`, `&`, `|`, `!`, parentheses, and `,` for separate lists. Plus two of ours:
+   `course: <name>` and `school` (has a course).
+6. Tests: `test/tasks.test.js` (endpoints, isolation between users, `client_id` retries, move and reorder,
+   cascade deletes, the homework endpoints unchanged), and `test/recurrence.test.js`, `test/quickadd.test.js`,
+   `test/filters.test.js` with table-driven cases, at least 40 each, including DST and month ends.
+
+**Checks:** `npm test`; the website still works (`npm run dev`, add, complete and delete homework); `plate` reads
+`/api/plan` unchanged (`test/plate.test.js`).
+
+### Phase 11: the app works fully offline for tasks
+
+1. Port `recurrence.js`, `quickadd.js` and `filters.js` to `logic/` with golden tests (Phase 2 rules).
+2. Generalise the `Outbox` (Phase 5) from focus logs to every task, project, section, label, comment, reminder
+   and habit mutation: each change is applied to the in-memory snapshot and the cache file at once, queued with a
+   `client_id`, and sent in order when online. New objects get a negative temporary id until the server answers.
+   Remap it everywhere it's used (parent, labels, comments). On a 4xx, drop the change, reload, and show the
+   server's message. Keep the "full reload after many-row mutations" rule.
+3. A small "Not synced yet" indicator when the outbox isn't empty.
+
+**Checks:** Outbox tests with MockWebServer: create offline, kill and restart, go online, everything arrives once
+and in order; a task created offline with a subtask and a label syncs with correct ids.
+
+### Phase 12: Todoist screens
+
+1. **Navigation** becomes Todoist's: bottom bar with **Inbox, Today, Upcoming, Search, Browse**, and a quick-add
+   button on every task list. Browse holds favourites, Projects (nested), Filters & Labels, then School
+   (Attendance, Courses, Sessions, Calendar, Breaks), Focus, Habits, Countdowns and Settings. Today keeps the
+   class header and *Do next* from Phase 4 above Todoist's overdue + today list.
+2. **Task rows**: checkbox ring in the priority colour (p1 red, p2 orange, p3 blue, p4 grey), title with inline
+   markdown, meta line (due, recurrence icon, deadline, labels, project, comment count, subtask progress, course).
+   Swipe right to complete, left to schedule. Completing animates out, with an Undo snackbar. Long-press and drag
+   to reorder, or drag right and left to nest and unnest.
+3. **Quick add** (bottom sheet): live highlighting of what `quickadd.js` matched, chips for date, priority,
+   labels, reminder and project, keyboard stays up for adding several in a row.
+4. **Task detail** (sheet that expands to full screen): title and description (markdown), project and section,
+   date with recurrence, deadline, duration, priority, labels, reminders, subtasks (add, reorder, complete),
+   comments, Focus on this, Plan on the Calendar, created and completed dates.
+5. **Projects**: list or board view (sections as columns, drag cards between them), sections (add, rename,
+   reorder, collapse), show completed, sort and group options (by date, priority, label), archive.
+6. **Upcoming**: a week strip and an endless agenda by day, sessions included, drag a task onto another day.
+7. **Filters & Labels**: create with a live preview of the matching tasks, favourites in Browse.
+8. **Search**: tasks, comments, projects, labels, courses, sessions; recent searches.
+9. **Completed**: history per day, from `completed_at` and the completions table.
+
+**Checks per screen** as in Phase 4, plus Compose UI tests for quick add (typing highlights and the saved task's
+fields) and for drag-to-reorder.
+
+### Phase 13: Todoist reminders and surfaces
+
+1. Task reminders on the device (absolute and relative), rescheduled after every snapshot change, boot and time
+   zone change. Actions: Done (the next occurrence for recurring tasks), Snooze 10 min / 1 h / tomorrow.
+2. Widgets: a task list widget for any project or filter (ticks work without opening the app), and a quick-add
+   widget. The Phase 6 widget stays.
+3. A quick-add quick-settings tile and a launcher shortcut. Share text to the app → quick add (replaces 7.4).
+4. Daily digest at a chosen time: today's tasks, classes and habits (off by default).
+
+**Checks:** scheduler unit tests (recurring next occurrence across DST, snooze, relative reminders when the due
+time changes).
