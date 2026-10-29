@@ -573,3 +573,17 @@ const groupsGolden = {
 fs.writeFileSync(path.join(GOLDEN_DIR, 'groups_golden.json'), JSON.stringify(groupsGolden, null, 2));
 
 console.log('All golden files generated successfully!');
+
+// Habits: inputs stay separate from outputs so Kotlin is checked against the web implementation.
+const habits = await import('../../public/habits.js');
+const hf = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'habits.json'), 'utf8'));
+const hg = {
+  schedules: hf.schedules.map(s => ({ clean: habits.cleanSchedule(s), label: habits.scheduleLabel(habits.cleanSchedule(s)) })),
+  habits: hf.habits.map(h => [habits.cleanHabit(h), habits.cleanHabit(h, { partial: true })]),
+  sentences: hf.sentences.map(habits.parseHabit),
+  stats: hf.stats.map(c => ({ stats: habits.habitStats(c, new Map(Object.entries(c.counts)), { today: c.today, start: c.start }), months: habits.monthTotals(c, new Map(Object.entries(c.counts)), c.today, 4) })),
+  dates: hf.dates.map(d => habits.isKey(d) ? { valid: true, ms: habits.keyMs(d), plus: habits.addDays(d, 2), diff: habits.diffDays(d, '2026-01-01'), dow: habits.dow(d), week: habits.weekOf(d), month: habits.monthOf(d) } : { valid: false }),
+  times: hf.times.map(t => ({ key: habits.keyInZone(t.now, t.tz), reminder: habits.reminderDay(t, t.now, t.tz) })),
+  labels: [0, 1, 2].flatMap(n => ['day', 'week', 'month', 'time'].map(unit => habits.streakLabel(n, unit)))
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'habits_golden.json'), JSON.stringify(hg, null, 2) + '\n');
