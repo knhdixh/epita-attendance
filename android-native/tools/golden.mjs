@@ -602,3 +602,15 @@ const cg = {
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'countdowns_golden.json'), JSON.stringify(cg, null, 2) + '\n');
 process.env.TZ = 'Europe/Paris';
+
+// Calendar fixtures use wall times in each zone, as the browser does.
+const calendar = await import('../../public/calendar.js');
+const cal = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'calendar.json'), 'utf8'));
+const calGolden = {
+  dates: cal.dates.map(x => { process.env.TZ = x.zone; const date = localMs(x.date); return { date, start: calendar.startOfDay(date), plus: calendar.addDays(date, 1), minus: calendar.addDays(date, -1), monday: calendar.mondayOf(date), minutes: [90, 150, 210, 540].map(n => calendar.atMinutes(date, n)), week: calendar.isoWeek(date), views: ['day','3day','week','month'].map(v => ({ period: calendar.period(v,date), before: calendar.shift(v,date,-1), after: calendar.shift(v,date,1) })) }; }),
+  layout: Object.fromEntries(calendar.layout(cal.items)),
+  colors: Object.fromEntries(calendar.courseColors(cal.courses)),
+  plans: cal.plans.map(x => { process.env.TZ = x.zone; const at = t => localMs(`${x.date}T${t}:00`); return calendar.autoPlan({ ...x, now: at(x.now), until: localMs(x.until), todos: x.todos.map(t => ({ id:t.id, due_at:at(t.due), effort:t.effort })), busy:x.busy.map(a => a.map(at)), blocks:x.blocks.map(a => a.map(at)) }); })
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'calendar_golden.json'), JSON.stringify(calGolden, null, 2) + '\n');
+process.env.TZ = 'Europe/Paris';
