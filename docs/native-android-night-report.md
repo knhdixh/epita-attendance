@@ -6,7 +6,7 @@ Run started 2026-10-29. Reviewer/orchestrator: parent Codex session. Implementat
 
 | Phase | Verdict | Fix rounds | Merge | Independent checks |
 |---|---|---|---|---|
-| 2b | In progress: snapshot DTOs committed; Habits split worker running | 0 | — | Pending |
+| 2b | In progress: snapshot DTOs and Habits committed; Countdowns worker running | 0 | — | Pending |
 | 3, 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Owner/device release work |
 
@@ -35,7 +35,10 @@ Pending Phase 2b Roborazzi setup. Required committed location: `android-native/a
 ## Worker runs
 
 - Phase 2b initial run completed DTO/fixture work in `e533c9d` and log in `9aa1a9f`; explicitly reported remaining scope rather than claiming phase completion.
-- Phase 2b split run: Habits port and golden tests running. Countdowns, CalendarMath, endpoint audit, Compose and screenshot infrastructure still pending.
+- Habits split run committed `b958c40`: port and JS-generated golden tests. Worker performed deliberate golden mutation then restored it. Independent partial review: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed with 32 JVM tests, 0 failures/errors/skips. Final whole-phase review remains pending.
+- Countdowns split worker initially exited after inspection with no changes or checks; resumed the same Codex session `01a189e4-ee11-7593-a1e2-468341474267` with instruction to implement. No failure review rounds consumed.
+- CalendarMath, endpoint audit, Compose and screenshot infrastructure still pending.
+- Independent native/night baseline: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed, 31 JVM tests, 0 failures/errors/skips. Secondary worktree initially lacked SDK configuration; configured only the existing sdk.dir locally and reran successfully.
 - Bootstrap report/instructions documentation check on native/night: `npm test` 103/104 with known countdown assertion; initial secondary worktree attempt lacked node_modules, resolved by sharing the existing dependency installation. No dependency or app code changed for this.
 
-Current position: Phase 2b Habits implementation is running; no phase has passed review or merged yet.
+Current position: Phase 2b Countdowns implementation is running; no phase has passed review or merged yet.
