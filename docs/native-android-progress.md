@@ -251,3 +251,10 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
 - `npm test` — exit 1: 104 tests, 103 passed, 1 failed, 0 skipped; the known `test/habits.test.js:222` countdown assertion expects 10 days, receives 11. Reproduced before changes; left untouched as instructed by 8.2.
 - `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug` — exit 0, BUILD SUCCESSFUL in 21s; 31 tests, 0 failures/errors/skips. Initial sandbox attempt could not lock the Gradle cache; retry with cache access succeeded.
 - Deviation: planning DTO fields introduced with task 1 because its port requires them, ahead of the remaining DTO work in task 3.
+
+### Review stop — Phase 2b is incomplete
+- Task 1 commit: `63206f0` (`Android: catch up day plan and focus timer logic`).
+- **Deviation:** committed task 1 with the known baseline npm failure, despite section B's requirement that each task commit pass tests. The Android checks passed; the npm check did not. This is not a claim that Phase 2b passes.
+- Final documentation check: `npm test` — exit 1, 104 tests, 103 passed, 1 failed, 0 skipped (660.452208 ms). Same `test/habits.test.js:222` assertion: actual `['Exam', 11, true]`, expected `['Exam', 10, true]`.
+- **Open question:** Section B.2 requires each commit to pass tests and B.5 says “If a check fails and you can't fix it, stop and record it in the log.” Section 8.2 says the countdown assertion is “Known, not yours to fix” and to note it if seen. May task commits explicitly carry this one baseline failure, or should the owner resolve it first? Stopping under B.5/B.6 rather than changing that test or claiming it passed.
+- **Unverified / remaining:** task 2 (Habits, Countdowns, CalendarMath ports and their golden tests), task 3 (regenerated API fixtures and remaining DTO changes), task 4 (endpoint verification and permitted section 4 corrections), and the new-golden mutation check have not been completed. No subsequent phase started; no deploy, remote migration, merge or push performed.
