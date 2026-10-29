@@ -379,6 +379,7 @@ for (const profile of settingsProfiles) {
     const finishNormal = focus.finish(t, s, now, 'finish-run-1', { early: false });
     const finishEarly = focus.finish(t, s, now, 'finish-run-2', { early: true });
     const stopRes = focus.stop(t, now);
+    const setRemainingCases = [-60000, 0, 30000, 90000, 123456, 999999999].map(ms => ({ ms, result: focus.setRemaining(t, s, ms, now) }));
 
     timerOperations.push({
       name: `${tf.name}_${profile.name}`,
@@ -399,6 +400,7 @@ for (const profile of settingsProfiles) {
       setLength30,
       finishNormal,
       finishEarly,
+      setRemainingCases,
       stop: stopRes
     });
   }
@@ -408,7 +410,8 @@ const focusTimerGolden = {
   cleanSettingsResults,
   cleanTagsResults,
   cleanTasksResults,
-  timerOperations
+  timerOperations,
+  parseClockCases: ['25', '12:30', '1:05:00', '0', '999', '1:60', '1:2:3:4', '', ' 05 ', '-1', '1.5', 'abc'].map(input => ({ input, result: focus.parseClock(input) }))
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'focus_timer_golden.json'), JSON.stringify(focusTimerGolden, null, 2));
 

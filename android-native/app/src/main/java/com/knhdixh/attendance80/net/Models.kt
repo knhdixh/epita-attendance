@@ -135,6 +135,8 @@ data class HomeworkDto(
     val kind: String? = null,
     val event_id: Long? = null,
     val effort_minutes: Int? = null,
+    val planned_at: Long? = null,
+    val planned_minutes: Int? = null,
 )
 
 @Serializable

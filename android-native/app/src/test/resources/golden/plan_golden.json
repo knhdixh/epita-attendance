@@ -127,9 +127,9 @@
         "tomorrowFirst": 46,
         "gaps": [
           {
-            "start": 1791972000000,
+            "start": 1791979200000,
             "end": 1792008000000,
-            "minutes": 600,
+            "minutes": 480,
             "fits": [
               {
                 "id": 101,
@@ -142,16 +142,6 @@
                 "minutes": 120
               },
               {
-                "id": 1,
-                "title": "Algo Assignment 1",
-                "minutes": 60
-              },
-              {
-                "id": 2,
-                "title": "Web TP 2",
-                "minutes": 120
-              },
-              {
                 "id": 6,
                 "title": "Catch-up: Algo missed lecture",
                 "minutes": 90
@@ -160,9 +150,30 @@
                 "id": 3,
                 "title": "Architecture Lab Report",
                 "minutes": 90
+              },
+              {
+                "id": 4,
+                "title": "French Essay",
+                "minutes": 60
               }
             ],
             "left": 30
+          }
+        ],
+        "planned": [
+          {
+            "id": 1,
+            "title": "Algo Assignment 1",
+            "start": 1791968400000,
+            "end": 1791971100000,
+            "minutes": 45
+          },
+          {
+            "id": 2,
+            "title": "Web TP 2",
+            "start": 1791972000000,
+            "end": 1791979200000,
+            "minutes": 120
           }
         ],
         "todo": [
@@ -227,6 +238,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -246,6 +259,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",
@@ -315,14 +330,14 @@
         "week": {
           "classHours": 15,
           "workHours": 10.5,
-          "freeHours": 80,
+          "freeHours": 78,
           "clashes": [
             [
               50,
               1003
             ]
           ],
-          "load": 0.13125
+          "load": 0.1346153846153846
         }
       }
     },
@@ -347,17 +362,17 @@
             "minutes": 60,
             "fits": [
               {
-                "id": 1,
-                "title": "Algo Assignment 1",
+                "id": 4,
+                "title": "French Essay",
                 "minutes": 60
               }
             ],
             "left": 0
           },
           {
-            "start": 1791972000000,
+            "start": 1791979200000,
             "end": 1792004400000,
-            "minutes": 540,
+            "minutes": 420,
             "fits": [
               {
                 "id": 101,
@@ -367,11 +382,6 @@
               {
                 "id": 102,
                 "title": "Spring DST Web Project",
-                "minutes": 120
-              },
-              {
-                "id": 2,
-                "title": "Web TP 2",
                 "minutes": 120
               },
               {
@@ -386,6 +396,22 @@
               }
             ],
             "left": 30
+          }
+        ],
+        "planned": [
+          {
+            "id": 1,
+            "title": "Algo Assignment 1",
+            "start": 1791968400000,
+            "end": 1791971100000,
+            "minutes": 45
+          },
+          {
+            "id": 2,
+            "title": "Web TP 2",
+            "start": 1791972000000,
+            "end": 1791979200000,
+            "minutes": 120
           }
         ],
         "todo": [
@@ -450,6 +476,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -469,6 +497,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",
@@ -538,14 +568,14 @@
         "week": {
           "classHours": 17,
           "workHours": 10.5,
-          "freeHours": 80,
+          "freeHours": 78,
           "clashes": [
             [
               50,
               1003
             ]
           ],
-          "load": 0.13125
+          "load": 0.1346153846153846
         }
       }
     },
@@ -581,6 +611,7 @@
             "left": 630
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -673,6 +704,7 @@
             "left": 270
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -765,6 +797,7 @@
             "left": 630
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -857,6 +890,7 @@
             "left": 210
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -974,6 +1008,7 @@
             "left": 210
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -1036,6 +1071,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -1055,6 +1092,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",
@@ -1182,6 +1221,7 @@
             "left": 0
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -1244,6 +1284,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -1263,6 +1305,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",
@@ -1395,6 +1439,7 @@
             "left": 210
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -1457,6 +1502,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -1476,6 +1523,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",
@@ -1598,6 +1647,7 @@
             "left": 0
           }
         ],
+        "planned": [],
         "todo": [
           {
             "id": 101,
@@ -1660,6 +1710,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 60,
+            "planned_at": 1791968400000,
+            "planned_minutes": 45,
             "effort": 60,
             "latestStart": 1791651600000,
             "course": "Algorithms & Data Structures",
@@ -1679,6 +1731,8 @@
             "done": 0,
             "kind": null,
             "effort_minutes": 120,
+            "planned_at": 1791972000000,
+            "planned_minutes": null,
             "effort": 120,
             "latestStart": 1792044000000,
             "course": "Web Development",

@@ -240,3 +240,14 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
   `test/habits.test.js`, which depends on the time of day and fails on the live line too.
   `./gradlew testProdDebugUnitTest` 31 tests, 0 failures. `node android-native/tools/golden.mjs` changes
   `plan_golden.json` (the new `planned` list), so `Plan.kt` is behind `public/plan.js`; that's Phase 2b, task 1.
+
+## Phase 2b — catch up with main (2026-10-29)
+
+### Task 1 — day plan and focus timer
+- Ported `plannedBlock`, busy-time subtraction, the `planned` result and exclusion of today's planned tasks from gap fitting. Added homework planning fields needed by this port.
+- Diffed `public/focus.js` against `1243884`: the additions are `parseClock` and `setRemaining`; both are ported.
+- Extended JS-generated fixtures with active planned blocks, typed-clock valid/invalid inputs, and remaining-time limits across every existing timer state and settings profile.
+- Checks: `node android-native/tools/golden.mjs` — exit 0, “All golden files generated successfully!”.
+- `npm test` — exit 1: 104 tests, 103 passed, 1 failed, 0 skipped; the known `test/habits.test.js:222` countdown assertion expects 10 days, receives 11. Reproduced before changes; left untouched as instructed by 8.2.
+- `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug` — exit 0, BUILD SUCCESSFUL in 21s; 31 tests, 0 failures/errors/skips. Initial sandbox attempt could not lock the Gradle cache; retry with cache access succeeded.
+- Deviation: planning DTO fields introduced with task 1 because its port requires them, ahead of the remaining DTO work in task 3.
