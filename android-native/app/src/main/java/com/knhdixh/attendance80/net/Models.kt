@@ -304,28 +304,8 @@ data class FocusSettingsResponse(
 )
 
 @Serializable
-data class AttendanceUpdateRequest(
-    val status: String? = null,
-    val tag: String? = null,
-    val note: String? = null,
-)
-
-@Serializable
-data class AttendanceBulkRequest(
-    val ids: List<Long>,
-    val status: String,
-)
-
-@Serializable
 data class AttendanceBulkResponse(
     val updated: Int = 0,
-)
-
-@Serializable
-data class CourseUpdateRequest(
-    val tracked: Boolean? = null,
-    val tag: String? = null,
-    val recording_url: String? = null,
 )
 
 @Serializable
@@ -349,7 +329,7 @@ data class CatchupRequest(
 data class HomeworkCreateRequest(
     val title: String,
     val course_id: Long? = null,
-    val due_date: String? = null,
+    val due_date: String,
     val due_time: String? = null,
     val tz: String,
     val remind_minutes: Int? = null,
@@ -357,19 +337,6 @@ data class HomeworkCreateRequest(
     val notes: String = "",
     val planned_at: Long? = null,
     val planned_minutes: Int? = null,
-)
-
-@Serializable
-data class HomeworkUpdateRequest(
-    val title: String? = null,
-    val course_id: Long? = null,
-    val due_date: String? = null,
-    val due_time: String? = null,
-    val tz: String? = null,
-    val remind_minutes: Int? = null,
-    val done: Boolean? = null,
-    val effort_minutes: Int? = null,
-    val notes: String? = null,
 )
 
 @Serializable
@@ -404,24 +371,14 @@ data class CalendarAddRequest(
 
 @Serializable
 data class CalendarImportSummary(
-    val id: Long = 0,
-    val name: String = "",
-    val added: Int = 0,
-    val removed: Int = 0,
-    val total: Int = 0,
-)
-
-@Serializable
-data class CalendarUpdateRequest(
-    val name: String? = null,
-    val attendance: Boolean? = null,
-    val from: String? = null,
-)
-
-@Serializable
-data class CalendarUpdateResponse(
-    val calendar: CalendarDto,
-    val summary: CalendarImportSummary? = null,
+    val calendar: Long,
+    val total: Int? = null,
+    val added: Int? = null,
+    val updated: Int? = null,
+    val removed: Int? = null,
+    val cancelled: Int? = null,
+    val recurringIgnored: Int? = null,
+    val unchanged: Boolean? = null,
 )
 
 @Serializable
@@ -437,8 +394,9 @@ data class CalendarDeleteResponse(
 
 @Serializable
 data class GcalResyncResponse(
-    val pushed: Int = 0,
-    val errors: Int = 0,
+    val synced: Int,
+    val failed: Int? = null,
+    val remaining: Int,
 )
 
 @Serializable
@@ -483,8 +441,8 @@ data class PersonalTokenCreatedDto(
 
 @Serializable
 data class SettingsUpdateRequest(
-    val threshold: Double? = null,
-    val unit: String? = null,
+    val threshold: Double,
+    val unit: String,
 )
 
 @Serializable

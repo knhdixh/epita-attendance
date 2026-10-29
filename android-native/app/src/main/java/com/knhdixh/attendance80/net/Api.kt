@@ -53,16 +53,16 @@ interface Api {
     suspend fun deleteFocus(@Path("id") id: Long): OkResponse
 
     @PUT("api/focus/settings")
-    suspend fun saveFocusSettings(@Body settings: FocusSettingsDto): FocusSettingsResponse
+    suspend fun saveFocusSettings(@Body settings: JsonObject): FocusSettingsResponse
 
     @PATCH("api/attendance/{id}")
-    suspend fun updateAttendance(@Path("id") id: Long, @Body req: AttendanceUpdateRequest): OkResponse
+    suspend fun updateAttendance(@Path("id") id: Long, @Body req: JsonObject): OkResponse
 
     @POST("api/attendance/bulk")
-    suspend fun bulkAttendance(@Body req: AttendanceBulkRequest): AttendanceBulkResponse
+    suspend fun bulkAttendance(@Body req: JsonObject): AttendanceBulkResponse
 
     @PATCH("api/courses/{id}")
-    suspend fun updateCourse(@Path("id") id: Long, @Body req: CourseUpdateRequest): OkResponse
+    suspend fun updateCourse(@Path("id") id: Long, @Body req: JsonObject): OkResponse
 
     @POST("api/courses/tracked")
     suspend fun updateCoursesTracked(@Body req: CourseTrackedBulkRequest): OkResponse
@@ -119,7 +119,7 @@ interface Api {
     suspend fun addCalendar(@Body req: CalendarAddRequest): CalendarImportSummary
 
     @PATCH("api/calendars/{id}")
-    suspend fun updateCalendar(@Path("id") id: Long, @Body req: CalendarUpdateRequest): CalendarUpdateResponse
+    suspend fun updateCalendar(@Path("id") id: Long, @Body req: JsonObject): CalendarImportSummary
 
     @POST("api/calendars/{id}/sync")
     suspend fun syncCalendar(@Path("id") id: Long): CalendarImportSummary
