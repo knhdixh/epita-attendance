@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | Starting: data layer, scope, background refresh; then shell/search and local-device harness | 0 | — | Pending |
+| 3 | In progress: Terra data/scope/background worker on native/phase-3 | 0 | — | Worker checks running; independent review pending |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -43,4 +43,4 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 - Phase 3 will be split into data/scope/background work, shell/navigation/search with screenshots, then the local-server/managed-device harness. Future-feature instrumented actions are added when their phases implement them; no skipped or fake tests.
 - No owner response is needed to continue.
 
-Current position: Phase 2b merged and native/night verified building; starting Phase 3. Later phases remain pending.
+Current position: Phase 2b merged and native/night verified building; Phase 3 data/scope/background worker is live (shell handle 57371; /tmp/epita-native-night/phase-3-data-worker.log). Shell/search/screenshots and the local-device harness follow; later phases remain pending.
