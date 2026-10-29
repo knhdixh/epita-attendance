@@ -1,73 +1,46 @@
 # Native Android overnight report
 
-Run started 2026-10-29. Reviewer/orchestrator: parent Codex session. Implementation workers: `gpt-6.1-terra` through `codex exec`. No push, deployment, remote migration or change to main is authorised.
+Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orchestrates; implementation workers are `gpt-6.1-terra` through `codex exec`. `native/night` was created from main `e97f6ca`; main remains unchanged. No push, deployment or remote migration.
 
-`native/night` was created from `main` at `e97f6ca`. Existing Phase 2b task 1 and the owner's overnight instructions on `native/phase-2b` are preserved. That branch descends from the same base. No phase has been merged yet.
-
-| Phase | Verdict | Fix rounds | Merge | Independent checks |
+| Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
-| 2b | PASS after round 2; ready to merge | 2 | Pending | npm 103/104; Android 62/62; lint/APK/24 screenshots verified |
-| 3, 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending | — | — | Pending |
-| 9 | Skipped by instruction | — | — | Owner/device release work |
+| 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
+| 3 | Starting: data layer, scope, background refresh; then shell/search and local-device harness | 0 | — | Pending |
+| 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
+| 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
+
+## Test counts and accepted evidence
+
+Phase 2b: 23 golden methods; 11 ordinary JVM methods; 1 existing Robolectric ViewModel method; 3 Compose interaction methods; 24 screenshot methods/PNGs; 0 instrumented tests. Total 62, zero failures/errors/skips. The 24 screenshots were all inspected by the reviewer. A deliberately corrupted expected PNG correctly failed targeted verification; restoring the original bytes and running full verification passed. JS golden regeneration produced no tracked changes.
+
+After merge, on native/night: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug verifyRoborazziProdDebug` passed in 34s, all 62 tests. Reviewed Android source and merged Android source are identical. The web suite remains at its explicitly allowed baseline: 103/104, only the time-of-day countdown assertion (`test/habits.test.js:222`, expected 10, got 11).
+
+Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, round-1 FIX and round-2 PASS. App/test/screenshot commit `af8a72c`; worker log `4fe80d7`; append-only implementation detail in `docs/native-android-progress.md`. Local review logs live under `/tmp/epita-native-night/`.
 
 ## Screenshot index
 
-Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. Accepted final matrix: 24 committed PNGs, all visually inspected and independently verified. Includes all 8 real 200% main-screen captures.
+`android-native/app/src/test/screenshots/`: 24 accepted PNGs. Phone 411×891 dp and tablet 840×1000 dp; light/dark; sign-in, loading, authenticated placeholder and create-account dialog. Both main screens additionally at real font scale 2.0, with measured growth and action reachability assertions. Diagnostic dumps and incorrectly labelled identical font-scale images were replaced before acceptance.
 
 ## Needs a device
 
 - Real passkey and Google Custom Tab sign-in.
-- Exact-alarm behaviour in Doze and promoted ongoing notifications.
-- Update over the existing TWA and import of its running timer.
+- Exact-alarm timing in Doze and promoted ongoing notifications.
+- Updating over the existing TWA and importing its running timer.
 - Widget behaviour on a real launcher.
-- Dialog window dimming, which Robolectric full-window captures do not render.
+- Dialog window dimming: Robolectric full-window captures show the real dialog surface/content but do not render the system dim layer.
 
 ## Unverified
 
-- Independent baseline on the existing Phase 2b task 1 work: `npm test` 103/104 (known countdown failure); `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` BUILD SUCCESSFUL, 31 JVM tests, 0 failures/errors/skips. Final Phase 2b checks remain pending.
-- Managed-device and local server end-to-end checks are introduced in Phase 3.
+- Phase 3 managed-device and local-server end-to-end harness has not yet been introduced or run.
+- No physical-device or release/TWA replacement claim is made.
 
 ## Decisions and owner questions
 
-- Preserve the existing Phase 2b branch rather than reset already committed work.
-- The known countdown time-of-day assertion may remain at 103/104 as explicitly allowed by `overnight-run.md`; it does not stop this run. A proper clock-pinning fix is allowed if that test is touched.
-- No owner response is required to continue.
+- Preserved the pre-existing Phase 2b task commit and branch; they descend from the same main base as native/night.
+- Allowed the documented 103/104 npm baseline exactly as overnight-run.md permits. A proper clock-pinning fix is permitted if that test is touched.
+- Split Phase 2b into focused worker runs; reviewed the whole phase before merge.
+- The real account dialog uses responsive explicit width constraints (24dp side padding, max 560dp, platform default width disabled). This preserves the real input and actions while avoiding the width-qualifier dialog idle issue described in https://github.com/robolectric/robolectric/issues/8460.
+- Phase 3 will be split into data/scope/background work, shell/navigation/search with screenshots, then the local-server/managed-device harness. Future-feature instrumented actions are added when their phases implement them; no skipped or fake tests.
+- No owner response is needed to continue.
 
-## Worker runs
-
-- Phase 2b initial run completed DTO/fixture work in `e533c9d` and log in `9aa1a9f`; explicitly reported remaining scope rather than claiming phase completion.
-- Habits split run committed `b958c40`: port and JS-generated golden tests. Worker performed deliberate golden mutation then restored it. Independent partial review: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed with 32 JVM tests, 0 failures/errors/skips. Final whole-phase review remains pending.
-- Countdowns split worker initially exited after inspection with no changes or checks; resumed the same Codex session `01a189e4-ee11-7593-a1e2-468341474267` with instruction to implement. No failure review rounds consumed.
-- Countdowns completed in `ac1eba9` (log `d2eea23`); independent unit/lint/assemble check passed with 33 JVM tests, 0 failures/errors/skips.
-- CalendarMath completed in `9545857`; independent unit/lint/assemble check passed with 34 JVM tests, 0 failures/errors/skips. Both split workers performed golden mutation checks.
-- Endpoint audit completed: missing methods in `bf7f58f`, audit corrections in `b84546c`, inventory in `91cf2b0` (partial log `58910c2`). Corrected flat calendar responses, GCal resync fields, explicit-null partial writes and section 4 only. Independent full unit/lint/assemble check after restored review inputs passed: 35 JVM tests, 0 failures/errors/skips.
-- Initial Compose/Roborazzi infrastructure worker ended with failing checks and uncommitted work, Codex session `01a189ee-7fdc-7de3-93af-c741d9a82882` (shell handle 50376; log `/tmp/epita-native-night/phase-2b-ui-worker.log`). Interim native screenshots exist. Reviewer inspected initial captures: diagnostic dumps were replaced with real images; current sign-in font1/font2 pairs are byte-identical, so 200% coverage is unproven. Final matrix review and independent verify run remain pending.
-- Reviewer independently reproduced a Habits numeric-coercion mismatch with JS-computed temporary expectations: `weekly n:"true"` returned an object rather than null. Targeted test failed as expected; test resource files restored byte-for-byte and full check passed. Requires a permanent regression and fix during the whole-phase review; phase remains unmerged.
-- Independent native/night baseline: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed, 31 JVM tests, 0 failures/errors/skips. Secondary worktree initially lacked SDK configuration; configured only the existing sdk.dir locally and reran successfully.
-- Bootstrap report/instructions documentation check on native/night: `npm test` 103/104 with known countdown assertion; initial secondary worktree attempt lacked node_modules, resolved by sharing the existing dependency installation. No dependency or app code changed for this.
-
-## Initial Phase 2b review
-
-- `docs/native-android-review-2b.md`: **FIX**, 4 numbered findings: ineffective 200% font rendering/missing matrix; dialog interaction non-idle failure; Habits Number conversion; inconsistent dialog screenshot host/framing.
-- Independent exact full Android gate: 40 tests, 37 passed, 3 failed, 0 skipped. Golden 23/23; ordinary JVM 11/11; existing Robolectric ViewModel 1/1; Compose UI 2/3; screenshot test methods 0/2. No instrumented tests yet.
-- Separate lint and debug APK build passed. Phone-only screenshot verify failed with the font-height assertion. No passing whole-matrix verification claimed.
-- UI worker stopped with uncommitted work because its checks failed. Preserve and fix it; no test weakening or skipped tests.
-
-
-## Fix round 1 re-review
-
-- Round 1 ended without a commit; all WIP is preserved on native/phase-2b.
-- Reviewer focused checks: Habits generated regressions and phone light 200% capture passed; dialog interaction failed (`AppNotIdleException`). 3 tests, 2 passed, 1 failed, no skips. Full gate and full screenshot verification remain unresolved.
-- Reviewer inspected actual enlarged phone sign-in text. Complete light/dark phone/tablet matrix and dialog framing remain pending.
-- Upstream diagnostic lead: https://github.com/robolectric/robolectric/issues/8460 (width qualifier + dialog text field). Do not remove size coverage or fake a dialog.
-
-
-## Fix round 2 final review
-
-- PASS at `4fe80d7`; implementation/test/screenshot commit `af8a72c`. Two fix rounds used; all four findings closed.
-- Reviewer independent full gate: 62/62, zero failures/errors/skips; lint and debug assembly passed. Categories: 23 golden, 11 ordinary JVM, 1 existing Robolectric ViewModel, 3 Compose interaction, 24 screenshot methods. No instrumented tests introduced yet.
-- Unfiltered screenshot verification passed; all 24 PNGs visually inspected. Corrupting one expected PNG correctly failed a targeted verification, then restoring original bytes and running full verification passed.
-- Golden regeneration from JS produced no tracked changes. npm remains at allowed 103/104 baseline.
-- Dialog window dimming on a physical device remains unverified; test host does not draw the dim layer. Actual dialog content, inputs, callbacks, responsive widths and normal/large-text main screens are verified in Robolectric.
-
-Current position: Phase 2b has PASS after two fix rounds and is ready to merge into native/night. Later phases remain pending.
+Current position: Phase 2b merged and native/night verified building; starting Phase 3. Later phases remain pending.
