@@ -164,25 +164,6 @@ data class IntegrationsDto(
 )
 
 @Serializable
-data class AiByokDto(
-    val provider: String,
-    val label: String? = null,
-    val model: String? = null,
-    val keyHint: String? = null,
-    val accountId: String? = null,
-    val lastError: String? = null,
-    val lastUsedAt: Long? = null,
-)
-
-@Serializable
-data class AssistantDto(
-    val used: Int = 0,
-    val limit: Int = 0,
-    val owner: Boolean = false,
-    val byok: AiByokDto? = null,
-)
-
-@Serializable
 data class CalendarDto(
     val id: Long,
     val kind: String,
@@ -250,6 +231,37 @@ data class FocusDataDto(
 )
 
 @Serializable
+data class HabitScheduleDto(val type: String, val days: List<Int>? = null, val n: Int? = null)
+
+@Serializable
+data class HabitDto(
+    val id: Long, val name: String, val icon: String? = null, val color: String,
+    val schedule: HabitScheduleDto, val target: Int, val unit: String? = null,
+    val remind_at: String? = null, val position: Int, val archived: Boolean, val created_at: Long,
+)
+
+@Serializable
+data class HabitLogDto(val habit_id: Long, val day: String, val count: Int)
+
+@Serializable
+data class HabitsDto(val list: List<HabitDto> = emptyList(), val logs: List<HabitLogDto> = emptyList(), val since: String = "")
+
+@Serializable
+data class CountdownDto(
+    val id: Long, val title: String, val at: Long,
+    @Serializable(with = IntBooleanSerializer::class) val all_day: Boolean,
+    val repeat: String, val units: String, val after: String, val start_at: Long? = null,
+    val color: String, @Serializable(with = IntBooleanSerializer::class) val pinned: Boolean,
+    val note: String? = null, val event_id: Long? = null, val homework_id: Long? = null, val created_at: Long,
+)
+
+@Serializable
+data class NotifySettingsDto(val classes: Boolean = true, val classLead: Int = 10, val habits: Boolean = true, val focus: Boolean = true, val tz: String = "Europe/Paris")
+
+@Serializable
+data class NotificationsDto(val key: String? = null, val settings: NotifySettingsDto = NotifySettingsDto(), val devices: Int = 0)
+
+@Serializable
 data class AppData(
     val user: UserDto,
     val account: AccountDto = AccountDto(),
@@ -258,7 +270,9 @@ data class AppData(
     val homework: List<HomeworkDto> = emptyList(),
     val breaks: List<BreakDto> = emptyList(),
     val integrations: IntegrationsDto,
-    val assistant: AssistantDto? = null,
+    val habits: HabitsDto = HabitsDto(),
+    val countdowns: List<CountdownDto> = emptyList(),
+    val notifications: NotificationsDto = NotificationsDto(),
     val calendars: List<CalendarDto> = emptyList(),
     val calendarSyncs: List<CalendarSyncDto> = emptyList(),
     val focus: FocusDataDto = FocusDataDto(),
@@ -463,44 +477,6 @@ data class PersonalTokenCreatedDto(
     val token: String,
     val created_at: Long,
     val last_used_at: Long? = null,
-)
-
-@Serializable
-data class AiKeyRequest(
-    val provider: String,
-    val apiKey: String,
-    val accountId: String? = null,
-    val model: String? = null,
-)
-
-@Serializable
-data class AiKeyResponse(
-    val key: AiByokDto? = null,
-    val usage: AssistantDto,
-)
-
-@Serializable
-data class AiUsageResponse(
-    val usage: AssistantDto,
-)
-
-@Serializable
-data class ChatMessageDto(
-    val role: String,
-    val content: String,
-)
-
-@Serializable
-data class ChatRequest(
-    val messages: List<ChatMessageDto>,
-    val tz: String,
-)
-
-@Serializable
-data class ChatResponse(
-    val reply: String,
-    val actions: List<JsonElement> = emptyList(),
-    val usage: AssistantDto? = null,
 )
 
 @Serializable

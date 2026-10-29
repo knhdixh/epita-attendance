@@ -120,15 +120,6 @@ interface Api {
     @DELETE("api/tokens/{id}")
     suspend fun deleteToken(@Path("id") id: Long): OkResponse
 
-    @PUT("api/ai-key")
-    suspend fun setAiKey(@Body req: AiKeyRequest): AiKeyResponse
-
-    @DELETE("api/ai-key")
-    suspend fun deleteAiKey(): AiUsageResponse
-
-    @POST("api/assistant/chat")
-    suspend fun chat(@Body req: ChatRequest): ChatResponse
-
     @DELETE("api/passkeys/{id}")
     suspend fun deletePasskey(@Path("id") id: String): OkResponse
 
