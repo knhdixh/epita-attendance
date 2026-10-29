@@ -292,3 +292,9 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
 - `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug`: exit 0, BUILD SUCCESSFUL; test XML reports 34 JVM tests, 0 failures, 0 errors, 0 skipped; lint passed. CalendarMath adds one recursive golden test.
 - **Remaining Phase 2b:** endpoint and DTO parity audit, Compose Robolectric tests, Roborazzi screenshot infrastructure and screenshot verification. These are outside this authorised split run. The known npm baseline failure is carried under the explicit run instruction. No review or night report was edited.
 - **Unverified:** arbitrary malformed inputs, all historical time-zone transitions, and screen or device integration. This split run does not establish full Phase 2b completion.
+
+### Task 4 split — partial endpoint parity (2026-10-30)
+- Commit `bf7f58f` adds Retrofit methods for homework bulk planning, habits CRUD/log/order, countdowns CRUD and notification settings. Partial bodies use JsonObject so explicit nulls can clear fields; homework creation includes planning fields. Added a MockWebServer check for bulk planning nulls and habit log path and body. Existing JS-generated snapshot fixtures check habit, countdown, notification and planning response fields.
+- `npm test`: exit 1, 104 tests, 103 passed, 1 failed, 0 skipped; permitted baseline countdown assertion at `test/habits.test.js:222` expected 10, received 11.
+- `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug`: exit 0, BUILD SUCCESSFUL; 35 tests, 0 failures, 0 errors, 0 skipped; lint passed.
+- **Incomplete / unverified:** this is not a complete endpoint and DTO parity audit. Remaining work includes auditing every other route and handler, expanding MockWebServer coverage for all added calls and response shapes, and checking section 4 corrections and delete/catchup semantics in detail. No plan correction is claimed. The untracked night report was left untouched.
