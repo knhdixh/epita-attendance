@@ -7,6 +7,7 @@ import * as tokens from './tokens-ui.js';
 import * as fx from './focus-ui.js';
 import * as hb from './habits-ui.js';
 import * as cd from './countdowns-ui.js';
+import * as cv from './calendar-ui.js';
 import { passkeysSupported, registerPasskey, signInWithPasskey } from './passkey.js';
 import * as palette from './palette.js';
 
@@ -239,12 +240,13 @@ function render() {
   renderScope(view);
   if (view === 'empty') renderEmpty();
   else {
-    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, countdowns: cd.renderCountdowns, courses: renderCourses, settings: renderSettings })[state.tab]();
+    ({ today: today.renderToday, overview: renderOverview, upcoming: renderUpcoming, calendar: cv.renderCalendar, sessions: renderSessions, homework: hw.renderHomework, breaks: brk.renderBreaks, focus: fx.renderFocus, habits: hb.renderHabits, countdowns: cd.renderCountdowns, courses: renderCourses, settings: renderSettings })[state.tab]();
     $app.insertAdjacentHTML('afterbegin', pageHead(TITLES[state.tab], pageSub()));
   }
   $topTitle.textContent = view === 'empty' ? 'Add your timetable' : TITLES[state.tab];
   document.title = `${$topTitle.textContent} · Attendance80`;
   $app.classList.toggle('wide', view === 'breaks');
+  $app.classList.toggle('cal-main', view === 'calendar');
   // The entrance plays once, on first load; switching pages just swaps the content.
   if (changed) {
     $scroller.scrollTop = 0;
@@ -257,9 +259,9 @@ function render() {
 
 let lastView = null;
 // Pages that work before a timetable is added.
-const NO_TIMETABLE = ['settings', 'focus', 'habits', 'countdowns'];
+const NO_TIMETABLE = ['settings', 'focus', 'habits', 'countdowns', 'calendar'];
 let first = true;
-const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', countdowns: 'Countdowns', breaks: 'Breaks', courses: 'Courses', settings: 'Settings' };
+const TITLES = { today: 'Today', overview: 'Attendance', upcoming: 'Upcoming', calendar: 'Calendar', sessions: 'Sessions', homework: 'Homework', focus: 'Focus', habits: 'Habits', countdowns: 'Countdowns', breaks: 'Breaks', courses: 'Courses', settings: 'Settings' };
 const pageHead = (label, sub = '') => `<header class="page-head"><h1>${esc(label)}</h1>${sub ? `<span class="sub">${sub}</span>` : ''}</header>`;
 
 // The small grey text on the right of the page title.
@@ -274,6 +276,7 @@ function pageSub() {
   if (state.tab === 'focus') parts.push(fx.subtitle());
   if (state.tab === 'habits') parts.push(hb.subtitle());
   if (state.tab === 'countdowns') parts.push(cd.subtitle());
+  if (state.tab === 'calendar') parts.push(cv.subtitle());
   if (state.tab === 'upcoming' && state.weekCount != null) parts.push(`${state.weekCount} session${state.weekCount === 1 ? '' : 's'} this week`);
   if (state.tab === 'sessions' && state.shownIds) parts.push(`${state.shownIds.length} session${state.shownIds.length === 1 ? '' : 's'}`);
   return [esc(parts.join(' · ')), scope && `<span class="scope-note">${esc(scope)}</span>`].filter(Boolean).join(' · ');
@@ -865,7 +868,7 @@ async function setTracked(updates) {
 
 // [tab, label, icon, key after G]
 const NAV = [
-  ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
+  ['today', 'Today', 'i-today', 'T'], ['overview', 'Attendance', 'i-home', 'O'], ['upcoming', 'Upcoming', 'i-calendar', 'U'], ['calendar', 'Calendar', 'i-month', 'K'], ['sessions', 'Sessions', 'i-sessions', 'S'], ['homework', 'Homework', 'i-homework', 'H'],
   ['focus', 'Focus', 'i-focus', 'F'], ['habits', 'Habits', 'i-habits', 'R'], ['countdowns', 'Countdowns', 'i-countdown', 'D'], ['breaks', 'Breaks', 'i-breaks', 'B'], ['courses', 'Courses', 'i-courses', 'C'],
   ['settings', 'Settings', 'i-settings', ','],
 ];
@@ -876,6 +879,7 @@ function go(tab) {
   closeDrawer();
   if (tab === 'sessions' && state.tab !== 'sessions') state.filter.course = 'all';
   if (tab === 'upcoming' && state.tab !== 'upcoming') state.upWeek = 0;
+  if (tab === 'calendar' && state.tab !== 'calendar') cv.enter();
   state.tab = tab;
   history.replaceState(null, '', '#' + tab);
   render();
@@ -930,7 +934,7 @@ function paletteItems() {
   const unmarked = unmarkedEvents();
   if (unmarked.length) act('mark-all', `Mark ${unmarked.length} past session${unmarked.length === 1 ? '' : 's'} as attended`, 'i-check', () => bulkStatus(unmarked.map((x) => x.id), 'present'), { keywords: 'unmarked present attendance' });
   if (hasData) act('break', 'Plan a break', 'i-breaks', () => { go('breaks'); document.querySelector('#break-form [name=from]')?.focus(); }, { keywords: 'holiday trip time off skip' });
-  items.push(...cal.paletteItems(go), ...fx.paletteItems(), ...hb.paletteItems(go), ...cd.paletteItems(go));
+  items.push(...cal.paletteItems(go), ...fx.paletteItems(), ...hb.paletteItems(go), ...cd.paletteItems(go), ...cv.paletteItems(go));
   if (state.data.integrations?.feedUrl) act('copy-feed', 'Copy timetable calendar link', 'i-link', copyTimetableFeed, { home: false, keywords: 'feed ics subscribe google apple outlook' });
   act('sidebar', 'Toggle sidebar', 'i-panel', toggleSidebar, { keys: ['M'], home: false });
   act('shortcuts', 'Keyboard shortcuts', 'i-keyboard', () => palette.open('?'), { keys: ['?'], home: false, keywords: 'keys help' });
@@ -979,7 +983,7 @@ function paletteFallback(q) {
 function shortcutsHelp() {
   const rows = [
     [['/'], 'Search and commands'], [['⌘', 'K'], 'Search and commands, even while typing'], [['Q'], 'Add homework'],
-    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'], ...fx.SHORTCUTS, ...hb.SHORTCUTS,
+    [['M'], 'Show or hide the sidebar'], [['?'], 'This list'], ...fx.SHORTCUTS, ...hb.SHORTCUTS, ...cv.SHORTCUTS,
     ...NAV.map(([, label, , key]) => [['G', 'then', key], `Go to ${label}`]),
     [['Esc'], 'Close, or cancel the homework form'], [['⌘', '↵'], 'Save homework from the notes'],
   ];
@@ -1010,7 +1014,7 @@ document.addEventListener('click', async (e) => {
   const upDay = t.closest('[data-up-day]');
   if (upDay) return document.getElementById(`up-${upDay.dataset.upDay}`)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
 
-  if (fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
+  if (cv.onClick(e) || fx.onClick(e) || hb.onClick(e) || cd.onClick(e) || await hw.onClick(e) || brk.onClick(e) || cal.onClick(e) || tokens.onClick(e)) return;
   const action = t.closest('[data-action]')?.dataset.action;
   const row = t.closest('[data-event]');
 
@@ -1122,7 +1126,7 @@ document.addEventListener('keydown', (e) => {
     return palette.isOpen() ? palette.close() : palette.open();
   }
   if (palette.isOpen()) return;
-  if (hw.onKeydown(e) || cal.onKeydown(e) || fx.onKeydown(e) || hb.onKeydown(e) || cd.onKeydown(e)) return;
+  if (cv.onKeydown(e) || hw.onKeydown(e) || cal.onKeydown(e) || fx.onKeydown(e) || hb.onKeydown(e) || cd.onKeydown(e)) return;
   if (e.key === 'Escape' && state.tab === 'habits' && state.hbOpen && !isTyping(e.target) && $accountMenu.hidden) { hb.onPageKey(e); return; }
   if (e.key === 'Escape') { toggleMenu(false); closeDrawer(); return; }
   if (e.key === 'Enter' && e.target.matches('[data-course-open]')) return e.target.click();
@@ -1138,6 +1142,7 @@ document.addEventListener('keydown', (e) => {
   if (state.tab === 'focus' && fx.onPageKey(e)) return;
   if (state.tab === 'habits' && hb.onPageKey(e)) return;
   if (state.tab === 'countdowns' && cd.onPageKey(e)) return;
+  if (state.tab === 'calendar' && cv.onPageKey(e)) return;
   if (k === '/') { e.preventDefault(); palette.open(); }
   else if (e.key === '?') { e.preventDefault(); palette.open('?'); }
   else if (k === 'g') gAt = Date.now();
@@ -1154,7 +1159,7 @@ window.addEventListener('hashchange', () => {
 $scroller.addEventListener('scroll', () => $scroller.classList.toggle('scrolled', $scroller.scrollTop > 56), { passive: true });
 
 document.addEventListener('change', (e) => {
-  if (fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
+  if (cv.onChange(e) || fx.onChange(e) || hb.onChange(e) || cd.onChange(e) || hw.onChange(e) || brk.onChange(e)) return;
   const t = e.target;
   if (t.id === 'f-course') { state.filter.course = t.value; return render(); }
   if (t.id === 'f-hidden') { state.filter.showHidden = t.checked; return render(); }
@@ -1191,7 +1196,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
-  if (hw.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e) || hb.onSubmit(e) || cd.onSubmit(e)) return;
+  if (cv.onSubmit(e) || hw.onSubmit(e) || brk.onSubmit(e) || cal.onSubmit(e) || tokens.onSubmit(e) || fx.onSubmit(e) || hb.onSubmit(e) || cd.onSubmit(e)) return;
   if (e.target.id === 'pk-signup') {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
