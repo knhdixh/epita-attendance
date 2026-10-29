@@ -6,13 +6,13 @@ Run started 2026-10-29. Reviewer/orchestrator: parent Codex session. Implementat
 
 | Phase | Verdict | Fix rounds | Merge | Independent checks |
 |---|---|---|---|---|
-| 2b | FIX after round 1 | 1 completed; round 2 next | — | Focused 2/3 pass; full gate unresolved; npm 103/104 |
+| 2b | PASS after round 2; ready to merge | 2 | Pending | npm 103/104; Android 62/62; lint/APK/24 screenshots verified |
 | 3, 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Owner/device release work |
 
 ## Screenshot index
 
-Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. All 16 normal-font PNGs inspected by reviewer; provisional and not accepted. Eight incorrect font2 images were removed.
+Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. Accepted final matrix: 24 committed PNGs, all visually inspected and independently verified. Includes all 8 real 200% main-screen captures.
 
 ## Needs a device
 
@@ -20,6 +20,7 @@ Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phon
 - Exact-alarm behaviour in Doze and promoted ongoing notifications.
 - Update over the existing TWA and import of its running timer.
 - Widget behaviour on a real launcher.
+- Dialog window dimming, which Robolectric full-window captures do not render.
 
 ## Unverified
 
@@ -60,4 +61,13 @@ Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phon
 - Reviewer inspected actual enlarged phone sign-in text. Complete light/dark phone/tablet matrix and dialog framing remain pending.
 - Upstream diagnostic lead: https://github.com/robolectric/robolectric/issues/8460 (width qualifier + dialog text field). Do not remove size coverage or fake a dialog.
 
-Current position: Phase 2b remains FIX after 1 of 3 fix rounds; round 2 is next. No phase merged; native/night remains independently building.
+
+## Fix round 2 final review
+
+- PASS at `4fe80d7`; implementation/test/screenshot commit `af8a72c`. Two fix rounds used; all four findings closed.
+- Reviewer independent full gate: 62/62, zero failures/errors/skips; lint and debug assembly passed. Categories: 23 golden, 11 ordinary JVM, 1 existing Robolectric ViewModel, 3 Compose interaction, 24 screenshot methods. No instrumented tests introduced yet.
+- Unfiltered screenshot verification passed; all 24 PNGs visually inspected. Corrupting one expected PNG correctly failed a targeted verification, then restoring original bytes and running full verification passed.
+- Golden regeneration from JS produced no tracked changes. npm remains at allowed 103/104 baseline.
+- Dialog window dimming on a physical device remains unverified; test host does not draw the dim layer. Actual dialog content, inputs, callbacks, responsive widths and normal/large-text main screens are verified in Robolectric.
+
+Current position: Phase 2b has PASS after two fix rounds and is ready to merge into native/night. Later phases remain pending.

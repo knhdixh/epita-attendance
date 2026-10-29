@@ -1,6 +1,8 @@
 # Native Android Phase 2b review
 
-Verdict: **FIX**. Initial review, 2026-10-30. No fix rounds completed yet. Do not merge or start Phase 3.
+Current verdict: **PASS after fix round 2**, reviewed 2026-10-30 at `4fe80d7` (app/test commit `af8a72c`). Merge into native/night is authorised under overnight-run.md. The original FIX review and re-review are preserved below.
+
+## Initial review — FIX (2026-10-30)
 
 Reviewed committed implementation through `91cf2b0`, plus the UI worker's uncommitted changes and untracked test files/PNGs. The UI worker correctly stopped without committing because its required checks failed. Preserve that work and finish it in the first fix round.
 
@@ -40,3 +42,23 @@ Round 1 ended without a commit because required checks still fail. Preserve the 
 - A primary upstream report provides a concrete lead: [Robolectric #8460](https://github.com/robolectric/robolectric/issues/8460) reproduces non-idle text fields inside dialogs when a non-default width qualifier is used. Its later reproduction distinguishes width from height and reports stable sizing with `DialogProperties(usePlatformDefaultWidth = false)` or an explicit constrained width. This is a diagnostic lead, not proof that any workaround fixes this app. Keep the required 411dp/840dp captures and real dialog assertions; verify any responsive sizing change on both sizes rather than removing coverage or faking content.
 
 Fix round 2 must finish the real dialog, full screenshot matrix, action reachability and all unfiltered checks, retaining the successful font and Habits regressions. Continue to append progress rather than rewriting previous entries.
+
+
+## Re-review after fix round 2 — PASS (2026-10-30)
+
+All four findings are resolved for the Phase 2b scope. Two fix rounds were used.
+
+1. Fixed configurations now start isolated compositions; measured text-height comparisons and actual callback checks at 2.0 remain. All 24 PNGs exist and are committed. Reviewer inspected every PNG using six labelled contact sheets, plus original-size phone 200% and phone/tablet dialog images. Enlarged text and multi-line controls remain readable; no clipped target content observed.
+2. The real account dialog uses responsive explicit constraints, 24dp side padding, maximum 560dp and `usePlatformDefaultWidth = false`. Native-graphics interaction tests exercise empty submission, trimmed name submission, reopen/cancel and developer sign-in. All pass without fakes, ignores or weakened assertions.
+3. Permanent JS-generated fixtures cover string/boolean distinctions, arrays, numeric prefixes and non-primitive schedule types. Reviewer regenerated every logic golden with `node android-native/tools/golden.mjs`: exit 0, no tracked fixture/golden changes. The specified coercion defect is fixed.
+4. The no-action-bar host and responsive dialog surface remove the extra title bar and produce consistent framing. Window dimming is not reproduced by the full-window Robolectric capture and is explicitly left for a real-device check; no claim of physical-device rendering is made.
+
+Independent final checks, run against the committed phase:
+
+- `npm test`: **103/104**, 1 known countdown failure, 0 skipped, allowed by overnight instructions.
+- `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug`: **BUILD SUCCESSFUL**, 62 tests, 0 failures/errors/skips. Tests executed rather than being up-to-date.
+- `./gradlew verifyRoborazziProdDebug`: **BUILD SUCCESSFUL**, 62 tests, 0 failures/errors/skips, all 24 image baselines verified. Breakdown: 23 golden methods; 11 ordinary JVM methods; 1 existing Robolectric ViewModel method; 3 Compose interaction methods; 24 screenshot methods. Instrumented tests start in Phase 3.
+- Negative verification probe: temporarily corrupted one committed placeholder PNG and ran `verifyRoborazziProdDebug --tests '*PhoneScreenshotTest.light_placeholder_font1'`; it failed (exit 1). Restored its original bytes in a finally block, then the full unfiltered verification passed. `git status` confirms no tracked changes from this probe.
+- `git diff --check`: passed. No changes to server source, public JS, existing migrations, android/, secrets or main. The existing endpoint corrections are restricted to permitted plan section 4. No extra phase screens added.
+
+Final evidence: `/tmp/epita-native-night/review-2b-final-{npm,gradle,verify,generate}.log`, `review-2b-verify-negative.log`, and `fix2-review-0.jpg` through `fix2-review-5.jpg`. Worker log and commit mapping are in the append-only progress log.
