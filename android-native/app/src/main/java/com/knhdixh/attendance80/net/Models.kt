@@ -355,6 +355,8 @@ data class HomeworkCreateRequest(
     val remind_minutes: Int? = null,
     val effort_minutes: Int? = null,
     val notes: String = "",
+    val planned_at: Long? = null,
+    val planned_minutes: Int? = null,
 )
 
 @Serializable
@@ -489,3 +491,16 @@ data class SettingsUpdateRequest(
 data class AccountDeleteRequest(
     val confirm: String = "DELETE",
 )
+
+// JsonObject preserves explicit nulls in partial mutation bodies.
+@Serializable
+data class HomeworkPlanResponse(val homework: List<HomeworkDto>)
+
+@Serializable
+data class HabitLogRequest(val day: String, val count: Int)
+
+@Serializable
+data class HabitOrderRequest(val ids: List<Long>)
+
+@Serializable
+data class NotifySettingsResponse(val settings: NotifySettingsDto, val devices: Int)

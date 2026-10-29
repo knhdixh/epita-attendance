@@ -1,6 +1,7 @@
 package com.knhdixh.attendance80.net
 
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -73,10 +74,40 @@ interface Api {
     suspend fun createHomework(@Body req: HomeworkCreateRequest): HomeworkDto
 
     @PATCH("api/homework/{id}")
-    suspend fun updateHomework(@Path("id") id: Long, @Body req: HomeworkUpdateRequest): HomeworkDto
+    suspend fun updateHomework(@Path("id") id: Long, @Body req: JsonObject): HomeworkDto
 
     @DELETE("api/homework/{id}")
     suspend fun deleteHomework(@Path("id") id: Long): OkResponse
+
+    @POST("api/homework/plan")
+    suspend fun planHomework(@Body req: JsonObject): HomeworkPlanResponse
+
+    @POST("api/habits")
+    suspend fun createHabit(@Body req: JsonObject): HabitDto
+
+    @PATCH("api/habits/{id}")
+    suspend fun updateHabit(@Path("id") id: Long, @Body req: JsonObject): HabitDto
+
+    @DELETE("api/habits/{id}")
+    suspend fun deleteHabit(@Path("id") id: Long): OkResponse
+
+    @PUT("api/habits/{id}/log")
+    suspend fun logHabit(@Path("id") id: Long, @Body req: HabitLogRequest): HabitLogDto
+
+    @POST("api/habits/order")
+    suspend fun orderHabits(@Body req: HabitOrderRequest): OkResponse
+
+    @POST("api/countdowns")
+    suspend fun createCountdown(@Body req: JsonObject): CountdownDto
+
+    @PATCH("api/countdowns/{id}")
+    suspend fun updateCountdown(@Path("id") id: Long, @Body req: JsonObject): CountdownDto
+
+    @DELETE("api/countdowns/{id}")
+    suspend fun deleteCountdown(@Path("id") id: Long): OkResponse
+
+    @PUT("api/notify/settings")
+    suspend fun saveNotifySettings(@Body req: JsonObject): NotifySettingsResponse
 
     @POST("api/breaks")
     suspend fun createBreak(@Body req: BreakCreateRequest): BreakCreateResponse
