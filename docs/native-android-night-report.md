@@ -6,13 +6,13 @@ Run started 2026-10-29. Reviewer/orchestrator: parent Codex session. Implementat
 
 | Phase | Verdict | Fix rounds | Merge | Independent checks |
 |---|---|---|---|---|
-| 2b | In progress: Logic ports and endpoint audit committed; Compose/screenshot worker running | 0 | — | Pending |
+| 2b | In progress: FIX: initial review rejects UI/font evidence and Habits coercion | 0 | — | Pending |
 | 3, 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Owner/device release work |
 
 ## Screenshot index
 
-Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. Current images are interim and not accepted.
+Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. All 16 normal-font PNGs inspected by reviewer; provisional and not accepted. Eight incorrect font2 images were removed.
 
 ## Needs a device
 
@@ -45,4 +45,11 @@ Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phon
 - Independent native/night baseline: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed, 31 JVM tests, 0 failures/errors/skips. Secondary worktree initially lacked SDK configuration; configured only the existing sdk.dir locally and reran successfully.
 - Bootstrap report/instructions documentation check on native/night: `npm test` 103/104 with known countdown assertion; initial secondary worktree attempt lacked node_modules, resolved by sharing the existing dependency installation. No dependency or app code changed for this.
 
-Current position: Phase 2b UI worker remains live, debugging Compose interaction checks and screenshot font-scale evidence; no phase has passed review or merged yet.
+## Initial Phase 2b review
+
+- `docs/native-android-review-2b.md`: **FIX**, 4 numbered findings: ineffective 200% font rendering/missing matrix; dialog interaction non-idle failure; Habits Number conversion; inconsistent dialog screenshot host/framing.
+- Independent exact full Android gate: 40 tests, 37 passed, 3 failed, 0 skipped. Golden 23/23; ordinary JVM 11/11; existing Robolectric ViewModel 1/1; Compose UI 2/3; screenshot test methods 0/2. No instrumented tests yet.
+- Separate lint and debug APK build passed. Phone-only screenshot verify failed with the font-height assertion. No passing whole-matrix verification claimed.
+- UI worker stopped with uncommitted work because its checks failed. Preserve and fix it; no test weakening or skipped tests.
+
+Current position: Phase 2b initial review is FIX; fix round 1 is next. No phase has passed review or merged; native/night remains independently building.
