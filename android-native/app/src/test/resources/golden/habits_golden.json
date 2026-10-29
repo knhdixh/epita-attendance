@@ -66,6 +66,104 @@
     {
       "clean": null,
       "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 1
+      },
+      "label": "Once a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "days",
+        "days": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "label": "Mon, Tue, Wed, Thu"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
     }
   ],
   "habits": [

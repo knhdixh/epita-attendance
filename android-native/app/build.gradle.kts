@@ -1,6 +1,7 @@
 import java.util.Properties
 
 plugins {
+    alias(libs.plugins.roborazzi)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -83,6 +84,8 @@ android {
         jvmTarget = "17"
     }
 
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -126,6 +129,11 @@ dependencies {
     debugImplementation(libs.compose.ui.test.manifest)
     debugImplementation(libs.okhttp.logging)
 
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

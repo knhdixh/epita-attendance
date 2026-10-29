@@ -3,6 +3,10 @@ package com.knhdixh.attendance80.ui.signin
 import android.app.Activity
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.knhdixh.attendance80.BuildConfig
 import com.knhdixh.attendance80.ui.theme.LocalExtraColors
 
@@ -48,19 +53,41 @@ fun SignInScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
+    val openCustomTab: (Uri) -> Unit = { uri ->
+        CustomTabsIntent.Builder().build().launchUrl(context, uri)
+    }
+    SignInContent(
+        uiState = uiState,
+        onGoogle = { viewModel.startGoogleSignIn(openCustomTab) },
+        onPasskey = { if (activity != null) viewModel.signInWithPasskey(activity) },
+        onDev = { viewModel.startDevSignIn(it, openCustomTab) },
+        onShowCreate = viewModel::showCreateAccountDialog,
+        onDismissCreate = viewModel::dismissCreateAccountDialog,
+        onCreate = { if (activity != null) viewModel.registerPasskey(activity, it) },
+        onClearError = viewModel::clearError,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun SignInContent(
+    uiState: SignInUiState,
+    onGoogle: () -> Unit,
+    onPasskey: () -> Unit,
+    onDev: (String) -> Unit,
+    onShowCreate: () -> Unit,
+    onDismissCreate: () -> Unit,
+    onCreate: (String) -> Unit,
+    onClearError: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val extraColors = LocalExtraColors.current
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+            onClearError()
         }
-    }
-
-    val openCustomTab: (Uri) -> Unit = { uri ->
-        val intent = CustomTabsIntent.Builder().build()
-        intent.launchUrl(context, uri)
     }
 
     var devEmail by remember { mutableStateOf("dev@example.com") }
@@ -73,7 +100,8 @@ fun SignInScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -106,10 +134,10 @@ fun SignInScreen(
                     // Continue with Google
                     if (config?.google == true) {
                         Button(
-                            onClick = { viewModel.startGoogleSignIn(openCustomTab) },
+                            onClick = onGoogle,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp),
+                                .heightIn(min = 48.dp),
                             shape = MaterialTheme.shapes.small,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
@@ -123,14 +151,10 @@ fun SignInScreen(
 
                     // Sign in with a passkey (always available)
                     OutlinedButton(
-                        onClick = {
-                            if (activity != null) {
-                                viewModel.signInWithPasskey(activity)
-                            }
-                        },
+                        onClick = onPasskey,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
+                            .heightIn(min = 48.dp),
                         shape = MaterialTheme.shapes.small,
                     ) {
                         Text("Sign in with a passkey")
@@ -140,10 +164,10 @@ fun SignInScreen(
                     // Create an account with a passkey (when signup is enabled)
                     if (config?.signup == true) {
                         OutlinedButton(
-                            onClick = { viewModel.showCreateAccountDialog() },
+                            onClick = onShowCreate,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp),
+                                .heightIn(min = 48.dp),
                             shape = MaterialTheme.shapes.small,
                         ) {
                             Text("Create an account with a passkey")
@@ -170,10 +194,10 @@ fun SignInScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
-                            onClick = { viewModel.startDevSignIn(devEmail, openCustomTab) },
+                            onClick = { onDev(devEmail) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp),
+                                .heightIn(min = 44.dp),
                             shape = MaterialTheme.shapes.small,
                         ) {
                             Text("Sign in with dev account")
@@ -187,7 +211,10 @@ fun SignInScreen(
     if (uiState.showCreateAccountDialog) {
         var nameInput by remember { mutableStateOf("") }
         AlertDialog(
-            onDismissRequest = { viewModel.dismissCreateAccountDialog() },
+            onDismissRequest = onDismissCreate,
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 560.dp).fillMaxWidth()
+                .border(1.dp, extraColors.line2, MaterialTheme.shapes.large),
             title = { Text("Create account") },
             text = {
                 Column {
@@ -210,8 +237,8 @@ fun SignInScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (activity != null && nameInput.isNotBlank()) {
-                            viewModel.registerPasskey(activity, nameInput.trim())
+                        if (nameInput.isNotBlank()) {
+                            onCreate(nameInput.trim())
                         }
                     },
                     shape = MaterialTheme.shapes.small,
@@ -221,7 +248,7 @@ fun SignInScreen(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { viewModel.dismissCreateAccountDialog() },
+                    onClick = onDismissCreate,
                     shape = MaterialTheme.shapes.small,
                 ) {
                     Text("Cancel")

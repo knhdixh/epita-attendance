@@ -19,17 +19,37 @@ object Habits {
     fun monthOf(key: String) = key.substring(0, 7)
     fun isKey(key: String) = Regex("\\d{4}-\\d{2}-\\d{2}").matches(key) && runCatching { LocalDate.parse(key).toString() == key }.getOrDefault(false)
 
-    private fun number(v: JsonElement?): Double? = when (v) {
-        null -> null
-        JsonNull -> 0.0
-        is JsonPrimitive -> if (v.content == "true") 1.0 else if (v.content == "false") 0.0 else if (v.content.isBlank()) 0.0 else v.content.toDoubleOrNull()
-        else -> null
+    // JavaScript Number first converts arrays to their comma-joined string representation.
+    private fun jsString(v: JsonElement): String = when (v) {
+        JsonNull -> ""
+        is JsonArray -> v.joinToString(",") { jsString(it) }
+        is JsonObject -> "[object Object]"
+        is JsonPrimitive -> v.content
+    }
+    private fun number(v: JsonElement?): Double? {
+        if (v == null) return null // undefined
+        if (v == JsonNull) return 0.0
+        if (v is JsonObject) return null
+        if (v is JsonPrimitive && !v.isString) {
+            if (v.content == "true") return 1.0
+            if (v.content == "false") return 0.0
+        }
+        val text = jsString(v).trim()
+        if (text.isEmpty()) return 0.0
+        val radix = when {
+            text.startsWith("0x", true) -> 16
+            text.startsWith("0b", true) -> 2
+            text.startsWith("0o", true) -> 8
+            else -> 0
+        }
+        if (radix != 0) return text.substring(2).toLongOrNull(radix)?.toDouble()
+        return text.toDoubleOrNull()
     }
     private fun int(v: JsonElement?): Int? = number(v)?.takeIf { it.isFinite() && it % 1.0 == 0.0 && it in Int.MIN_VALUE.toDouble()..Int.MAX_VALUE.toDouble() }?.toInt()
     fun cleanSchedule(s: JsonElement?): HabitScheduleDto? {
         val obj = s as? JsonObject ?: return null
         val n = int(obj["n"])
-        return when (obj["type"]?.jsonPrimitive?.contentOrNull) {
+        return when ((obj["type"] as? JsonPrimitive)?.takeIf { it.isString }?.content) {
             "daily" -> HabitScheduleDto("daily")
             "days" -> (obj["days"] as? JsonArray)?.mapNotNull { int(it) }?.filter { it in 1..7 }?.distinct()?.sorted()?.let { if (it.size == 7) HabitScheduleDto("daily") else if (it.isEmpty()) null else HabitScheduleDto("days", days = it) }
             "weekly" -> if (n != null && n in 1..7) if (n == 7) HabitScheduleDto("daily") else HabitScheduleDto("weekly", n = n) else null
