@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.net
 
+import okhttp3.ResponseBody
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
@@ -42,6 +43,9 @@ interface Api {
 
     @GET("api/data")
     suspend fun data(): AppData
+
+    @GET("api/data")
+    suspend fun rawData(): ResponseBody
 
     @GET("api/focus")
     suspend fun listFocus(@Query("since") since: Long): FocusListResponse

@@ -45,6 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        (application as App).startData()
         if (savedInstanceState == null) {
             handleAuthIntent(intent)
         }

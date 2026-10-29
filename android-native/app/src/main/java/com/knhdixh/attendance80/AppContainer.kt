@@ -8,10 +8,12 @@ import com.knhdixh.attendance80.auth.EncryptedTokenStore
 import com.knhdixh.attendance80.auth.TokenStore
 import com.knhdixh.attendance80.auth.authDataStore
 import com.knhdixh.attendance80.net.Api
+import com.knhdixh.attendance80.data.DataRepository
 import com.knhdixh.attendance80.net.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 
 interface AppContainer {
     val context: Context
@@ -19,6 +21,7 @@ interface AppContainer {
     val tokenStore: TokenStore
     val api: Api
     val authRepository: AuthRepository
+    val dataRepository: DataRepository
 }
 
 class DefaultAppContainer(
@@ -46,6 +49,20 @@ class DefaultAppContainer(
                 scope.launch { tokenStore.clearToken() }
             },
         )
+    }
+
+    override val dataRepository: DataRepository by lazy {
+        DataRepository(api, context.filesDir, clock) { tokenStore.currentToken() }
+    }
+
+    fun startData() {
+        scope.launch {
+            tokenStore.awaitToken()
+            tokenStore.token.collectLatest { token ->
+                dataRepository.start()
+                if (token != null) dataRepository.refresh()
+            }
+        }
     }
 
     override val authRepository: AuthRepository by lazy {
