@@ -12,7 +12,7 @@ Run started 2026-10-29. Reviewer/orchestrator: parent Codex session. Implementat
 
 ## Screenshot index
 
-Pending Phase 2b Roborazzi setup. Required committed location: `android-native/app/src/test/screenshots/`.
+Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phone411x891 and tablet840x1000, light/dark, sign-in/loading/placeholder/dialog; main screens also labelled font1/font2. Current images are interim and not accepted.
 
 ## Needs a device
 
@@ -40,9 +40,9 @@ Pending Phase 2b Roborazzi setup. Required committed location: `android-native/a
 - Countdowns completed in `ac1eba9` (log `d2eea23`); independent unit/lint/assemble check passed with 33 JVM tests, 0 failures/errors/skips.
 - CalendarMath completed in `9545857`; independent unit/lint/assemble check passed with 34 JVM tests, 0 failures/errors/skips. Both split workers performed golden mutation checks.
 - Endpoint audit completed: missing methods in `bf7f58f`, audit corrections in `b84546c`, inventory in `91cf2b0` (partial log `58910c2`). Corrected flat calendar responses, GCal resync fields, explicit-null partial writes and section 4 only. Independent full unit/lint/assemble check after restored review inputs passed: 35 JVM tests, 0 failures/errors/skips.
-- Compose/Roborazzi infrastructure worker running, Codex session `01a189ee-7fdc-7de3-93af-c741d9a82882` (shell handle 50376; log `/tmp/epita-native-night/phase-2b-ui-worker.log`). Screenshots remain pending; no PNGs reviewed yet.
+- Compose/Roborazzi infrastructure worker running, Codex session `01a189ee-7fdc-7de3-93af-c741d9a82882` (shell handle 50376; log `/tmp/epita-native-night/phase-2b-ui-worker.log`). Interim native screenshots exist. Reviewer inspected initial captures: diagnostic dumps were replaced with real images; current sign-in font1/font2 pairs are byte-identical, so 200% coverage is unproven. Final matrix review and independent verify run remain pending.
 - Reviewer independently reproduced a Habits numeric-coercion mismatch with JS-computed temporary expectations: `weekly n:"true"` returned an object rather than null. Targeted test failed as expected; test resource files restored byte-for-byte and full check passed. Requires a permanent regression and fix during the whole-phase review; phase remains unmerged.
 - Independent native/night baseline: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug` passed, 31 JVM tests, 0 failures/errors/skips. Secondary worktree initially lacked SDK configuration; configured only the existing sdk.dir locally and reran successfully.
 - Bootstrap report/instructions documentation check on native/night: `npm test` 103/104 with known countdown assertion; initial secondary worktree attempt lacked node_modules, resolved by sharing the existing dependency installation. No dependency or app code changed for this.
 
-Current position: Phase 2b Compose and screenshot infrastructure implementation is running; no phase has passed review or merged yet.
+Current position: Phase 2b UI worker remains live, debugging Compose interaction checks and screenshot font-scale evidence; no phase has passed review or merged yet.
