@@ -1,0 +1,4441 @@
+{
+  "cleanSettingsResults": [
+    {
+      "name": "null_raw",
+      "input": null,
+      "output": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      }
+    },
+    {
+      "name": "empty_raw",
+      "input": {},
+      "output": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      }
+    },
+    {
+      "name": "custom_valid",
+      "input": {
+        "focus": 50,
+        "short": 10,
+        "long": 20,
+        "longEvery": 3,
+        "goal": 10,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": true,
+        "tasks": [
+          "Task A",
+          "Task B"
+        ],
+        "tags": [
+          "coding",
+          "reading"
+        ]
+      },
+      "output": {
+        "focus": 50,
+        "short": 10,
+        "long": 20,
+        "longEvery": 3,
+        "goal": 10,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": true,
+        "tasks": [
+          "Task A",
+          "Task B"
+        ],
+        "tags": [
+          "coding",
+          "reading"
+        ]
+      }
+    },
+    {
+      "name": "out_of_bounds",
+      "input": {
+        "focus": 500,
+        "short": 0,
+        "long": -5,
+        "longEvery": 100,
+        "goal": 0,
+        "autoBreaks": "not_a_bool",
+        "extra_field": 42,
+        "tasks": [
+          "T1",
+          "  T1  ",
+          "#invalid#tag"
+        ],
+        "tags": [
+          "#TAG1",
+          "TAG1",
+          "TAG2"
+        ]
+      },
+      "output": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [
+          "T1",
+          "#invalid#tag"
+        ],
+        "tags": [
+          "tag1",
+          "tag2"
+        ]
+      }
+    },
+    {
+      "name": "junk_types",
+      "input": {
+        "focus": "not_a_number",
+        "short": null,
+        "long": true,
+        "longEvery": "4",
+        "goal": [
+          8
+        ],
+        "autoBreaks": 1,
+        "autoFocus": "false",
+        "sound": "yes",
+        "notify": null,
+        "tasks": "not_an_array",
+        "tags": {
+          "a": "b"
+        }
+      },
+      "output": {
+        "focus": 25,
+        "short": 5,
+        "long": 1,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      }
+    },
+    {
+      "name": "out_of_range_extremes",
+      "input": {
+        "focus": 0,
+        "short": 100,
+        "long": 1,
+        "longEvery": 1,
+        "goal": 30,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [
+          "Task 1",
+          "   ",
+          null,
+          "Task 1",
+          "Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task Very long task "
+        ],
+        "tags": [
+          "#TAG!",
+          "   ",
+          null,
+          "tag!",
+          "#TAG!"
+        ]
+      },
+      "output": {
+        "focus": 25,
+        "short": 5,
+        "long": 1,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [
+          "Task 1",
+          "Very long task Very long task Very long task Very long task Very long task Very "
+        ],
+        "tags": [
+          "tag!"
+        ]
+      }
+    }
+  ],
+  "cleanTagsResults": [
+    {
+      "input": [
+        "#coding",
+        "Coding",
+        "CODING",
+        "#java",
+        " kotlin "
+      ],
+      "output": [
+        "coding",
+        "java",
+        "kotlin"
+      ]
+    },
+    {
+      "input": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "output": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "input": null,
+      "output": []
+    },
+    {
+      "input": [],
+      "output": []
+    }
+  ],
+  "cleanTasksResults": [
+    {
+      "input": [
+        "Task 1",
+        "  Task 1  ",
+        "TASK 1",
+        "Task 2"
+      ],
+      "output": [
+        "Task 1",
+        "Task 2"
+      ]
+    },
+    {
+      "input": [
+        "Task 0",
+        "Task 1",
+        "Task 2",
+        "Task 3",
+        "Task 4",
+        "Task 5",
+        "Task 6",
+        "Task 7",
+        "Task 8",
+        "Task 9",
+        "Task 10",
+        "Task 11",
+        "Task 12",
+        "Task 13",
+        "Task 14",
+        "Task 15",
+        "Task 16",
+        "Task 17",
+        "Task 18",
+        "Task 19",
+        "Task 20",
+        "Task 21",
+        "Task 22",
+        "Task 23",
+        "Task 24",
+        "Task 25",
+        "Task 26",
+        "Task 27",
+        "Task 28",
+        "Task 29",
+        "Task 30",
+        "Task 31",
+        "Task 32",
+        "Task 33",
+        "Task 34",
+        "Task 35",
+        "Task 36",
+        "Task 37",
+        "Task 38",
+        "Task 39"
+      ],
+      "output": [
+        "Task 0",
+        "Task 1",
+        "Task 2",
+        "Task 3",
+        "Task 4",
+        "Task 5",
+        "Task 6",
+        "Task 7",
+        "Task 8",
+        "Task 9",
+        "Task 10",
+        "Task 11",
+        "Task 12",
+        "Task 13",
+        "Task 14",
+        "Task 15",
+        "Task 16",
+        "Task 17",
+        "Task 18",
+        "Task 19",
+        "Task 20",
+        "Task 21",
+        "Task 22",
+        "Task 23",
+        "Task 24",
+        "Task 25",
+        "Task 26",
+        "Task 27",
+        "Task 28",
+        "Task 29"
+      ]
+    }
+  ],
+  "timerOperations": [
+    {
+      "name": "idle_fresh_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 30
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 20
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null,
+          "custom": null,
+          "updatedAt": 0
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null,
+          "custom": null,
+          "updatedAt": 0
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_with_custom_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 45,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        }
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 50
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 40
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "custom": 45,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          },
+          "updatedAt": 1792576200000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "custom": 45,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          },
+          "updatedAt": 1792576200000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          }
+        }
+      }
+    },
+    {
+      "name": "running_focus_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000,
+      "remainingNow": 900000,
+      "remaining5m": 600000,
+      "length": 1500000,
+      "progressNow": 0.4,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792578000000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": true,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-1",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577100000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 2,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": false,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-2",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577100000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 1,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": false,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "paused_focus_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 600000,
+      "remaining5m": 600000,
+      "length": 1500000,
+      "progressNow": 0.6,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577400000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792576800000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": true,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-1",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577100000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 1,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": false,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-2",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577100000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 0,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": false,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "resumed_focus_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 300000,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 0.8,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 3,
+        "target": null
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "long",
+          "next": "long",
+          "run": "finish-run-1",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577700000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 4,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-2",
+          "startedAt": 1792576800000,
+          "endsAt": 1792577100000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 3,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 3,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "running_short_break_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "now": 1792576800000,
+      "remainingNow": 180000,
+      "remaining5m": 0,
+      "length": 300000,
+      "progressNow": 0.4,
+      "isDueNow": false,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792577280000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "running_long_break_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 600000,
+      "remaining5m": 300000,
+      "length": 900000,
+      "progressNow": 0.33333333333333337,
+      "isDueNow": false,
+      "nextLength": 15,
+      "start": {
+        "phase": "long",
+        "next": "long",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null
+      },
+      "pause": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 4,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "due_focus_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "now": 1792576801000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576801000,
+        "endsAt": 1792578301000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": 1792576801000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576861000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-1",
+          "startedAt": 1792576801000,
+          "endsAt": 1792577101000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 1,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "short",
+          "next": "short",
+          "run": "finish-run-2",
+          "startedAt": 1792576801000,
+          "endsAt": 1792577101000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 0,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      }
+    },
+    {
+      "name": "stale_focus_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 2,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "paused_short_break_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "now": 1792576200000,
+      "remainingNow": 200000,
+      "remaining5m": 200000,
+      "length": 300000,
+      "progressNow": 0.33333333333333337,
+      "isDueNow": false,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576700000,
+        "pausedAt": null,
+        "pausedMs": 400000,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576600000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576160000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "stale_break_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 300000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": 1792576200000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792576260000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792576260000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_next_short_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 10
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 1
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_next_long_default",
+      "settings": {
+        "focus": 25,
+        "short": 5,
+        "long": 15,
+        "longEvery": 4,
+        "goal": 8,
+        "autoBreaks": true,
+        "autoFocus": false,
+        "sound": true,
+        "notify": true,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 15,
+      "start": {
+        "phase": "long",
+        "next": "long",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 20
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 10
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 4,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 4,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 4,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_fresh_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 45,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "custom": null,
+        "updatedAt": 0
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 50
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 40
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 0,
+        "target": null,
+        "updatedAt": 0,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null,
+          "custom": null,
+          "updatedAt": 0
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null,
+          "custom": null,
+          "updatedAt": 0
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_with_custom_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 45,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        }
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "custom": 45,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 50
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 40
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "focus",
+        "done": 2,
+        "target": {
+          "course_id": 1,
+          "label": "Math"
+        },
+        "updatedAt": 1792576200000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "custom": 45,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          },
+          "updatedAt": 1792576200000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "custom": 45,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          },
+          "updatedAt": 1792576200000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": {
+            "course_id": 1,
+            "label": "Math"
+          }
+        }
+      }
+    },
+    {
+      "name": "running_focus_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "now": 1792576800000,
+      "remainingNow": 900000,
+      "remaining5m": 600000,
+      "length": 1500000,
+      "progressNow": 0.4,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792578000000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f1",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": {
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "updatedAt": 1792576200000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": true,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 2,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": false,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f1",
+          "started_at": 1792576200000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 600,
+          "completed": false,
+          "homework_id": 2,
+          "course_id": 2,
+          "label": "Web TP",
+          "tags": [
+            "frontend",
+            "css"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": {
+            "homework_id": 2,
+            "course_id": 2,
+            "label": "Web TP",
+            "tags": [
+              "frontend",
+              "css"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "paused_focus_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 600000,
+      "remaining5m": 600000,
+      "length": 1500000,
+      "progressNow": 0.6,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577400000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792576800000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f2",
+        "startedAt": 1792575600000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576500000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "homework_id": 1,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": true,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": false,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 0,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f2",
+          "started_at": 1792575600000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 900,
+          "completed": false,
+          "homework_id": 1,
+          "course_id": null,
+          "label": "Algo HW",
+          "tags": [
+            "algo"
+          ]
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": {
+            "homework_id": 1,
+            "label": "Algo HW",
+            "tags": [
+              "algo"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "resumed_focus_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 300000,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 0.8,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 3,
+        "target": null
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-f3",
+        "startedAt": 1792575000000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 600000,
+        "done": 3,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 4,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 3,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-f3",
+          "started_at": 1792575000000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1200,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 3,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "running_short_break_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "now": 1792576800000,
+      "remainingNow": 180000,
+      "remaining5m": 0,
+      "length": 300000,
+      "progressNow": 0.4,
+      "isDueNow": false,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792577280000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-sb1",
+        "startedAt": 1792576680000,
+        "endsAt": 1792576980000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 2,
+        "target": null,
+        "updatedAt": 1792576680000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-1",
+          "startedAt": 1792576800000,
+          "endsAt": 1792579500000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 2,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-2",
+          "startedAt": 1792576800000,
+          "endsAt": 1792579500000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 2,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 2,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "running_long_break_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "now": 1792576800000,
+      "remainingNow": 600000,
+      "remaining5m": 300000,
+      "length": 900000,
+      "progressNow": 0.33333333333333337,
+      "isDueNow": false,
+      "nextLength": 15,
+      "start": {
+        "phase": "long",
+        "next": "long",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792578300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null
+      },
+      "pause": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "resume": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustPlus5": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "adjustMinus5": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "setLength30": {
+        "phase": "long",
+        "next": "long",
+        "run": "run-lb1",
+        "startedAt": 1792576500000,
+        "endsAt": 1792577400000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576500000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-1",
+          "startedAt": 1792576800000,
+          "endsAt": 1792579500000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 0,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-2",
+          "startedAt": 1792576800000,
+          "endsAt": 1792579500000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 0,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 4,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "due_focus_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "now": 1792576801000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576801000,
+        "endsAt": 1792579501000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        }
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": 1792576801000,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792577100000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576861000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-due",
+        "startedAt": 1792575300000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 0,
+        "target": {
+          "label": "Exam prep"
+        },
+        "updatedAt": 1792575300000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 0,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-due",
+          "started_at": 1792575300000,
+          "ended_at": 1792576800000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": "Exam prep",
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 0,
+          "target": {
+            "label": "Exam prep"
+          }
+        }
+      }
+    },
+    {
+      "name": "stale_focus_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "now": 1792576800000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 1500000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 25,
+      "start": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "new-run-start",
+        "startedAt": 1792576800000,
+        "endsAt": 1792579500000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": 1792576800000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "resume": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "adjustPlus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "adjustMinus5": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792576860000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "setLength30": {
+        "phase": "focus",
+        "next": "focus",
+        "run": "run-stale",
+        "startedAt": 1792574400000,
+        "endsAt": 1792575900000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792574400000
+      },
+      "finishNormal": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": true,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 2,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": {
+          "client_id": "run-stale",
+          "started_at": 1792574400000,
+          "ended_at": 1792575900000,
+          "planned_seconds": 1500,
+          "focus_seconds": 1500,
+          "completed": false,
+          "homework_id": null,
+          "course_id": null,
+          "label": null,
+          "tags": []
+        },
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "paused_short_break_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "now": 1792576200000,
+      "remainingNow": 200000,
+      "remaining5m": 200000,
+      "length": 300000,
+      "progressNow": 0.33333333333333337,
+      "isDueNow": false,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576700000,
+        "pausedAt": null,
+        "pausedMs": 400000,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576600000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576160000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-paused",
+        "startedAt": 1792576000000,
+        "endsAt": 1792576300000,
+        "pausedAt": 1792576100000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576100000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-1",
+          "startedAt": 1792576200000,
+          "endsAt": 1792578900000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 1,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "focus",
+          "next": "focus",
+          "run": "finish-run-2",
+          "startedAt": 1792576200000,
+          "endsAt": 1792578900000,
+          "pausedAt": null,
+          "pausedMs": 0,
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "stale_break_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 300000,
+      "progressNow": 1,
+      "isDueNow": true,
+      "nextLength": 5,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": 1792576200000,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "resume": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "adjustPlus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792576260000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "adjustMinus5": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792576260000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "setLength30": {
+        "phase": "short",
+        "next": "short",
+        "run": "run-b-stale",
+        "startedAt": 1792570000000,
+        "endsAt": 1792570300000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792570000000
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_next_short_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 10,
+      "start": {
+        "phase": "short",
+        "next": "short",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792576800000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 1,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 15
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 5
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "short",
+        "done": 1,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "short",
+          "done": 1,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 1,
+          "target": null
+        }
+      }
+    },
+    {
+      "name": "idle_next_long_custom",
+      "settings": {
+        "focus": 45,
+        "short": 10,
+        "long": 25,
+        "longEvery": 2,
+        "goal": 6,
+        "autoBreaks": false,
+        "autoFocus": true,
+        "sound": false,
+        "notify": false,
+        "tasks": [],
+        "tags": []
+      },
+      "timer": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "now": 1792576200000,
+      "remainingNow": 0,
+      "remaining5m": 0,
+      "length": 0,
+      "progressNow": 0,
+      "isDueNow": false,
+      "nextLength": 25,
+      "start": {
+        "phase": "long",
+        "next": "long",
+        "run": "new-run-start",
+        "startedAt": 1792576200000,
+        "endsAt": 1792577700000,
+        "pausedAt": null,
+        "pausedMs": 0,
+        "done": 4,
+        "target": null
+      },
+      "pause": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "resume": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "custom": null,
+        "updatedAt": 1792576000000
+      },
+      "adjustPlus5": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 30
+      },
+      "adjustMinus5": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 20
+      },
+      "setLength30": {
+        "phase": "idle",
+        "next": "long",
+        "done": 4,
+        "target": null,
+        "updatedAt": 1792576000000,
+        "custom": 30
+      },
+      "finishNormal": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 4,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "finishEarly": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "long",
+          "done": 4,
+          "target": null,
+          "custom": null,
+          "updatedAt": 1792576000000
+        }
+      },
+      "stop": {
+        "log": null,
+        "next": {
+          "phase": "idle",
+          "next": "focus",
+          "done": 4,
+          "target": null
+        }
+      }
+    }
+  ]
+}

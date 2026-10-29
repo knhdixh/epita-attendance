@@ -1,0 +1,201 @@
+{
+  "calendars": [
+    {
+      "id": 101,
+      "kind": "ics",
+      "name": "SE1",
+      "attendance": 1
+    },
+    {
+      "id": 102,
+      "kind": "ics",
+      "name": "SE2",
+      "attendance": 1
+    },
+    {
+      "id": 103,
+      "kind": "ics",
+      "name": "SE3",
+      "attendance": 1
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "name": "GR10 - French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 2,
+      "name": "GR2 - French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 3,
+      "name": "GR1 - French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 4,
+      "name": "G1 - Adapting to a New Culture",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 5,
+      "name": "G2 - Adapting to a New Culture",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 6,
+      "name": "GR3 – English Advanced",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 7,
+      "name": "Algorithms",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    },
+    {
+      "id": 8,
+      "name": "Tutorat & French for Fall 26 T1",
+      "tracked": 1,
+      "tag": "normal",
+      "attendance": 1
+    }
+  ],
+  "testStrings": [
+    "GR10 - French for Fall 26 T1",
+    "G2 - Adapting to a New Culture",
+    "GR3 – English",
+    "GR1 - Architecture",
+    "Tutorat & French for Fall 26 T1",
+    "Normal Course Name",
+    "  GR5   -   Physics  ",
+    "gr3",
+    "G 12",
+    "gr3 - English",
+    "G 12 - English",
+    "GR 3 - English",
+    "G 12 - English",
+    "GR1 – Architecture",
+    "GR1 — Biology",
+    "gr3 – English",
+    "gr3 — English"
+  ],
+  "scopeCases": [
+    {
+      "name": "empty_scope",
+      "scope": []
+    },
+    {
+      "name": "single_cal_101",
+      "scope": [
+        101
+      ]
+    },
+    {
+      "name": "two_cals_101_102",
+      "scope": [
+        101,
+        102
+      ]
+    },
+    {
+      "name": "all_three_cals",
+      "scope": [
+        101,
+        102,
+        103
+      ]
+    },
+    {
+      "name": "invalid_cal",
+      "scope": [
+        999
+      ]
+    },
+    {
+      "name": "mixed_valid_invalid",
+      "scope": [
+        101,
+        999
+      ]
+    }
+  ],
+  "toggleSequences": [
+    [
+      "all"
+    ],
+    [
+      "101"
+    ],
+    [
+      "101",
+      "102"
+    ],
+    [
+      "101",
+      "102",
+      "103"
+    ],
+    [
+      "101",
+      "101"
+    ],
+    [
+      "all",
+      "102"
+    ]
+  ],
+  "labelCases": [
+    {
+      "name": "null_ids",
+      "ids": null
+    },
+    {
+      "name": "empty_ids",
+      "ids": []
+    },
+    {
+      "name": "one_cal",
+      "ids": [
+        101
+      ]
+    },
+    {
+      "name": "two_cals",
+      "ids": [
+        101,
+        102
+      ]
+    },
+    {
+      "name": "all_cals",
+      "ids": [
+        101,
+        102,
+        103
+      ]
+    },
+    {
+      "name": "unknown_id",
+      "ids": [
+        999
+      ]
+    }
+  ]
+}

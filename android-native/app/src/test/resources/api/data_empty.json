@@ -1,0 +1,42 @@
+{
+  "user": {
+    "email": "newuser@example.com",
+    "name": "newuser",
+    "picture": null,
+    "threshold": 0.8,
+    "unit": "sessions"
+  },
+  "account": {
+    "google": true,
+    "passkeys": []
+  },
+  "courses": [],
+  "events": [],
+  "homework": [],
+  "breaks": [],
+  "integrations": {
+    "feedUrl": "https://app.test/feed/NbIB_IyXpLWhKHkIzvJSU0lYJdm_8BOU.ics",
+    "gcalAvailable": false,
+    "gcal": null
+  },
+  "assistant": null,
+  "calendars": [],
+  "calendarSyncs": [],
+  "focus": {
+    "settings": {
+      "focus": 25,
+      "short": 5,
+      "long": 15,
+      "longEvery": 4,
+      "goal": 8,
+      "autoBreaks": true,
+      "autoFocus": false,
+      "sound": true,
+      "notify": true,
+      "tasks": [],
+      "tags": []
+    },
+    "sessions": [],
+    "since": 1788350071265
+  }
+}

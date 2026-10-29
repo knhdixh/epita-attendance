@@ -1,0 +1,7 @@
+*.apk
+*.aab
+*.idsig
+build/
+app/build/
+.gradle/
+local.properties

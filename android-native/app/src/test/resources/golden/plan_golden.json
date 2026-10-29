@@ -1,0 +1,1758 @@
+{
+  "localMidnightResults": [
+    {
+      "name": "normal_day_paris",
+      "tz": "Europe/Paris",
+      "now": 1791964800000,
+      "midnight": 1791928800000
+    },
+    {
+      "name": "normal_day_helsinki",
+      "tz": "Europe/Helsinki",
+      "now": 1791961200000,
+      "midnight": 1791925200000
+    },
+    {
+      "name": "dst_spring_paris_night",
+      "tz": "Europe/Paris",
+      "now": 1774744200000,
+      "midnight": 1774738800000
+    },
+    {
+      "name": "dst_spring_paris_day",
+      "tz": "Europe/Paris",
+      "now": 1774785600000,
+      "midnight": 1774738800000
+    },
+    {
+      "name": "dst_spring_helsinki_night",
+      "tz": "Europe/Helsinki",
+      "now": 1774744200000,
+      "midnight": 1774735200000
+    },
+    {
+      "name": "dst_spring_helsinki_day",
+      "tz": "Europe/Helsinki",
+      "now": 1774785600000,
+      "midnight": 1774735200000
+    },
+    {
+      "name": "dst_fall_paris_night",
+      "tz": "Europe/Paris",
+      "now": 1792888200000,
+      "midnight": 1792879200000
+    },
+    {
+      "name": "dst_fall_paris_day",
+      "tz": "Europe/Paris",
+      "now": 1792929600000,
+      "midnight": 1792879200000
+    },
+    {
+      "name": "dst_fall_helsinki_night",
+      "tz": "Europe/Helsinki",
+      "now": 1792888200000,
+      "midnight": 1792875600000
+    },
+    {
+      "name": "dst_fall_helsinki_day",
+      "tz": "Europe/Helsinki",
+      "now": 1792929600000,
+      "midnight": 1792875600000
+    }
+  ],
+  "effortOfResults": [
+    {
+      "id": 1,
+      "title": "Algo Assignment 1",
+      "effort": 60
+    },
+    {
+      "id": 2,
+      "title": "Web TP 2",
+      "effort": 120
+    },
+    {
+      "id": 3,
+      "title": "Architecture Lab Report",
+      "effort": 90
+    },
+    {
+      "id": 4,
+      "title": "French Essay",
+      "effort": 60
+    },
+    {
+      "id": 5,
+      "title": "Final Project Proposal",
+      "effort": 180
+    },
+    {
+      "id": 6,
+      "title": "Catch-up: Algo missed lecture",
+      "effort": 90
+    },
+    {
+      "id": 7,
+      "title": "Algo Quiz 1",
+      "effort": 30
+    },
+    {
+      "id": 101,
+      "title": "Spring DST Algo Assignment",
+      "effort": 90
+    },
+    {
+      "id": 102,
+      "title": "Spring DST Web Project",
+      "effort": 120
+    }
+  ],
+  "buildPlanCases": [
+    {
+      "name": "normal_day_paris",
+      "now": 1791964800000,
+      "tz": "Europe/Paris",
+      "plan": {
+        "now": 1791964800000,
+        "tz": "Europe/Paris",
+        "today": 1791928800000,
+        "current": [
+          45
+        ],
+        "next": 46,
+        "todaySessions": [
+          45
+        ],
+        "tomorrowFirst": 46,
+        "gaps": [
+          {
+            "start": 1791972000000,
+            "end": 1792008000000,
+            "minutes": 600,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              },
+              {
+                "id": 3,
+                "title": "Architecture Lab Report",
+                "minutes": 90
+              }
+            ],
+            "left": 30
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "urgent",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": 46
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 15,
+          "workHours": 10.5,
+          "freeHours": 80,
+          "clashes": [
+            [
+              50,
+              1003
+            ]
+          ],
+          "load": 0.13125
+        }
+      }
+    },
+    {
+      "name": "normal_day_helsinki",
+      "now": 1791961200000,
+      "tz": "Europe/Helsinki",
+      "plan": {
+        "now": 1791961200000,
+        "tz": "Europe/Helsinki",
+        "today": 1791925200000,
+        "current": [],
+        "next": 45,
+        "todaySessions": [
+          45
+        ],
+        "tomorrowFirst": 46,
+        "gaps": [
+          {
+            "start": 1791961200000,
+            "end": 1791964800000,
+            "minutes": 60,
+            "fits": [
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              }
+            ],
+            "left": 0
+          },
+          {
+            "start": 1791972000000,
+            "end": 1792004400000,
+            "minutes": 540,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              },
+              {
+                "id": 3,
+                "title": "Architecture Lab Report",
+                "minutes": 90
+              }
+            ],
+            "left": 30
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "urgent",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": 46
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 17,
+          "workHours": 10.5,
+          "freeHours": 80,
+          "clashes": [
+            [
+              50,
+              1003
+            ]
+          ],
+          "load": 0.13125
+        }
+      }
+    },
+    {
+      "name": "dst_spring_paris_night",
+      "now": 1774744200000,
+      "tz": "Europe/Paris",
+      "plan": {
+        "now": 1774744200000,
+        "tz": "Europe/Paris",
+        "today": 1774738800000,
+        "current": [],
+        "next": 2006,
+        "todaySessions": [],
+        "tomorrowFirst": 2006,
+        "gaps": [
+          {
+            "start": 1774764000000,
+            "end": 1774814400000,
+            "minutes": 840,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              }
+            ],
+            "left": 630
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 6,
+        "week": {
+          "classHours": 10,
+          "workHours": 3.5,
+          "freeHours": 88,
+          "clashes": [],
+          "load": 0.03977272727272727
+        }
+      }
+    },
+    {
+      "name": "dst_spring_paris_day",
+      "now": 1774785600000,
+      "tz": "Europe/Paris",
+      "plan": {
+        "now": 1774785600000,
+        "tz": "Europe/Paris",
+        "today": 1774738800000,
+        "current": [],
+        "next": 2006,
+        "todaySessions": [],
+        "tomorrowFirst": 2006,
+        "gaps": [
+          {
+            "start": 1774785600000,
+            "end": 1774814400000,
+            "minutes": 480,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              }
+            ],
+            "left": 270
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 6,
+        "week": {
+          "classHours": 10,
+          "workHours": 3.5,
+          "freeHours": 82,
+          "clashes": [],
+          "load": 0.042682926829268296
+        }
+      }
+    },
+    {
+      "name": "dst_spring_helsinki_night",
+      "now": 1774744200000,
+      "tz": "Europe/Helsinki",
+      "plan": {
+        "now": 1774744200000,
+        "tz": "Europe/Helsinki",
+        "today": 1774735200000,
+        "current": [],
+        "next": 2006,
+        "todaySessions": [],
+        "tomorrowFirst": 2006,
+        "gaps": [
+          {
+            "start": 1774760400000,
+            "end": 1774810800000,
+            "minutes": 840,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              }
+            ],
+            "left": 630
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 6,
+        "week": {
+          "classHours": 10,
+          "workHours": 3.5,
+          "freeHours": 88,
+          "clashes": [],
+          "load": 0.03977272727272727
+        }
+      }
+    },
+    {
+      "name": "dst_spring_helsinki_day",
+      "now": 1774785600000,
+      "tz": "Europe/Helsinki",
+      "plan": {
+        "now": 1774785600000,
+        "tz": "Europe/Helsinki",
+        "today": 1774735200000,
+        "current": [],
+        "next": 2006,
+        "todaySessions": [],
+        "tomorrowFirst": 2006,
+        "gaps": [
+          {
+            "start": 1774785600000,
+            "end": 1774810800000,
+            "minutes": 420,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              }
+            ],
+            "left": 210
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "due",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "soon",
+            "beforeSession": null
+          }
+        ],
+        "later": 6,
+        "week": {
+          "classHours": 10,
+          "workHours": 3.5,
+          "freeHours": 81,
+          "clashes": [],
+          "load": 0.043209876543209874
+        }
+      }
+    },
+    {
+      "name": "dst_fall_paris_night",
+      "now": 1792888200000,
+      "tz": "Europe/Paris",
+      "plan": {
+        "now": 1792888200000,
+        "tz": "Europe/Paris",
+        "today": 1792879200000,
+        "current": [],
+        "next": 58,
+        "todaySessions": [],
+        "tomorrowFirst": null,
+        "gaps": [
+          {
+            "start": 1792911600000,
+            "end": 1792962000000,
+            "minutes": 840,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              },
+              {
+                "id": 3,
+                "title": "Architecture Lab Report",
+                "minutes": 90
+              },
+              {
+                "id": 4,
+                "title": "French Essay",
+                "minutes": 60
+              }
+            ],
+            "left": 210
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "overdue",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 0,
+          "workHours": 10.5,
+          "freeHours": 98,
+          "clashes": [],
+          "load": 0.10714285714285714
+        }
+      }
+    },
+    {
+      "name": "dst_fall_paris_day",
+      "now": 1792929600000,
+      "tz": "Europe/Paris",
+      "plan": {
+        "now": 1792929600000,
+        "tz": "Europe/Paris",
+        "today": 1792879200000,
+        "current": [],
+        "next": 58,
+        "todaySessions": [],
+        "tomorrowFirst": null,
+        "gaps": [
+          {
+            "start": 1792929600000,
+            "end": 1792962000000,
+            "minutes": 540,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              },
+              {
+                "id": 4,
+                "title": "French Essay",
+                "minutes": 60
+              }
+            ],
+            "left": 0
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "overdue",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 0,
+          "workHours": 10.5,
+          "freeHours": 93,
+          "clashes": [],
+          "load": 0.11290322580645161
+        }
+      }
+    },
+    {
+      "name": "dst_fall_helsinki_night",
+      "now": 1792888200000,
+      "tz": "Europe/Helsinki",
+      "plan": {
+        "now": 1792888200000,
+        "tz": "Europe/Helsinki",
+        "today": 1792875600000,
+        "current": [],
+        "next": 58,
+        "todaySessions": [],
+        "tomorrowFirst": null,
+        "gaps": [
+          {
+            "start": 1792908000000,
+            "end": 1792958400000,
+            "minutes": 840,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              },
+              {
+                "id": 3,
+                "title": "Architecture Lab Report",
+                "minutes": 90
+              },
+              {
+                "id": 4,
+                "title": "French Essay",
+                "minutes": 60
+              }
+            ],
+            "left": 210
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "overdue",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 0,
+          "workHours": 10.5,
+          "freeHours": 98,
+          "clashes": [],
+          "load": 0.10714285714285714
+        }
+      }
+    },
+    {
+      "name": "dst_fall_helsinki_day",
+      "now": 1792929600000,
+      "tz": "Europe/Helsinki",
+      "plan": {
+        "now": 1792929600000,
+        "tz": "Europe/Helsinki",
+        "today": 1792875600000,
+        "current": [],
+        "next": 58,
+        "todaySessions": [],
+        "tomorrowFirst": null,
+        "gaps": [
+          {
+            "start": 1792929600000,
+            "end": 1792958400000,
+            "minutes": 480,
+            "fits": [
+              {
+                "id": 101,
+                "title": "Spring DST Algo Assignment",
+                "minutes": 90
+              },
+              {
+                "id": 102,
+                "title": "Spring DST Web Project",
+                "minutes": 120
+              },
+              {
+                "id": 1,
+                "title": "Algo Assignment 1",
+                "minutes": 60
+              },
+              {
+                "id": 2,
+                "title": "Web TP 2",
+                "minutes": 120
+              },
+              {
+                "id": 6,
+                "title": "Catch-up: Algo missed lecture",
+                "minutes": 90
+              }
+            ],
+            "left": 0
+          }
+        ],
+        "todo": [
+          {
+            "id": 101,
+            "course_id": 1,
+            "title": "Spring DST Algo Assignment",
+            "due_date": "2026-03-30",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1774886400000,
+            "remind_minutes": 60,
+            "done": 0,
+            "effort_minutes": 90,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 90,
+            "latestStart": 1774881000000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 102,
+            "course_id": 2,
+            "title": "Spring DST Web Project",
+            "due_date": "2026-04-02",
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1775167199999,
+            "remind_minutes": null,
+            "done": 0,
+            "effort_minutes": 120,
+            "kind": "homework",
+            "notes": "",
+            "gcal_event_id": null,
+            "sync_error": null,
+            "created_at": 1774200000000,
+            "updated_at": 1774200000000,
+            "event_id": null,
+            "effort": 120,
+            "latestStart": 1775159999999,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 1,
+            "course_id": 1,
+            "title": "Algo Assignment 1",
+            "notes": "Graph traversals",
+            "due_date": "2026-10-10",
+            "due_time": "20:00",
+            "tz": "Europe/Paris",
+            "due_at": 1791655200000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1791651600000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 2,
+            "course_id": 2,
+            "title": "Web TP 2",
+            "notes": "REST API",
+            "due_date": "2026-10-15",
+            "due_time": "10:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792051200000,
+            "remind_minutes": 120,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 120,
+            "effort": 120,
+            "latestStart": 1792044000000,
+            "course": "Web Development",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 6,
+            "course_id": 1,
+            "title": "Catch-up: Algo missed lecture",
+            "notes": "Trees and heaps",
+            "due_date": null,
+            "due_time": null,
+            "tz": "Europe/Paris",
+            "due_at": 1792065600000,
+            "remind_minutes": 0,
+            "done": 0,
+            "kind": "catchup",
+            "event_id": 3,
+            "effort_minutes": null,
+            "effort": 90,
+            "latestStart": 1792060200000,
+            "course": "Algorithms & Data Structures",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 3,
+            "course_id": 3,
+            "title": "Architecture Lab Report",
+            "notes": "RISC-V pipeline",
+            "due_date": "2026-10-16",
+            "due_time": "23:59",
+            "tz": "Europe/Paris",
+            "due_at": 1792187940000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 90,
+            "effort": 90,
+            "latestStart": 1792182540000,
+            "course": "GR1 - Computer Architecture",
+            "urgency": "overdue",
+            "beforeSession": null
+          },
+          {
+            "id": 4,
+            "course_id": 7,
+            "title": "French Essay",
+            "notes": "Cultural differences",
+            "due_date": "2026-10-19",
+            "due_time": "18:00",
+            "tz": "Europe/Paris",
+            "due_at": 1792425600000,
+            "remind_minutes": 60,
+            "done": 0,
+            "kind": null,
+            "effort_minutes": 60,
+            "effort": 60,
+            "latestStart": 1792422000000,
+            "course": "GR10 - French for Fall 26 T1",
+            "urgency": "overdue",
+            "beforeSession": null
+          }
+        ],
+        "later": 1,
+        "week": {
+          "classHours": 0,
+          "workHours": 10.5,
+          "freeHours": 92,
+          "clashes": [],
+          "load": 0.11413043478260869
+        }
+      }
+    }
+  ]
+}
