@@ -356,3 +356,8 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
 - `npm test`: exit 1, 104 tests, 103 passed, 1 failed, 0 skipped: the permitted time-dependent countdown assertion in `test/habits.test.js:222`, expected 10 and got 11.
 - `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug --no-daemon`: exit 0, 65 tests, 0 failures/errors/skips; lint and assembly passed. The first combined attempt failed 26 tests because Application startup eagerly accessed Android Keystore in Robolectric; startup moved to the activity, and the subsequent full check passed.
 - **Incomplete:** Task 1 still requires stronger atomic-write failure testing and review of auth and mutation races; scope and background tasks, shell, search, screenshots and the instrumented/end-to-end harness remain. No device or offline UI was verified. No review or report was edited.
+
+### Phase 3 split — task 2 (2026-10-30)
+- Task 1 implementation commit `9d49090`. Task 2 adds a DataStore Count filter using the existing Groups helpers, persistence, calendar reconciliation and an `AppData` filtering seam for subsequent screens. The selected IDs are stored as a set, so their display order is sorted rather than the web's selection order; no UI is built in this split.
+- `npm test`: exit 1, 104 tests, 103 passed, 1 failed, 0 skipped; permitted `test/habits.test.js:222` countdown assertion expected 10 and got 11.
+- `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug --no-daemon`: exit 0; 66 tests, 0 failures/errors/skips, lint passed. No device or offline UI was verified.
