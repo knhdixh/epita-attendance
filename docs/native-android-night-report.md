@@ -52,4 +52,4 @@ Phase 2b worker is recording to `android-native/app/src/test/screenshots/`: phon
 - Separate lint and debug APK build passed. Phone-only screenshot verify failed with the font-height assertion. No passing whole-matrix verification claimed.
 - UI worker stopped with uncommitted work because its checks failed. Preserve and fix it; no test weakening or skipped tests.
 
-Current position: Phase 2b initial review is FIX; fix round 1 is next. No phase has passed review or merged; native/night remains independently building.
+Current position: Phase 2b initial review is FIX; Terra fix round 1 is running (shell handle 27556; log /tmp/epita-native-night/phase-2b-fix1-worker.log). No phase has passed review or merged; native/night remains independently building.
