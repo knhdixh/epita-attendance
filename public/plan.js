@@ -6,6 +6,7 @@
 //   due time minus the effort they need. Overdue ones come first.
 // - Free time is the part of each day between DAY_START and DAY_END with no session, in blocks of 30 min or more,
 //   and the to-dos are fitted into today's blocks in rank order.
+// - A to-do planned on the Calendar (planned_at) takes its block out of the free time, and isn't fitted again.
 
 const MIN = 60000;
 const HOUR = 60 * MIN;
@@ -17,6 +18,8 @@ const HOMEWORK_EFFORT = 60;   // minutes, when the item doesn't say
 const SOON = 7 * DAY;         // to-dos due later than this are only counted
 
 export const effortOf = (h) => h.effort_minutes || (h.kind === 'catchup' ? 90 : HOMEWORK_EFFORT);
+// The time block a to-do is planned in, [start, end), or null.
+export const plannedBlock = (h) => (h.planned_at == null ? null : [h.planned_at, h.planned_at + (h.planned_minutes || effortOf(h)) * MIN]);
 
 // Midnight (as an instant) of the local day containing `ms`, in time zone `tz`.
 function offset(ms, tz) {
@@ -92,10 +95,14 @@ export function buildPlan({ courses, events, homework, now = Date.now(), tz = In
 
   // Today's free time, with to-dos fitted in rank order. A block too short for the next to-do gets the first
   // one that fits; a long to-do that fits nowhere is started in the longest block.
-  const busy = timed.map((e) => [e.start_at, e.end_at]);
+  const blocks = open.map((h) => [h, plannedBlock(h)]).filter(([, b]) => b && b[1] > today && b[0] < today + 8 * DAY);
+  const busy = [...timed.map((e) => [e.start_at, e.end_at]), ...blocks.map(([, b]) => b)].sort((a, b) => a[0] - b[0]);
   const dayFrom = Math.max(now, atHour(today, DAY_START, tz));
+  const planned = blocks.filter(([, [s, e]]) => e > now && s < tomorrow)
+    .map(([h, [start, end]]) => ({ id: h.id, title: h.title, start, end, minutes: Math.round((end - start) / MIN) }));
   const gaps = freeBlocks(dayFrom, atHour(today, DAY_END, tz), busy).map((g) => ({ ...g, minutes: Math.round((g.end - g.start) / MIN), fits: [] }));
-  const pending = [...todo];
+  const plannedToday = new Set(planned.map((p) => p.id));
+  const pending = todo.filter((h) => !plannedToday.has(h.id));
   for (const g of gaps) {
     let left = g.minutes;
     for (let i = 0; i < pending.length && left >= 30;) {
@@ -140,6 +147,6 @@ export function buildPlan({ courses, events, homework, now = Date.now(), tz = In
     next: upcoming[0]?.id ?? null,
     todaySessions: todaySessions.map((e) => e.id),
     tomorrowFirst: timed.find((e) => e.start_at >= tomorrow && e.start_at < tomorrow + DAY)?.id ?? null,
-    gaps, todo, later, week,
+    gaps, planned, todo, later, week,
   };
 }

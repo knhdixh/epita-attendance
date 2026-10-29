@@ -13,7 +13,7 @@ export async function sha256(text) {
 
 const READ = [['GET', /^\/api\/(plan|data|focus)$/]];
 const WRITE = [
-  ['POST', /^\/api\/homework$/], ['PATCH', /^\/api\/homework\/\d+$/], ['DELETE', /^\/api\/homework\/\d+$/],
+  ['POST', /^\/api\/homework$/], ['POST', /^\/api\/homework\/plan$/], ['PATCH', /^\/api\/homework\/\d+$/], ['DELETE', /^\/api\/homework\/\d+$/],
   ['POST', /^\/api\/catchups$/], ['PATCH', /^\/api\/attendance\/\d+$/],
 ];
 export const tokenAllows = (scope, method, path) =>

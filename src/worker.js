@@ -3,7 +3,7 @@ import { buildFeed } from './homework.js';
 import { buildTimetableFeed } from './timetable-feed.js';
 import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal.js';
 import { HttpError } from './http.js';
-import { HOMEWORK_COLUMNS, createHomework, updateHomework } from './homework-store.js';
+import { HOMEWORK_COLUMNS, createHomework, updateHomework, planHomework } from './homework-store.js';
 import { chat, usage as aiUsage } from './assistant.js';
 import { saveAiKey, deleteAiKey } from './llm.js';
 import { deleteAccount } from './account.js';
@@ -408,6 +408,8 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/homework' && method === 'POST') {
     return json(await createHomework(env, user, await readJson(request), url.origin));
   }
+
+  if (path === '/api/homework/plan' && method === 'POST') return json(await planHomework(env, user, await readJson(request)));
 
   if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'PATCH') {
     return json(await updateHomework(env, user, Number(m[1]), await readJson(request), url.origin));

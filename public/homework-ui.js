@@ -53,6 +53,13 @@ function syncIcon(hw) {
 const recordingOf = (hw) => /^Recording: (https?:\/\/\S+)/m.exec(hw.notes || '')?.[1];
 const effortLabel = (m) => (m < 60 ? `~${m} min` : `~${Math.round(m / 30) / 2} h`);
 
+// "planned today 14:00", "planned Tue 4 Nov 9:30": when a to-do has a time block on the Calendar.
+function plannedLabel(ms) {
+  const diff = Math.round((new Date(ms).setHours(0, 0, 0, 0) - startOfToday()) / DAY);
+  const day = diff === 0 ? 'today' : diff === 1 ? 'tomorrow' : new Date(ms).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+  return `planned ${day} ${fmtTime(ms)}`;
+}
+
 // `plan` (from the Today page) adds how long the item takes.
 export function hwItem(hw, now = Date.now(), plan = null) {
   const course = courseById()[hw.course_id];
@@ -70,6 +77,7 @@ export function hwItem(hw, now = Date.now(), plan = null) {
           <span class="due ${hw.done ? '' : bucket(hw, now)}"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>${esc(dueLabel(hw))}</span>
           ${hw.kind === 'catchup' ? '<span class="chip">catch-up</span>' : ''}
           ${plan ? `<span title="Time it needs (set it when editing)">${effortLabel(plan.effort)}</span>` : ''}
+          ${hw.planned_at != null && !hw.done ? `<button class="hw-planned" data-cal-show="${hw.planned_at}" title="Show it in the calendar">${esc(plannedLabel(hw.planned_at))}</button>` : ''}
           ${focusing ? '<span class="hw-focus on">focusing now</span>' : focused >= 1 ? `<span class="hw-focus" title="Focus time on it in the last weeks">${hrs(focused)} focused</span>` : ''}
           ${recording ? `<a href="${esc(recording)}" target="_blank" rel="noopener" class="hw-rec">recording ↗</a>` : ''}
           ${hw.remind_minutes != null && !hw.done ? `<span title="Reminder">reminder ${esc(remind)}</span>` : ''}

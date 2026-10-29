@@ -153,3 +153,39 @@ test('tokens: hashed, scoped, revocable, and the plan is readable with one', asy
   await revokeToken(env, user, read.id);
   assert.equal((await call('/api/plan')).status, 401);
 });
+
+test('time blocks: planned on create and update, several at once, validated, per user', async () => {
+  const { env, user } = setup();
+  env.DB.raw.exec("INSERT INTO users (id, google_sub, created_at, threshold, unit) VALUES (2, 'b', 0, 0.8, 'sessions')");
+  const rnd = () => 'y'.repeat(30) + Math.random().toString(36).slice(2);
+  const write = await createToken(env, user, { name: 'plan', scope: 'write' }, rnd);
+  const read = await createToken(env, user, { name: 'look', scope: 'read' }, rnd);
+  const call = (token, path, method = 'GET', body) => worker.fetch(new Request(`https://app.test${path}`,
+    { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) }), env);
+  const at = Date.now() + DAY;
+  const base = { notes: '', due_date: '2030-01-01', due_time: null, tz: 'Europe/Paris', remind_minutes: null };
+
+  const a = await (await call(write.token, '/api/homework', 'POST', { ...base, title: 'A', planned_at: at, planned_minutes: 45 })).json();
+  assert.deepEqual([a.planned_at, a.planned_minutes], [at, 45]);
+  const b = await (await call(write.token, '/api/homework', 'POST', { ...base, title: 'B' })).json();
+  assert.equal(b.planned_at, null);
+  // Editing other fields keeps the block; unplanning clears its length too.
+  const a2 = await (await call(write.token, `/api/homework/${a.id}`, 'PATCH', { title: 'A2' })).json();
+  assert.deepEqual([a2.title, a2.planned_at, a2.planned_minutes], ['A2', at, 45]);
+  const a3 = await (await call(write.token, `/api/homework/${a.id}`, 'PATCH', { planned_at: null, planned_minutes: 30 })).json();
+  assert.deepEqual([a3.planned_at, a3.planned_minutes], [null, null]);
+
+  const r = await call(write.token, '/api/homework/plan', 'POST', { items: [{ id: a.id, planned_at: at, planned_minutes: 60 }, { id: b.id, planned_at: at + 3600000, planned_minutes: 90 }] });
+  assert.equal(r.status, 200);
+  assert.deepEqual((await r.json()).homework.map((h) => [h.title, h.planned_minutes]), [['A2', 60], ['B', 90]]);
+  assert.equal((await call(read.token, '/api/homework/plan', 'POST', { items: [] })).status, 403);
+  assert.equal((await call(write.token, '/api/homework/plan', 'POST', { items: [{ id: a.id, planned_at: at, planned_minutes: 1 }] })).status, 400);
+  assert.equal((await call(write.token, '/api/homework/plan', 'POST', { items: [{ id: a.id, planned_at: 'soon' }] })).status, 400);
+  assert.equal((await call(write.token, `/api/homework/${a.id}`, 'PATCH', { planned_at: -5 })).status, 400);
+
+  // Someone else's homework is left alone.
+  env.DB.raw.exec(`INSERT INTO homework (id, user_id, title, due_date, tz, due_at, created_at, updated_at) VALUES (99, 2, 'theirs', '2030-01-01', 'UTC', 0, 0, 0)`);
+  const other = await (await call(write.token, '/api/homework/plan', 'POST', { items: [{ id: 99, planned_at: at, planned_minutes: 60 }] })).json();
+  assert.deepEqual(other.homework, []);
+  assert.equal(env.DB.raw.prepare('SELECT planned_at FROM homework WHERE id = 99').get().planned_at, null);
+});

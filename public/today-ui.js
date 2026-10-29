@@ -54,17 +54,27 @@ export function renderToday() {
 
     ${todayPanel()}
 
-    ${plan.gaps.length ? `
+    ${plan.gaps.length || plan.planned.length ? `
     <section class="panel">
-      <h3>Free time today</h3>
-      <div class="gaps">${plan.gaps.map((g) => `
+      <h3><span>Free time today</span><a href="#calendar" data-goto="calendar">calendar →</a></h3>
+      <div class="gaps">${[
+        ...plan.planned.map((p) => [p.start, `
+        <div class="gap planned">
+          <div class="when">${fmtTime(p.start)}<span>–${fmtTime(p.end)}</span></div>
+          <div class="what">
+            <div class="title"><a href="#homework" data-hw-open="${p.id}">${esc(p.title)}</a></div>
+            <div class="muted small">planned, ${mins(p.minutes)}</div>
+          </div>
+        </div>`]),
+        ...plan.gaps.map((g) => [g.start, `
         <div class="gap">
           <div class="when">${fmtTime(g.start)}<span>–${fmtTime(g.end)}</span></div>
           <div class="what">
             <div class="title">${mins(g.minutes)} free</div>
             ${g.fits.length ? `<div class="muted small">${g.fits.map((f) => `${f.partial ? 'start ' : ''}<a href="#homework" data-hw-open="${f.id}">${esc(f.title)}</a> (${mins(f.minutes)})`).join(', ')}</div>` : ''}
           </div>
-        </div>`).join('')}</div>
+        </div>`]),
+      ].sort((a, b) => a[0] - b[0]).map(([, html]) => html).join('')}</div>
     </section>` : ''}
 
     <section class="panel">
