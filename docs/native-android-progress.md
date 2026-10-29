@@ -361,3 +361,8 @@ All items under **Must fix** (items 1–8) and **Should fix** (items 9–14) fro
 - Task 1 implementation commit `9d49090`. Task 2 adds a DataStore Count filter using the existing Groups helpers, persistence, calendar reconciliation and an `AppData` filtering seam for subsequent screens. The selected IDs are stored as a set, so their display order is sorted rather than the web's selection order; no UI is built in this split.
 - `npm test`: exit 1, 104 tests, 103 passed, 1 failed, 0 skipped; permitted `test/habits.test.js:222` countdown assertion expected 10 and got 11.
 - `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug --no-daemon`: exit 0; 66 tests, 0 failures/errors/skips, lint passed. No device or offline UI was verified.
+
+### Phase 3 split — task 6 (2026-10-30)
+- Task 2 commit `c069268`. Added unique periodic WorkManager refresh, 60 minutes and connected network; signed-out work exits without fetching. Successful refresh updates the repository snapshot and last-synced flows, the seam for the actual Phase 6 widget. No widget is invented ahead of Phase 6. Scheduling begins when the app activity first starts.
+- `npm test`: exit 1, 104 tests, 103 passed, 1 failed, 0 skipped; permitted `test/habits.test.js:222` countdown assertion expected 10 and got 11.
+- `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug --no-daemon`: exit 0; 67 tests, 0 failures/errors/skips, lint and assembly passed. The request test checks interval and network constraint; background execution on a device is unverified.

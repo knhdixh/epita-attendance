@@ -1,6 +1,7 @@
 package com.knhdixh.attendance80
 
 import android.app.Application
+import com.knhdixh.attendance80.background.scheduleRefresh
 
 class App : Application() {
     lateinit var container: AppContainer
@@ -12,6 +13,7 @@ class App : Application() {
         if (!dataStarted) {
             dataStarted = true
             (container as DefaultAppContainer).startData()
+            scheduleRefresh(this)
         }
     }
 
