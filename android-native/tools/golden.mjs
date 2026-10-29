@@ -587,3 +587,18 @@ const hg = {
   labels: [0, 1, 2].flatMap(n => ['day', 'week', 'month', 'time'].map(unit => habits.streakLabel(n, unit)))
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'habits_golden.json'), JSON.stringify(hg, null, 2) + '\n');
+
+// Countdown inputs use local wall times and an explicit zone for every evaluation.
+const countdowns = await import('../../public/countdowns.js');
+const cf = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'countdowns.json'), 'utf8'));
+const localMs = s => new Date(s).getTime();
+const materialise = c => ({ ...c, at: localMs(c.at), start_at: c.start_at == null ? null : localMs(c.start_at) });
+const cg = {
+  validation: cf.validation.map(c => [countdowns.cleanCountdown(c), countdowns.cleanCountdown(c, { partial: true })]),
+  cases: cf.cases.map(x => { process.env.TZ = x.zone; const c = materialise(x.c), now = localMs(x.now); return { c, now, occurrence: countdowns.occurrence(c, now), view: countdowns.view(c, now), workdays: countdowns.workdaysBetween(now, c.at) }; }),
+  dates: cf.dateCases.map(x => { process.env.TZ = x.zone; const at = localMs(x.at); return { at, start: countdowns.dayStart(at), added: countdowns.addMonths(at, x.n) }; }),
+  parses: ['Europe/Paris', 'Europe/Helsinki'].map(zone => { process.env.TZ = zone; return cf.sentences.map(s => countdowns.parseCountdown(s, localMs(cf.parseNow))); }),
+  sorts: ['Europe/Paris', 'Europe/Helsinki'].map(zone => { process.env.TZ = zone; const now=localMs(cf.parseNow); const list=cf.cases.filter(x => x.zone === zone && x.c.repeat === 'none' && x.c.units === 'days' && x.c.all_day === 1).map(x => materialise(x.c)); return countdowns.sortCountdowns(list,now); })
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'countdowns_golden.json'), JSON.stringify(cg, null, 2) + '\n');
+process.env.TZ = 'Europe/Paris';
