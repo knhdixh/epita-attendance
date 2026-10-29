@@ -99,15 +99,14 @@ fun AppNav(
             SignInScreen(viewModel = signInViewModel)
         }
         composable("main") {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Welcome to Attendance80",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
+            AuthenticatedPlaceholder()
         }
+    }
+}
+
+@Composable
+fun AuthenticatedPlaceholder() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Welcome to Attendance80", style = MaterialTheme.typography.titleMedium)
     }
 }

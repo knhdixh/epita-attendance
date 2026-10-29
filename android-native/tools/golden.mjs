@@ -379,6 +379,7 @@ for (const profile of settingsProfiles) {
     const finishNormal = focus.finish(t, s, now, 'finish-run-1', { early: false });
     const finishEarly = focus.finish(t, s, now, 'finish-run-2', { early: true });
     const stopRes = focus.stop(t, now);
+    const setRemainingCases = [-60000, 0, 30000, 90000, 123456, 999999999].map(ms => ({ ms, result: focus.setRemaining(t, s, ms, now) }));
 
     timerOperations.push({
       name: `${tf.name}_${profile.name}`,
@@ -399,6 +400,7 @@ for (const profile of settingsProfiles) {
       setLength30,
       finishNormal,
       finishEarly,
+      setRemainingCases,
       stop: stopRes
     });
   }
@@ -408,7 +410,8 @@ const focusTimerGolden = {
   cleanSettingsResults,
   cleanTagsResults,
   cleanTasksResults,
-  timerOperations
+  timerOperations,
+  parseClockCases: ['25', '12:30', '1:05:00', '0', '999', '1:60', '1:2:3:4', '', ' 05 ', '-1', '1.5', 'abc'].map(input => ({ input, result: focus.parseClock(input) }))
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'focus_timer_golden.json'), JSON.stringify(focusTimerGolden, null, 2));
 
@@ -570,3 +573,44 @@ const groupsGolden = {
 fs.writeFileSync(path.join(GOLDEN_DIR, 'groups_golden.json'), JSON.stringify(groupsGolden, null, 2));
 
 console.log('All golden files generated successfully!');
+
+// Habits: inputs stay separate from outputs so Kotlin is checked against the web implementation.
+const habits = await import('../../public/habits.js');
+const hf = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'habits.json'), 'utf8'));
+const hg = {
+  schedules: hf.schedules.map(s => ({ clean: habits.cleanSchedule(s), label: habits.scheduleLabel(habits.cleanSchedule(s)) })),
+  habits: hf.habits.map(h => [habits.cleanHabit(h), habits.cleanHabit(h, { partial: true })]),
+  sentences: hf.sentences.map(habits.parseHabit),
+  stats: hf.stats.map(c => ({ stats: habits.habitStats(c, new Map(Object.entries(c.counts)), { today: c.today, start: c.start }), months: habits.monthTotals(c, new Map(Object.entries(c.counts)), c.today, 4) })),
+  dates: hf.dates.map(d => habits.isKey(d) ? { valid: true, ms: habits.keyMs(d), plus: habits.addDays(d, 2), diff: habits.diffDays(d, '2026-01-01'), dow: habits.dow(d), week: habits.weekOf(d), month: habits.monthOf(d) } : { valid: false }),
+  times: hf.times.map(t => ({ key: habits.keyInZone(t.now, t.tz), reminder: habits.reminderDay(t, t.now, t.tz) })),
+  labels: [0, 1, 2].flatMap(n => ['day', 'week', 'month', 'time'].map(unit => habits.streakLabel(n, unit)))
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'habits_golden.json'), JSON.stringify(hg, null, 2) + '\n');
+
+// Countdown inputs use local wall times and an explicit zone for every evaluation.
+const countdowns = await import('../../public/countdowns.js');
+const cf = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'countdowns.json'), 'utf8'));
+const localMs = s => new Date(s).getTime();
+const materialise = c => ({ ...c, at: localMs(c.at), start_at: c.start_at == null ? null : localMs(c.start_at) });
+const cg = {
+  validation: cf.validation.map(c => [countdowns.cleanCountdown(c), countdowns.cleanCountdown(c, { partial: true })]),
+  cases: cf.cases.map(x => { process.env.TZ = x.zone; const c = materialise(x.c), now = localMs(x.now); return { c, now, occurrence: countdowns.occurrence(c, now), view: countdowns.view(c, now), workdays: countdowns.workdaysBetween(now, c.at) }; }),
+  dates: cf.dateCases.map(x => { process.env.TZ = x.zone; const at = localMs(x.at); return { at, start: countdowns.dayStart(at), added: countdowns.addMonths(at, x.n) }; }),
+  parses: ['Europe/Paris', 'Europe/Helsinki'].map(zone => { process.env.TZ = zone; return cf.sentences.map(s => countdowns.parseCountdown(s, localMs(cf.parseNow))); }),
+  sorts: ['Europe/Paris', 'Europe/Helsinki'].map(zone => { process.env.TZ = zone; const now=localMs(cf.parseNow); const list=cf.cases.filter(x => x.zone === zone && x.c.repeat === 'none' && x.c.units === 'days' && x.c.all_day === 1).map(x => materialise(x.c)); return countdowns.sortCountdowns(list,now); })
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'countdowns_golden.json'), JSON.stringify(cg, null, 2) + '\n');
+process.env.TZ = 'Europe/Paris';
+
+// Calendar fixtures use wall times in each zone, as the browser does.
+const calendar = await import('../../public/calendar.js');
+const cal = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'calendar.json'), 'utf8'));
+const calGolden = {
+  dates: cal.dates.map(x => { process.env.TZ = x.zone; const date = localMs(x.date); return { date, start: calendar.startOfDay(date), plus: calendar.addDays(date, 1), minus: calendar.addDays(date, -1), monday: calendar.mondayOf(date), minutes: [90, 150, 210, 540].map(n => calendar.atMinutes(date, n)), week: calendar.isoWeek(date), views: ['day','3day','week','month'].map(v => ({ period: calendar.period(v,date), before: calendar.shift(v,date,-1), after: calendar.shift(v,date,1) })) }; }),
+  layout: Object.fromEntries(calendar.layout(cal.items)),
+  colors: Object.fromEntries(calendar.courseColors(cal.courses)),
+  plans: cal.plans.map(x => { process.env.TZ = x.zone; const at = t => localMs(`${x.date}T${t}:00`); return calendar.autoPlan({ ...x, now: at(x.now), until: localMs(x.until), todos: x.todos.map(t => ({ id:t.id, due_at:at(t.due), effort:t.effort })), busy:x.busy.map(a => a.map(at)), blocks:x.blocks.map(a => a.map(at)) }); })
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'calendar_golden.json'), JSON.stringify(calGolden, null, 2) + '\n');
+process.env.TZ = 'Europe/Paris';

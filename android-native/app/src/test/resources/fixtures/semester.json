@@ -1795,7 +1795,9 @@
       "remind_minutes": 60,
       "done": 0,
       "kind": null,
-      "effort_minutes": 60
+      "effort_minutes": 60,
+      "planned_at": 1791968400000,
+      "planned_minutes": 45
     },
     {
       "id": 2,
@@ -1809,7 +1811,9 @@
       "remind_minutes": 120,
       "done": 0,
       "kind": null,
-      "effort_minutes": 120
+      "effort_minutes": 120,
+      "planned_at": 1791972000000,
+      "planned_minutes": null
     },
     {
       "id": 3,

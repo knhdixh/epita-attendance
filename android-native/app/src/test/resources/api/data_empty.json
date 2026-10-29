@@ -15,11 +15,10 @@
   "homework": [],
   "breaks": [],
   "integrations": {
-    "feedUrl": "https://app.test/feed/NbIB_IyXpLWhKHkIzvJSU0lYJdm_8BOU.ics",
+    "feedUrl": "https://app.test/feed/6M4H53eaG8eefwb7WYoi8OBWnLWDdYF6.ics",
     "gcalAvailable": false,
     "gcal": null
   },
-  "assistant": null,
   "calendars": [],
   "calendarSyncs": [],
   "focus": {
@@ -37,6 +36,23 @@
       "tags": []
     },
     "sessions": [],
-    "since": 1788350071265
+    "since": 1788476167950
+  },
+  "habits": {
+    "list": [],
+    "logs": [],
+    "since": "2025-09-23"
+  },
+  "countdowns": [],
+  "notifications": {
+    "key": null,
+    "settings": {
+      "classes": true,
+      "classLead": 10,
+      "habits": true,
+      "focus": true,
+      "tz": "Europe/Paris"
+    },
+    "devices": 0
   }
 }

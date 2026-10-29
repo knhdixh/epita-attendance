@@ -487,18 +487,18 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | POST | `/api/attendance/bulk` | `{ ids, status }` → `{ updated }` |
 | PATCH | `/api/courses/{id}` | `{ tracked?, tag?, recording_url? }` → `{ ok }` |
 | POST | `/api/courses/tracked` | `{ updates: [{ id, tracked }] }` → `{ ok }` |
-| POST | `/api/catchups` | `{ event_id, tz }` → homework row |
+| POST | `/api/catchups` | `{ event_id, tz }` → homework row (returns existing catch-up for that session if present) |
 | POST | `/api/homework` | homework input → homework row |
 | PATCH | `/api/homework/{id}` | partial input → homework row |
 | DELETE | `/api/homework/{id}` | → `{ ok }` |
 | POST | `/api/breaks` | `{ from, to, label, tz }` → `{ break, sessions }` |
 | DELETE | `/api/breaks/{id}` | → `{ restored }` |
-| POST | `/api/calendars` | `{ kind: 'link', url, from?, name?, attendance? }` or `{ kind: 'file', ics, fileName?, name?, attendance? }` → import summary |
-| PATCH | `/api/calendars/{id}` | `{ name?, attendance?, from? }` → `{ calendar, …summary? }` |
-| POST | `/api/calendars/{id}/sync` | → import summary |
-| POST | `/api/calendars/{id}/file` | `{ ics, fileName? }` → import summary |
+| POST | `/api/calendars` | `{ kind: 'link', url, from?, name?, attendance? }` or `{ kind: 'file', ics, fileName?, name?, attendance? }` → `{ calendar: id, ...importSummary }` |
+| PATCH | `/api/calendars/{id}` | `{ name?, attendance?, from? }` → `{ calendar: id, ...importSummary? }` |
+| POST | `/api/calendars/{id}/sync` | → `{ calendar: id, ...importSummary }` |
+| POST | `/api/calendars/{id}/file` | `{ ics, fileName? }` → `{ calendar: id, ...importSummary }` |
 | DELETE | `/api/calendars/{id}` | → `{ removed }` |
-| POST | `/api/gcal/resync` | → resync result |
+| POST | `/api/gcal/resync` | → `{ synced, failed?, remaining }` |
 | POST | `/api/gcal/disconnect` | → `{ ok }` |
 | POST | `/api/feed/rotate` | → `{ ok }` |
 | POST | `/api/app/web-link` | `{ next }` → `{ url }` |
@@ -511,8 +511,8 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | POST/PATCH/DELETE | `/api/countdowns`, `/api/countdowns/{id}` | countdown input (`src/countdowns.js`) → countdown row / `{ ok }` |
 | PUT | `/api/notify/settings` | `{ classes?, classLead?, habits?, focus?, tz? }` → `{ settings, devices }` |
 | DELETE | `/api/passkeys/{id}` | → `{ ok }` |
-| PATCH | `/api/settings` | `{ threshold, unit }` → `{ ok }` |
-| DELETE | `/api/data` | → `{ ok }` |
+| PATCH | `/api/settings` | `{ threshold, unit }` (both required) → `{ ok }` |
+| DELETE | `/api/data` | → `{ ok }` (removes calendars, events, courses and breaks; keeps homework) |
 | DELETE | `/api/account` | `{ confirm: 'DELETE' }` → `{ ok }` |
 
 Field names and types: read the SQL in `src/worker.js` (`/api/data`), `HOMEWORK_COLUMNS` in

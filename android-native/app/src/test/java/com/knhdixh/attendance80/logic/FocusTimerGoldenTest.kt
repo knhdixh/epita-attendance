@@ -71,7 +71,13 @@ class FocusTimerGoldenTest {
         val finishNormal: FinishResult,
         val finishEarly: FinishResult,
         val stop: FinishResult,
+        val setRemainingCases: List<RemainingCase>,
     )
+
+    @Serializable
+    private data class RemainingCase(val ms: Long, val result: FocusTimer)
+    @Serializable
+    private data class ClockCase(val input: String, val result: Long?)
 
     @Serializable
     private data class FocusTimerGoldenData(
@@ -79,6 +85,7 @@ class FocusTimerGoldenTest {
         val cleanTagsResults: List<CleanTagsItem>,
         val cleanTasksResults: List<CleanTasksItem>,
         val timerOperations: List<TimerOpItem>,
+        val parseClockCases: List<ClockCase>,
     )
 
     @Test
@@ -109,6 +116,7 @@ class FocusTimerGoldenTest {
     fun testTimerOperationsGolden() {
         val golden = json.decodeFromString<FocusTimerGoldenData>(loadResource("golden/focus_timer_golden.json"))
 
+        for (c in golden.parseClockCases) assertEquals(c.input, c.result, parseClock(c.input))
         for (op in golden.timerOperations) {
             val settings = op.settings
             val t = op.timer
@@ -125,6 +133,9 @@ class FocusTimerGoldenTest {
 
             // Operations deep comparison (updatedAt is an Android-native UI bookkeeping field not present in JS focus.js)
             val ignored = setOf("updatedAt")
+            for (c in op.setRemainingCases) {
+                assertJsonEquals(json.encodeToJsonElement(c.result), json.encodeToJsonElement(setRemaining(t, settings, c.ms, now)), "$tag.setRemaining(${c.ms})", ignored)
+            }
             assertJsonEquals(json.encodeToJsonElement(op.start), json.encodeToJsonElement(start(t, settings, now, "new-run-start")), "$tag.start", ignored)
             assertJsonEquals(json.encodeToJsonElement(op.pause), json.encodeToJsonElement(pause(t, now)), "$tag.pause", ignored)
             assertJsonEquals(json.encodeToJsonElement(op.resume), json.encodeToJsonElement(resume(t, now + 5 * 60000L)), "$tag.resume", ignored)

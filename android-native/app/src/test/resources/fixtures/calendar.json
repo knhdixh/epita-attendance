@@ -1,0 +1,387 @@
+{
+  "dates": [
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-03-29T01:30:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-03-29T03:30:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-10-25T01:30:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-10-25T03:30:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2020-12-31T12:00:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2021-01-01T12:00:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2021-01-04T12:00:00"
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-12-31T12:00:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-03-29T01:30:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-03-29T03:30:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-10-25T01:30:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-10-25T03:30:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2020-12-31T12:00:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2021-01-01T12:00:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2021-01-04T12:00:00"
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-12-31T12:00:00"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "start": 0,
+      "end": 10
+    },
+    {
+      "id": 2,
+      "start": 2,
+      "end": 5
+    },
+    {
+      "id": 3,
+      "start": 5,
+      "end": 12
+    },
+    {
+      "id": 4,
+      "start": 12,
+      "end": 13
+    },
+    {
+      "id": 5,
+      "start": 12,
+      "end": 15
+    }
+  ],
+  "courses": [
+    {
+      "id": 12,
+      "tracked": true
+    },
+    {
+      "id": 11,
+      "tracked": false
+    },
+    {
+      "id": 10,
+      "tracked": false
+    },
+    {
+      "id": 9,
+      "tracked": true
+    },
+    {
+      "id": 8,
+      "tracked": false
+    },
+    {
+      "id": 7,
+      "tracked": false
+    },
+    {
+      "id": 6,
+      "tracked": true
+    },
+    {
+      "id": 5,
+      "tracked": false
+    },
+    {
+      "id": 4,
+      "tracked": false
+    },
+    {
+      "id": 3,
+      "tracked": true
+    },
+    {
+      "id": 2,
+      "tracked": false
+    },
+    {
+      "id": 1,
+      "tracked": false
+    }
+  ],
+  "plans": [
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-03-29",
+      "now": "07:07",
+      "until": "2026-04-01T23:00:00",
+      "todos": [
+        {
+          "id": 1,
+          "due": "12:00",
+          "effort": 90
+        },
+        {
+          "id": 2,
+          "due": "09:00",
+          "effort": 120
+        },
+        {
+          "id": 3,
+          "due": "06:00",
+          "effort": 180
+        },
+        {
+          "id": 4,
+          "due": "08:15",
+          "effort": 60
+        },
+        {
+          "id": 5,
+          "due": "12:00",
+          "effort": 30
+        },
+        {
+          "id": 6,
+          "due": "12:00",
+          "effort": 15
+        }
+      ],
+      "busy": [
+        [
+          "09:00",
+          "10:00"
+        ],
+        [
+          "11:00",
+          "11:30"
+        ]
+      ],
+      "blocks": [
+        [
+          "08:00",
+          "08:30"
+        ]
+      ],
+      "dayStart": 8,
+      "dayEnd": 12,
+      "buffer": 10,
+      "cap": 120,
+      "maxBlock": 90,
+      "step": 15
+    },
+    {
+      "zone": "Europe/Paris",
+      "date": "2026-10-25",
+      "now": "07:07",
+      "until": "2026-10-28T23:00:00",
+      "todos": [
+        {
+          "id": 1,
+          "due": "12:00",
+          "effort": 90
+        },
+        {
+          "id": 2,
+          "due": "09:00",
+          "effort": 120
+        },
+        {
+          "id": 3,
+          "due": "06:00",
+          "effort": 180
+        },
+        {
+          "id": 4,
+          "due": "08:15",
+          "effort": 60
+        },
+        {
+          "id": 5,
+          "due": "12:00",
+          "effort": 30
+        },
+        {
+          "id": 6,
+          "due": "12:00",
+          "effort": 15
+        }
+      ],
+      "busy": [
+        [
+          "09:00",
+          "10:00"
+        ],
+        [
+          "11:00",
+          "11:30"
+        ]
+      ],
+      "blocks": [
+        [
+          "08:00",
+          "08:30"
+        ]
+      ],
+      "dayStart": 8,
+      "dayEnd": 12,
+      "buffer": 10,
+      "cap": 120,
+      "maxBlock": 90,
+      "step": 15
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-03-29",
+      "now": "07:07",
+      "until": "2026-04-01T23:00:00",
+      "todos": [
+        {
+          "id": 1,
+          "due": "12:00",
+          "effort": 90
+        },
+        {
+          "id": 2,
+          "due": "09:00",
+          "effort": 120
+        },
+        {
+          "id": 3,
+          "due": "06:00",
+          "effort": 180
+        },
+        {
+          "id": 4,
+          "due": "08:15",
+          "effort": 60
+        },
+        {
+          "id": 5,
+          "due": "12:00",
+          "effort": 30
+        },
+        {
+          "id": 6,
+          "due": "12:00",
+          "effort": 15
+        }
+      ],
+      "busy": [
+        [
+          "09:00",
+          "10:00"
+        ],
+        [
+          "11:00",
+          "11:30"
+        ]
+      ],
+      "blocks": [
+        [
+          "08:00",
+          "08:30"
+        ]
+      ],
+      "dayStart": 8,
+      "dayEnd": 12,
+      "buffer": 10,
+      "cap": 120,
+      "maxBlock": 90,
+      "step": 15
+    },
+    {
+      "zone": "Europe/Helsinki",
+      "date": "2026-10-25",
+      "now": "07:07",
+      "until": "2026-10-28T23:00:00",
+      "todos": [
+        {
+          "id": 1,
+          "due": "12:00",
+          "effort": 90
+        },
+        {
+          "id": 2,
+          "due": "09:00",
+          "effort": 120
+        },
+        {
+          "id": 3,
+          "due": "06:00",
+          "effort": 180
+        },
+        {
+          "id": 4,
+          "due": "08:15",
+          "effort": 60
+        },
+        {
+          "id": 5,
+          "due": "12:00",
+          "effort": 30
+        },
+        {
+          "id": 6,
+          "due": "12:00",
+          "effort": 15
+        }
+      ],
+      "busy": [
+        [
+          "09:00",
+          "10:00"
+        ],
+        [
+          "11:00",
+          "11:30"
+        ]
+      ],
+      "blocks": [
+        [
+          "08:00",
+          "08:30"
+        ]
+      ],
+      "dayStart": 8,
+      "dayEnd": 12,
+      "buffer": 10,
+      "cap": 120,
+      "maxBlock": 90,
+      "step": 15
+    }
+  ]
+}

@@ -22,6 +22,10 @@ private const val SOON_MS = 7 * DAY_MS
 fun effortOf(h: HomeworkDto): Int =
     h.effort_minutes?.takeIf { it > 0 } ?: if (h.kind == "catchup") 90 else HOMEWORK_EFFORT
 
+fun plannedBlock(h: HomeworkDto): Pair<Long, Long>? = h.planned_at?.let {
+    it to it + (h.planned_minutes?.takeIf { minutes -> minutes != 0 } ?: effortOf(h)) * MIN_MS
+}
+
 fun localMidnight(ms: Long, tz: String): Long {
     val zone = ZoneId.of(tz)
     val localDate = Instant.ofEpochMilli(ms).atZone(zone).toLocalDate()
@@ -98,12 +102,17 @@ data class PlanTodoItem(
     val kind: String? = null,
     val event_id: Long? = null,
     val effort_minutes: Int? = null,
+    val planned_at: Long? = null,
+    val planned_minutes: Int? = null,
     val effort: Int,
     val latestStart: Long,
     val course: String? = null,
     val urgency: String,
     val beforeSession: Long? = null,
 )
+
+@Serializable
+data class PlannedItem(val id: Long, val title: String, val start: Long, val end: Long, val minutes: Int)
 
 @Serializable
 data class WeekLoad(
@@ -127,6 +136,7 @@ data class DayPlan(
     val todo: List<PlanTodoItem>,
     val later: Int,
     val week: WeekLoad,
+    val planned: List<PlannedItem>,
 )
 
 fun buildPlan(
@@ -189,6 +199,8 @@ fun buildPlan(
             kind = h.kind,
             event_id = h.event_id,
             effort_minutes = h.effort_minutes,
+            planned_at = h.planned_at,
+            planned_minutes = h.planned_minutes,
             effort = effort,
             latestStart = latestStart,
             course = courseName,
@@ -207,7 +219,13 @@ fun buildPlan(
     val todo = open.filter { it.due_at < now + SOON_MS }
     val later = open.size - todo.size
 
-    val busy = timed.map { it.start_at to it.end_at }
+    val blocks = homework.filter { !it.done }.mapNotNull { h ->
+        plannedBlock(h)?.takeIf { it.second > today && it.first < today + 8 * DAY_MS }?.let { h to it }
+    }
+    val busy = (timed.map { it.start_at to it.end_at } + blocks.map { it.second }).sortedBy { it.first }
+    val planned = blocks.filter { (_, b) -> b.second > now && b.first < tomorrow }.map { (h, b) ->
+        PlannedItem(h.id, h.title, b.first, b.second, ((b.second - b.first).toDouble() / MIN_MS).roundToInt())
+    }
     val dayFrom = max(now, atHour(today, DAY_START, tz))
     val dayTo = atHour(today, DAY_END, tz)
 
@@ -222,7 +240,8 @@ fun buildPlan(
         )
     }
 
-    val pending = todo.toMutableList()
+    val plannedToday = planned.map { it.id }.toSet()
+    val pending = todo.filter { it.id !in plannedToday }.toMutableList()
     for (g in gaps) {
         var left = g.minutes
         var i = 0
@@ -294,5 +313,6 @@ fun buildPlan(
         todo = todo,
         later = later,
         week = week,
+        planned = planned,
     )
 }
