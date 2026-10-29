@@ -29,3 +29,14 @@ Local evidence: `/tmp/epita-native-night/review-2b-initial-{npm,gradle,build,ver
 ## Re-review gate
 
 Fix every finding on `native/phase-2b`, append a `Review 2b fixes — round 1` entry with exact counts/commands/commit references, and commit only after required checks pass. Then stop for independent review. Maximum three fix rounds, per overnight-run.md. The night branch remains at its last independently building state until PASS.
+
+## Re-review after fix round 1 — FIX (2026-10-30)
+
+Round 1 ended without a commit because required checks still fail. Preserve the working tree. One of three fix rounds is now consumed.
+
+- Independently ran `./gradlew testProdDebugUnitTest --tests '*HabitsGoldenTest' --tests '*SignInUiTest.actionsAndDialog' --tests '*PhoneScreenshotTest.light_signin_font2' lintProdDebug assembleProdDebug`: **3 tests, 2 passed, 1 failed**, 0 skipped; exit 1 after 1m10s. Habits generated regressions and the isolated 200% phone capture pass. The real dialog still fails with `AppNotIdleException` at `SignInUiTest.kt:60`. No passing full-suite claim.
+- Inspected the new original-size phone light 200% sign-in PNG: text is visibly larger, multi-line buttons expand, and content is not clipped. Finding 1 is partly addressed, but the complete matrix and verification remain pending. Finding 3's specified regression cases pass. Findings 2 and 4 remain open; new dialog captures have not been proven.
+- `npm test`: **103/104**, only the allowed countdown failure. Separate reviewer `./gradlew lintProdDebug assembleProdDebug`: BUILD SUCCESSFUL, exit 0. `git diff --check` passes.
+- A primary upstream report provides a concrete lead: [Robolectric #8460](https://github.com/robolectric/robolectric/issues/8460) reproduces non-idle text fields inside dialogs when a non-default width qualifier is used. Its later reproduction distinguishes width from height and reports stable sizing with `DialogProperties(usePlatformDefaultWidth = false)` or an explicit constrained width. This is a diagnostic lead, not proof that any workaround fixes this app. Keep the required 411dp/840dp captures and real dialog assertions; verify any responsive sizing change on both sizes rather than removing coverage or faking content.
+
+Fix round 2 must finish the real dialog, full screenshot matrix, action reachability and all unfiltered checks, retaining the successful font and Habits regressions. Continue to append progress rather than rewriting previous entries.
