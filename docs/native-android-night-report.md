@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | In progress: Terra data/scope/background worker on native/phase-3 | 0 | — | Worker checks running; independent review pending |
+| 3 | In progress: data/scope/background committed; shell/navigation/search worker running | 0 | — | Worker data checks 72/72; whole-phase review pending |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -49,4 +49,13 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 - The initial worker terminated at 00:52 Paris with an explicit CLI usage-limit error and a stated 03:41 reset. It left session-race hardening uncommitted; its last full checks reported 68 tests passing, which still needs independent review.
 - At 03:45 Paris the reset time had passed. Resumed the same Codex session `01a18a0d-df28-7b51-a904-a2a5ee8e9b81`; live shell handle 14272 and log `/tmp/epita-native-night/phase-3-data-resume-worker.log`. It is reading and completing the preserved changes, including stronger atomic-write and race checks. No alternative worker model or quota bypass is used.
 
-Current position: Phase 2b merged and native/night verified building; Phase 3 data/scope/background worker resumed after the CLI quota reset. Shell/search/screenshots and the local-device harness follow; later phases remain pending.
+
+## Phase 3 data and shell progress
+
+- Resumed data worker completed as `4ecfaf6`: atomic rename failure protection, refresh/mutation ordering, conditional token clearing and session isolation, persisted scope tests. Worker reported 72 passing Android tests, lint, debug assembly and existing screenshot verification; npm 104/104. Reviewer partial Gradle command passed, but the worker subsequently replaced XML with targeted runs; no independently retained whole-phase count is claimed yet.
+- Data cache limitation is documented: successful single-row mutations stay in memory until a full refresh writes the raw snapshot; offline restart before that refresh can show earlier data. Phase 11 must persist task mutations as it generalises the outbox. Device background execution remains unverified.
+- Initial shell run produced only an unconnected URI parser and stopped without a commit. Resumed that session to complete the actual assignment; this is still initial implementation, no review fix rounds consumed.
+- Shell task committed as `ebf369e`; navigation/shortcuts/deep-link handling and search are being completed. Live shell handle 63939, log `/tmp/epita-native-night/phase-3-shell-resume-worker.log`, Codex session `01a18ab9-3112-7c13-93bd-c8c3ae4c7d68`.
+- Interim visual inspection found default Material purple navigation/card styling and poor 200% footer wrapping. Revalidate against final PNGs during the whole-phase review; no Phase 3 PASS or merge is claimed.
+
+Current position: Phase 2b merged and native/night verified building; Phase 3 shell/navigation/search implementation is running. The managed-device/local-server harness follows; later phases remain pending.
