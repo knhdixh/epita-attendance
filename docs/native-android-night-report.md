@@ -77,3 +77,11 @@ Current position: Phase2b merged and native/night verified building; Phase3 harn
 - Instrumented test source now exists, exercising dev PKCE callback, seeded top-level data, scope/search/internal links, and an Orchestrator process restart with cached data while offline. It remains uncommitted and under worker validation. The local seed now imports two 16-week calendars with shared lectures and group memberships through real local APIs.
 
 Current position: Phase 2b remains the only merged phase, verified building on native/night. Phase 3 initial harness validation is still running; all current screenshots have been inspected, but independent final checks and the formal whole-phase review remain.
+
+
+## Phase 3 quota interruption and explicit continuation
+
+- Harness worker terminal handle67965 exited1 with an explicit usage-limit error and reset08:45. Its last device run did not complete: e2e6 reported discovery0/2, and no passing test result is claimed. Source changes remain preserved on native/phase-3; no new Phase3 merge or fix round.
+- On the user's active-goal continuation, reviewer checked live time07:52UTC/08:52Paris (2026-10-30), past the stated reset. No live Codex/Gradle wrapper remained. Stopped only orphan local-server process group20976 (temporary a80-e2e.TyPTKybS) and its owned emulator21114; port8787 is free. Resumed the same Terra session after reset, live shell55539, log `/tmp/epita-native-night/phase-3-e2e-second-resume-worker.log`. This is continuation after quota reset, not another model or quota bypass.
+
+Current position: Phase2b is the only accepted merge. Phase3 harness source and real test completion are still being finished by the resumed Terra worker; all136 current PNGs reviewed. Formal Phase3 verdict/fixes and later phases remain pending.
