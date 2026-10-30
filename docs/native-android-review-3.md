@@ -1,6 +1,6 @@
 # Phase 3 review
 
-Verdict: **FIX after round 1**. One fix round completed; reviewed through `b2b1ff3` on `native/phase-3`. Nothing from this phase is merged. The initial review and findings are retained below; current remaining findings are at the end.
+Verdict: **PASS after round 2**. Two fix rounds completed; accepted implementation `6947dcd` on `native/phase-3`. Initial FIX history is retained below; the final acceptance is at the end.
 
 ## Findings
 
@@ -45,3 +45,24 @@ Reviewer evidence: npm104/104; Android combined unit/lint/app+test assembly/full
 4. **Finish the requested account-change/restoration regression.** `android-native/app/src/test/java/com/knhdixh/attendance80/ui/ShellUiTest.kt:73` tests offline Back, and the updated device case tests reauthentication into the same seeded account. The worker explicitly leaves two-account switch/restoration Unverified. Initial finding3 requested verification of account changes. Add a meaningful integration/Compose or local-device case that navigates with accountA, signs out/switches to accountB, recreates, and proves A's data, navigation state and pending form/controller payload are not rendered or replayed for B. Reuse real AppNav/session ownership behavior; repository token-race tests alone don't exercise the saved navigation boundary. Fix any behavior this exposes. Real external identity-provider testing can remain Needs a device.
 
 All other original findings remain resolved unless new evidence contradicts that. Do not build Phase4/5 implementations in this fix round. Preserve their explicit saved-action wiring checklist and the substantive device harness. At most two further fix rounds remain under the overnight protocol.
+
+
+## Round 2 review — PASS (`6947dcd`)
+
+All four remaining findings are resolved.
+
+1. Clipboard dispatch appends `groups` from the normalized active scope. `SearchUiTest.copiedFeedUsesNormalizedCount` exercises actual clipboard selection with duplicate/invalid IDs, subset, All, and no calendars. The separate Settings feed-group picker remains Phase4.
+2. Child routes resolve their owning section for phone/rail styling and selected semantics. Phone/tablet ChildNavigationTest each exercise8 cases including saved-state restore and Back. All32 changed child-route PNGs were independently inspected; no clipping or wrong parent selection found.
+3. PaletteRecents uses Preferences DataStore; ShellViewModel owns its state and MainActivity lifecycle-collects it. SearchSheet only emits selection events. Persistence is bounded to5 IDs and visible recents filter unavailable entries; PaletteRecentsTest covers the store and AppNavAccountTest selects an actual item, replaces the ViewModel and reopens the actual Recent section. No token storage introduced.
+4. AppNavAccountTest uses the real repository and MockWebServer with separate session owners and snapshots. It saves a Focus request under ownerA, switches through signed-out state to ownerB, recreates, checks B's content/Today, opens Focus again and confirms A's saved action is absent. The real local-device401 -> PKCE -> pendingSession flow remains passing. This is component/integration evidence, not proof of real Google/passkey providers.
+
+### Independent final checks
+
+- `npm test`:104/104,0 failures/skips.
+- Initial combined Gradle invocation passed8s with up-to-date reuse. Reviewer then forced the complete command with `--rerun-tasks --no-daemon`: `testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug` passed1m19s; all83 tasks executed. Fresh XML244 tests,0 failures/errors/skips. Types:23golden,29ordinaryJVM,4otherRobolectric,1RobolectricViewModel,51Compose interaction/integration,136screenshots.
+- Local smoke passed against isolated local D1:48 real imported semester events plus shared/group memberships and all seeded categories. Full local managed-device e2e passed1m32s,69 tasks executed; fresh XML2 cases with0 failures/errors/skips. Both8787/8788 free afterward. Real browser launch remains intercepted by the test driver.
+- All136 final PNG hashes match independently inspected artifacts; manifest `/tmp/epita-native-night/fix2-current-reviewed-hashes.json`, final32-image contacts `/tmp/epita-native-night/fix2-image-review.json`, with the preceding baseline/round1 manifests.
+- Final diff contains no main/server/website source changes, existing migration edits, secrets, `android/` edits or plan edits; no new production server query. Main unchanged at e97f6ca0c9018c7c71cfe53769d475c17284075c.
+- Logs `/tmp/epita-native-night/review-3-fix2-{npm,gradle,forced-gradle,smoke,device}.log`.
+
+Phase3 framework/data/navigation acceptance does not claim the later screens/controllers: Phase4 must consume saved OpenForm requests for homework/calendar/break/habit/countdown UI and replace unavailable notices; Phase5 must consume Focus command/target payloads and derive visible commands from live timer state; Phase6 must publish widget snapshots when snapshot or lastSynced changes; Phase11 must persist/queue task and habit mutations for offline restart/replay. These are explicit scheduled feature dependencies, not waived final requirements. Phase8 retains the final design/polish audit against section6. All phases remain in the overnight order and no release/physical-device claim is made.

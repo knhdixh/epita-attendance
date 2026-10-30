@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | FIX after round1; round2 starting | 1 completed, 2 starting | — | Independent npm104/104; Android225/225, lint/app+test assembly,136 PNGs/full verify; local smoke and2/2 instrumented e2e pass |
+| 3 | PASS after round2; merge pending | 2 | — | Independent npm104/104; fresh244/244 Android, all83 tasks;136 PNG/full verify; real local smoke and2/2 managed-device e2e |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -129,3 +129,13 @@ Current position: Phase2b merged and native/night builds. Phase3 isFIX after1 co
 - Resumed the SAME Terra session after reset, live shell22486, log `/tmp/epita-native-night/phase-3-fix-2-resume-worker.log`. This remains fix round2, not another fix attempt. No alternative model or quota bypass. The resumed worker is implementing the four remaining findings from the committed review.
 
 Current position: Phase2b remains the only accepted merge and native/night builds. Phase3FIX after round1; round2 is live after quota reset, noPhase3 merge and later phases pending.
+
+
+## Phase 3 final review — PASS after two fix rounds
+
+- Accepted worker commit `6947dcd` after prior `b2b1ff3`. All review findings fixed; reviewer-authored review3 nowPASS, with initial/round1 FIX history and explicit resolution evidence.
+- Reviewer forced final Android command with `--rerun-tasks`: all83 tasks executed and passed1m19s; fresh244 tests,0 failures/errors/skips (23golden,29ordinaryJVM,4otherRobolectric,1RoboVM,51Composeinteraction,136screenshots). npm104/104. All136 current hashes independently visually reviewed;32 round2 changes inspected and match final manifest `/tmp/epita-native-night/fix2-current-reviewed-hashes.json`.
+- Independent local smoke and full managed-device e2e passed, fresh2 cases0 failures/errors/skips; device run1m32s/all69 tasks. Both local ports free. Logs `/tmp/epita-native-night/review-3-fix2-{npm,gradle,forced-gradle,smoke,device}.log`.
+- Full read-only shell/typed action seams are accepted for Phase3. Detailed forms/screens in4, actual timer controller in5, widget publication in6, durable generalized task/habit outbox in11 and final design audit in8 remain mandatory, with hooks recorded in progress/review. No real external identity-provider/browser/physical-device claim.
+
+Current position: Phase3PASS at6947dcd, two fix rounds; merge into native/night is next, followed by merged-branch verification and Phase4a. Main unchanged; no push/deploy.
