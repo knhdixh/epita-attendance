@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | FIX: initial whole-phase review; fix round1 starting | 1 started | — | Independent npm104/104; Android218/218, lint/app+test assembly,136 PNGs/full verify; local smoke and2/2 instrumented e2e pass |
+| 3 | FIX after round1; round2 starting | 1 completed, 2 starting | — | Independent npm104/104; Android225/225, lint/app+test assembly,136 PNGs/full verify; local smoke and2/2 instrumented e2e pass |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -112,3 +112,12 @@ Current position: Phase2b is the only merged phase and native/night builds. Phas
 - Reviewer candidate remaining issues, to revalidate final source: copied timetable feed ignores Count groups, recents use SharedPreferences instead of planned DataStore, and child routes lose parent navigation highlight. Private review notes `/tmp/epita-native-night/review-3-fix-1-notes.md`; no second formal verdict or fix round yet.
 
 Current position: Phase2b is the only merged phase and native/night builds. Phase3 first fix worker is still live; image QA is complete for the current hashes, final independent checks/code review remain. Goal active, noPhase3 merge and later phases pending.
+
+
+## Phase 3 fix round 1 independently reviewed — FIX
+
+- Worker completed and stopped at `b2b1ff3`. Reviewer independently ran npm104/104 and Android unit/lint/app+test assemblies/unfiltered screenshot verification:225 tests,0 failures/errors/skips, passed17s. Counts by type:23golden,29ordinaryJVM,3otherRobolectric,1RobolectricViewModel,33Composeinteraction/integration,136screenshots. All136 final PNG hashes match the independently inspected union,84 changed against cb8444d.
+- Independent local smoke passed. Independent full managed-device/local-server e2e passed1m30s,69 tasks executed; fresh XML2 cases,0 failures/errors/skips, including actual local rejected-session401/sign-in/pendingSession delivery and offline new-process cached startup. Both local ports8787/8788 free after cleanup. Logs `/tmp/epita-native-night/review-3-fix1-{npm,gradle,smoke,device}.log`. No new website/server/migration/secret/plan/android/ changes; main still e97f6ca.
+- Review3 now records round1FIX, with four remaining findings: Count-scoped copied feed URL; parent nav highlighting/semantics on child routes; DataStore-backed persisted recents; dedicated two-account AppNav/restoration isolation test. Other original fixes accepted at this stage. Forms/controllers remain deliberately assigned to4/5 with saved payloads/checklist.
+
+Current position: Phase2b merged and native/night builds. Phase3 isFIX after1 completed fix round; round2 starting on the same branch. NoPhase3 merge; later phases pending.

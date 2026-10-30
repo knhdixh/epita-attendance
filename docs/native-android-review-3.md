@@ -1,6 +1,6 @@
 # Phase 3 review
 
-Verdict: **FIX**. Initial whole-phase review; 0 fix rounds used. Reviewed implementation through `cb8444d` on `native/phase-3`; nothing from this phase is merged.
+Verdict: **FIX after round 1**. One fix round completed; reviewed through `b2b1ff3` on `native/phase-3`. Nothing from this phase is merged. The initial review and findings are retained below; current remaining findings are at the end.
 
 ## Findings
 
@@ -26,3 +26,22 @@ Verdict: **FIX**. Initial whole-phase review; 0 fix rounds used. Reviewed implem
 ## Scope and verification boundaries
 
 The Phase 3 read-only shell is not a substitute for Phase 4 screens. Timer execution/alarms, widget publication and reminders stay in Phases5/6/7; their instrumented cases must be added there, as listed in `android-native/tools/E2E-COVERAGE.md`. Successful individual mutations update memory, with disk updated at refresh; the logged Phase11 persistence work must not be forgotten. Do not mark Phase3 PASS until the findings above are fixed and independently verified.
+
+
+## Round 1 review — FIX (`b2b1ff3`)
+
+Resolved: real NavHost/registered destinations, offline Back plus saved-state restoration, localized date/date-only formatting, stable entity keys and native empty guidance. Palette catalogs and supported API actions now exist, parsers are reused, typed form/controller payloads are serialized into destination saved state, and unfinished form routes explicitly say so. The device flow now checks rejected-session401 -> devPKCE -> pending Session delivery. Future Phase4/5 handlers remain an explicit dependency rather than a claim of executed forms/timers.
+
+Reviewer evidence: npm104/104; Android combined unit/lint/app+test assembly/full Roborazzi verification passed17s,225 tests with0 failures/errors/skips. Reviewer inspected all84 changed PNGs;136 current source hashes match the reviewed union `/tmp/epita-native-night/fix1-current-reviewed-hashes.json`. Original-size spot checks resolved misleading small contact-sheet details. Reviewer local smoke passed with the real48-event seed and related data. Reviewer full e2e passed1m30s: all69 Gradle tasks executed; fresh XML has2 tests,0 failures/errors/skips, rejected-session401/devPKCE/pending delivery and offline process restart included. Both8787/8788 were free afterward. Logs: `/tmp/epita-native-night/review-3-fix1-{npm,gradle,smoke,device}.log`.
+
+### Remaining findings for fix round 2
+
+1. **Copy the scoped timetable link.** `android-native/app/src/main/java/com/knhdixh/attendance80/ui/search/Palette.kt:57` always constructs the all-groups URL. With two calendars and Count set to one, choosing Copy timetable calendar link subscribes to all groups. The web default is `timetableFeedUrl(ids = feedGroups ?? state.scope)` in `public/homework-ui.js:257–259`, adding `?groups=...` when selected. Pass the active normalized scope to the action/clipboard path and preserve it in the copied URL. The separate Settings feed-group picker belongs to Phase4; the current Count default must already work. Add a real clipboard/action test for selected subset and All, including normalization and a no-calendar session case where relevant.
+
+2. **Keep the owning navigation item selected on child routes.** `android-native/app/src/main/java/com/knhdixh/attendance80/ui/shell/Shell.kt:135` only selects exact root routes; `:151–152` does the same in the rail. `homework/new` and `homework/{id}` have no selected phone tab; session/course/habit/countdown detail/new routes likewise lose their owning More or rail item. This is visible in the new-route captures. Resolve a registered destination's owning top-level section (Homework, Sessions, Courses, Habits, Countdowns, etc.) and use it consistently for phone/rail highlight and selected accessibility semantics. Test child selection, Back and restoration on phone and tablet; update/verify affected PNGs. This completes initial finding3's navigation selection requirement.
+
+3. **Use the planned DataStore persistence for recents.** `android-native/app/src/main/java/com/knhdixh/attendance80/ui/search/SearchSheet.kt:24–25` introduces SharedPreferences and storage reads/writes inside a composable. Plan section1 specifies DataStore Preferences for small persisted values. Move this state into a store/repository/ViewModel using the existing architecture and lifecycle-collected state; keep recent IDs bounded and discard unavailable IDs when deriving results. Test selecting a real item, recreating/reopening against persisted data, and the actual Recent section. The current pure palette test supplies a hand-written list, so it does not prove persistence. Avoid reading or writing session tokens through this store.
+
+4. **Finish the requested account-change/restoration regression.** `android-native/app/src/test/java/com/knhdixh/attendance80/ui/ShellUiTest.kt:73` tests offline Back, and the updated device case tests reauthentication into the same seeded account. The worker explicitly leaves two-account switch/restoration Unverified. Initial finding3 requested verification of account changes. Add a meaningful integration/Compose or local-device case that navigates with accountA, signs out/switches to accountB, recreates, and proves A's data, navigation state and pending form/controller payload are not rendered or replayed for B. Reuse real AppNav/session ownership behavior; repository token-race tests alone don't exercise the saved navigation boundary. Fix any behavior this exposes. Real external identity-provider testing can remain Needs a device.
+
+All other original findings remain resolved unless new evidence contradicts that. Do not build Phase4/5 implementations in this fix round. Preserve their explicit saved-action wiring checklist and the substantive device harness. At most two further fix rounds remain under the overnight protocol.
