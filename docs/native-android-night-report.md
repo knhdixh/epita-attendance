@@ -103,3 +103,12 @@ Current position: Phase2b merged and native/night verified building; Phase3 init
 - Worker has started NavHost/back-stack changes, device-locale date formatting, stable rows and focused saved-state/date tests; palette catalog/actions work continues. These uncommitted changes have not been accepted. Reviewer will independently rerun checks and inspect every changed PNG after the worker commits and stops.
 
 Current position: Phase2b is the only merged phase and native/night builds. Phase3 isFIX with round1 in progress; noPhase3 merge and later phases pending. Goal remains active.
+
+
+## Phase 3 fix round 1 reviewer progress
+
+- Terra worker handle98198 remains live on native/phase-3; no fix commit yet. Reviewer completed all changed-image inspection:84 distinct PNGs changed against cb8444d, with12 revised/new form captures additionally inspected after an earlier80-image pass. Final reviewed-hash union `/tmp/epita-native-night/fix1-current-reviewed-hashes.json` covers136 current PNGs; no pending hashes at last comparison. Contact manifests `fix1-image-review.json` and `fix1-extra-image-review.json`. Full-size spot checks resolved unclear contact-sheet impressions; no new clipping found.
+- Worker reports225 JVM tests passing after navigation/date/action/serialization regressions and two passing fresh managed-device cases including a rejected app session, real server401/devPKCE and pending-session delivery. These are worker results until reviewer repeats the final checks after commit/stop. Further catalog edits and final checks are still in progress.
+- Reviewer candidate remaining issues, to revalidate final source: copied timetable feed ignores Count groups, recents use SharedPreferences instead of planned DataStore, and child routes lose parent navigation highlight. Private review notes `/tmp/epita-native-night/review-3-fix-1-notes.md`; no second formal verdict or fix round yet.
+
+Current position: Phase2b is the only merged phase and native/night builds. Phase3 first fix worker is still live; image QA is complete for the current hashes, final independent checks/code review remain. Goal active, noPhase3 merge and later phases pending.
