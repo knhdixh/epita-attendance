@@ -22,9 +22,9 @@ class AttendanceViewModel : ViewModel() {
     private var generation = 0
     fun update(data: AppData?, now: Long, zone: ZoneId) {
         val minute = now / 60000 * 60000
-        if (mutable.value?.let { it.data === data && it.now == minute && it.zone == zone } == true) return
+        if (mutable.value?.let { it.data == data && it.now == minute && it.zone == zone } == true) return
         val version = ++generation
-        if (mutable.value?.data !== data) mutable.value = null
+        if (mutable.value?.data != data) mutable.value = null
         if (data == null) { mutable.value = null; return }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { derive(data, minute, zone) }

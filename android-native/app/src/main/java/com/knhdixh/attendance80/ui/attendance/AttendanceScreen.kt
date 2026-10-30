@@ -37,7 +37,7 @@ private fun skips(s: AttendanceStats, unit: String): String {
 fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: AttendanceViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
-    val s = state?.takeIf { it.data === data }
+    val s = state?.takeIf { it.data == data }
     if (s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     fun tone(level: String): Color = when (level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }

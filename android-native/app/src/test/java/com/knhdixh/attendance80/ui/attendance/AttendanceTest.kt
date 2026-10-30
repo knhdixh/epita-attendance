@@ -1,6 +1,9 @@
 package com.knhdixh.attendance80.ui.attendance
 
 import androidx.compose.ui.test.*
+import androidx.compose.runtime.*
+import com.knhdixh.attendance80.ui.shell.Shell
+import com.knhdixh.attendance80.ui.shell.ShellState
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.knhdixh.attendance80.net.*
 import com.knhdixh.attendance80.logic.applyScope
@@ -65,6 +68,33 @@ class AttendanceTest {
         ui.onNodeWithTag("attendance-list").performScrollToNode(hasTestTag("attendance-course-2"))
         ui.onNodeWithTag("attendance-course-2").performClick()
         ui.runOnIdle { assertEquals("course/2", route) }
+    }
+    @Test fun shellRecomposesEqualRefreshAndClearsForAccountReset() {
+        val initial = populated()
+        var shell by mutableStateOf(ShellState(data = initial))
+        ui.setContent { Attendance80Theme { Shell(shell, {}, {}, {}, initialRoute = "attendance", now = now, zone = zone) } }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("Mark 2 as attended").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithText("Mark 2 as attended").assertIsDisplayed()
+        ui.onNodeWithTag("attendance-list").performScrollToNode(hasTestTag("attendance-course-2"))
+        ui.onNodeWithText("Missed 1 exam or mandatory").assertIsDisplayed()
+        ui.runOnIdle { shell = shell.copy(data = initial.copy(), loading = true) }
+        ui.onNodeWithText("Missed 1 exam or mandatory").assertIsDisplayed()
+        ui.onNodeWithTag("attendance-list").performScrollToNode(hasText("Mark 2 as attended"))
+        ui.onNodeWithText("Mark 2 as attended").assertIsDisplayed()
+        ui.runOnIdle { shell = shell.copy(data = initial.copy(), loading = false) }
+        ui.onNodeWithText("Mark 2 as attended").assertIsDisplayed()
+        val changed = initial.copy(events = initial.events.map { if (it.id == 12L) it.copy(status = "present") else it })
+        ui.runOnIdle { shell = shell.copy(data = changed) }
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("Mark 1 as attended").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithText("Mark 1 as attended").assertIsDisplayed()
+        ui.runOnIdle { shell = shell.copy(data = null) }
+        ui.onAllNodesWithText("Mark 1 as attended").assertCountEquals(0)
+        ui.onAllNodesWithText("Failed").assertCountEquals(0)
+        val replacement = empty().copy(courses = listOf(CourseDto(9, "New account")), events = listOf(EventDto(90, 9, "New session", start_at = now - 120000, end_at = now - 60000)))
+        ui.runOnIdle { shell = shell.copy(data = replacement) }
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("attendance-course-9").fetchSemanticsNodes().isNotEmpty() }
+        ui.onAllNodesWithText("Failed").assertCountEquals(0)
+        ui.onNodeWithText("Mark 1 as attended").assertIsDisplayed()
     }
     @Test fun emptyScreen() {
         ui.setContent { Attendance80Theme { AttendanceScreen(empty(), now, zone, {}, {}) } }
