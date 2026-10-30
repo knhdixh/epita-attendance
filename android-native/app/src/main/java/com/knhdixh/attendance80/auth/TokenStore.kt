@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.security.KeyStore
 import java.util.Base64
 import javax.crypto.Cipher
@@ -32,6 +34,9 @@ interface TokenStore {
     fun currentToken(): String? = token.value
     suspend fun setToken(token: String)
     suspend fun clearToken()
+    suspend fun clearTokenIfMatches(expected: String) {
+        if (currentToken() == expected) clearToken()
+    }
 }
 
 interface TokenCipher {
@@ -93,6 +98,7 @@ class EncryptedTokenStore(
     private val cipher: TokenCipher,
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
 ) : TokenStore {
+    private val tokenMutex = Mutex()
     private val keySessionToken = stringPreferencesKey("session_token_encrypted")
     private val _token = MutableStateFlow<String?>(null)
     override val token: StateFlow<String?> = _token.asStateFlow()
@@ -107,7 +113,7 @@ class EncryptedTokenStore(
                 _token.value = cipher.decrypt(encrypted)
             } catch (_: Exception) {
                 _token.value = null
-                clearToken()
+                tokenMutex.withLock { clearLocked() }
             }
         }
         _isLoaded.value = true
@@ -119,15 +125,28 @@ class EncryptedTokenStore(
     }
 
     override suspend fun setToken(token: String) {
-        val encrypted = cipher.encrypt(token)
-        dataStore.edit { prefs ->
-            prefs[keySessionToken] = encrypted
+        initJob.join()
+        tokenMutex.withLock {
+            val encrypted = cipher.encrypt(token)
+            dataStore.edit { prefs ->
+                prefs[keySessionToken] = encrypted
+            }
+            _token.value = token
+            _isLoaded.value = true
         }
-        _token.value = token
-        _isLoaded.value = true
     }
 
     override suspend fun clearToken() {
+        initJob.join()
+        tokenMutex.withLock { clearLocked() }
+    }
+
+    override suspend fun clearTokenIfMatches(expected: String) {
+        initJob.join()
+        tokenMutex.withLock { if (_token.value == expected) clearLocked() }
+    }
+
+    private suspend fun clearLocked() {
         dataStore.edit { prefs ->
             prefs.remove(keySessionToken)
         }

@@ -35,4 +35,18 @@ class ScopeTest {
             assertTrue(scope.selected.first().isEmpty())
         } finally { job.cancel(); dir.deleteRecursively() }
     }
+    @Test fun selectionSurvivesDataStoreRestart() = runBlocking {
+        val dir = Files.createTempDirectory("scope-restart").toFile()
+        val firstJob = SupervisorJob()
+        val secondJob = SupervisorJob()
+        try {
+            val file = dir.resolve("scope.preferences_pb")
+            val first = PreferenceDataStoreFactory.create(scope = CoroutineScope(Dispatchers.IO + firstJob)) { file }
+            val calendars = listOf(CalendarDto(1, "file", "A"), CalendarDto(2, "file", "B"))
+            Scope(first).toggle("1", calendars)
+            firstJob.cancelAndJoin()
+            val second = PreferenceDataStoreFactory.create(scope = CoroutineScope(Dispatchers.IO + secondJob)) { file }
+            assertEquals(listOf(1L), Scope(second).selected.first())
+        } finally { firstJob.cancel(); secondJob.cancelAndJoin(); dir.deleteRecursively() }
+    }
 }

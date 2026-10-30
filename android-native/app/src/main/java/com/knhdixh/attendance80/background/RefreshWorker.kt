@@ -14,7 +14,9 @@ import java.util.concurrent.TimeUnit
 
 class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val container = (applicationContext as App).container
+        val app = applicationContext as App
+        app.startData()
+        val container = app.container
         if (container.tokenStore.awaitToken() == null) return Result.success()
         container.dataRepository.start()
         return if (container.dataRepository.refresh()) Result.success() else Result.retry()

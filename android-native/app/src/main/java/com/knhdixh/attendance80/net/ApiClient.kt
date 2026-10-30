@@ -16,7 +16,7 @@ object ApiClient {
 
     fun createOkHttpClient(
         tokenProvider: () -> String?,
-        onUnauthorized: () -> Unit,
+        onUnauthorized: (String?) -> Unit,
         cookieJar: CookieJar = InMemoryCookieJar(),
     ): OkHttpClient {
         return OkHttpClient.Builder()
@@ -42,7 +42,7 @@ object ApiClient {
     fun createApi(
         baseUrl: String,
         tokenProvider: () -> String?,
-        onUnauthorized: () -> Unit,
+        onUnauthorized: (String?) -> Unit,
         cookieJar: CookieJar = InMemoryCookieJar(),
     ): Api {
         val client = createOkHttpClient(tokenProvider, onUnauthorized, cookieJar)

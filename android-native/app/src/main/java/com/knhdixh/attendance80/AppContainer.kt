@@ -47,8 +47,8 @@ class DefaultAppContainer(
             tokenProvider = {
                 kotlinx.coroutines.runBlocking { tokenStore.awaitToken() }
             },
-            onUnauthorized = {
-                scope.launch { tokenStore.clearToken() }
+            onUnauthorized = { rejectedToken ->
+                if (rejectedToken != null) scope.launch { tokenStore.clearTokenIfMatches(rejectedToken) }
             },
         )
     }

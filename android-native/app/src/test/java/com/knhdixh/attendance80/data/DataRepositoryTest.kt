@@ -55,9 +55,64 @@ class DataRepositoryTest {
             assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
             assertNotNull(restarted.snapshot.value)
             assertFalse(refresh.isCompleted)
-            assertTrue(refresh.await())
-            token = null; restarted.start(); assertNull(restarted.snapshot.value)
+            token = null
+            val signedOut = async(Dispatchers.IO) { restarted.start() }
+            withTimeout(1000) { while (restarted.snapshot.value != null) yield() }
+            assertFalse(refresh.await())
+            signedOut.await(); assertNull(restarted.snapshot.value)
             token = "another-token"; restarted.start(); assertNull(restarted.snapshot.value)
+        } finally { server.shutdown(); dir.deleteRecursively() }
+    }
+
+    @Test fun renameFailureKeepsPreviousSnapshotOnDiskAndCleansTemporaryFile() = runBlocking {
+        val server = MockWebServer(); server.start()
+        val dir = Files.createTempDirectory("snapshot").toFile()
+        try {
+            val api = ApiClient.createApi(server.url("/").toString(), { "token" }, {})
+            val first = DataRepository(api, dir, clock) { "token" }
+            first.start(); server.enqueue(MockResponse().setBody(fixture())); assertTrue(first.refresh())
+            val before = first.snapshot.value
+            val cached = dir.listFiles()!!.single().readText()
+            val failing = DataRepository(api, dir, clock, rename = { source, _ ->
+                assertTrue(source.exists())
+                assertTrue(source.readText().contains("changed@example.com"))
+                false
+            }) { "token" }
+            failing.start()
+            server.enqueue(MockResponse().setBody(fixture().replace("student@epita.fr", "changed@example.com")))
+            assertFalse(failing.refresh())
+            assertEquals("Could not save snapshot", failing.error.value)
+            assertEquals(before, failing.snapshot.value)
+            assertEquals(1, dir.listFiles()!!.size)
+            assertEquals(cached, dir.listFiles()!!.single().readText())
+            val restarted = DataRepository(api, dir, clock) { "token" }; restarted.start()
+            assertEquals(before, restarted.snapshot.value)
+        } finally { server.shutdown(); dir.deleteRecursively() }
+    }
+
+    @Test fun refreshWaitsForMutationBeforeReplacingSnapshot() = runBlocking {
+        val server = MockWebServer(); server.start()
+        val dir = Files.createTempDirectory("snapshot").toFile()
+        try {
+            val api = ApiClient.createApi(server.url("/").toString(), { "token" }, {})
+            val repo = DataRepository(api, dir, clock) { "token" }
+            repo.start(); server.enqueue(MockResponse().setBody(fixture())); assertTrue(repo.refresh())
+            val entered = CompletableDeferred<Unit>(); val finish = CompletableDeferred<Unit>()
+            val mutation = async {
+                repo.mutate({ it.copy(courses = emptyList()) }, {
+                    entered.complete(Unit); finish.await(); Unit
+                }, { data, _ -> data })
+            }
+            entered.await()
+            server.enqueue(MockResponse().setBody(fixture()))
+            val refresh = async { repo.refresh() }
+            yield()
+            assertEquals(1, server.requestCount)
+            assertTrue(repo.snapshot.value!!.courses.isEmpty())
+            finish.complete(Unit)
+            assertTrue(mutation.await()); assertTrue(refresh.await())
+            assertEquals(2, server.requestCount)
+            assertEquals(2, repo.snapshot.value!!.courses.size)
         } finally { server.shutdown(); dir.deleteRecursively() }
     }
 

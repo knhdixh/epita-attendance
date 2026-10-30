@@ -14,9 +14,10 @@ import java.security.MessageDigest
 
 /** Serialises reads and writes so a refresh cannot overwrite an in-flight mutation. */
 class DataRepository(private val api: Api, private val directory: File, private val clock: Clock,
+                     private val rename: (File, File) -> Boolean = { from, to -> from.renameTo(to) },
                      private val token: () -> String?) {
     private val mutex = Mutex()
-    private var session: String? = null
+    @Volatile private var session: String? = null
     private val _snapshot = MutableStateFlow<AppData?>(null)
     val snapshot = _snapshot.asStateFlow()
     private val _loading = MutableStateFlow(false)
@@ -32,17 +33,25 @@ class DataRepository(private val api: Api, private val directory: File, private 
         return File(directory, "data-$hash.json")
     }
 
-    suspend fun start() = mutex.withLock {
-        val current = token()
-        if (session != current) {
-            session = current
+    suspend fun start() {
+        if (session != token()) {
             _snapshot.value = null
             _lastSynced.value = null
             _error.value = null
-            if (current != null) {
-                _snapshot.value = runCatching {
-                    ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
-                }.getOrNull()
+        }
+        mutex.withLock {
+            val current = token()
+            if (session != current) {
+                session = current
+                _snapshot.value = null
+                _lastSynced.value = null
+                _error.value = null
+                if (current != null) {
+                    val cached = runCatching {
+                        ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
+                    }.getOrNull()
+                    if (token() == current) _snapshot.value = cached
+                }
             }
         }
     }
@@ -63,8 +72,9 @@ class DataRepository(private val api: Api, private val directory: File, private 
             val temporary = File.createTempFile("snapshot-", ".tmp", directory)
             try {
                 temporary.writeText(raw)
-                check(temporary.renameTo(target)) { "Could not save snapshot" }
+                check(rename(temporary, target)) { "Could not save snapshot" }
             } finally { temporary.delete() }
+            if (token() != active) return false
             _snapshot.value = data
             _lastSynced.value = clock.now()
             true
