@@ -43,4 +43,10 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 - Phase 3 will be split into data/scope/background work, shell/navigation/search with screenshots, then the local-server/managed-device harness. Future-feature instrumented actions are added when their phases implement them; no skipped or fake tests.
 - No owner response is needed to continue.
 
-Current position: Phase 2b merged and native/night verified building; Phase 3 data/scope/background worker is live (shell handle 57371; /tmp/epita-native-night/phase-3-data-worker.log). Shell/search/screenshots and the local-device harness follow; later phases remain pending.
+## Phase 3 worker continuation
+
+- Data repository task committed as `9d49090`, Count scope as `c069268`, hourly background refresh as `c2746b8` on `native/phase-3`. Nothing from Phase 3 is merged.
+- The initial worker terminated at 00:52 Paris with an explicit CLI usage-limit error and a stated 03:41 reset. It left session-race hardening uncommitted; its last full checks reported 68 tests passing, which still needs independent review.
+- At 03:45 Paris the reset time had passed. Resumed the same Codex session `01a18a0d-df28-7b51-a904-a2a5ee8e9b81`; live shell handle 14272 and log `/tmp/epita-native-night/phase-3-data-resume-worker.log`. It is reading and completing the preserved changes, including stronger atomic-write and race checks. No alternative worker model or quota bypass is used.
+
+Current position: Phase 2b merged and native/night verified building; Phase 3 data/scope/background worker resumed after the CLI quota reset. Shell/search/screenshots and the local-device harness follow; later phases remain pending.
