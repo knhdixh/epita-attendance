@@ -1,10 +1,17 @@
 package com.knhdixh.attendance80.ui
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.OnBackPressedDispatcherOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.net.CalendarDto
 import com.knhdixh.attendance80.ui.shell.Shell
@@ -36,22 +43,22 @@ class ShellUiTest {
     }
     @Test fun today() = content("today", "No classes today.", "Mathématiques")
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
-    @Test fun homework() = content("homework", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
-    @Test fun focus() = content("focus", "Your focus sessions will show here. Press F to start one.", "Algorithms revision")
+    @Test fun homework() = content("homework", "Nothing due.", "Maths Exercise 4")
+    @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
     @Test fun upcoming() = content("upcoming", "Nothing scheduled", "Algorithmique")
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
     @Test fun courses() = content("courses", "No tracked courses.", "Algorithmique")
     @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
-    @Test fun homeworkDetail() = content("homework/1", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
+    @Test fun homeworkDetail() = content("homework/1", "Nothing due.", "Maths Exercise 4")
     @Test fun habitDetail() = content("habits/1", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun sessionDetail() = content("session/1", "No sessions match.", "Mathématiques")
     @Test fun courseDetail() = content("course/1", "No tracked courses.", "Mathématiques")
-    @Test fun newHomeworkRoute() = content("homework/new", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
+    @Test fun newHomeworkRoute() = content("homework/new", "Nothing due.", "Maths Exercise 4")
     @Test fun pendingRouteIsRetainedUntilRefreshSucceeds() {
         var state by mutableStateOf(ShellState(data = populated))
         var consumed = 0
@@ -61,6 +68,27 @@ class ShellUiTest {
         compose.runOnIdle { assertEquals(0, consumed); assertEquals("", validated); state = state.copy(session = "token", lastSynced = 1) }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(0, consumed); assertEquals("session/1", validated) }
+    }
+    @Test fun offlineLinkBackDoesNotReturnAfterSavedStateRecreation() {
+        val dispatcher = OnBackPressedDispatcher()
+        val owner = object : OnBackPressedDispatcherOwner {
+            override val onBackPressedDispatcher = dispatcher
+            override val lifecycle = LifecycleRegistry(this).apply { currentState = Lifecycle.State.RESUMED }
+        }
+        var pending by mutableStateOf<String?>("session/1")
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
+            CompositionLocalProvider(LocalOnBackPressedDispatcherOwner provides owner) {
+                Attendance80Theme { Shell(ShellState(data = populated, session = "offline"), {}, {}, {},
+                    pendingRoute = pending, onPendingConsumed = { pending = null }) }
+            }
+        }
+        compose.onNodeWithTag("shell-title").assertTextEquals("Session")
+        compose.runOnIdle { dispatcher.onBackPressed() }
+        compose.onNodeWithTag("shell-title").assertTextEquals("Today")
+        compose.runOnIdle { assertEquals(null, pending) }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("shell-title").assertTextEquals("Today")
     }
     @Test fun breaks() = content("breaks", "Saved breaks", "All Saints Break")
     @Test fun settings() = content("settings", "newuser", "student")

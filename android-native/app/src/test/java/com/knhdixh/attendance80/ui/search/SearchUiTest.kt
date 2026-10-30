@@ -29,7 +29,14 @@ class SearchUiTest {
         compose.onNodeWithTag("result-habit:1").performClick()
         compose.mainClock.advanceTimeBy(500)
         compose.onNodeWithTag("shell-title").assertTextEquals("Habits")
-        compose.onNodeWithText("Read").assertIsDisplayed()
+        compose.onAllNodesWithText("Read").onLast().assertExists()
+    }
+    @Test fun fallbackSelectionDispatchesParsedAction() {
+        var chosen: PaletteAction? = null
+        compose.setContent { Attendance80Theme { SearchSheet(screenshotData(), {}, {}, {}, onAction = { action, _ -> chosen = action }, now = 1793600000000) } }
+        compose.onNodeWithTag("search-query").performTextInput("Read 3x a week")
+        compose.onNodeWithTag("result-fallback:habit").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(PaletteAction.AddHabit("Read 3x a week"), chosen) }
     }
     @Test fun emptySnapshotAndClose() {
         compose.mainClock.autoAdvance = false
@@ -48,7 +55,7 @@ class SearchUiTest {
         compose.onNodeWithText("Go to Today").assertIsDisplayed()
         compose.onNodeWithTag("search-query").performTextInput("does not exist")
         compose.mainClock.advanceTimeBy(500)
-        compose.onNodeWithText("Nothing found for “does not exist”.").assertIsDisplayed()
+        compose.onNodeWithText("Search all sessions for “does not exist”").assertIsDisplayed()
         compose.onNodeWithTag("search-query").performTextClearance()
         compose.onNodeWithTag("search-query").performTextInput("sign out")
         compose.mainClock.advanceTimeBy(500)

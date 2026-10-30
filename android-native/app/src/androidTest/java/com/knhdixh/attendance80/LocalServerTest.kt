@@ -78,9 +78,10 @@ class LocalServerTest {
 
     @Test(timeout = 180_000) fun a_signInAndLiveShell() {
         assertEquals("http://10.0.2.2:8787", BuildConfig.BASE_URL.trimEnd('/'))
-        // A retry starts signed out, without clearing files or another account's server records.
-        runBlocking { app.container.tokenStore.clearToken() }
-        launch()
+        // A rejected app session must retain a link until the next sign-in succeeds.
+        val (expiredLinkId, _, _) = idsFromServer()
+        runBlocking { app.container.tokenStore.setToken("a80s_expired_test_session") }
+        openLink("a80://session/$expiredLinkId")
         waitText("Sign in with dev account")
         ui.onNodeWithText("dev@example.com").performTextReplacement("e2e@example.test")
         Intents.init()
@@ -98,6 +99,9 @@ class LocalServerTest {
             assertTrue(callback.startsWith("com.knhdixh.attendance80:/auth?code="))
             openLink(callback)
         } finally { conn.disconnect() }
+        waitTitle("Session")
+        waitText("GR1 - E2E Algorithms")
+        goBottom("Today")
         waitText("E2E shared lecture")
         ui.onNodeWithText("E2E shared lecture").assertExists()
         goBottom("Attendance"); waitText("GR1 - E2E Algorithms")

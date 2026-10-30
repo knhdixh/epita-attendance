@@ -127,7 +127,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onValidatePending = { route ->
                     if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
                 },
-                now = now, zone = shellViewModel.clock.zone())
+                now = now, zone = shellViewModel.clock.zone(), onAction = shellViewModel::dispatch)
         }
     }
 }
