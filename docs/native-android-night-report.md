@@ -95,3 +95,11 @@ Current position: Phase2b is the only accepted merge. Phase3 harness source and 
 - Latest native/night source independently checked again:62 tests,0 failures/errors/skips, lint/debug assembly/full verify passed10s (up-to-date tasks reused where applicable); source remains accepted Phase2b. main unchanged at e97f6ca.
 
 Current position: Phase2b merged and native/night verified building; Phase3 initial review isFIX and first fix round is starting. Phase3 code/screenshot/harness evidence is recorded, noPhase3 merge; later phases remain pending.
+
+
+## Phase 3 fix round 1 launched
+
+- Review committed on native/night as `030b563`; read-only copy supplied to worker branch. First formal fix round is active in Terra session `01a18be5-6c40-7a50-b0e2-7d79644c733c`, live shell98198, log `/tmp/epita-native-night/phase-3-fix-1-worker.log`. No other implementation worker is running.
+- Worker has started NavHost/back-stack changes, device-locale date formatting, stable rows and focused saved-state/date tests; palette catalog/actions work continues. These uncommitted changes have not been accepted. Reviewer will independently rerun checks and inspect every changed PNG after the worker commits and stops.
+
+Current position: Phase2b is the only merged phase and native/night builds. Phase3 isFIX with round1 in progress; noPhase3 merge and later phases pending. Goal remains active.
