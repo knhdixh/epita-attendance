@@ -121,3 +121,11 @@ Current position: Phase2b is the only merged phase and native/night builds. Phas
 - Review3 now records round1FIX, with four remaining findings: Count-scoped copied feed URL; parent nav highlighting/semantics on child routes; DataStore-backed persisted recents; dedicated two-account AppNav/restoration isolation test. Other original fixes accepted at this stage. Forms/controllers remain deliberately assigned to4/5 with saved payloads/checklist.
 
 Current position: Phase2b merged and native/night builds. Phase3 isFIX after1 completed fix round; round2 starting on the same branch. NoPhase3 merge; later phases pending.
+
+
+## Phase 3 fix round 2 quota interruption and resumed work
+
+- New Terra fix-round2 session `01a18cd2-6ad7-7222-bd4c-4329f7e67196` (handle73803) terminated exit1 on usage limit with reset13:51 before changing source. The user continued the active goal; reviewer checked live time12:55:57UTC/13:55:57Paris2026-10-30, past reset. No implementation/Gradle/e2e process remained and source was clean apart from reviewer-owned untracked review copy.
+- Resumed the SAME Terra session after reset, live shell22486, log `/tmp/epita-native-night/phase-3-fix-2-resume-worker.log`. This remains fix round2, not another fix attempt. No alternative model or quota bypass. The resumed worker is implementing the four remaining findings from the committed review.
+
+Current position: Phase2b remains the only accepted merge and native/night builds. Phase3FIX after round1; round2 is live after quota reset, noPhase3 merge and later phases pending.
