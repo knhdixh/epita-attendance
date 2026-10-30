@@ -17,6 +17,14 @@ import java.time.ZoneId
 @Config(sdk = [35], qualifiers = "w411dp-h891dp-mdpi")
 class TodayUiTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun emptyDataShowsTodayEmptyStates() {
+        val data = ApiClient.json.decodeFromString<AppData>(javaClass.getResource("/api/data_empty.json")!!.readText())
+        compose.setContent { Attendance80Theme { TodayScreen(data, 1793600000000L, ZoneId.of("Europe/Paris"), {}, {}) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Nothing due in the next 7 days.").assertIsDisplayed()
+        compose.onNodeWithTag("today-list").performScrollToNode(hasText("No classes today."))
+        compose.onNodeWithText("No classes today.").assertIsDisplayed()
+    }
     @Test fun overlappingPlannedItemsBothRenderAndScroll() {
         val now = 1793600000000L
         val start = now + 2 * 3600000L

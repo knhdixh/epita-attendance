@@ -148,7 +148,7 @@ fun Shell(
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                 phone.forEach { item ->
                     val selected = owner == item.route || (item == more && owner in destinations.drop(4).map { it.route })
-                    NavigationBarItem(selected = selected, onClick = { navigate(item.route, topLevel = true) },
+                    NavigationBarItem(selected = selected, onClick = { navigate(item.route, topLevel = true) }, modifier = Modifier.testTag("nav-${item.route}"),
                         icon = { Icon(item.icon, contentDescription = if (largeText) item.label else null) },
                         label = if (largeText) null else {{ Text(item.label) }},
                         colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer, selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary))
@@ -184,6 +184,7 @@ fun Shell(
                                 navController.popBackStack()
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
+                            else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents)
                             else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
                         }
                     }

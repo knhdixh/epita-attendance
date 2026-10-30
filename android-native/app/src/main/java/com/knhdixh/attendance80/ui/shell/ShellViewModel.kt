@@ -18,6 +18,7 @@ import kotlinx.serialization.json.*
 data class ShellState(
     val data: com.knhdixh.attendance80.net.AppData? = null,
     val selected: List<Long> = emptyList(),
+    val allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null,
     val loading: Boolean = false,
     val error: String? = null,
     val session: String? = null,
@@ -27,7 +28,7 @@ data class ShellState(
 class ShellViewModel(private val container: AppContainer) : ViewModel() {
     val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
         container.dataRepository.loading, container.dataRepository.error) { owned, selected, loading, error ->
-        ShellState(owned.second?.let { container.calendarScope.apply(it, selected) }, selected, loading, error, owned.first, owned.third)
+        ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     private val recentsStore = com.knhdixh.attendance80.data.PaletteRecents(container.context)

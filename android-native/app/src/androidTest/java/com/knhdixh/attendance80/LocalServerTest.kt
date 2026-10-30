@@ -52,13 +52,13 @@ class LocalServerTest {
     private fun launch() {
         app.startActivity(Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
-    private fun goBottom(label: String) { ui.onNodeWithText(label).performClick() }
+    private fun goBottom(label: String) { ui.onNodeWithTag("nav-${label.lowercase()}").performClick() }
     private fun more(label: String) {
         goBottom("More")
         ui.onNodeWithText(label).performScrollTo().performClick()
     }
 
-    private fun idsFromServer(): Triple<Long, Long, Long> {
+    private fun dataFromServer(): JSONObject {
         val login = (URL("http://10.0.2.2:8787/auth/dev?email=e2e%40example.test").openConnection() as HttpURLConnection)
             .apply { instanceFollowRedirects = false; connectTimeout = 5000; readTimeout = 5000 }
         val cookie = try { assertEquals(302, login.responseCode); login.getHeaderField("Set-Cookie").substringBefore(';') }
@@ -67,6 +67,11 @@ class LocalServerTest {
             .apply { connectTimeout = 5000; readTimeout = 5000; setRequestProperty("Cookie", cookie) }
         val data = try { assertEquals(200, request.responseCode); JSONObject(request.inputStream.bufferedReader().readText()) }
             finally { request.disconnect() }
+        return data
+    }
+
+    private fun idsFromServer(): Triple<Long, Long, Long> {
+        val data = dataFromServer()
         val events = data.getJSONArray("events")
         val courses = data.getJSONArray("courses")
         val event = (0 until events.length()).map { events.getJSONObject(it) }.first { it.getString("summary") == "GR1 - E2E Algorithms" }
@@ -105,6 +110,29 @@ class LocalServerTest {
         waitText("E2E shared lecture")
         ui.onNodeWithText("E2E shared lecture").assertExists()
         goBottom("Attendance"); waitText("GR1 - E2E Algorithms")
+        val before = dataFromServer()
+        val coursesById = before.getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        val eventsBefore = before.getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        fun truth(v: Any?) = v == true || v == 1
+        val minuteNow = System.currentTimeMillis() / 60000 * 60000
+        val ids = eventsBefore.filter { e ->
+            val c = coursesById[e.getLong("course_id")]
+            c != null && truth(c.opt("tracked")) && truth(c.opt("attendance")) && e.getLong("start_at") <= minuteNow && (e.isNull("status") || e.optString("status").isEmpty())
+        }.map { it.getLong("id") }.toSet()
+        assertTrue("seed must contain unmarked tracked past events", ids.isNotEmpty())
+        val button = "Mark ${ids.size} as attended"
+        waitText(button)
+        ui.onNodeWithText(button).performClick()
+        ui.waitUntil(30_000) { ui.onAllNodesWithText(button).fetchSemanticsNodes().isEmpty() }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val after = dataFromServer().getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        eventsBefore.forEach { old ->
+            val id = old.getLong("id")
+            val actual = after.getValue(id)
+            if (id in ids) assertEquals("present", actual.optString("status"))
+            else assertEquals(old.optString("status"), actual.optString("status"))
+        }
+        assertTrue(app.container.dataRepository.snapshot.value!!.events.filter { it.id in ids }.all { it.status == "present" })
         goBottom("Homework"); waitText("E2E homework")
         goBottom("Focus"); waitText("E2E focus")
         more("Upcoming"); waitText("E2E shared lecture")

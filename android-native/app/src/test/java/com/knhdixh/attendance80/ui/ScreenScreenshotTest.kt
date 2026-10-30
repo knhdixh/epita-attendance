@@ -11,7 +11,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithTag
@@ -41,6 +43,55 @@ abstract class ScreenScreenshotTest {
     abstract val device: String
     @get:Rule val compose = createComposeRule()
 
+    @Test fun light_attendance_action_font1() = attendanceAction("light", 1f)
+    @Test fun light_attendance_action_font2() = attendanceAction("light", 2f)
+    @Test fun dark_attendance_action_font1() = attendanceAction("dark", 1f)
+    @Test fun dark_attendance_action_font2() = attendanceAction("dark", 2f)
+    private fun attendanceAction(theme: String, scale: Float) {
+        val now = 1793600000000L
+        val base = screenshotData()
+        val data = base.copy(courses = base.courses + com.knhdixh.attendance80.net.CourseDto(900, "GR1 - Advanced language studies", tracked = false),
+            events = base.events.mapIndexed { index, e -> if (index == 0) e.copy(start_at = now - 7200000, end_at = now - 3600000, status = null) else e } +
+                (0 until 100).map { base.events.first().copy(id = 1000L + it, start_at = now - 8 * 86400000L, end_at = now - 8 * 86400000L + 3600000L, status = "absent") })
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+                Attendance80Theme(darkTheme = theme == "dark") { Surface {
+                    com.knhdixh.attendance80.ui.attendance.AttendanceScreen(data, now, java.time.ZoneId.of("Europe/Paris"), {}, {})
+                } }
+            }
+        }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Mark 1 as attended").fetchSemanticsNodes().isNotEmpty() }
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_attendance_action_font${scale.toInt()}.png")
+        if (scale == 2f) {
+            compose.onNodeWithTag("attendance-list").performScrollToNode(hasText("Mark 1 as attended"))
+            compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_attendance_action_button_font2.png")
+        }
+    }
+    @Test fun light_attendance_font1() = attendanceCapture("light", 1f, false, false)
+    @Test fun light_attendance_font2() = attendanceCapture("light", 2f, false, false)
+    @Test fun dark_attendance_font1() = attendanceCapture("dark", 1f, false, false)
+    @Test fun dark_attendance_font2() = attendanceCapture("dark", 2f, false, false)
+    @Test fun light_attendance_end_font1() = attendanceCapture("light", 1f, false, true)
+    @Test fun light_attendance_end_font2() = attendanceCapture("light", 2f, false, true)
+    @Test fun dark_attendance_end_font1() = attendanceCapture("dark", 1f, false, true)
+    @Test fun dark_attendance_end_font2() = attendanceCapture("dark", 2f, false, true)
+    @Test fun light_attendance_empty() = attendanceCapture("light", 1f, true, false)
+    @Test fun dark_attendance_empty() = attendanceCapture("dark", 1f, true, false)
+    private fun attendanceCapture(theme: String, scale: Float, empty: Boolean, end: Boolean) {
+        val data = if (empty) ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()) else todayScreenshotData()
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+                Attendance80Theme(darkTheme = theme == "dark") {
+                    Surface { com.knhdixh.attendance80.ui.attendance.AttendanceScreen(data, 1793600000000, java.time.ZoneId.of("Europe/Paris"), {}, {}) }
+                }
+            }
+        }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("attendance-list").fetchSemanticsNodes().isNotEmpty() }
+        if (end) compose.onNodeWithTag("attendance-list").performScrollToNode(hasTestTag("attendance-course-${data.courses.last().id}"))
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_attendance_${if (empty) "empty" else if (end) "end" else "main"}_font${scale.toInt()}.png")
+    }
     @Test fun light_today_end_font1() = captureTodayLower("light", 1f, true)
     @Test fun light_today_end_font2() = captureTodayLower("light", 2f, true)
     @Test fun dark_today_end_font1() = captureTodayLower("dark", 1f, true)
@@ -59,7 +110,7 @@ abstract class ScreenScreenshotTest {
             }
         }
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("today-list").performScrollToNode(hasText(if (end) "Next 7 days" else "Today's sessions"))
+        compose.onNodeWithTag("today-list").performScrollToNode(if (end) hasText("of class,", substring = true) else hasText("Today's sessions"))
         compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_today_${if (end) "end" else "lower"}_font${scale.toInt()}.png")
     }
     @Test fun light_signin_font1() = capture("light", "signin", 1f)

@@ -76,7 +76,9 @@ class PaletteDispatchTest {
             val before = repo.snapshot.value!!
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot check habit\"}"))
             vm.dispatch(PaletteAction.CheckHabit(1, "2026-11-02", 0)); advanceUntilIdle()
-            assertEquals("/api/habits/1/log", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            var failedHabitRequest: okhttp3.mockwebserver.RecordedRequest? = null
+            repeat(500) { if (failedHabitRequest == null) { runCurrent(); failedHabitRequest = server.takeRequest(10, TimeUnit.MILLISECONDS) } }
+            assertEquals("/api/habits/1/log", failedHabitRequest!!.path)
             repeat(100) { if (repo.error.value == null) { Thread.sleep(10); runCurrent() } }
             assertEquals("Cannot check habit", repo.error.value)
             assertEquals(before.habits, repo.snapshot.value!!.habits)
