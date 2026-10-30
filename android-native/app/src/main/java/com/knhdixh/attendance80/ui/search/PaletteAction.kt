@@ -15,4 +15,6 @@ sealed interface PaletteAction {
     @Serializable data class SyncCalendar(val id: Long) : PaletteAction
     @Serializable data class AddHabit(val input: String) : PaletteAction
     @Serializable data class AddCountdown(val input: String) : PaletteAction
+    @Serializable data class CourseField(val id: Long, val field: String, val value: String) : PaletteAction
+    @Serializable data class CourseGroups(val ids: List<Long>, val selected: Long?) : PaletteAction
 }

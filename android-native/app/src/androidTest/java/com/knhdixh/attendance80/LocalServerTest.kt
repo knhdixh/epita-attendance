@@ -167,6 +167,14 @@ class LocalServerTest {
         openLink("a80://course/$courseId")
         waitText("GR1 - E2E Algorithms")
         waitTitle("Course")
+        waitText("Default tag: Normal")
+        ui.onNodeWithText("Default tag: Normal").performClick()
+        ui.onNodeWithText("Mandatory").performClick()
+        waitText("Default tag: Mandatory")
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.courses?.find { it.id == courseId }?.tag == "mandatory" && !app.container.dataRepository.loading.value }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val persistedCourses = dataFromServer().getJSONArray("courses")
+        assertEquals("mandatory", (0 until persistedCourses.length()).map { persistedCourses.getJSONObject(it) }.first { it.getLong("id") == courseId }.getString("tag"))
         openLink("a80://today")
         waitText("E2E shared lecture")
         // Orchestrator destroys this process after this method. The next test launches the app offline.

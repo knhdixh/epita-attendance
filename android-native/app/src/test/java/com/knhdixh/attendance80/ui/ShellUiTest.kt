@@ -37,8 +37,10 @@ class ShellUiTest {
         var data by mutableStateOf(empty)
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = route,
             now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText(emptyText).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText(emptyText).assertExists()
         compose.runOnIdle { data = populated }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText(populatedText).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText(populatedText).assertExists()
     }
     @Test fun today() {
@@ -65,7 +67,14 @@ class ShellUiTest {
     @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun sessionDetail() = content("session/1", "No sessions match.", "Mathématiques")
-    @Test fun courseDetail() = content("course/1", "No tracked courses.", "Mathématiques")
+    @Test fun courseDetail() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "course/1", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Course not found.").fetchSemanticsNodes().isNotEmpty() }
+        compose.runOnIdle { data = populated }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Mathématiques").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("course-detail").assertIsDisplayed()
+    }
     @Test fun newHomeworkRoute() = content("homework/new", "Nothing due.", "Maths Exercise 4")
     @Test fun pendingRouteIsRetainedUntilRefreshSucceeds() {
         var state by mutableStateOf(ShellState(data = populated))

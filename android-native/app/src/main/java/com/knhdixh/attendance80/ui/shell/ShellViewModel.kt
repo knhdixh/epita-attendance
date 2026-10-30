@@ -47,6 +47,23 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         val repo = container.dataRepository
         val api = container.api
         when (action) {
+            is PaletteAction.CourseField -> {
+                val change: (com.knhdixh.attendance80.net.AppData) -> com.knhdixh.attendance80.net.AppData = { d ->
+                    d.copy(courses = d.courses.map { c -> if (c.id != action.id) c else when (action.field) {
+                        "tracked" -> c.copy(tracked = action.value == "true")
+                        "tag" -> c.copy(tag = action.value)
+                        "recording_url" -> c.copy(recording_url = action.value.trim().ifEmpty { null })
+                        else -> c
+                    } })
+                }
+                val body = buildJsonObject { if (action.field == "tracked") put(action.field, action.value == "true") else put(action.field, action.value) }
+                repo.mutate(change, { api.updateCourse(action.id, body) }, { d, _ -> d }, reload = true)
+            }
+            is PaletteAction.CourseGroups -> {
+                val updates = action.ids.map { com.knhdixh.attendance80.net.CourseTrackedUpdate(it, it == action.selected) }
+                repo.mutate({ d -> d.copy(courses = d.courses.map { c -> updates.find { it.id == c.id }?.let { c.copy(tracked = it.tracked) } ?: c }) },
+                    { api.updateCoursesTracked(com.knhdixh.attendance80.net.CourseTrackedBulkRequest(updates)) }, { d, _ -> d }, reload = true)
+            }
             is PaletteAction.BulkAttendance -> repo.mutate(
                 optimistic = { d -> d.copy(events = d.events.map { if (it.id in action.ids) it.copy(status = "present") else it }) },
                 request = { api.bulkAttendance(buildJsonObject { put("ids", JsonArray(action.ids.map(::JsonPrimitive))); put("status", "present") }) },
