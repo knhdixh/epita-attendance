@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | In progress: data/scope/background committed; shell/navigation/search worker running | 0 | — | Worker data checks 72/72; whole-phase review pending |
+| 3 | In progress: shell/search committed with documented parity gaps; device harness being completed | 0 | — | Worker 218/218 and 136 PNGs; independent whole-phase review pending |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -58,4 +58,13 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 - Shell task committed as `ebf369e`; navigation/shortcuts/deep-link handling and search are being completed. Live shell handle 63939, log `/tmp/epita-native-night/phase-3-shell-resume-worker.log`, Codex session `01a18ab9-3112-7c13-93bd-c8c3ae4c7d68`.
 - Interim visual inspection found default Material purple navigation/card styling and poor 200% footer wrapping. Revalidate against final PNGs during the whole-phase review; no Phase 3 PASS or merge is claimed.
 
-Current position: Phase 2b merged and native/night verified building; Phase 3 shell/navigation/search implementation is running. The managed-device/local-server harness follows; later phases remain pending.
+
+## Phase 3 shell and harness continuation
+
+- Shell/navigation/search split committed `ebf369e`, `74dd6c4`, `cd51b84`; log `960d3f3`. Worker reports 218 passing Android tests, lint, debug assembly and unfiltered verification of 136 PNGs; npm 104/104. Task 5 is explicitly incomplete: recent searches, natural-language fallback and several calendar/attendance/habit/focus palette actions remain. New-item entries currently open read-only routes; real forms/controllers are not claimed.
+- Reviewer has inspected all 68 phone PNGs at these source hashes; tablet review remains pending. Review manifest with filenames and SHA256: `/tmp/epita-native-night/phase3-image-review.json`; contact sheets `phase3-phone-sheet-00.jpg` through `11.jpg`, and tablet sheets `00` through `16`. Final phone tokens/flat rows and adaptive large-font navigation corrected the earlier purple/footer issues. Source review still needs pending-link offline lifecycle, NavHost architecture, device-locale formatting and stable list keys checked.
+- Harness partial commit `d201d03`: managed-device profile plus isolated local server/seed smoke. Actual local HTTP acquisition succeeded for seeded data and cleanup left port8787 free. No instrumented tests were implemented in that run; normal e2e deliberately fails rather than claiming an empty test APK passes.
+- Initial managed-device provisioning was interrupted while preparing Android Emulator37.2.13; this is NOT proof that the Mac cannot run it. Root checked that no provisioning process remained. Resumed harness session `01a18ad7-6fa6-7530-b9f9-76ed72d80572`, live shell handle67965, log `/tmp/epita-native-night/phase-3-e2e-resume-worker.log`, with real test implementation and a definitive provisioning attempt required.
+- No Phase3 review verdict or fix rounds yet; initial implementation and review evidence remain incomplete. No Phase3 merge.
+
+Current position: Phase2b merged and native/night verified building; Phase3 harness worker is live, completing real instrumented tests and device provisioning. Tablet screenshot review and whole-phase review/fixes remain; later phases are pending.
