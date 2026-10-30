@@ -5,7 +5,7 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | In progress: shell/search committed with documented parity gaps; device harness being completed | 0 | — | Worker 218/218 and 136 PNGs; independent whole-phase review pending |
+| 3 | FIX: initial whole-phase review; fix round1 starting | 1 started | — | Independent npm104/104; Android218/218, lint/app+test assembly,136 PNGs/full verify; local smoke and2/2 instrumented e2e pass |
 | 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
@@ -31,7 +31,7 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 
 ## Unverified
 
-- Phase 3 managed-device and local-server end-to-end harness has not yet been introduced or run.
+- Phase3 device/local-server harness now passes independently; actual browser/passkey/Google flow and physical-device behavior remain unverified.
 - No physical-device or release/TWA replacement claim is made.
 
 ## Decisions and owner questions
@@ -85,3 +85,13 @@ Current position: Phase 2b remains the only merged phase, verified building on n
 - On the user's active-goal continuation, reviewer checked live time07:52UTC/08:52Paris (2026-10-30), past the stated reset. No live Codex/Gradle wrapper remained. Stopped only orphan local-server process group20976 (temporary a80-e2e.TyPTKybS) and its owned emulator21114; port8787 is free. Resumed the same Terra session after reset, live shell55539, log `/tmp/epita-native-night/phase-3-e2e-second-resume-worker.log`. This is continuation after quota reset, not another model or quota bypass.
 
 Current position: Phase2b is the only accepted merge. Phase3 harness source and real test completion are still being finished by the resumed Terra worker; all136 current PNGs reviewed. Formal Phase3 verdict/fixes and later phases remain pending.
+
+
+## Phase 3 initial whole-phase review: FIX
+
+- Harness completed as `cb8444d`, worker terminal exit0; branch source clean before reviewer checks. Independent reviewer `npm test`:104/104. Reviewer Android unit/lint/app+test assembly/unfiltered screenshot verify passed21s,218 tests with0 failures/errors/skips:23 golden,25 ordinary JVM,2 other Robolectric,1 Robolectric ViewModel,31 Compose interaction/integration,136 screenshots. All136 source PNG hashes match the visually inspected manifest.
+- Independent local smoke passed: real48-event semester, both group memberships/shared lecture and all seeded entity categories. Independent full `tools/e2e.sh` passed1m57s with69 tasks executed. Fresh managed-device XML has2 passing tests,0 failures/errors/skips: actual localPKCE/shell/scope/search/links and cached offline restart in a different process. Both8787/8788 free afterward. Browser launch is intercepted; actual Custom Tab login remains Needs a device. Reviewer logs `/tmp/epita-native-night/review-3-final-{npm,gradle}.log`, `review-3-e2e-{smoke,device}.log`.
+- `docs/native-android-review-3.md` verdictFIX: finish palette/catalog/dispatch/recents/fallback contract, prevent cached offline link replay after Back/recreation, restore planned NavHost, device-locale dates, stable list identity and native-appropriate empty guidance. Future forms/controllers remain in Phases4/5, with preserved action payload seams required now. NoPhase3 merge.
+- Latest native/night source independently checked again:62 tests,0 failures/errors/skips, lint/debug assembly/full verify passed10s (up-to-date tasks reused where applicable); source remains accepted Phase2b. main unchanged at e97f6ca.
+
+Current position: Phase2b merged and native/night verified building; Phase3 initial review isFIX and first fix round is starting. Phase3 code/screenshot/harness evidence is recorded, noPhase3 merge; later phases remain pending.
