@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
@@ -87,7 +88,7 @@ abstract class ShellScreenshotTest {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
                 Attendance80Theme(darkTheme = theme == "dark") {
-                    val data = screenshotData().copy(calendars = listOf(
+                    val data = todayScreenshotData().copy(calendars = listOf(
                         com.knhdixh.attendance80.net.CalendarDto(1, "link", "First"),
                         com.knhdixh.attendance80.net.CalendarDto(2, "link", "Second")))
                     Shell(ShellState(data = data, selected = listOf(1)), {}, { selected = it }, {},
@@ -96,6 +97,7 @@ abstract class ShellScreenshotTest {
             }
         }
         compose.mainClock.advanceTimeBy(500)
+        compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false
         compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_scope_font${scale.toInt()}.png")
         compose.onNodeWithText("Second").performScrollTo().performClick()
         compose.runOnIdle { org.junit.Assert.assertEquals("2", selected) }

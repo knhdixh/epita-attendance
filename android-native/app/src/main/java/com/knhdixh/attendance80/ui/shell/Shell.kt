@@ -183,7 +183,8 @@ fun Shell(
                                 if (pendingRoute != null) onPendingConsumed()
                                 navController.popBackStack()
                             }
-                            ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
+                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
+                            else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
                         }
                     }
                 }

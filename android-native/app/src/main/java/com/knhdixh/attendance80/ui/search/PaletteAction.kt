@@ -10,6 +10,7 @@ sealed interface PaletteAction {
     @Serializable data class CopyFeed(val url: String) : PaletteAction
     @Serializable data class SessionSearch(val query: String) : PaletteAction
     @Serializable data class BulkAttendance(val ids: List<Long>) : PaletteAction
+    @Serializable data class ToggleHomework(val id: Long, val done: Boolean) : PaletteAction
     @Serializable data class CheckHabit(val id: Long, val day: String, val count: Int) : PaletteAction
     @Serializable data class SyncCalendar(val id: Long) : PaletteAction
     @Serializable data class AddHabit(val input: String) : PaletteAction

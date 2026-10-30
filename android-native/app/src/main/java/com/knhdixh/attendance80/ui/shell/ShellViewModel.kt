@@ -51,6 +51,10 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
                 request = { api.bulkAttendance(buildJsonObject { put("ids", JsonArray(action.ids.map(::JsonPrimitive))); put("status", "present") }) },
                 apply = { d, _ -> d }, reload = true)
             is PaletteAction.SyncCalendar -> repo.mutate({ it }, { api.syncCalendar(action.id) }, { d, _ -> d }, reload = true)
+            is PaletteAction.ToggleHomework -> repo.mutate(
+                { d -> d.copy(homework = d.homework.map { if (it.id == action.id) it.copy(done = action.done) else it }) },
+                { api.updateHomework(action.id, buildJsonObject { put("done", action.done) }) },
+                { d, h -> d.copy(homework = d.homework.map { if (it.id == h.id) h else it }) })
             is PaletteAction.CheckHabit -> repo.mutate({ d -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == action.id && it.day == action.day } + com.knhdixh.attendance80.net.HabitLogDto(action.id, action.day, action.count))) }, { api.logHabit(action.id, HabitLogRequest(action.day, action.count)) },
                 { d, log -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == log.habit_id && it.day == log.day } + log)) })
             is PaletteAction.AddHabit -> {

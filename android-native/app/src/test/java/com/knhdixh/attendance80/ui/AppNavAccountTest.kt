@@ -62,7 +62,7 @@ class AppNavAccountTest {
                 override val authRepository = auth
                 override val calendarScope = Scope(store)
             }
-            val fixture = javaClass.getResource("/api/data.json")!!.readText()
+            val fixture = javaClass.getResource("/api/data.json")!!.readText().replace("\"status\": \"absent\"", "\"status\": \"present\"")
             runBlocking { repo.start(); server.enqueue(MockResponse().setBody(fixture)); Assert.assertTrue(repo.refresh()) }
             server.enqueue(MockResponse().setResponseCode(500))
             val signIn = SignInViewModel(auth, SavedStateHandle())
@@ -99,6 +99,8 @@ class AppNavAccountTest {
             compose.onNodeWithTag("shell-title").assertTextEquals("Today")
             compose.onNodeWithText("This action is not available yet.").assertDoesNotExist()
             compose.onNodeWithText("Mathématiques").assertDoesNotExist()
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("today-list").performScrollToNode(hasText("Account B class"))
             compose.onNodeWithText("Account B class").assertExists()
             compose.onNode(hasText("Focus") and hasClickAction()).performClick()
             compose.onNodeWithTag("shell-title").assertTextEquals("Focus")

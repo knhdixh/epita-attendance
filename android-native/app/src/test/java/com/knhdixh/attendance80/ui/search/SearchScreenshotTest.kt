@@ -8,7 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.knhdixh.attendance80.ui.screenshotData
+import com.knhdixh.attendance80.ui.todayScreenshotData
 import com.knhdixh.attendance80.ui.shell.Shell
 import com.knhdixh.attendance80.ui.shell.ShellState
 import com.knhdixh.attendance80.ui.theme.Attendance80Theme
@@ -36,13 +36,14 @@ abstract class SearchScreenshotTest {
                 Attendance80Theme(darkTheme = theme == "dark") {
                     baseline = rememberTextMeasurer().measure("Search", style = MaterialTheme.typography.titleLarge,
                         density = Density(density.density, 1f)).size.height
-                    Shell(ShellState(data = screenshotData()), {}, {}, {}, now = 1793600000000,
+                    Shell(ShellState(data = todayScreenshotData()), {}, {}, {}, now = 1793600000000,
                         zone = java.time.ZoneId.of("Europe/Paris"))
                 }
             }
         }
         compose.onNodeWithContentDescription("Search").performClick()
         compose.mainClock.advanceTimeBy(500)
+        compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false
         if (scale == 2f) {
             val height = compose.onNodeWithTag("search-title").fetchSemanticsNode().boundsInRoot.height
             assertTrue("200% font must increase search title ($height vs $baseline)", height > baseline)

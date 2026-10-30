@@ -11,6 +11,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -38,6 +41,27 @@ abstract class ScreenScreenshotTest {
     abstract val device: String
     @get:Rule val compose = createComposeRule()
 
+    @Test fun light_today_end_font1() = captureTodayLower("light", 1f, true)
+    @Test fun light_today_end_font2() = captureTodayLower("light", 2f, true)
+    @Test fun dark_today_end_font1() = captureTodayLower("dark", 1f, true)
+    @Test fun dark_today_end_font2() = captureTodayLower("dark", 2f, true)
+    @Test fun light_today_lower_font1() = captureTodayLower("light", 1f)
+    @Test fun light_today_lower_font2() = captureTodayLower("light", 2f)
+    @Test fun dark_today_lower_font1() = captureTodayLower("dark", 1f)
+    @Test fun dark_today_lower_font2() = captureTodayLower("dark", 2f)
+    private fun captureTodayLower(theme: String, scale: Float, end: Boolean = false) {
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+                Attendance80Theme(darkTheme = theme == "dark") {
+                    Shell(ShellState(data = todayScreenshotData()), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
+                }
+            }
+        }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("today-list").performScrollToNode(hasText(if (end) "Next 7 days" else "Today's sessions"))
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_today_${if (end) "end" else "lower"}_font${scale.toInt()}.png")
+    }
     @Test fun light_signin_font1() = capture("light", "signin", 1f)
     @Test fun light_signin_font2() = capture("light", "signin", 2f)
     @Test fun light_loading_font1() = capture("light", "loading", 1f)
@@ -66,7 +90,7 @@ abstract class ScreenScreenshotTest {
                     normalSignInHeight = measurer.measure("Attendance80", style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold), density = Density(density.density, 1f)).size.height
                     normalShellHeight = measurer.measure("Today", style = MaterialTheme.typography.titleLarge, density = Density(density.density, 1f)).size.height
                     Surface {
-                        if (screen == "shell") Shell(ShellState(data = screenshotData()), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
+                        if (screen == "shell") Shell(ShellState(data = todayScreenshotData()), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
                         else SignInContent(
                             SignInUiState(config = AuthConfigResponse(google = true, signup = true, dev = true),
                                 isLoading = screen == "loading", showCreateAccountDialog = screen == "dialog"),
@@ -78,6 +102,7 @@ abstract class ScreenScreenshotTest {
             }
         }
         compose.mainClock.advanceTimeBy(500)
+        if (screen == "shell") { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
         if (screen == "signin" || screen == "shell") {
             val label = if (screen == "signin") "Attendance80" else "Today"
             val height = if (screen == "shell") compose.onNodeWithTag("shell-title").fetchSemanticsNode().boundsInRoot.height else compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot.height
@@ -113,3 +138,10 @@ class TabletScreenshotTest : ScreenScreenshotTest() { override val device = "tab
 fun screenshotData(): com.knhdixh.attendance80.net.AppData = ApiClient.json.decodeFromString(
     object {}.javaClass.getResource("/api/data.json")!!.readText()
 )
+
+fun todayScreenshotData(): com.knhdixh.attendance80.net.AppData {
+    val data = screenshotData()
+    val now = 1793600000000L
+    return data.copy(events = data.events.map { it.copy(status = null) },
+        homework = data.homework.mapIndexed { index, h -> h.copy(due_date = "2026-11-02", due_time = "09:13", due_at = now + (index + 2) * 3600000L, done = false) })
+}

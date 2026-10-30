@@ -41,7 +41,15 @@ class ShellUiTest {
         compose.runOnIdle { data = populated }
         compose.onNodeWithText(populatedText).assertExists()
     }
-    @Test fun today() = content("today", "No classes today.", "Mathématiques")
+    @Test fun today() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Nothing due in the next 7 days.").fetchSemanticsNodes().isNotEmpty() }
+        compose.runOnIdle { data = populated.copy(events = populated.events.map { it.copy(status = "present") }) }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Do next").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("today-list").performScrollToNode(hasText("Mathématiques"))
+        compose.onNodeWithText("Mathématiques").assertExists()
+    }
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
     @Test fun homework() = content("homework", "Nothing due.", "Maths Exercise 4")
     @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
@@ -109,7 +117,7 @@ class ShellUiTest {
         var refreshes = 0
         var state by mutableStateOf(ShellState(data = populated))
         compose.setContent { Attendance80Theme { Shell(state, { refreshes++ }, {}, {}) } }
-        compose.onNodeWithText("Classes").performTouchInput { swipeDown(startY = 0f, endY = 500f) }
+        compose.onNodeWithTag("today-list").performTouchInput { swipeDown(startY = 0f, endY = 500f) }
         compose.runOnIdle { assertEquals(1, refreshes); state = state.copy(error = "Try again") }
         compose.onNodeWithText("Try again").assertIsDisplayed()
     }

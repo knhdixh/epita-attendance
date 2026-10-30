@@ -73,6 +73,19 @@ class PaletteDispatchTest {
                 Thread.sleep(10); runCurrent()
             }
             assertEquals(2, repo.snapshot.value!!.habits.logs.single { it.habit_id == 1L && it.day == "2026-11-02" }.count)
+            val before = repo.snapshot.value!!
+            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot check habit\"}"))
+            vm.dispatch(PaletteAction.CheckHabit(1, "2026-11-02", 0)); advanceUntilIdle()
+            assertEquals("/api/habits/1/log", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            repeat(100) { if (repo.error.value == null) { Thread.sleep(10); runCurrent() } }
+            assertEquals("Cannot check habit", repo.error.value)
+            assertEquals(before.habits, repo.snapshot.value!!.habits)
+            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot complete homework\"}"))
+            vm.dispatch(PaletteAction.ToggleHomework(1, true)); advanceUntilIdle()
+            assertEquals("/api/homework/1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            repeat(100) { if (repo.error.value != "Cannot complete homework") { Thread.sleep(10); runCurrent() } }
+            assertEquals("Cannot complete homework", repo.error.value)
+            assertEquals(before.homework, repo.snapshot.value!!.homework)
             server.enqueue(MockResponse().setBody("{\"updated\":1}")); server.enqueue(MockResponse().setBody(fixture))
             vm.dispatch(PaletteAction.BulkAttendance(listOf(1))); advanceUntilIdle()
             val bulk = server.takeRequest(5, TimeUnit.SECONDS)!!
