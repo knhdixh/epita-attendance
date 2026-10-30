@@ -124,6 +124,9 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
             Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
                 shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
                 pendingRoute = pendingRoute, onPendingConsumed = pendingRouteViewModel::clear,
+                onValidatePending = { route ->
+                    if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
+                },
                 now = now, zone = shellViewModel.clock.zone())
         }
     }

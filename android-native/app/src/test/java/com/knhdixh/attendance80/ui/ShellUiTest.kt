@@ -44,17 +44,23 @@ class ShellUiTest {
     @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
+    @Test fun homeworkDetail() = content("homework/1", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
+    @Test fun habitDetail() = content("habits/1", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
+    @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
+    @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
+    @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun sessionDetail() = content("session/1", "No sessions match.", "Mathématiques")
     @Test fun courseDetail() = content("course/1", "No tracked courses.", "Mathématiques")
     @Test fun newHomeworkRoute() = content("homework/new", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
     @Test fun pendingRouteIsRetainedUntilRefreshSucceeds() {
         var state by mutableStateOf(ShellState(data = populated))
         var consumed = 0
-        compose.setContent { Attendance80Theme { Shell(state, {}, {}, {}, pendingRoute = "session/1", onPendingConsumed = { consumed++ }) } }
+        var validated = ""
+        compose.setContent { Attendance80Theme { Shell(state, {}, {}, {}, pendingRoute = "session/1", onPendingConsumed = { consumed++ }, onValidatePending = { validated = it }) } }
         compose.onNodeWithTag("shell-title").assertTextEquals("Session")
-        compose.runOnIdle { assertEquals(0, consumed); state = state.copy(lastSynced = 1) }
+        compose.runOnIdle { assertEquals(0, consumed); assertEquals("", validated); state = state.copy(session = "token", lastSynced = 1) }
         compose.waitForIdle()
-        compose.runOnIdle { assertEquals(1, consumed) }
+        compose.runOnIdle { assertEquals(0, consumed); assertEquals("session/1", validated) }
     }
     @Test fun breaks() = content("breaks", "Saved breaks", "All Saints Break")
     @Test fun settings() = content("settings", "newuser", "student")

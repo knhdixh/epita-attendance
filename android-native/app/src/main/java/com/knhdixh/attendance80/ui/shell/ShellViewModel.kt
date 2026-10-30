@@ -28,6 +28,11 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     val clock get() = container.clock
 
     fun refresh() { viewModelScope.launch { container.dataRepository.refresh() } }
+    suspend fun validatePendingSession(): Boolean {
+        val token = container.tokenStore.currentToken() ?: return false
+        val refreshed = container.dataRepository.refresh()
+        return refreshed && container.tokenStore.currentToken() == token
+    }
     fun toggleScope(value: String) {
         val calendars = container.dataRepository.snapshot.value?.calendars ?: return
         viewModelScope.launch { container.calendarScope.toggle(value, calendars) }

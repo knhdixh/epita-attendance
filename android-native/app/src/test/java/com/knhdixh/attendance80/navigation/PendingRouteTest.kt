@@ -13,6 +13,8 @@ class PendingRouteTest {
         assertEquals("session/42", beforeSignIn.pending.value)
         val restored = PendingRouteViewModel(saved)
         assertEquals("session/42", restored.pending.value)
+        restored.clearIfMatches("session/41")
+        assertEquals("session/42", restored.pending.value)
         restored.clear()
         assertNull(PendingRouteViewModel(saved).pending.value)
     }

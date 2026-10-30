@@ -66,6 +66,40 @@ abstract class ShellScreenshotTest {
     @Test fun dark_course() = capture("dark", "course/1", 1f)
     @Test fun light_homework_new() = capture("light", "homework/new", 1f)
     @Test fun dark_homework_new() = capture("dark", "homework/new", 1f)
+    @Test fun light_homework_detail() = capture("light", "homework/1", 1f)
+    @Test fun light_habit_detail() = capture("light", "habits/1", 1f)
+    @Test fun light_countdown_detail() = capture("light", "countdowns/1", 1f)
+    @Test fun light_habit_new() = capture("light", "habits/new", 1f)
+    @Test fun light_countdown_new() = capture("light", "countdowns/new", 1f)
+    @Test fun dark_homework_detail() = capture("dark", "homework/1", 1f)
+    @Test fun dark_habit_detail() = capture("dark", "habits/1", 1f)
+    @Test fun dark_countdown_detail() = capture("dark", "countdowns/1", 1f)
+    @Test fun dark_habit_new() = capture("dark", "habits/new", 1f)
+    @Test fun dark_countdown_new() = capture("dark", "countdowns/new", 1f)
+    @Test fun light_scope() = captureScope("light", 1f)
+    @Test fun dark_scope() = captureScope("dark", 1f)
+    @Test fun light_scope_large() = captureScope("light", 2f)
+    @Test fun dark_scope_large() = captureScope("dark", 2f)
+    private fun captureScope(theme: String, scale: Float) {
+        var selected = ""
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+                Attendance80Theme(darkTheme = theme == "dark") {
+                    val data = screenshotData().copy(calendars = listOf(
+                        com.knhdixh.attendance80.net.CalendarDto(1, "link", "First"),
+                        com.knhdixh.attendance80.net.CalendarDto(2, "link", "Second")))
+                    Shell(ShellState(data = data, selected = listOf(1)), {}, { selected = it }, {},
+                        now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
+                }
+            }
+        }
+        compose.mainClock.advanceTimeBy(500)
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_scope_font${scale.toInt()}.png")
+        compose.onNodeWithText("Second").performScrollTo().performClick()
+        compose.runOnIdle { org.junit.Assert.assertEquals("2", selected) }
+    }
     private fun capture(theme: String, route: String, scale: Float) {
         val title = route.replaceFirstChar { it.uppercase() }
         var baseline = 0

@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.knhdixh.attendance80.net.AppData
+import com.knhdixh.attendance80.ui.search.SearchSheet
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -54,6 +55,7 @@ fun Shell(
     initialRoute: String = "today",
     pendingRoute: String? = null,
     onPendingConsumed: () -> Unit = {},
+    onValidatePending: suspend (String) -> Unit = {},
     now: Long = System.currentTimeMillis(),
     zone: ZoneId = ZoneId.systemDefault(),
 ) {
@@ -63,19 +65,29 @@ fun Shell(
         history = if (topLevel) listOf(destination) else history + destination
         if (pendingRoute != null) onPendingConsumed()
     }
-    LaunchedEffect(pendingRoute) {
-        if (pendingRoute != null) history = if (pendingRoute == "today") listOf("today") else listOf("today", pendingRoute)
+    fun signOut() {
+        if (pendingRoute != null) onPendingConsumed()
+        onSignOut()
     }
-    LaunchedEffect(pendingRoute, state.lastSynced) {
-        if (pendingRoute != null && state.lastSynced != null) onPendingConsumed()
+    LaunchedEffect(pendingRoute, state.session) {
+        if (pendingRoute != null) {
+            history = if (pendingRoute == "today") listOf("today") else listOf("today", pendingRoute)
+            if (state.session != null) onValidatePending(pendingRoute)
+        }
     }
     BackHandler(enabled = history.size > 1) { history = history.dropLast(1) }
+    var showSearch by rememberSaveable { mutableStateOf(false) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
         route.startsWith("session/") -> "Session"
         route.startsWith("course/") -> "Course"
         route == "homework/new" -> "Add homework"
+        route.startsWith("homework/") -> "Homework"
+        route == "habits/new" -> "New habit"
+        route.startsWith("habits/") -> "Habits"
+        route == "countdowns/new" -> "New countdown"
+        route.startsWith("countdowns/") -> "Countdowns"
         else -> (destinations + more).find { it.route == route }?.label ?: "Today"
     }
     val snack = remember { SnackbarHostState() }
@@ -83,14 +95,16 @@ fun Shell(
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(title = { Text(title, modifier = Modifier.testTag("shell-title")) })
+                TopAppBar(title = { Text(title, modifier = Modifier.testTag("shell-title")) }, actions = {
+                    IconButton(onClick = { showSearch = true }) { Icon(Icons.Outlined.Search, contentDescription = "Search") }
+                })
                 if ((state.data?.calendars?.size ?: 0) >= 2) {
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Count", modifier = Modifier.padding(top = 10.dp))
-                        FilterChip(selected = state.selected.isEmpty(), onClick = { onScope("all") }, label = { Text("All") })
+                        FilterChip(selected = state.selected.isEmpty(), onClick = { onScope("all") }, label = { Text("All") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
                         state.data?.calendars?.forEach { calendar ->
-                            FilterChip(selected = calendar.id in state.selected, onClick = { onScope(calendar.id.toString()) }, label = { Text(calendar.name) })
+                            FilterChip(selected = calendar.id in state.selected, onClick = { onScope(calendar.id.toString()) }, label = { Text(calendar.name) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
                         }
                     }
                 }
@@ -127,10 +141,12 @@ fun Shell(
                 }
             }
             PullToRefreshBox(isRefreshing = state.loading, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                ShellContent(route, state.data, now, zone, onNavigate = { navigate(it) }, onSignOut = onSignOut)
+                ShellContent(route, state.data, now, zone, onNavigate = { navigate(it) }, onSignOut = ::signOut)
             }
         }
     }
+    if (showSearch) SearchSheet(state.data, onDismiss = { showSearch = false },
+        onRoute = { navigate(it) }, onSignOut = ::signOut)
 }
 
 private data class RowData(val title: String, val detail: String = "", val route: String? = null)
@@ -151,10 +167,13 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         route == "courses" -> courses.map { RowData(it.name, route = "course/${it.id}") }
         route == "focus" -> data?.focus?.sessions.orEmpty().map { RowData(it.label ?: "Focus", date(it.started_at, zone)) }
         route == "settings" -> data?.user?.let { listOf(RowData(it.name ?: it.email.orEmpty(), it.email.orEmpty())) }.orEmpty()
-        (route == "homework" || route == "homework/new") -> data?.homework.orEmpty().map { RowData(it.title, it.due_date.orEmpty()) }
+        (route == "homework" || route == "homework/new") -> data?.homework.orEmpty().map { RowData(it.title, it.due_date.orEmpty(), "homework/${it.id}") }
+        route.startsWith("homework/") -> data?.homework.orEmpty().filter { "homework/${it.id}" == route }.map { RowData(it.title, listOfNotNull(it.due_date, it.notes.takeIf(String::isNotBlank)).joinToString(" · ")) }
         route == "breaks" -> data?.breaks.orEmpty().map { RowData(it.label, "${it.start_date} – ${it.end_date}") }
-        route == "habits" -> data?.habits?.list.orEmpty().filterNot { it.archived }.map { RowData(it.name) }
-        route == "countdowns" -> data?.countdowns.orEmpty().map { RowData(it.title, date(it.at, zone)) }
+        route == "habits" || route == "habits/new" -> data?.habits?.list.orEmpty().filterNot { it.archived }.map { RowData(it.name, route = "habits/${it.id}") }
+        route.startsWith("habits/") -> data?.habits?.list.orEmpty().filter { "habits/${it.id}" == route }.map { RowData(it.name) }
+        route == "countdowns" || route == "countdowns/new" -> data?.countdowns.orEmpty().map { RowData(it.title, date(it.at, zone), "countdowns/${it.id}") }
+        route.startsWith("countdowns/") -> data?.countdowns.orEmpty().filter { "countdowns/${it.id}" == route }.map { RowData(it.title, date(it.at, zone)) }
         route.startsWith("session/") -> events.filter { "session/${it.id}" == route }.map { RowData(it.summary, listOf(date(it.start_at, zone), it.location).filter { s -> s.isNotBlank() }.joinToString(" · ")) }
         route.startsWith("course/") -> courses.filter { "course/${it.id}" == route }.map { RowData(it.name) }
         else -> emptyList()
@@ -162,14 +181,17 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
     val empty = when {
         route.startsWith("session/") -> "No sessions match."
         route.startsWith("course/") -> "No tracked courses."
+        route.startsWith("homework/") && route != "homework/new" -> "Nothing due. Press Q to add homework."
+        route.startsWith("habits/") && route != "habits/new" -> "Build habits that stick. Add one, tick it off each day, and watch the grid fill in."
+        route.startsWith("countdowns/") && route != "countdowns/new" -> "Count down to what matters, or count up from when something began."
         else -> when (route) {
         "today" -> "No classes today."
         "attendance", "courses" -> "No tracked courses."
         "sessions" -> "No sessions match."
         "upcoming", "calendar" -> "Nothing scheduled"
         "homework", "homework/new" -> "Nothing due. Press Q to add homework."
-        "habits" -> "Build habits that stick. Add one, tick it off each day, and watch the grid fill in."
-        "countdowns" -> "Count down to what matters, or count up from when something began."
+        "habits", "habits/new" -> "Build habits that stick. Add one, tick it off each day, and watch the grid fill in."
+        "countdowns", "countdowns/new" -> "Count down to what matters, or count up from when something began."
         "focus" -> "Your focus sessions will show here. Press F to start one."
         else -> ""
         }

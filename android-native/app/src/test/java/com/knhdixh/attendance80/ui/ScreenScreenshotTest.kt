@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -86,6 +87,9 @@ abstract class ScreenScreenshotTest {
         val file = "src/test/screenshots/${device}_${theme}_${screen}_font${scale.toInt()}.png"
         if (screen == "dialog") compose.onNode(isDialog()).captureRoboImage(file)
         else compose.onRoot().captureRoboImage(file)
+        if (screen == "shell" && scale == 2f && device.startsWith("phone")) {
+            compose.onNodeWithContentDescription("More").performClick()
+        }
         if (screen == "signin" && scale == 2f) {
             compose.onNodeWithText("Create an account with a passkey").performScrollTo().assertIsDisplayed().performClick()
             compose.runOnIdle { assertEquals("create", action) }
