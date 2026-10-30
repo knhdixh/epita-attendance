@@ -66,3 +66,6 @@ All four remaining findings are resolved.
 - Logs `/tmp/epita-native-night/review-3-fix2-{npm,gradle,forced-gradle,smoke,device}.log`.
 
 Phase3 framework/data/navigation acceptance does not claim the later screens/controllers: Phase4 must consume saved OpenForm requests for homework/calendar/break/habit/countdown UI and replace unavailable notices; Phase5 must consume Focus command/target payloads and derive visible commands from live timer state; Phase6 must publish widget snapshots when snapshot or lastSynced changes; Phase11 must persist/queue task and habit mutations for offline restart/replay. These are explicit scheduled feature dependencies, not waived final requirements. Phase8 retains the final design/polish audit against section6. All phases remain in the overnight order and no release/physical-device claim is made.
+
+
+Postmerge: `539dc00f26deea9a59f9bb5c8ddf1f5740402c68` on native/night has identical Android source to6947dcd. Reviewer merged-branch unit/lint/app+test assembly/full screenshot verification passed1m17s, all83 tasks executed and244 tests with0 failures/errors/skips. Main unchanged.

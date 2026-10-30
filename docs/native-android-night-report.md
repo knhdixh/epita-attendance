@@ -5,8 +5,9 @@ Run started 2026-10-29; current date 2026-10-30. Parent Codex reviews and orches
 | Phase | Verdict | Fix rounds | Merge commit | Independent checks |
 |---|---|---|---|---|
 | 2b | PASS | 2 | `98b2002` | npm 103/104; 62/62 Android; lint/debug APK and full screenshot verification pass |
-| 3 | PASS after round2; merge pending | 2 | — | Independent npm104/104; fresh244/244 Android, all83 tasks;136 PNG/full verify; real local smoke and2/2 managed-device e2e |
-| 4, 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
+| 3 | PASS, merged | 2 | `539dc00` | Independent npm104/104; fresh244/244 Android, all83 tasks;136 PNG/full verify; real local smoke and2/2 managed-device e2e |
+| 4 | Initial split4a starting: Today, Attendance, Course detail, Courses, Sessions | 0 | — | Whole-phase review after all splits |
+| 5, 6, 7, 8, 10, 11, 12, 13 | Pending, in that order | — | — | Pending |
 | 9 | Skipped by instruction | — | — | Release/TWA replacement belongs to owner/device |
 
 ## Test counts and accepted evidence
@@ -139,3 +140,13 @@ Current position: Phase2b remains the only accepted merge and native/night build
 - Full read-only shell/typed action seams are accepted for Phase3. Detailed forms/screens in4, actual timer controller in5, widget publication in6, durable generalized task/habit outbox in11 and final design audit in8 remain mandatory, with hooks recorded in progress/review. No real external identity-provider/browser/physical-device claim.
 
 Current position: Phase3PASS at6947dcd, two fix rounds; merge into native/night is next, followed by merged-branch verification and Phase4a. Main unchanged; no push/deploy.
+
+
+## Phase 3 merged and verified
+
+- Merge commit `539dc00f26deea9a59f9bb5c8ddf1f5740402c68` on native/night, following reviewerPASS committed as e01d674. Android tree exactly matches accepted6947dcd. Main remains e97f6ca0c9018c7c71cfe53769d475c17284075c.
+- Postmerge in reviewer worktree: `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon` passed1m17s, all83 tasks executed, fresh244 tests0 failures/errors/skips. Log `/tmp/epita-native-night/review-3-postmerge-gradle.log`. No source conflict or unverified merge result.
+- Current accepted screenshot folder `android-native/app/src/test/screenshots/` has136 PNGs: phone411x891dp/tablet840x1000dp, light/dark, sign-in/loading/account dialog, shell destinations/details/new-route notices, Count and Search, with2x main screens and search/scope. Final independently reviewed hashes `/tmp/epita-native-night/fix2-current-reviewed-hashes.json`. Earlier24-PNG index is historical Phase2b evidence.
+- Phase4 will be split in plan order:4aToday/Attendance/Course detail/Courses/Sessions; subsequent splits complete Upcoming/Homework/Focus, Breaks/Settings and8.3Calendar/Habits/Countdowns. Root reviews the wholePhase4 before merge, and all forms/action/controller hook responsibilities remain mandatory in their named phases.
+
+Current position: Phase2b andPhase3 merged; native/night verified building with244 tests. Phase4a initial worker is starting from this accepted branch; noPhase4 merge, main untouched, no push/deploy.
