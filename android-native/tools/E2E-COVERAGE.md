@@ -1,9 +1,9 @@
 # Device test extension checklist
 
-The harness and fixture are incomplete. The local smoke mode checks only real HTTP acquisition of a subset of seeded records. It does not run instrumented tests. The normal command deliberately fails until Phase 3 device coverage exists.
+`tools/e2e.sh --smoke` checks real local HTTP and seed acquisition only. The normal command additionally runs the managed-device tests and checks that both instrumented cases produced passing results. The two cases use Android Test Orchestrator so the offline case starts in a new app process with persisted app data. A local pass-through proxy forwards real API traffic and then closes connections to simulate the server being unreachable.
 
-- Phase 3: implement real local dev sign-in and PKCE callback, each shell destination with seeded data, scope, search, deep links and offline restart using the cached snapshot. Expand the seed into a representative semester with genuinely group-split courses and verify sessions, logs and focus records through the API.
-- Phase 4: exercise attendance marking and homework creation/completion against local D1.
-- Phase 5: exercise timer start, alarm, notification actions and offline outbox replay exactly once.
-- Phase 6: verify the widget snapshot on the managed device.
-- Phase 7: verify class and habit notifications and their actions.
+- Phase 3: local developer PKCE/callback, populated shell destinations, scope, search, deep links and cached offline process restart are covered by `LocalServerTest`; device execution must still be verified.
+- Phase 4: add device tests for marking attendance and creating and completing homework against local D1.
+- Phase 5: add timer start, alarm firing, notification actions and offline outbox replay exactly once.
+- Phase 6: add a managed-device widget snapshot test.
+- Phase 7: add class and habit notification and action tests.
