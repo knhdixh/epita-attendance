@@ -28,6 +28,18 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="a80" android:host="today" />
+                <data android:scheme="a80" android:host="focus" />
+                <data android:scheme="a80" android:host="homework" />
+                <data android:scheme="a80" android:host="session" />
+                <data android:scheme="a80" android:host="course" />
+            </intent-filter>
 
             <!-- Auth callback: com.knhdixh.attendance80:/auth -->
             <intent-filter tools:ignore="AppLinkUrlError">

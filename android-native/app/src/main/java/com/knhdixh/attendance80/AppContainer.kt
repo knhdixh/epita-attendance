@@ -8,10 +8,13 @@ import com.knhdixh.attendance80.auth.EncryptedTokenStore
 import com.knhdixh.attendance80.auth.TokenStore
 import com.knhdixh.attendance80.auth.authDataStore
 import com.knhdixh.attendance80.net.Api
+import com.knhdixh.attendance80.data.DataRepository
+import com.knhdixh.attendance80.data.Scope
 import com.knhdixh.attendance80.net.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 
 interface AppContainer {
     val context: Context
@@ -19,6 +22,8 @@ interface AppContainer {
     val tokenStore: TokenStore
     val api: Api
     val authRepository: AuthRepository
+    val dataRepository: DataRepository
+    val calendarScope: Scope
 }
 
 class DefaultAppContainer(
@@ -42,10 +47,31 @@ class DefaultAppContainer(
             tokenProvider = {
                 kotlinx.coroutines.runBlocking { tokenStore.awaitToken() }
             },
-            onUnauthorized = {
-                scope.launch { tokenStore.clearToken() }
+            onUnauthorized = { rejectedToken ->
+                if (rejectedToken != null) scope.launch { tokenStore.clearTokenIfMatches(rejectedToken) }
             },
         )
+    }
+
+    override val calendarScope: Scope by lazy { Scope(context.authDataStore) }
+
+    override val dataRepository: DataRepository by lazy {
+        DataRepository(api, context.filesDir, clock) { tokenStore.currentToken() }
+    }
+
+    fun startData() {
+        scope.launch {
+            dataRepository.snapshot.collect { data ->
+                if (data != null) calendarScope.reconcile(data.calendars)
+            }
+        }
+        scope.launch {
+            tokenStore.awaitToken()
+            tokenStore.token.collectLatest { token ->
+                dataRepository.start()
+                if (token != null) dataRepository.refresh()
+            }
+        }
     }
 
     override val authRepository: AuthRepository by lazy {

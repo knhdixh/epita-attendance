@@ -1,0 +1,6 @@
+<resources>
+    <string name="shortcut_focus">Focus</string>
+    <string name="shortcut_today">Today</string>
+    <string name="shortcut_homework">Homework</string>
+    <string name="shortcut_add_homework">Add homework</string>
+</resources>

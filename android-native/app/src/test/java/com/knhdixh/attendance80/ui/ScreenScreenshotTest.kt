@@ -10,13 +10,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.knhdixh.attendance80.AuthenticatedPlaceholder
+import com.knhdixh.attendance80.ui.shell.Shell
+import com.knhdixh.attendance80.ui.shell.ShellState
+import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.net.AuthConfigResponse
 import com.knhdixh.attendance80.ui.signin.SignInContent
 import com.knhdixh.attendance80.ui.signin.SignInUiState
@@ -37,20 +41,20 @@ abstract class ScreenScreenshotTest {
     @Test fun light_signin_font1() = capture("light", "signin", 1f)
     @Test fun light_signin_font2() = capture("light", "signin", 2f)
     @Test fun light_loading_font1() = capture("light", "loading", 1f)
-    @Test fun light_placeholder_font1() = capture("light", "placeholder", 1f)
-    @Test fun light_placeholder_font2() = capture("light", "placeholder", 2f)
+    @Test fun light_shell_font1() = capture("light", "shell", 1f)
+    @Test fun light_shell_font2() = capture("light", "shell", 2f)
     @Test fun light_dialog_font1() = capture("light", "dialog", 1f)
     @Test fun dark_signin_font1() = capture("dark", "signin", 1f)
     @Test fun dark_signin_font2() = capture("dark", "signin", 2f)
     @Test fun dark_loading_font1() = capture("dark", "loading", 1f)
-    @Test fun dark_placeholder_font1() = capture("dark", "placeholder", 1f)
-    @Test fun dark_placeholder_font2() = capture("dark", "placeholder", 2f)
+    @Test fun dark_shell_font1() = capture("dark", "shell", 1f)
+    @Test fun dark_shell_font2() = capture("dark", "shell", 2f)
     @Test fun dark_dialog_font1() = capture("dark", "dialog", 1f)
 
     private fun capture(theme: String, screen: String, scale: Float) {
         val dark = theme == "dark"
         var normalSignInHeight = 0
-        var normalPlaceholderHeight = 0
+        var normalShellHeight = 0
         var action = ""
         compose.mainClock.autoAdvance = false
         compose.setContent {
@@ -60,9 +64,9 @@ abstract class ScreenScreenshotTest {
                 Attendance80Theme(darkTheme = dark) {
                     val measurer = rememberTextMeasurer()
                     normalSignInHeight = measurer.measure("Attendance80", style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold), density = Density(density.density, 1f)).size.height
-                    normalPlaceholderHeight = measurer.measure("Welcome to Attendance80", style = MaterialTheme.typography.titleMedium, density = Density(density.density, 1f)).size.height
+                    normalShellHeight = measurer.measure("Today", style = MaterialTheme.typography.titleLarge, density = Density(density.density, 1f)).size.height
                     Surface {
-                        if (screen == "placeholder") AuthenticatedPlaceholder()
+                        if (screen == "shell") Shell(ShellState(data = screenshotData()), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
                         else SignInContent(
                             SignInUiState(config = AuthConfigResponse(google = true, signup = true, dev = true),
                                 isLoading = screen == "loading", showCreateAccountDialog = screen == "dialog"),
@@ -74,15 +78,18 @@ abstract class ScreenScreenshotTest {
             }
         }
         compose.mainClock.advanceTimeBy(500)
-        if (screen == "signin" || screen == "placeholder") {
-            val label = if (screen == "signin") "Attendance80" else "Welcome to Attendance80"
-            val height = compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot.height
-            val baseline = if (screen == "signin") normalSignInHeight else normalPlaceholderHeight
+        if (screen == "signin" || screen == "shell") {
+            val label = if (screen == "signin") "Attendance80" else "Today"
+            val height = if (screen == "shell") compose.onNodeWithTag("shell-title").fetchSemanticsNode().boundsInRoot.height else compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot.height
+            val baseline = if (screen == "signin") normalSignInHeight else normalShellHeight
             if (scale == 2f) assertTrue("200% font must increase text height ($height vs $baseline)", height > baseline)
         }
         val file = "src/test/screenshots/${device}_${theme}_${screen}_font${scale.toInt()}.png"
         if (screen == "dialog") compose.onNode(isDialog()).captureRoboImage(file)
         else compose.onRoot().captureRoboImage(file)
+        if (screen == "shell" && scale == 2f && device.startsWith("phone")) {
+            compose.onNodeWithContentDescription("More").performClick()
+        }
         if (screen == "signin" && scale == 2f) {
             compose.onNodeWithText("Create an account with a passkey").performScrollTo().assertIsDisplayed().performClick()
             compose.runOnIdle { assertEquals("create", action) }
@@ -102,3 +109,7 @@ class PhoneScreenshotTest : ScreenScreenshotTest() { override val device = "phon
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w840dp-h1000dp-mdpi")
 class TabletScreenshotTest : ScreenScreenshotTest() { override val device = "tablet840x1000" }
+
+fun screenshotData(): com.knhdixh.attendance80.net.AppData = ApiClient.json.decodeFromString(
+    object {}.javaClass.getResource("/api/data.json")!!.readText()
+)
