@@ -16,12 +16,13 @@ data class ShellState(
     val loading: Boolean = false,
     val error: String? = null,
     val session: String? = null,
+    val lastSynced: Long? = null,
 )
 
 class ShellViewModel(private val container: AppContainer) : ViewModel() {
     val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
         container.dataRepository.loading, container.dataRepository.error) { owned, selected, loading, error ->
-        ShellState(owned.second?.let { container.calendarScope.apply(it, selected) }, selected, loading, error, owned.first)
+        ShellState(owned.second?.let { container.calendarScope.apply(it, selected) }, selected, loading, error, owned.first, owned.third)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     val clock get() = container.clock

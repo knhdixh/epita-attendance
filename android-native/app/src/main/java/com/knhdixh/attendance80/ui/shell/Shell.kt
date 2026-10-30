@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.ui.shell
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -51,10 +52,24 @@ fun Shell(
     onScope: (String) -> Unit,
     onSignOut: () -> Unit,
     initialRoute: String = "today",
+    pendingRoute: String? = null,
+    onPendingConsumed: () -> Unit = {},
     now: Long = System.currentTimeMillis(),
     zone: ZoneId = ZoneId.systemDefault(),
 ) {
-    var route by rememberSaveable { mutableStateOf(initialRoute) }
+    var history by rememberSaveable { mutableStateOf(listOf(initialRoute)) }
+    val route = history.last()
+    fun navigate(destination: String, topLevel: Boolean = false) {
+        history = if (topLevel) listOf(destination) else history + destination
+        if (pendingRoute != null) onPendingConsumed()
+    }
+    LaunchedEffect(pendingRoute) {
+        if (pendingRoute != null) history = if (pendingRoute == "today") listOf("today") else listOf("today", pendingRoute)
+    }
+    LaunchedEffect(pendingRoute, state.lastSynced) {
+        if (pendingRoute != null && state.lastSynced != null) onPendingConsumed()
+    }
+    BackHandler(enabled = history.size > 1) { history = history.dropLast(1) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
@@ -86,7 +101,7 @@ fun Shell(
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                 phone.forEach { item ->
                     val selected = route == item.route || (item == more && route in destinations.drop(4).map { it.route })
-                    NavigationBarItem(selected = selected, onClick = { route = item.route },
+                    NavigationBarItem(selected = selected, onClick = { navigate(item.route, topLevel = true) },
                         icon = { Icon(item.icon, contentDescription = if (largeText) item.label else null) },
                         label = if (largeText) null else {{ Text(item.label) }},
                         colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer, selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary))
@@ -99,7 +114,7 @@ fun Shell(
                 NavigationRail(modifier = Modifier.width(if (largeText) 220.dp else 160.dp), containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                         destinations.forEach { item ->
-                            TextButton(onClick = { route = item.route }, modifier = Modifier.fillMaxWidth().testTag("nav-${item.route}"),
+                            TextButton(onClick = { navigate(item.route, topLevel = true) }, modifier = Modifier.fillMaxWidth().testTag("nav-${item.route}"),
                                 colors = ButtonDefaults.textButtonColors(
                                     containerColor = if (route == item.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = if (route == item.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)) {
@@ -112,7 +127,7 @@ fun Shell(
                 }
             }
             PullToRefreshBox(isRefreshing = state.loading, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                ShellContent(route, state.data, now, zone, onNavigate = { route = it }, onSignOut = onSignOut)
+                ShellContent(route, state.data, now, zone, onNavigate = { navigate(it) }, onSignOut = onSignOut)
             }
         }
     }
@@ -136,7 +151,7 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         route == "courses" -> courses.map { RowData(it.name, route = "course/${it.id}") }
         route == "focus" -> data?.focus?.sessions.orEmpty().map { RowData(it.label ?: "Focus", date(it.started_at, zone)) }
         route == "settings" -> data?.user?.let { listOf(RowData(it.name ?: it.email.orEmpty(), it.email.orEmpty())) }.orEmpty()
-        route == "homework" -> data?.homework.orEmpty().map { RowData(it.title, it.due_date.orEmpty()) }
+        (route == "homework" || route == "homework/new") -> data?.homework.orEmpty().map { RowData(it.title, it.due_date.orEmpty()) }
         route == "breaks" -> data?.breaks.orEmpty().map { RowData(it.label, "${it.start_date} – ${it.end_date}") }
         route == "habits" -> data?.habits?.list.orEmpty().filterNot { it.archived }.map { RowData(it.name) }
         route == "countdowns" -> data?.countdowns.orEmpty().map { RowData(it.title, date(it.at, zone)) }
@@ -144,16 +159,20 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         route.startsWith("course/") -> courses.filter { "course/${it.id}" == route }.map { RowData(it.name) }
         else -> emptyList()
     }
-    val empty = when (route) {
+    val empty = when {
+        route.startsWith("session/") -> "No sessions match."
+        route.startsWith("course/") -> "No tracked courses."
+        else -> when (route) {
         "today" -> "No classes today."
         "attendance", "courses" -> "No tracked courses."
         "sessions" -> "No sessions match."
         "upcoming", "calendar" -> "Nothing scheduled"
-        "homework" -> "Nothing due. Press Q to add homework."
+        "homework", "homework/new" -> "Nothing due. Press Q to add homework."
         "habits" -> "Build habits that stick. Add one, tick it off each day, and watch the grid fill in."
         "countdowns" -> "Count down to what matters, or count up from when something began."
         "focus" -> "Your focus sessions will show here. Press F to start one."
         else -> ""
+        }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (data == null && route != "more") item { CircularProgressIndicator() }

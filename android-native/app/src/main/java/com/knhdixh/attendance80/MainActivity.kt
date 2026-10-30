@@ -18,6 +18,7 @@ import androidx.compose.runtime.produceState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.knhdixh.attendance80.ui.shell.Shell
 import com.knhdixh.attendance80.ui.shell.ShellViewModel
+import com.knhdixh.attendance80.navigation.PendingRouteViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,12 +55,16 @@ class MainActivity : ComponentActivity() {
         } }
     }
 
+    private val pendingRouteViewModel: PendingRouteViewModel by viewModels {
+        viewModelFactory { initializer { PendingRouteViewModel(createSavedStateHandle()) } }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         (application as App).startData()
         if (savedInstanceState == null) {
-            handleAuthIntent(intent)
+            handleIntent(intent)
         }
 
         setContent {
@@ -73,6 +78,7 @@ class MainActivity : ComponentActivity() {
                             token = token,
                             signInViewModel = signInViewModel,
                             shellViewModel = shellViewModel,
+                            pendingRouteViewModel = pendingRouteViewModel,
                         )
                     }
                 }
@@ -83,11 +89,12 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleAuthIntent(intent)
+        handleIntent(intent)
     }
 
-    private fun handleAuthIntent(intent: Intent?) {
+    private fun handleIntent(intent: Intent?) {
         val data = intent?.data ?: return
+        if (data.scheme == "a80") pendingRouteViewModel.accept(data.toString())
         if (data.scheme == "com.knhdixh.attendance80") {
             if (data.path == "/auth") {
                 val code = data.getQueryParameter("code")
@@ -101,12 +108,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel) {
+fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel) {
     if (token.isNullOrBlank()) {
         SignInScreen(viewModel = signInViewModel)
     } else {
         key(token) {
             val state by shellViewModel.state.collectAsStateWithLifecycle()
+            val pendingRoute by pendingRouteViewModel.pending.collectAsStateWithLifecycle()
             val now by produceState(initialValue = shellViewModel.clock.now()) {
                 while (true) {
                     value = shellViewModel.clock.now()
@@ -115,6 +123,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
             }
             Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
                 shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
+                pendingRoute = pendingRoute, onPendingConsumed = pendingRouteViewModel::clear,
                 now = now, zone = shellViewModel.clock.zone())
         }
     }

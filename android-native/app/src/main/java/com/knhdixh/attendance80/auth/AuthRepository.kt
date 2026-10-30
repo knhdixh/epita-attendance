@@ -94,11 +94,11 @@ class AuthRepository(
     }
 
     suspend fun logout() {
+        val token = tokenStore.awaitToken() ?: return
+        tokenStore.clearTokenIfMatches(token)
         try {
-            api.logout()
+            api.logout("Bearer $token")
         } catch (_: Exception) {
-        } finally {
-            tokenStore.clearToken()
         }
     }
 }

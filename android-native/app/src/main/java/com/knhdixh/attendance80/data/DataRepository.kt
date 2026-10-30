@@ -20,11 +20,12 @@ class DataRepository(private val api: Api, private val directory: File, private 
     @Volatile private var session: String? = null
     private val _snapshot = MutableStateFlow<AppData?>(null)
     val snapshot = _snapshot.asStateFlow()
-    private val _sessionSnapshot = MutableStateFlow<Pair<String?, AppData?>>(null to null)
+    private val _sessionSnapshot = MutableStateFlow<Triple<String?, AppData?, Long?>>(Triple(null, null, null))
     val sessionSnapshot = _sessionSnapshot.asStateFlow()
-    private fun publish(owner: String?, data: AppData?) {
+    private fun publish(owner: String?, data: AppData?, synced: Long? =
+        if (owner == _sessionSnapshot.value.first) _sessionSnapshot.value.third else null) {
         _snapshot.value = data
-        _sessionSnapshot.value = owner to data
+        _sessionSnapshot.value = Triple(owner, data, synced)
     }
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
@@ -83,8 +84,9 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 check(rename(temporary, target)) { "Could not save snapshot" }
             } finally { temporary.delete() }
             if (token() != active) return false
-            publish(active, data)
-            _lastSynced.value = clock.now()
+            val synced = clock.now()
+            publish(active, data, synced)
+            _lastSynced.value = synced
             true
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) {

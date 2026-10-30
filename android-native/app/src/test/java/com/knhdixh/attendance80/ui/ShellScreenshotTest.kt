@@ -60,6 +60,12 @@ abstract class ShellScreenshotTest {
     @Test fun dark_homework_large() = capture("dark", "homework", 2f)
     @Test fun dark_focus_large() = capture("dark", "focus", 2f)
     @Test fun dark_more_large() = capture("dark", "more", 2f)
+    @Test fun light_session() = capture("light", "session/1", 1f)
+    @Test fun dark_session() = capture("dark", "session/1", 1f)
+    @Test fun light_course() = capture("light", "course/1", 1f)
+    @Test fun dark_course() = capture("dark", "course/1", 1f)
+    @Test fun light_homework_new() = capture("light", "homework/new", 1f)
+    @Test fun dark_homework_new() = capture("dark", "homework/new", 1f)
     private fun capture(theme: String, route: String, scale: Float) {
         val title = route.replaceFirstChar { it.uppercase() }
         var baseline = 0
@@ -80,7 +86,7 @@ abstract class ShellScreenshotTest {
             val height = compose.onNodeWithTag("shell-title").fetchSemanticsNode().boundsInRoot.height
             assertTrue("200% font must increase title height ($height vs $baseline)", height > baseline)
         }
-        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_${route}_font${scale.toInt()}.png")
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_${route.replace("/", "_")}_font${scale.toInt()}.png")
         if (scale == 2f && device.startsWith("phone")) compose.onNodeWithContentDescription("More").performClick()
         if (scale == 2f && device.startsWith("tablet")) compose.onNodeWithTag("nav-settings").performScrollTo().performClick()
     }

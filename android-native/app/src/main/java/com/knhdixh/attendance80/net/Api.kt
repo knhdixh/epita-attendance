@@ -8,6 +8,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.Headers
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -36,7 +37,7 @@ interface Api {
     suspend fun passkeyLoginVerify(@Body req: PasskeyLoginVerifyRequest): PasskeyLoginVerifyResponse
 
     @POST("auth/logout")
-    suspend fun logout(): OkResponse
+    suspend fun logout(@Header("Authorization") authorization: String? = null): OkResponse
 
     @GET("api/me")
     suspend fun me(): MeResponse
