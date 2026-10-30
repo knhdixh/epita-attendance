@@ -115,6 +115,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
         key(token) {
             val state by shellViewModel.state.collectAsStateWithLifecycle()
             val pendingRoute by pendingRouteViewModel.pending.collectAsStateWithLifecycle()
+            val recents by shellViewModel.recents.collectAsStateWithLifecycle()
             val now by produceState(initialValue = shellViewModel.clock.now()) {
                 while (true) {
                     value = shellViewModel.clock.now()
@@ -127,7 +128,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onValidatePending = { route ->
                     if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
                 },
-                now = now, zone = shellViewModel.clock.zone(), onAction = shellViewModel::dispatch)
+                now = now, zone = shellViewModel.clock.zone(), onAction = shellViewModel::dispatch,
+                recents = recents, onRecent = shellViewModel::recordRecent)
         }
     }
 }

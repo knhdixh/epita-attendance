@@ -1,6 +1,8 @@
 package com.knhdixh.attendance80.ui.search
 
 import androidx.compose.ui.test.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.knhdixh.attendance80.ui.screenshotData
 import com.knhdixh.attendance80.ui.shell.Shell
@@ -62,4 +64,29 @@ class SearchUiTest {
         compose.onNodeWithTag("result-logout").performClick()
         compose.runOnIdle { assertEquals(true, signedOut) }
     }
+    @Test fun copiedFeedUsesNormalizedCount() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val original = screenshotData()
+        var data by androidx.compose.runtime.mutableStateOf(original.copy(calendars = listOf(
+            com.knhdixh.attendance80.net.CalendarDto(1, "link", "First"),
+            com.knhdixh.attendance80.net.CalendarDto(2, "link", "Second")),
+            integrations = original.integrations.copy(feedUrl = "https://example.test/feed.ics")))
+        var selected by androidx.compose.runtime.mutableStateOf(listOf(1L, 1L, 99L))
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data, selected = selected), {}, {}, {}) } }
+        fun copy() {
+            compose.onNodeWithContentDescription("Search").performClick()
+            compose.onNodeWithTag("search-query").performTextInput("copy timetable")
+            compose.onNodeWithTag("result-copy-feed").performClick()
+        }
+        copy()
+        compose.runOnIdle { assertEquals("https://example.test/feed/timetable.ics?groups=1", clipboard.primaryClip!!.getItemAt(0).text.toString()); selected = listOf(1, 2, 99) }
+        copy()
+        compose.runOnIdle { assertEquals("https://example.test/feed/timetable.ics", clipboard.primaryClip!!.getItemAt(0).text.toString()); selected = listOf(99) }
+        copy()
+        compose.runOnIdle { assertEquals("https://example.test/feed/timetable.ics", clipboard.primaryClip!!.getItemAt(0).text.toString()); data = data.copy(calendars = emptyList()); selected = listOf(1) }
+        copy()
+        compose.runOnIdle { assertEquals("https://example.test/feed/timetable.ics", clipboard.primaryClip!!.getItemAt(0).text.toString()) }
+    }
+
 }

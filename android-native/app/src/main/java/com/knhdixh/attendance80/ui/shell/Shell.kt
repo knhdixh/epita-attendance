@@ -25,6 +25,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import com.knhdixh.attendance80.logic.sanitizeScope
 import androidx.compose.ui.unit.dp
 import com.knhdixh.attendance80.net.AppData
 import com.knhdixh.attendance80.ui.search.SearchSheet
@@ -57,6 +60,15 @@ private val destinations = listOf(
 private val more = Destination("more", "More", Icons.Outlined.MoreHoriz)
 private val phone = destinations.take(4) + more
 
+private fun owningRoute(route: String): String = when {
+    route.startsWith("session/") -> "sessions"
+    route.startsWith("course/") -> "courses"
+    route.startsWith("homework/") -> "homework"
+    route.startsWith("habits/") -> "habits"
+    route.startsWith("countdowns/") -> "countdowns"
+    else -> route
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Shell(
@@ -71,12 +83,15 @@ fun Shell(
     now: Long = System.currentTimeMillis(),
     zone: ZoneId = ZoneId.systemDefault(),
     onAction: (PaletteAction) -> Unit = {},
+    recents: List<String> = emptyList(),
+    onRecent: (String) -> Unit = {},
 ) {
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
     val route = entry?.destination?.route?.let { pattern ->
         if (pattern.contains("{id}")) pattern.replace("{id}", entry?.arguments?.getString("id").orEmpty()) else pattern
     } ?: initialRoute
+    val owner = owningRoute(route)
     fun navigate(destination: String, topLevel: Boolean = false) {
         navController.navigate(destination) {
             if (topLevel) popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -132,7 +147,7 @@ fun Shell(
         bottomBar = {
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                 phone.forEach { item ->
-                    val selected = route == item.route || (item == more && route in destinations.drop(4).map { it.route })
+                    val selected = owner == item.route || (item == more && owner in destinations.drop(4).map { it.route })
                     NavigationBarItem(selected = selected, onClick = { navigate(item.route, topLevel = true) },
                         icon = { Icon(item.icon, contentDescription = if (largeText) item.label else null) },
                         label = if (largeText) null else {{ Text(item.label) }},
@@ -146,10 +161,10 @@ fun Shell(
                 NavigationRail(modifier = Modifier.width(if (largeText) 220.dp else 160.dp), containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                         destinations.forEach { item ->
-                            TextButton(onClick = { navigate(item.route, topLevel = true) }, modifier = Modifier.fillMaxWidth().testTag("nav-${item.route}"),
+                            TextButton(onClick = { navigate(item.route, topLevel = true) }, modifier = Modifier.fillMaxWidth().testTag("nav-${item.route}").semantics { selected = owner == item.route },
                                 colors = ButtonDefaults.textButtonColors(
-                                    containerColor = if (route == item.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (route == item.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)) {
+                                    containerColor = if (owner == item.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (owner == item.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)) {
                                 Icon(item.icon, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
                                 Text(item.label, modifier = Modifier.weight(1f))
@@ -177,10 +192,10 @@ fun Shell(
     }
     val context = LocalContext.current
     if (showSearch) SearchSheet(state.data, onDismiss = { showSearch = false },
-        onRoute = { navigate(it) }, onSignOut = ::signOut, now = now, zone = zone,
+        onRoute = { navigate(it) }, onSignOut = ::signOut, now = now, zone = zone, recents = recents, onRecent = onRecent,
         onAction = { action, destination ->
             when (action) {
-                is PaletteAction.CopyFeed -> (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("Timetable", action.url))
+                is PaletteAction.CopyFeed -> (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("Timetable", action.url + sanitizeScope(state.selected.distinct(), state.data?.calendars.orEmpty()).let { ids -> if (ids.isEmpty()) "" else "?groups=${ids.joinToString(",")}" }))
                 is PaletteAction.OpenForm, is PaletteAction.Focus, is PaletteAction.SessionSearch -> {
                     if (destination != null) {
                         navigate(destination)

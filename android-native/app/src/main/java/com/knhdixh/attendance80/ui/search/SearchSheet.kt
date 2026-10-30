@@ -12,17 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.knhdixh.attendance80.net.AppData
 
 @Composable
-fun SearchSheet(data: AppData?, onDismiss: () -> Unit, onRoute: (String) -> Unit, onSignOut: () -> Unit, onAction: (PaletteAction, String?) -> Unit = { _, _ -> }, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()) {
+fun SearchSheet(data: AppData?, onDismiss: () -> Unit, onRoute: (String) -> Unit, onSignOut: () -> Unit, onAction: (PaletteAction, String?) -> Unit = { _, _ -> }, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault(), recents: List<String> = emptyList(), onRecent: (String) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
-    val prefs = LocalContext.current.getSharedPreferences("palette-recents", android.content.Context.MODE_PRIVATE)
-    var recents by remember { mutableStateOf(prefs.getString("ids", "").orEmpty().split("\n").filter { it.isNotEmpty() }) }
     val results = remember(data, query, recents, now, zone) { searchPalette(data, query, recents, now, zone) }
     val density = LocalDensity.current
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -49,10 +46,7 @@ fun SearchSheet(data: AppData?, onDismiss: () -> Unit, onRoute: (String) -> Unit
                                     modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) }
                                 items(entries, key = { it.id }) { item ->
                                     Column(Modifier.fillMaxWidth().clickable {
-                                        if (item.recent) {
-                                            recents = (listOf(item.id) + recents.filter { it != item.id }).take(5)
-                                            prefs.edit().putString("ids", recents.joinToString("\n")).apply()
-                                        }
+                                        if (item.recent) onRecent(item.id)
                                         if (item.id == "logout") onSignOut() else if (item.action != null) onAction(item.action, item.route) else item.route?.let(onRoute)
                                         onDismiss()
                                     }.padding(vertical = 12.dp).testTag("result-${item.id}")) {
