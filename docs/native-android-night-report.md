@@ -68,3 +68,12 @@ Phase 2b review: `docs/native-android-review-2b.md`, including original FIX, rou
 - No Phase3 review verdict or fix rounds yet; initial implementation and review evidence remain incomplete. No Phase3 merge.
 
 Current position: Phase2b merged and native/night verified building; Phase3 harness worker is live, completing real instrumented tests and device provisioning. Tablet screenshot review and whole-phase review/fixes remain; later phases are pending.
+
+
+## Phase 3 reviewer continuation
+
+- Reviewer visually inspected all 136 current PNGs (68 phone, 68 tablet); all contact sheets in `/tmp/epita-native-night/phase3-image-review.json` are now marked reviewed against their source SHA256. No new clipping was found in the tablet rail, scope, search or 200% main-screen captures. These are read-only shells; detailed Phase 4 screen functionality is not claimed.
+- Managed-device provisioning completed: Android Emulator 37.2.13 and API 35 AOSP ATD ARM64 image installed; adb saw emulator-5554 online. The first actual two-test run failed its local-host assertion because a concurrent worker verification build replaced the local APK configuration with the production URL. The worker is resolving its check ordering; this is a real failing check, not an environment exemption or a passing e2e claim.
+- Instrumented test source now exists, exercising dev PKCE callback, seeded top-level data, scope/search/internal links, and an Orchestrator process restart with cached data while offline. It remains uncommitted and under worker validation. The local seed now imports two 16-week calendars with shared lectures and group memberships through real local APIs.
+
+Current position: Phase 2b remains the only merged phase, verified building on native/night. Phase 3 initial harness validation is still running; all current screenshots have been inspected, but independent final checks and the formal whole-phase review remain.
