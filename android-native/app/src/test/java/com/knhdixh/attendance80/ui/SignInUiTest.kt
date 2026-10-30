@@ -6,7 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.knhdixh.attendance80.AuthenticatedPlaceholder
+import com.knhdixh.attendance80.ui.shell.Shell
+import com.knhdixh.attendance80.ui.shell.ShellState
 import com.knhdixh.attendance80.net.AuthConfigResponse
 import com.knhdixh.attendance80.ui.signin.SignInContent
 import com.knhdixh.attendance80.ui.signin.SignInUiState
@@ -76,8 +77,10 @@ class SignInUiTest {
         compose.runOnIdle { assertEquals("dev:student@example.com", action) }
     }
 
-    @Test fun authenticatedPlaceholder() {
-        compose.setContent { Attendance80Theme { Surface { AuthenticatedPlaceholder() } } }
-        compose.onNodeWithText("Welcome to Attendance80").assertIsDisplayed()
+    @Test fun authenticatedShellNavigation() {
+        compose.setContent { Attendance80Theme { Surface { Shell(ShellState(data = screenshotData()), {}, {}, {}) } } }
+        compose.onNodeWithText("More").performClick()
+        compose.onNodeWithText("Courses").performClick()
+        compose.onNodeWithText("Courses").assertIsDisplayed()
     }
 }

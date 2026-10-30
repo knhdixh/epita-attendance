@@ -20,6 +20,12 @@ class DataRepository(private val api: Api, private val directory: File, private 
     @Volatile private var session: String? = null
     private val _snapshot = MutableStateFlow<AppData?>(null)
     val snapshot = _snapshot.asStateFlow()
+    private val _sessionSnapshot = MutableStateFlow<Pair<String?, AppData?>>(null to null)
+    val sessionSnapshot = _sessionSnapshot.asStateFlow()
+    private fun publish(owner: String?, data: AppData?) {
+        _snapshot.value = data
+        _sessionSnapshot.value = owner to data
+    }
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
     private val _error = MutableStateFlow<String?>(null)
@@ -35,7 +41,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
 
     suspend fun start() {
         if (session != token()) {
-            _snapshot.value = null
+            publish(null, null)
             _lastSynced.value = null
             _error.value = null
         }
@@ -43,14 +49,16 @@ class DataRepository(private val api: Api, private val directory: File, private 
             val current = token()
             if (session != current) {
                 session = current
-                _snapshot.value = null
+                publish(null, null)
                 _lastSynced.value = null
                 _error.value = null
                 if (current != null) {
                     val cached = runCatching {
                         ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
                     }.getOrNull()
-                    if (token() == current) _snapshot.value = cached
+                    if (token() == current) {
+                        publish(current, cached)
+                    }
                 }
             }
         }
@@ -75,7 +83,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 check(rename(temporary, target)) { "Could not save snapshot" }
             } finally { temporary.delete() }
             if (token() != active) return false
-            _snapshot.value = data
+            publish(active, data)
             _lastSynced.value = clock.now()
             true
         } catch (e: CancellationException) { throw e
@@ -91,18 +99,18 @@ class DataRepository(private val api: Api, private val directory: File, private 
         val before = _snapshot.value ?: return@withLock false
         if (token() != active) return@withLock false
         _error.value = null
-        _snapshot.value = optimistic(before)
+        publish(active, optimistic(before))
         try {
             val result = request()
             if (token() != active) return@withLock false
-            _snapshot.value = apply(_snapshot.value ?: before, result)
+            publish(active, apply(_snapshot.value ?: before, result))
             if (reload) refreshLocked() else true
         } catch (e: CancellationException) {
-            if (token() == active) _snapshot.value = before
+            if (token() == active) publish(active, before)
             throw e
         } catch (e: Exception) {
             if (token() == active) {
-                _snapshot.value = before
+                publish(active, before)
                 _error.value = e.message ?: "Request failed"
             }
             false

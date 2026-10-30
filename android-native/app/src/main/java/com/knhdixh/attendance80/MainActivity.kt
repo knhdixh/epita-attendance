@@ -13,6 +13,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.knhdixh.attendance80.ui.shell.Shell
+import com.knhdixh.attendance80.ui.shell.ShellViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +47,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val shellViewModel: ShellViewModel by viewModels {
+        viewModelFactory { initializer {
+            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as App
+            ShellViewModel(app.container)
+        } }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -54,12 +66,13 @@ class MainActivity : ComponentActivity() {
             Attendance80Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val app = application as App
-                    val isLoaded by app.container.tokenStore.isLoaded.collectAsState()
-                    val token by app.container.tokenStore.token.collectAsState()
+                    val isLoaded by app.container.tokenStore.isLoaded.collectAsStateWithLifecycle()
+                    val token by app.container.tokenStore.token.collectAsStateWithLifecycle()
                     if (isLoaded) {
                         AppNav(
                             token = token,
                             signInViewModel = signInViewModel,
+                            shellViewModel = shellViewModel,
                         )
                     }
                 }
@@ -88,26 +101,21 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNav(
-    token: String?,
-    signInViewModel: SignInViewModel,
-) {
-    val navController = rememberNavController()
-    val startDest = if (token.isNullOrBlank()) "signin" else "main"
-
-    NavHost(navController = navController, startDestination = startDest) {
-        composable("signin") {
-            SignInScreen(viewModel = signInViewModel)
+fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel) {
+    if (token.isNullOrBlank()) {
+        SignInScreen(viewModel = signInViewModel)
+    } else {
+        key(token) {
+            val state by shellViewModel.state.collectAsStateWithLifecycle()
+            val now by produceState(initialValue = shellViewModel.clock.now()) {
+                while (true) {
+                    value = shellViewModel.clock.now()
+                    kotlinx.coroutines.delay(60_000)
+                }
+            }
+            Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
+                shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
+                now = now, zone = shellViewModel.clock.zone())
         }
-        composable("main") {
-            AuthenticatedPlaceholder()
-        }
-    }
-}
-
-@Composable
-fun AuthenticatedPlaceholder() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Welcome to Attendance80", style = MaterialTheme.typography.titleMedium)
     }
 }
