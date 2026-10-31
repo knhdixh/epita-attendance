@@ -66,7 +66,7 @@ class ShellUiTest {
     @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
-    @Test fun sessionDetail() = content("session/1", "No sessions match.", "Mathématiques")
+    @Test fun sessionDetail() = content("session/1", "Session not found.", "Mathématiques")
     @Test fun courseDetail() {
         var data by mutableStateOf(empty)
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "course/1", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }

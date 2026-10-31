@@ -85,6 +85,8 @@ fun Shell(
     onAction: (PaletteAction) -> Unit = {},
     recents: List<String> = emptyList(),
     onRecent: (String) -> Unit = {},
+    onErrorConsumed: (String) -> Unit = {},
+    accountKey: String? = state.session,
 ) {
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
@@ -110,6 +112,10 @@ fun Shell(
         }
     }
     var showSearch by rememberSaveable { mutableStateOf(false) }
+    var sessionCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
+    var sessionWhen by rememberSaveable(accountKey) { mutableStateOf("upcoming") }
+    var sessionQuery by rememberSaveable(accountKey) { mutableStateOf("") }
+    var sessionHidden by rememberSaveable(accountKey) { mutableStateOf(false) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
@@ -124,7 +130,7 @@ fun Shell(
         else -> (destinations + more).find { it.route == route }?.label ?: "Today"
     }
     val snack = remember { SnackbarHostState() }
-    LaunchedEffect(state.error) { state.error?.let { snack.showSnackbar(it) } }
+    LaunchedEffect(state.error) { state.error?.let { snack.showSnackbar(it); onErrorConsumed(it) } }
     Scaffold(
         topBar = {
             Column {
@@ -135,9 +141,9 @@ fun Shell(
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Count", modifier = Modifier.padding(top = 10.dp))
-                        FilterChip(selected = state.selected.isEmpty(), onClick = { onScope("all") }, label = { Text("All") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
+                        FilterChip(selected = state.selected.isEmpty(), onClick = { onScope("all") }, label = { Text("All") }, modifier = Modifier.testTag("scope-all"), colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
                         state.data?.calendars?.forEach { calendar ->
-                            FilterChip(selected = calendar.id in state.selected, onClick = { onScope(calendar.id.toString()) }, label = { Text(calendar.name) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
+                            FilterChip(selected = calendar.id in state.selected, onClick = { onScope(calendar.id.toString()) }, label = { Text(calendar.name) }, modifier = Modifier.testTag("scope-${calendar.id}"), colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer, selectedLabelColor = MaterialTheme.colorScheme.primary))
                         }
                     }
                 }
@@ -185,6 +191,11 @@ fun Shell(
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents)
+                            else if (route == "sessions") key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
+                                com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
+                                { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
+                                (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = { navigate(it) }, onAction = onAction) }
+                            else if (route.startsWith("session/")) key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), route.substringAfter('/').toLongOrNull(), now, zone, onBack = { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") }, onNavigate = { navigate(it) }, onAction = onAction) }
                             else if (route == "courses") key(state.session) { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = { navigate(it) }, onAction = onAction) }
                             else if (route.startsWith("course/")) key(state.session) { com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, route.substringAfter('/').toLongOrNull(), now, zone, onNavigate = { navigate(it) }, onBack = { if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
                             else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)

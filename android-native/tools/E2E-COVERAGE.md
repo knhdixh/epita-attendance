@@ -6,6 +6,7 @@
 - Phase 4.2: the live case marks all eligible past sessions through Attendance, verifies the selected IDs and unchanged other statuses via local `/api/data`, then checks the refreshed repository snapshot. Phase 4.7 must add creating and completing homework against local D1.
 - Phase 4.3: the live case opens the actual course deep link, changes its default tag through the Course destination, waits for the serialized repository refresh and verifies the tag through local `/api/data`.
 - Phase 4.4: the live case changes and restores tracking from the actual Courses list, waits for the optimistic mutation and a serialized repository refresh, and compares the changed and untouched courses with local `/api/data`.
+- Phase 4.5: the live session-detail case passed on the managed device against isolated local D1: it marks a past session absent, checks selected and untouched event statuses, verifies a catch-up, edits its tag and note, then marks it attended and checks removal of the untouched catch-up. It waits for serialized repository refreshes before persisted API comparisons. The offline restart remains a separate process.
 - Phase 5: add timer start, alarm firing, notification actions and offline outbox replay exactly once.
 - Phase 6: add a managed-device widget snapshot test.
 - Phase 7: add class and habit notification and action tests.

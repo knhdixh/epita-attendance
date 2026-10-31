@@ -79,7 +79,7 @@ class CourseTest {
         ui.onNodeWithTag("course-tracked").performClick()
         ui.runOnIdle { assertEquals(PaletteAction.CourseField(1, "tracked", "true"), action) }
         ui.onNodeWithText("Default tag: Normal").performClick()
-        ui.onNodeWithText("Exam").performClick()
+        ui.onNode(hasText("Exam") and hasAnyAncestor(isDialog())).performClick()
         ui.runOnIdle { assertEquals(PaletteAction.CourseField(1, "tag", "exam"), action) }
         ui.onNodeWithTag("course-detail").performScrollToNode(hasText("GR2"))
         ui.onNodeWithText("GR2").performClick()

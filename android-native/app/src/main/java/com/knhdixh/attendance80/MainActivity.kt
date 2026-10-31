@@ -128,8 +128,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onValidatePending = { route ->
                     if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
                 },
-                now = now, zone = shellViewModel.clock.zone(), onAction = shellViewModel::dispatch,
-                recents = recents, onRecent = shellViewModel::recordRecent)
+                now = now, zone = shellViewModel.clock.zone(), onAction = { shellViewModel.dispatch(it, token) },
+                recents = recents, onRecent = shellViewModel::recordRecent, onErrorConsumed = { shellViewModel.consumeError(it, token) }, accountKey = token)
         }
     }
 }

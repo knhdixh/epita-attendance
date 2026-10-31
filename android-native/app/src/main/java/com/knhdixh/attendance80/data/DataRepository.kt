@@ -31,6 +31,14 @@ class DataRepository(private val api: Api, private val directory: File, private 
     val loading = _loading.asStateFlow()
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
+    private val deferredErrors = ArrayDeque<String>()
+    @Synchronized fun consumeError(message: String) {
+        if (_error.value == message) _error.value = if (deferredErrors.isEmpty()) null else deferredErrors.removeFirst()
+    }
+    @Synchronized private fun clearErrors() { deferredErrors.clear(); _error.value = null }
+    @Synchronized private fun reportError(message: String, preserve: Boolean = false) {
+        if (preserve && _error.value != null) deferredErrors.addLast(message) else { deferredErrors.clear(); _error.value = message }
+    }
     private val _lastSynced = MutableStateFlow<Long?>(null)
     val lastSynced = _lastSynced.asStateFlow()
 
@@ -44,7 +52,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
         if (session != token()) {
             publish(null, null)
             _lastSynced.value = null
-            _error.value = null
+            clearErrors()
         }
         mutex.withLock {
             val current = token()
@@ -52,7 +60,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 session = current
                 publish(null, null)
                 _lastSynced.value = null
-                _error.value = null
+                clearErrors()
                 if (current != null) {
                     val cached = runCatching {
                         ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
@@ -71,7 +79,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
         val active = session ?: return false
         if (token() != active) return false
         _loading.value = true
-        _error.value = null
+        clearErrors()
         return try {
             val raw = api.rawData().use { it.string() }
             val data = ApiClient.json.decodeFromString<AppData>(raw)
@@ -90,17 +98,19 @@ class DataRepository(private val api: Api, private val directory: File, private 
             true
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) {
-            if (token() == active) _error.value = e.message ?: "Request failed"
+            if (token() == active) reportError(e.message ?: "Request failed")
             false
         } finally { _loading.value = false }
     }
 
     suspend fun <T> mutate(optimistic: (AppData) -> AppData, request: suspend () -> T,
-                           apply: (AppData, T) -> AppData, reload: Boolean = false): Boolean = mutex.withLock {
+                           apply: (AppData, T) -> AppData, reload: Boolean = false,
+                           expectedOwner: String? = null, preserveError: Boolean = false): Boolean = mutex.withLock {
         val active = session ?: return@withLock false
+        if (expectedOwner != null && expectedOwner != active) return@withLock false
         val before = _snapshot.value ?: return@withLock false
         if (token() != active) return@withLock false
-        _error.value = null
+        if (!preserveError) clearErrors()
         publish(active, optimistic(before))
         try {
             val result = request()
@@ -113,7 +123,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
         } catch (e: Exception) {
             if (token() == active) {
                 publish(active, before)
-                _error.value = e.message ?: "Request failed"
+                reportError(e.message ?: "Request failed", preserveError)
             }
             false
         }

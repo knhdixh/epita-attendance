@@ -100,12 +100,7 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
         }
         if (state.events.isEmpty()) item("empty") { Text("No sessions match.") }
         items(state.events, key = { it.id }) { event ->
-            Column(Modifier.fillMaxWidth().clickable { onNavigate("session/${event.id}") }.padding(vertical = 8.dp)) {
-                Text(event.summary)
-                Text("${Dates.formatDate(event.start_at, zone)} · ${Dates.formatTime(event.start_at, zone)}–${Dates.formatTime(event.end_at, zone)}${if (event.location.isNotBlank()) " · ${event.location}" else ""}", style = MaterialTheme.typography.bodySmall)
-                event.status?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                HorizontalDivider()
-            }
+            com.knhdixh.attendance80.ui.sessions.SessionRow(event, data, now, zone, onNavigate, onAction)
         }
     }
 }

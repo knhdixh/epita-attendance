@@ -109,7 +109,7 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
         }
         item("sessions-heading") { Heading("Today's sessions", "week") { onNavigate("upcoming") } }
         if (plan.todaySessions.isEmpty()) item("sessions-empty") { Text("No classes today.") }
-        items(plan.todaySessions, key = { "session:$it" }) { id -> events[id]?.let { e -> TodayRow(e.summary, "${time(e.start_at)}–${time(e.end_at)}${if (e.location.isNotBlank()) " · ${e.location}" else ""}${e.status?.let { " · $it" } ?: ""}", statusColor(e.status)) { onNavigate("session/${e.id}") } } }
+        items(plan.todaySessions, key = { "session:$it" }) { id -> events[id]?.let { e -> com.knhdixh.attendance80.ui.sessions.SessionRow(e, s.data, now, zone, onNavigate, onAction) } }
         plan.tomorrowFirst?.let(events::get)?.let { e -> item("tomorrow") { Text("Tomorrow starts at ${time(e.start_at)}: ${e.summary}${if (e.location.isNotBlank()) ", ${e.location}" else ""}.") } }
         item("week-heading") { Text("Next 7 days", style = MaterialTheme.typography.titleMedium) }
         item("week") { Text("${hours(plan.week.classHours)} of class, ${hours(plan.week.workHours)} of work due, about ${hours(plan.week.freeHours)} free between 8:00 and 22:00.${if (plan.week.load > 0.6) " That's tight: start the biggest item early." else ""}") }

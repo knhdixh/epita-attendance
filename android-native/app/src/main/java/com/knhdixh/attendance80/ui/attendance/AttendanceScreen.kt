@@ -73,11 +73,7 @@ fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (Strin
         if (s.sessions.isNotEmpty()) {
             item("sessions-heading") { SectionHeading(if (s.today) "Today" else "Next", "upcoming →") { onNavigate("upcoming") } }
             items(s.sessions, key = { "session:${it.id}" }) { e ->
-                Column(Modifier.fillMaxWidth().clickable { onNavigate("session/${e.id}") }.padding(vertical = 8.dp)) {
-                    if (!s.today) Text(Dates.formatDate(e.start_at, zone), style = MaterialTheme.typography.bodySmall)
-                    Text(e.summary); Text("${Dates.formatTime(e.start_at, zone)}–${Dates.formatTime(e.end_at, zone)}${if (e.location.isNotBlank()) " · ${e.location}" else ""}${if (e.note.isNotBlank()) " · ${e.note}" else ""}", style = MaterialTheme.typography.bodySmall)
-                    HorizontalDivider()
-                }
+                com.knhdixh.attendance80.ui.sessions.SessionRow(e, s.data, now, zone, onNavigate, onAction)
             }
         }
         if (s.homework.isNotEmpty()) {

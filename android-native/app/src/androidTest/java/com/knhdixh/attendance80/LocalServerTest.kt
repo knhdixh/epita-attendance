@@ -106,6 +106,7 @@ class LocalServerTest {
         } finally { conn.disconnect() }
         waitTitle("Session")
         waitText("GR1 - E2E Algorithms")
+        ui.onNodeWithText("Close").performClick()
         goBottom("Today")
         waitText("E2E shared lecture")
         ui.onNodeWithText("E2E shared lecture").assertExists()
@@ -169,11 +170,14 @@ class LocalServerTest {
 
         // Scope applies to sessions, including shared lectures, and is persisted.
         more("Sessions")
-        ui.onNodeWithText("Group 1").performClick()
-        waitText("GR1 - E2E Algorithms")
+        ui.onNodeWithTag("show-untracked").performClick()
+        val calendars = dataFromServer().getJSONArray("calendars")
+        val group1Id = (0 until calendars.length()).map { calendars.getJSONObject(it) }.first { it.getString("name") == "Group 1" }.getLong("id")
+        ui.onNodeWithTag("scope-$group1Id").performClick()
+        ui.onNodeWithTag("sessions-list").performScrollToNode(hasText("GR1 - E2E Algorithms"))
         ui.onAllNodesWithText("GR2 - E2E Algorithms").assertCountEquals(0)
-        ui.onNodeWithText("All").performClick()
-        waitText("GR2 - E2E Algorithms")
+        ui.onNodeWithTag("scope-all").performClick()
+        ui.onNodeWithTag("sessions-list").performScrollToNode(hasText("GR2 - E2E Algorithms"))
         val (sessionId, courseId, homeworkId) = idsFromServer()
         ui.onNodeWithContentDescription("Search").performClick()
         ui.onNodeWithTag("search-query").performTextInput("E2E homework")
@@ -187,6 +191,25 @@ class LocalServerTest {
         openLink("a80://session/$sessionId")
         waitText("GR1 - E2E Algorithms")
         waitTitle("Session")
+        // The first seeded occurrence is past and was marked present by the overview action.
+        val sessionBefore = dataFromServer().getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        ui.onNodeWithText("Absent").performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.kind == "catchup" && it.event_id == sessionId } == true }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val sessionAfter = dataFromServer().getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        sessionBefore.forEach { (id, old) -> assertEquals(if (id == sessionId) "absent" else old.optString("status"), sessionAfter.getValue(id).optString("status")) }
+        ui.onNodeWithText("Exam").performScrollTo().performClick()
+        ui.onNodeWithText("Note").performScrollTo().performTextInput("Local device note")
+        ui.onNodeWithText("Save note").performScrollTo().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.events?.find { it.id == sessionId }?.let { it.tag == "exam" && it.note == "Local device note" } == true }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val edited = dataFromServer().getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getLong("id") == sessionId } }
+        assertEquals("exam", edited.getString("tag")); assertEquals("Local device note", edited.getString("note"))
+        ui.onNodeWithText("Attended").performScrollTo().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.none { it.kind == "catchup" && it.event_id == sessionId } == true }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val restoredSession = dataFromServer().getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getLong("id") == sessionId } }
+        assertEquals("present", restoredSession.getString("status"))
         openLink("a80://course/$courseId")
         waitText("GR1 - E2E Algorithms")
         waitTitle("Course")
