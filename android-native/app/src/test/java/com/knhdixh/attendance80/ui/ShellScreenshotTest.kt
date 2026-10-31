@@ -118,6 +118,8 @@ abstract class ShellScreenshotTest {
             }
         }
         compose.mainClock.advanceTimeBy(500)
+        if (route.startsWith("course/")) { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("course-detail").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
+        if (route == "courses") { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
         if (scale == 2f) {
             val height = compose.onNodeWithTag("shell-title").fetchSemanticsNode().boundsInRoot.height
             assertTrue("200% font must increase title height ($height vs $baseline)", height > baseline)

@@ -138,6 +138,29 @@ class LocalServerTest {
         more("Upcoming"); waitText("E2E shared lecture")
         more("Sessions"); waitText("E2E shared lecture")
         more("Courses"); waitText("GR1 - E2E Algorithms")
+        // The row stays visible after untracking; refresh is serialized behind the mutation.
+        val originalCourses = dataFromServer().getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        val target = originalCourses.first { it.getString("name") == "GR1 - E2E Algorithms" }
+        val targetId = target.getLong("id")
+        val originallyTracked = truth(target.opt("tracked"))
+        val row = "course-row-$targetId"
+        ui.onNodeWithTag("courses-list").performScrollToNode(hasTestTag(row))
+        val toggle = hasTestTag("course-tracked") and hasAnyAncestor(hasTestTag(row))
+        ui.onNode(toggle).performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.courses?.find { it.id == targetId }?.tracked == !originallyTracked }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val afterToggle = dataFromServer().getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        originalCourses.forEach { old ->
+            val id = old.getLong("id")
+            assertEquals(if (id == targetId) !originallyTracked else truth(old.opt("tracked")), truth(afterToggle.getValue(id).opt("tracked")))
+            if (id != targetId) assertEquals(old.toString(), afterToggle.getValue(id).toString())
+        }
+        ui.waitUntil(30_000) { ui.onAllNodes(toggle).fetchSemanticsNodes().isNotEmpty() }
+        ui.onNode(toggle).performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.courses?.find { it.id == targetId }?.tracked == originallyTracked }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val restored = dataFromServer().getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getLong("id") == targetId } }
+        assertEquals(originallyTracked, truth(restored.opt("tracked")))
         more("Calendar"); waitText("E2E shared lecture")
         more("Breaks"); waitText("E2E break")
         more("Habits"); waitText("E2E habit")

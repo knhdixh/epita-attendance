@@ -185,6 +185,7 @@ fun Shell(
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents)
+                            else if (route == "courses") key(state.session) { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = { navigate(it) }, onAction = onAction) }
                             else if (route.startsWith("course/")) key(state.session) { com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, route.substringAfter('/').toLongOrNull(), now, zone, onNavigate = { navigate(it) }, onBack = { if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
                             else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
                         }

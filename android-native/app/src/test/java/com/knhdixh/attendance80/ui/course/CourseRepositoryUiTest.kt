@@ -117,6 +117,7 @@ class CourseRepositoryUiTest {
                 current = current.copy(courses = current.courses.map { if (it.id == course.id) it.copy(recording_url = canonical) else it })
                 server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), current)))
                 val button = if (index == 0) "Add link" else "Edit link"
+                ui.waitUntil(10_000) { ui.onAllNodesWithTag("course-detail").fetchSemanticsNodes().isNotEmpty() }
                 ui.onNodeWithTag("course-detail").performScrollToNode(hasText(button)); ui.onNodeWithText(button).performClick()
                 ui.onNodeWithTag("recording-url").performSemanticsAction(SemanticsActions.SetText) { it(AnnotatedString(value)) }
                 ui.onNodeWithText("Save").performClick()

@@ -13,6 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -44,7 +47,7 @@ class CourseViewModel : ViewModel() {
     private var generation = 0
     fun update(data: AppData?, id: Long?, now: Long, zone: ZoneId) {
         val minute = now / 60000 * 60000
-        if (mutable.value?.let { it.data == data && it.id == id && it.now == minute && it.zone == zone } == true) return
+        if (mutable.value?.let { it.data == data && it.id == id && it.now == minute && it.zone == zone } == true) { generation++; return }
         val version = ++generation
         if (mutable.value?.data != data || mutable.value?.id != id) mutable.value = null
         if (data == null) { mutable.value = null; return }
@@ -71,7 +74,7 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
     model: CourseViewModel = viewModel()) {
     LaunchedEffect(data, id, now / 60000, zone) { model.update(data, id, now, zone) }
     val derived by model.state.collectAsState()
-    val state = derived?.takeIf { it.data == data && it.id == id }
+    val state = derived?.takeIf { it.data == data && it.id == id && it.now == now / 60000 * 60000 && it.zone == zone }
     if (data == null) { Text("Loading…", Modifier.padding(16.dp)); return }
     if (state == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val course = state.course
@@ -79,12 +82,6 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
     val stats = requireNotNull(state.stats)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val tone = when (stats.level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }
-    val context = LocalContext.current
-    val density = LocalDensity.current
-    var edit by rememberSaveable(id) { mutableStateOf(false) }
-    var url by rememberSaveable(id) { mutableStateOf("") }
-    var menu by remember { mutableStateOf(false) }
-    var groupMenu by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize().testTag("course-detail"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item("course") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -97,20 +94,7 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
                 Text(if (stats.remaining < -1e-9) "over the absence limit" else "${num(stats.remainingDisplay)} ${if (data.user.unit == "hours") "hours" else "sessions"} left to skip", color = tone)
                 Text("${num(stats.absent)} of max ${num(floor(stats.allowedAbsence * 10 + 1e-9) / 10)} absences used")
                 if (stats.missedMustAttend.isNotEmpty()) Text("Missed ${stats.missedMustAttend.size} exam or mandatory", color = if (dark) RedDark else RedLight)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Track", Modifier.weight(1f)); Switch(course.tracked, { onAction(PaletteAction.CourseField(course.id, "tracked", it.toString())) }, Modifier.testTag("course-tracked"))
-                }
-                OutlinedButton(onClick = { menu = true }) { Text("Default tag: ${TAGS[course.tag]?.label ?: course.tag}") }
-                state.family?.let { family ->
-                    val chosen = family.courses.filter { it.tracked }
-                    val selection = when (chosen.size) { 0 -> "Not in this course"; 1 -> chosen.first().group; else -> "Several groups" }
-                    Text(family.family)
-                    OutlinedButton(onClick = { groupMenu = true }) { Text(selection) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    course.recording_url?.let { link -> TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link))) }.onFailure { Toast.makeText(context, "Could not open recordings.", Toast.LENGTH_SHORT).show() } }) { Text("Open recordings ↗") } }
-                    TextButton(onClick = { url = course.recording_url.orEmpty(); edit = true }) { Text(if (course.recording_url == null) "Add link" else "Edit link") }
-                }
+                CourseControls(course, state.family, onAction)
                 Text("Sessions", style = MaterialTheme.typography.titleMedium)
             }
         }
@@ -124,15 +108,30 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
             }
         }
     }
+}
+
+@Composable
+fun CourseControls(course: CourseDto, family: GroupFamily?, onAction: (PaletteAction) -> Unit) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    var edit by rememberSaveable(course.id) { mutableStateOf(false) }
+    var url by rememberSaveable(course.id) { mutableStateOf("") }
+    var menu by remember { mutableStateOf(false) }
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Track", Modifier.weight(1f)); Switch(course.tracked, { onAction(PaletteAction.CourseField(course.id, "tracked", it.toString())) }, Modifier.testTag("course-tracked").semantics { contentDescription = "Track ${course.name}" })
+        }
+        OutlinedButton(onClick = { menu = true }) { Text("Default tag: ${TAGS[course.tag]?.label ?: course.tag}") }
+        family?.let { GroupSelector(it, onAction) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            course.recording_url?.let { link -> TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link))) }.onFailure { Toast.makeText(context, "Could not open recordings.", Toast.LENGTH_SHORT).show() } }) { Text("Open recordings ↗") } }
+            TextButton(onClick = { url = course.recording_url.orEmpty(); edit = true }) { Text(if (course.recording_url == null) "Add link" else "Edit link") }
+        }
+    }
     if (menu) AlertDialog(onDismissRequest = { menu = false }, properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 560.dp).fillMaxWidth(), title = { Text("Default tag") },
-        text = { Column { listOf("normal", "mandatory", "exam", "optional").forEach { tag -> TextButton(onClick = { menu = false; onAction(PaletteAction.CourseField(course.id, "tag", tag)) }) { Text(TAGS[tag]?.label ?: tag) } } } },
+        text = { Column { listOf("normal", "mandatory", "exam", "optional").forEach { tag -> TextButton(onClick = { menu = false; onAction(PaletteAction.CourseField(course.id, "tag", tag)) }, modifier = Modifier.semantics { selected = course.tag == tag }) { Text(TAGS[tag]?.label ?: tag) } } } },
         confirmButton = { TextButton(onClick = { menu = false }) { Text("Cancel") } })
-    if (groupMenu) state.family?.let { family -> AlertDialog(onDismissRequest = { groupMenu = false }, properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 560.dp).fillMaxWidth(), title = { Text(family.family) },
-        text = { Column(Modifier.verticalScroll(rememberScrollState())) { TextButton(onClick = { groupMenu = false; onAction(PaletteAction.CourseGroups(family.courses.map { it.id }, null)) }) { Text("Not in this course") }
-            family.courses.forEach { c -> TextButton(onClick = { groupMenu = false; onAction(PaletteAction.CourseGroups(family.courses.map { it.id }, c.id)) }) { Text(c.group) } } } },
-        confirmButton = { TextButton(onClick = { groupMenu = false }) { Text("Cancel") } }) }
     if (edit) AlertDialog(onDismissRequest = { edit = false }, properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 560.dp).fillMaxWidth(), title = { CompositionLocalProvider(LocalDensity provides density) { Text("Lecture recordings") } }, text = {
         CompositionLocalProvider(LocalDensity provides density) { Column(Modifier.verticalScroll(rememberScrollState())) { Text("Link to the lecture recordings of ${course.name}. New catch-ups link to it. Leave empty to remove.")
@@ -140,4 +139,25 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
             OutlinedTextField(value = url, onValueChange = { url = it }, modifier = Modifier.fillMaxWidth().testTag("recording-url"), singleLine = true) } }
     }, confirmButton = { CompositionLocalProvider(LocalDensity provides density) { TextButton(onClick = { onAction(PaletteAction.CourseField(course.id, "recording_url", url.trim())); edit = false }) { Text("Save") } } },
         dismissButton = { CompositionLocalProvider(LocalDensity provides density) { TextButton(onClick = { edit = false }) { Text("Cancel") } } })
+}
+
+fun groupSelection(family: GroupFamily): String {
+    val chosen = family.courses.filter { it.tracked }
+    return when (chosen.size) { 0 -> "Not in this course"; 1 -> chosen.first().group; else -> "Several groups" }
+}
+
+@Composable
+fun GroupSelector(family: GroupFamily, onAction: (PaletteAction) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Column {
+        Text(family.family)
+        OutlinedButton(onClick = { open = true }) { Text(groupSelection(family)) }
+    }
+    if (open) AlertDialog(onDismissRequest = { open = false }, properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 560.dp).fillMaxWidth(), title = { Text(family.family) },
+        text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+            TextButton(onClick = { open = false; onAction(PaletteAction.CourseGroups(family.courses.map { it.id }, null)) }, modifier = Modifier.semantics { selected = family.courses.none { it.tracked } }) { Text("Not in this course") }
+            family.courses.forEach { c -> TextButton(onClick = { open = false; onAction(PaletteAction.CourseGroups(family.courses.map { it.id }, c.id)) }, modifier = Modifier.semantics { selected = family.courses.count { it.tracked } == 1 && c.tracked }) { Text(c.group) } }
+            if (family.courses.count { it.tracked } > 1) Text("Several groups", Modifier.semantics { selected = true })
+        } }, confirmButton = { TextButton(onClick = { open = false }) { Text("Cancel") } })
 }

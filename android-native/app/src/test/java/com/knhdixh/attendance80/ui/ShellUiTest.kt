@@ -57,7 +57,7 @@ class ShellUiTest {
     @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
     @Test fun upcoming() = content("upcoming", "Nothing scheduled", "Algorithmique")
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
-    @Test fun courses() = content("courses", "No tracked courses.", "Algorithmique")
+    @Test fun courses() = content("courses", "Add your Zeus link to keep it up to date automatically, or upload an .ics file. You can add more calendars later in Settings.", "Algorithmique")
     @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
