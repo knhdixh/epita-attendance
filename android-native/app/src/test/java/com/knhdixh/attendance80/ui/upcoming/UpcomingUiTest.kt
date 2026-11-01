@@ -93,4 +93,24 @@ class UpcomingUiTest {
         compose.runOnIdle { assertEquals("https://example.test/lecture", opened) }
     }
 
+    @Test fun weekChangesResetScrolledAgendaToTop() {
+        var offset by mutableIntStateOf(0)
+        compose.setContent { Attendance80Theme { UpcomingScreen(base, now, zone, offset, { offset = it }, {}, {}) } }
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-list").performScrollToNode(hasTestTag("upcoming-more-next"))
+        compose.onNodeWithTag("upcoming-more-next").performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-day-2026-11-02").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-next").assertIsDisplayed()
+        compose.onNodeWithTag("upcoming-day-2026-11-08").performScrollTo().performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-section-2026-11-08").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-section-2026-11-08").assertIsDisplayed()
+        compose.runOnIdle { offset = 2 }
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-prev").assertIsDisplayed().performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-day-2026-11-02").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-today").assertIsDisplayed().performClick()
+        compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-day-2026-10-28").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-next").assertIsDisplayed()
+    }
+
 }

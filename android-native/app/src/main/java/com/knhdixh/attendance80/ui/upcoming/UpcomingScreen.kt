@@ -72,13 +72,20 @@ class UpcomingViewModel : ViewModel() {
 @Composable
 fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffset: (Int) -> Unit,
     onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: UpcomingViewModel = viewModel()) {
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    var previousOffset by remember { mutableIntStateOf(offset) }
+    LaunchedEffect(offset) {
+        if (previousOffset != offset) {
+            list.scrollToItem(0)
+            previousOffset = offset
+        }
+    }
     val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     LaunchedEffect(data, today, zone, offset) { model.update(data, Clock.fixed(Instant.ofEpochMilli(now), zone), zone, offset) }
     val state by model.state.collectAsState()
     val s = state?.takeIf { it.data == data && it.today == today && it.zone == zone && it.offset == offset }
     if (s == null || data == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
-    val list = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val families = groupFamilies(data.courses).let { fs -> if (fs.any { f -> f.courses.any { it.tracked } }) emptyList() else fs }
     val locale = Locale.getDefault()
     val first = s.days.first().date
@@ -124,7 +131,7 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
             day.sessions.forEach { event -> item("session:${event.id}") { SessionRow(event, data, now, zone, onNavigate, onAction) } }
             day.homework.forEach { hw -> item("homework:${hw.id}") { UpcomingHomework(hw, data, s.today, zone, onNavigate, onAction) } }
         }
-        item("more") { TextButton(onClick = { onOffset(offset + 1) }) { Text("Next week") } }
+        item("more") { TextButton(onClick = { onOffset(offset + 1) }, modifier = Modifier.testTag("upcoming-more-next")) { Text("Next week") } }
     }
 }
 
