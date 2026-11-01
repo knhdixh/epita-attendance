@@ -116,6 +116,7 @@ fun Shell(
     var sessionWhen by rememberSaveable(accountKey) { mutableStateOf("upcoming") }
     var sessionQuery by rememberSaveable(accountKey) { mutableStateOf("") }
     var sessionHidden by rememberSaveable(accountKey) { mutableStateOf(false) }
+    var upcomingWeek by rememberSaveable(accountKey) { mutableIntStateOf(0) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
@@ -191,6 +192,7 @@ fun Shell(
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents)
+                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(state.data, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction) }
                             else if (route == "sessions") key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
                                 com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
                                 { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },

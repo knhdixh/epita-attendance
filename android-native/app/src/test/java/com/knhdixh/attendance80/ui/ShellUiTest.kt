@@ -55,7 +55,51 @@ class ShellUiTest {
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
     @Test fun homework() = content("homework", "Nothing due.", "Maths Exercise 4")
     @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
-    @Test fun upcoming() = content("upcoming", "Nothing scheduled", "Algorithmique")
+    @Test fun upcoming() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "upcoming", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Nothing scheduled").fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithText("Nothing scheduled").assertCountEquals(7)
+        compose.runOnIdle { data = populated }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-list").performScrollToNode(hasText("Algorithmique"))
+        compose.onNodeWithText("Algorithmique").assertExists()
+    }
+    @Test fun upcomingWeekSurvivesNavigationAndNullAndResetsForAnotherAccount() {
+        var data by mutableStateOf<com.knhdixh.attendance80.net.AppData?>(empty)
+        var owner by mutableStateOf("account-a")
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent { Attendance80Theme { Shell(ShellState(data = data, session = owner), {}, {}, {}, initialRoute = "upcoming", accountKey = owner, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-next").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-next").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("nav-today").performClick()
+        compose.onNodeWithTag("nav-more").performClick()
+        compose.onNodeWithText("Upcoming").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        compose.runOnIdle { data = null }
+        compose.runOnIdle { data = empty }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        compose.runOnIdle { owner = "account-b" }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-02").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-prev").assertIsNotEnabled()
+    }
+    @Test fun upcomingOpensSharedSessionAndHomeworkDestinations() {
+        val due = 1793600000000L + 3600000L
+        val data = populated.copy(homework = listOf(com.knhdixh.attendance80.net.HomeworkDto(900, title = "Week assignment", due_at = due)))
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "upcoming", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("upcoming-list").performScrollToNode(hasText("Mathématiques"))
+        compose.onNode(hasText("Mathématiques") and hasAnyAncestor(hasTestTag("session-row-1"))).performClick()
+        compose.onNodeWithText("Session tag").assertIsDisplayed()
+        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithTag("upcoming-list").performScrollToNode(hasText("Week assignment"))
+        compose.onNodeWithText("Week assignment").performClick()
+        compose.onNodeWithTag("shell-title").assertTextEquals("Homework")
+        compose.onNodeWithText("Week assignment").assertExists()
+    }
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
     @Test fun courses() = content("courses", "Add your Zeus link to keep it up to date automatically, or upload an .ics file. You can add more calendars later in Settings.", "Algorithmique")
     @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")

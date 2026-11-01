@@ -137,6 +137,16 @@ class LocalServerTest {
         goBottom("Homework"); waitText("E2E homework")
         goBottom("Focus"); waitText("E2E focus")
         more("Upcoming"); waitText("E2E shared lecture")
+        ui.onNodeWithTag("upcoming-next").performClick()
+        val nextMonday = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusWeeks(1)
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("upcoming-day-$nextMonday").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("upcoming-prev").assertIsEnabled()
+        ui.onNodeWithTag("upcoming-prev").performClick()
+        waitText("E2E shared lecture")
+        val todayKey = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).toString()
+        ui.onNodeWithTag("upcoming-day-$todayKey").performClick()
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("upcoming-section-$todayKey").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("upcoming-section-$todayKey").assertIsDisplayed()
         more("Sessions"); waitText("E2E shared lecture")
         more("Courses"); waitText("GR1 - E2E Algorithms")
         // The row stays visible after untracking; refresh is serialized behind the mutation.

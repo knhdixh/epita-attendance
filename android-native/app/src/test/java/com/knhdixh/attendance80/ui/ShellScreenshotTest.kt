@@ -4,6 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -34,6 +36,10 @@ abstract class ShellScreenshotTest {
     @Test fun light_focus() = capture("light", "focus", 1f)
     @Test fun light_more() = capture("light", "more", 1f)
     @Test fun light_upcoming() = capture("light", "upcoming", 1f)
+    @Test fun light_upcoming_large() = capture("light", "upcoming", 2f)
+    @Test fun light_upcoming_empty() = capture("light", "upcoming", 1f, true)
+    @Test fun light_upcoming_homework() = captureUpcomingState("light", true)
+    @Test fun light_upcoming_next() = captureUpcomingState("light", false)
     @Test fun light_sessions() = capture("light", "sessions", 1f)
     @Test fun light_courses() = capture("light", "courses", 1f)
     @Test fun light_calendar() = capture("light", "calendar", 1f)
@@ -50,6 +56,10 @@ abstract class ShellScreenshotTest {
     @Test fun dark_focus() = capture("dark", "focus", 1f)
     @Test fun dark_more() = capture("dark", "more", 1f)
     @Test fun dark_upcoming() = capture("dark", "upcoming", 1f)
+    @Test fun dark_upcoming_large() = capture("dark", "upcoming", 2f)
+    @Test fun dark_upcoming_empty() = capture("dark", "upcoming", 1f, true)
+    @Test fun dark_upcoming_homework() = captureUpcomingState("dark", true)
+    @Test fun dark_upcoming_next() = captureUpcomingState("dark", false)
     @Test fun dark_sessions() = capture("dark", "sessions", 1f)
     @Test fun dark_courses() = capture("dark", "courses", 1f)
     @Test fun dark_calendar() = capture("dark", "calendar", 1f)
@@ -81,6 +91,19 @@ abstract class ShellScreenshotTest {
     @Test fun dark_scope() = captureScope("dark", 1f)
     @Test fun light_scope_large() = captureScope("light", 2f)
     @Test fun dark_scope_large() = captureScope("dark", 2f)
+    private fun captureUpcomingState(theme: String, homework: Boolean) {
+        val now = 1793600000000L
+        val data = screenshotData().copy(homework = listOf(com.knhdixh.attendance80.net.HomeworkDto(900, title = "Review lecture", notes = "Read the notes", due_at = now + 3600000, remind_minutes = 60, kind = "catchup")))
+        compose.setContent { Attendance80Theme(darkTheme = theme == "dark") { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "upcoming", now = now, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-list").fetchSemanticsNodes().isNotEmpty() }
+        if (homework) {
+            compose.onNodeWithTag("upcoming-list").performScrollToNode(hasTestTag("upcoming-homework-900"))
+        } else {
+            compose.onNodeWithTag("upcoming-next").performClick()
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
+        }
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_upcoming_${if (homework) "homework" else "next"}.png")
+    }
     private fun captureScope(theme: String, scale: Float) {
         var selected = ""
         compose.mainClock.autoAdvance = false
@@ -102,7 +125,7 @@ abstract class ShellScreenshotTest {
         compose.onNodeWithText("Second").performScrollTo().performClick()
         compose.runOnIdle { org.junit.Assert.assertEquals("2", selected) }
     }
-    private fun capture(theme: String, route: String, scale: Float) {
+    private fun capture(theme: String, route: String, scale: Float, empty: Boolean = false) {
         val title = route.replaceFirstChar { it.uppercase() }
         var baseline = 0
         compose.mainClock.autoAdvance = false
@@ -112,7 +135,7 @@ abstract class ShellScreenshotTest {
                 Attendance80Theme(darkTheme = theme == "dark") {
                     baseline = rememberTextMeasurer().measure(title, style = MaterialTheme.typography.titleLarge,
                         density = Density(density.density, 1f)).size.height
-                    Shell(ShellState(data = screenshotData()), {}, {}, {}, initialRoute = route,
+                    Shell(ShellState(data = if (empty) com.knhdixh.attendance80.net.ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()) else screenshotData()), {}, {}, {}, initialRoute = route,
                         now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
                 }
             }
@@ -120,8 +143,8 @@ abstract class ShellScreenshotTest {
         compose.mainClock.advanceTimeBy(500)
         if (route.startsWith("course/")) { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("course-detail").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
         if (route == "courses") { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
-        if (route == "sessions" || route == "attendance") {
-            val contentTag = if (route == "sessions") "sessions-list" else "attendance-list"
+        if (route == "sessions" || route == "attendance" || route == "upcoming") {
+            val contentTag = when (route) { "sessions" -> "sessions-list"; "upcoming" -> "upcoming-list"; else -> "attendance-list" }
             compose.mainClock.autoAdvance = true
             compose.waitUntil(10_000) { compose.onAllNodesWithTag(contentTag).fetchSemanticsNodes().isNotEmpty() }
             compose.mainClock.autoAdvance = false
@@ -130,7 +153,7 @@ abstract class ShellScreenshotTest {
             val height = compose.onNodeWithTag("shell-title").fetchSemanticsNode().boundsInRoot.height
             assertTrue("200% font must increase title height ($height vs $baseline)", height > baseline)
         }
-        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_${route.replace("/", "_")}_font${scale.toInt()}.png")
+        compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_${route.replace("/", "_")}${if (empty) "_empty" else ""}_font${scale.toInt()}.png")
         if (scale == 2f && device.startsWith("phone")) compose.onNodeWithContentDescription("More").performClick()
         if (scale == 2f && device.startsWith("tablet")) compose.onNodeWithTag("nav-settings").performScrollTo().performClick()
     }
