@@ -762,3 +762,76 @@ Built by Claude in this session, following `public/countdowns-ui.js` (maths from
 - 4.1–4.7 by Codex; 4.8 finished and 4.9, 4.11, 4.12, 4.13 and 4.14 built by Claude, all on `native/phase-4`. 4.10 (Assistant) was removed from the product.
 - Owed to later phases, as planned: the live focus timer (Phase 5), local notifications for classes, habits, homework and check-ins (Phase 7), list-detail tablet layouts and a design pass (Phase 8), and the durable offline outbox (Phase 11).
 - To look at in the review: `CoursesRepositoryUiTest` flakiness (above), the Robolectric native-graphics note for bottom panels (4.12), the Settings dialog OOM that led to the inline account deletion (4.11), and the open question about cached `data.json` after sign-out or account deletion (4.11).
+
+### Phase 5: focus timer, natively (2026-11-02)
+
+Built by Claude on `native/phase-5`, from `4c569de`. The timer lives in the app now: one controller, one alarm, one notification, and nothing talks to Chrome.
+
+- **Tasks and commits** (the plan's tasks 2 and 3 are one commit, because the alarm and the notification are changed together):
+  - **1. `FocusController` and `FocusStore`**, `4147a6a`. `focus/FocusStore.kt` keeps the timer, the last settings, the outbox and pending tasks in a DataStore. `focus/FocusController.kt` has `start`, `pause`, `resume`, `toggle`, `skip`, `stop`, `adjust`, `setLength` and `setTarget`, plus `focusOn` ("focus on this"), `phaseEnded`, `restore` and `adopt`.
+    - Every change goes through one mutex, stamps `updatedAt`, saves, reschedules the alarm and redraws the notification and tile. It is built on `logic/FocusTimer.kt` and never computes time itself.
+    - The alarm, the notifier, the redraw hook and the outbox request are interfaces, so the tests use a fake clock and a fake alarm.
+    - `AppContainer.focusController`, `focusStore` and `focusOutbox` default to `null` in the interface, so the existing tests' anonymous containers still compile.
+  - **2 and 3. Phase end and notifications**, `24041a3`.
+    - `AndroidPhaseAlarm` uses `setExactAndAllowWhileIdle` at `endsAt`, with an inexact fallback if exact alarms aren't allowed.
+    - `FocusReceiver` handles Pause/Resume, Skip, Stop, the alarm, `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, `TIME_SET` and `TIMEZONE_CHANGED`. The last four call `restore()`: finish what is due, otherwise re-arm.
+    - `FocusNotifications` posts the ongoing countdown (chronometer counting down to `endsAt`, a progress bar, public on the lock screen, with Pause/Resume, Take a break/Skip break and Stop). On Android 16+, `LiveUpdate` builds it with `Notification.ProgressStyle` and requests promotion, and falls back silently to the normal one if anything throws.
+    - "Phase done" is on a high-priority channel with `res/raw/chime.wav`, honouring `notify` (nothing is posted) and `sound`.
+  - **4. Outbox**, `d9c5ce4`. `focus/Outbox.kt` sends sessions oldest first to `POST /api/focus`, and removes one only after a 2xx or a 400 (a 400 is logged and dropped). On anything else (offline, 401, 5xx) it stops and keeps order.
+    - `OutboxWorker` runs it with network required and exponential backoff from 30 s, as a unique work item, and asks again on every new log, on app start, and from the hourly `RefreshWorker`.
+    - A recorded session is merged into the snapshot by `client_id` (`DataRepository.recordFocus`).
+  - **5. Tile and quick-focus sheet**, `4f98d34`. `FocusTileService` starts, pauses and resumes, and shows "Start 25 min" / "Until 14:30" / "Paused · 20:00". `QuickFocusActivity` is opened by the tile's long-press (`QS_TILE_PREFERENCES`), in its own task.
+    - The sheet and the Focus screen share one `TimerPanel`: phase, clock, progress, ±1/±5 and length presets as on the web, the "Working on" picker (own tasks, open homework, tracked courses, "+ New task…"), tags (at most 5), Start/Pause/Resume, Take a break/Skip break, Stop.
+    - A task typed there is kept on the device and sent to `PUT /api/focus/settings` by the outbox worker, so it works offline.
+    - The notification permission is asked once, in context, the first time a timer starts (Focus screen or sheet). It is never asked at launch.
+  - **6. Settings**, in `d84c1e8`. Settings come from `focus.settings` in the snapshot: `DefaultAppContainer.startData` pushes every snapshot's settings into the controller, which also stores them, so the alarm receiver has them before the snapshot loads. Edits already went through `PUT /api/focus/settings` and updated the snapshot (Phase 4.8); that now reaches the controller. "Changes apply from the next phase" holds, because a running phase keeps its length.
+    - `d84c1e8` also puts the timer panel at the top of the Focus screen and wires the palette's Start, Pause, Resume, Skip, Stop, "Focus on: …" and "New focus task" to it. They run once and clear themselves. Focus on a task stops a focus running on something else first, as the web does.
+  - **7. Migration from the TWA**, `7a9cdaa`. `LegacyFocusMigration` reads the old `SharedPreferences("focus")`: a running timer is adopted and its alarm set (or finished at once if it ended meanwhile), unsent sessions go to the outbox (deduplicated by `client_id`, bad ones skipped), pending tasks go to the pending list, then the old file is cleared. It runs once, before the first `restore()`.
+  - **Screenshots and lint**: `19c5e49` (24 new screenshots), `78e0b86` (38 re-recorded; see Deviations), `2c28a67` (lint).
+- **Tests added: 73** (24 of them screenshot tests).
+  - `FocusControllerTest` (17, fake clock, alarm and notifier):
+    - start schedules the alarm at `endsAt`;
+    - pause cancels it and resume moves it by the gap;
+    - toggle, adjust and set length;
+    - finish with auto breaks logs and starts a break; without them it goes idle and cancels the alarm;
+    - a stale finish doesn't start the next phase;
+    - an early alarm only reschedules;
+    - `notify` off posts nothing;
+    - stop and skip log a stopped session, and under a minute isn't logged;
+    - restart and `restore`, a phase that ended while off, `adopt`, settings surviving a restart, and the outbox keeping one entry per `client_id`.
+  - `FocusSettingsMappingTest` (1) covers the account settings reaching the controller.
+  - `FocusNotificationsTest` (4, Robolectric): the ongoing countdown with three actions, paused text and Resume, idle cancels, and the chime channel versus the silent one.
+  - `OutboxTest` (6, MockWebServer): order and body, 500 keeps and stops, 400 drops and logs, offline and 401 keep, the same session twice is safe, and empty sends nothing.
+  - `TimerPanelUiTest` (7), `QuickFocusSheetTest` (3, through the real controller), `FocusScreenTimerUiTest` (5, palette commands), `LegacyFocusMigrationTest` (6, Robolectric).
+  - `TimerScreenshotTest`: idle, running, paused, break, sheet; light and dark; phone and tablet; running and sheet also at 200%.
+- **Checks run** (all from this session):
+  - `npm test`: 104 passed, 0 failed.
+  - `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: exit 0, BUILD SUCCESSFUL. 847 unit tests, 0 failures, 0 skipped.
+    - The first two runs of this command failed, honestly: (1) the Focus and Shell screenshots changed because I removed the placeholder lines, plus a race in my own sheet test (it asserted the outbox request before the coroutine made it); (2) lint's `StateFlowValueCalledInComposition` error in a test of mine. Both fixed (`78e0b86`, `2c28a67`) and the third run is the one above.
+  - `tools/e2e.sh`: exit 0, 2/2 `LocalServerTest` tests passed ("Both local-server instrumented tests passed.").
+  - Claude looked at the phone light running timer and the phone dark quick-focus sheet screenshots.
+- **Deviations from the plan:**
+  - **Live Update:** `Notification.Builder.setRequestPromotedOngoing` is not in the compileSdk 36 stubs, so `LiveUpdate` sets the extra `android.requestPromotedOngoing` by key and uses the platform `ProgressStyle`.
+  - **Progress bar:** it is drawn when the notification is posted (start, pause, resume, adjust). It does not advance by itself between those; only the chronometer does. Nothing is kept awake to update it.
+  - **Exact-alarm permission:** `SCHEDULE_EXACT_ALARM` now has `maxSdkVersion="32"`, as the TWA's manifest had it; `USE_EXACT_ALARM` covers 33+.
+  - **Chime:** `res/raw/chime.wav` is a two-note chime I synthesised (22 kHz, mono, 50 KB). Replace it if you want a different sound.
+  - **Silent channel:** because a channel's sound belongs to the device and "Play a sound" belongs to the account, there is a second, silent channel for when the setting is off.
+  - **Sheet applies at once:** the quick-focus sheet applies each change immediately (like the Focus screen), where the old sheet applied them on Save. It closes after Start, Pause, Skip and Stop.
+  - **Not ported** from `focus-ui.js`: typing a time into the clock, the "Next class" / "starts before this focus ends" note on the timer card, and "Finished “X”? Mark done". None is in the plan's Phase 5 list. The ported `parseClock` and `setRemaining` are ready if you want them.
+  - **Permission in context:** the notification permission is asked in context here (plan Phase 8 asks for that), because the timer is useless without it on Android 13+.
+  - **38 screenshots re-recorded:** the Focus page and the Shell's focus route had a line saying the timer was coming in the next phase, and the settings had one about notifications. Both lines are gone, so those Phase 4 screenshots changed. These are intended UI changes, not logic goldens.
+  - **Tasks 2 and 3** are one commit; the outbox (4) was committed before the tile (5).
+- **Not mine:**
+  - `OfflineShellTest.cachedShellStaysVisibleWhileRefreshIsDelayed` failed twice in partial, heavily parallel runs of the Focus and Shell tests (it asserts under a 2-second `MockWebServer` body delay). It passed alone, in a Shell-only run, and in the full run. It looks load-dependent; worth a look in the Phase 4 review next to `CoursesRepositoryUiTest`.
+  - `android-native/tools/run-phase.sh` was modified in the working tree by someone else during this session (budget and wording changes). I did not touch it and did not commit it.
+- **Unverified / Needs a device** (everything below is only tested with fakes or Robolectric):
+  - the exact alarm firing in Doze, and being re-armed after a real reboot, an app update, and a time or time-zone change;
+  - the lock-screen countdown ticking by itself, the notification actions, and the Live Update being promoted on Android 16 (and the fallback);
+  - the chime, and the silent channel really being silent;
+  - the tile (label, subtitle, toggling) and the long-press opening the sheet; the sheet's translucent window over the launcher;
+  - the notification permission dialog appearing once;
+  - the migration over a real TWA install with a running timer, unsent sessions and tasks;
+  - `WorkManager` backoff timing and the retry after a real offline period.
+- **Open questions:**
+  1. Outbox entries carry no account. If you sign out and into another account with sessions still queued, they would be sent to the new account. The server would accept them. The fix is an `owner` field on the entry (a hash of the token, as the snapshot cache does) and a purge on sign-out; I did not change the session JSON the plan fixes.
+  2. The widget (Phase 6) needs to open `QuickFocusActivity` and read `FocusController.timer`; both are ready (`FocusSurfaces.refresh()` is where the widget redraw goes).
