@@ -149,10 +149,10 @@ class HomeworkNavigationUiTest {
         ui.waitUntil(10000) { ui.onAllNodesWithText("Focus on this").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithText("Focus on this").performClick()
         ui.onNodeWithTag("shell-title").assertTextEquals("Focus")
-        ui.onNodeWithText("This action is not available yet.").assertExists()
+        ui.onNodeWithText("Focus request saved for the timer.").assertExists()
         ui.runOnIdle { Assert.assertEquals(PaletteAction.Focus("target", homeworkId = 17), ApiClient.json.decodeFromString<PaletteAction>(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")!!)) }
         restoration.emulateSavedInstanceStateRestore()
-        ui.onNodeWithText("This action is not available yet.").assertExists()
+        ui.onNodeWithText("Focus request saved for the timer.").assertExists()
         ui.runOnIdle { Assert.assertEquals(PaletteAction.Focus("target", homeworkId = 17), ApiClient.json.decodeFromString<PaletteAction>(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")!!)) }
         ui.onNodeWithTag("nav-homework").performClick()
         ui.waitUntil(10000) { ui.onAllNodes(hasText("planned", substring = true) and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }

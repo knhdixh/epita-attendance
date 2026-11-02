@@ -37,6 +37,12 @@ class AppNavAccountTest {
     @get:Rule val compose = createComposeRule()
     @Test fun switchingAccountsDiscardsSavedNavigationAndAction() {
         val server = MockWebServer(); server.start()
+        // Opening Focus fetches a year of history; keep it off the queue the refreshes below rely on.
+        server.dispatcher = object : okhttp3.mockwebserver.QueueDispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest): MockResponse =
+                if (request.path?.startsWith("/api/focus") == true) MockResponse().setBody("""{"sessions":[],"since":0}""")
+                else super.dispatch(request)
+        }
         val dir = Files.createTempDirectory("account-nav").toFile()
         val storeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         try {
@@ -84,7 +90,7 @@ class AppNavAccountTest {
             compose.onNodeWithTag("search-query").performTextInput("start focus")
             compose.onNodeWithTag("result-focus:start").performClick()
             compose.onNodeWithTag("shell-title").assertTextEquals("Focus")
-            compose.onNodeWithText("This action is not available yet.").assertExists()
+            compose.onNodeWithText("Focus request saved for the timer.").assertExists()
             compose.runOnIdle { token = null; tokenStore.token.value = null }
             runBlocking {
                 repo.start()
@@ -97,7 +103,7 @@ class AppNavAccountTest {
             compose.waitUntil(10_000) { shell.state.value.session == "account-b" }
             restoration.emulateSavedInstanceStateRestore()
             compose.onNodeWithTag("shell-title").assertTextEquals("Today")
-            compose.onNodeWithText("This action is not available yet.").assertDoesNotExist()
+            compose.onNodeWithText("Focus request saved for the timer.").assertDoesNotExist()
             compose.onNodeWithText("Mathématiques").assertDoesNotExist()
             compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("today-list").performScrollToNode(hasText("Account B class"))

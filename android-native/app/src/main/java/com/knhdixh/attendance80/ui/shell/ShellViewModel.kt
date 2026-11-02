@@ -33,6 +33,11 @@ data class ShellState(
 )
 
 class ShellViewModel(private val container: AppContainer) : ViewModel() {
+    val focusHistory = container.dataRepository.focusHistory
+    suspend fun ensureFocusHistory(owner: String, since: Long) = container.dataRepository.ensureFocusHistory(owner, since)
+    suspend fun saveFocusSettings(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettings(owner, body)
+    suspend fun saveFocusList(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettingsCanonical(owner, body)
+    suspend fun deleteFocus(owner: String, id: Long) = container.dataRepository.deleteFocus(owner, id)
     val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
         container.dataRepository.loading, container.dataRepository.error) { owned, selected, loading, error ->
         ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third)

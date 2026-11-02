@@ -54,7 +54,15 @@ class ShellUiTest {
     }
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
     @Test fun homework() = content("homework", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
-    @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
+    @Test fun focus() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "focus", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.onNodeWithTag("focus-list").performScrollToNode(hasText("Your focus sessions will show here."))
+        compose.onNodeWithText("Your focus sessions will show here.").assertExists()
+        compose.runOnIdle { data = populated }
+        compose.onNodeWithTag("focus-list").performScrollToNode(hasText("Algorithms revision · Algorithmique"))
+        compose.onNodeWithText("Algorithms revision · Algorithmique").assertExists()
+    }
     @Test fun upcoming() {
         var data by mutableStateOf(empty)
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "upcoming", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }

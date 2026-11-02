@@ -11,6 +11,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -92,6 +93,11 @@ fun Shell(
     onDeleteHomework: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {},
     onFinishHomeworkDelete: (Boolean, PendingHomeworkDelete) -> Unit = { _, _ -> },
     onSaveHomework: suspend (Long?, kotlinx.serialization.json.JsonObject) -> Boolean = { _, _ -> false },
+    focusHistory: com.knhdixh.attendance80.data.FocusHistoryStatus = com.knhdixh.attendance80.data.FocusHistoryStatus(),
+    onFocusHistory: suspend (Long) -> Unit = {},
+    onSaveFocus: suspend (kotlinx.serialization.json.JsonObject) -> Boolean = { false },
+    onSaveFocusList: suspend (kotlinx.serialization.json.JsonObject) -> com.knhdixh.attendance80.net.FocusSettingsDto? = { null },
+    onDeleteFocus: suspend (Long) -> Boolean = { false },
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -124,6 +130,27 @@ fun Shell(
     var upcomingWeek by rememberSaveable(accountKey) { mutableIntStateOf(0) }
     var lastHomeworkCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var homeworkDrafts by rememberSaveable(accountKey) { mutableStateOf(hashMapOf<String, String>()) }
+    val focusOwnerKey = remember(accountKey) { accountKey?.let { token -> java.security.MessageDigest.getInstance("SHA-256").digest(token.toByteArray()).joinToString("") { "%02x".format(it) } } }
+    var focusDraftOwner by rememberSaveable { mutableStateOf(focusOwnerKey) }
+    var focusDraft by rememberSaveable { mutableStateOf<String?>(null) }
+    val focusListState = rememberLazyListState()
+    val currentFocusOwner by rememberUpdatedState(accountKey)
+    val currentFocusData by rememberUpdatedState(state.data)
+    val currentFocusHistory by rememberUpdatedState(focusHistory)
+    val currentFocusTime by rememberUpdatedState(now)
+    val currentFocusZone by rememberUpdatedState(zone)
+    val currentHistoryAction by rememberUpdatedState(onFocusHistory)
+    val currentSaveFocus by rememberUpdatedState(onSaveFocus)
+    val currentSaveFocusList by rememberUpdatedState(onSaveFocusList)
+    val currentDeleteFocus by rememberUpdatedState(onDeleteFocus)
+    LaunchedEffect(focusOwnerKey) {
+        if (focusDraftOwner != focusOwnerKey) {
+            focusDraft = null
+            focusListState.scrollToItem(0)
+            runCatching { navController.getBackStackEntry("focus").savedStateHandle["paletteAction"] = null }
+            focusDraftOwner = focusOwnerKey
+        }
+    }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
@@ -216,6 +243,7 @@ fun Shell(
                                 navController.popBackStack()
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
+                            else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList)
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
                             else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
                             else if (route == "homework") key(accountKey) { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, { navigate(it) }, onAction, ::deleteHomework, ::pending) }

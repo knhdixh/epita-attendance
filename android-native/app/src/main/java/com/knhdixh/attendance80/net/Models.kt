@@ -210,7 +210,7 @@ data class FocusSettingsDto(
 
 @Serializable
 data class FocusSessionDto(
-    val id: Long = 0,
+    val id: Long? = null,
     val client_id: String,
     val homework_id: Long? = null,
     val course_id: Long? = null,
@@ -227,7 +227,7 @@ data class FocusSessionDto(
 data class FocusDataDto(
     val settings: FocusSettingsDto = FocusSettingsDto(),
     val sessions: List<FocusSessionDto> = emptyList(),
-    val since: Long = 0,
+    val since: Long = Long.MAX_VALUE,
 )
 
 @Serializable

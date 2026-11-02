@@ -11,12 +11,18 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicLong
+
+data class FocusHistoryStatus(val owner: String? = null, val since: Long? = null, val loading: Boolean = false, val failed: Boolean = false, val attempted: Boolean = false, val refreshVersion: Long = 0)
 
 /** Serialises reads and writes so a refresh cannot overwrite an in-flight mutation. */
 class DataRepository(private val api: Api, private val directory: File, private val clock: Clock,
                      private val rename: (File, File) -> Boolean = { from, to -> from.renameTo(to) },
                      private val token: () -> String?) {
     private val mutex = Mutex()
+    private val generation = AtomicLong()
+    private val _focusHistory = MutableStateFlow(FocusHistoryStatus())
+    val focusHistory = _focusHistory.asStateFlow()
     @Volatile private var session: String? = null
     private val _snapshot = MutableStateFlow<AppData?>(null)
     val snapshot = _snapshot.asStateFlow()
@@ -53,9 +59,11 @@ class DataRepository(private val api: Api, private val directory: File, private 
 
     suspend fun start() {
         if (session != token()) {
+            generation.incrementAndGet()
             publish(null, null)
             _lastSynced.value = null
             clearErrors()
+            _focusHistory.value = FocusHistoryStatus()
         }
         mutex.withLock {
             val current = token()
@@ -78,6 +86,48 @@ class DataRepository(private val api: Api, private val directory: File, private 
 
     suspend fun refresh(): Boolean = mutex.withLock { refreshLocked() }
 
+    /** The data endpoint only includes recent history; fetch the year independently. */
+    suspend fun ensureFocusHistory(owner: String, since: Long) = mutex.withLock {
+        val data = _snapshot.value ?: return@withLock
+        if (session != owner || token() != owner) return@withLock
+        val version = generation.get()
+        if (data.focus.since <= since) return@withLock
+        val status = _focusHistory.value
+        if (status.owner == owner && status.since == since && (status.loading || status.attempted)) return@withLock
+        val refreshVersion = status.refreshVersion
+        _focusHistory.value = FocusHistoryStatus(owner, since, loading = true, refreshVersion = refreshVersion)
+        try {
+            val result = api.listFocus(since)
+            if (session != owner || token() != owner || generation.get() != version) return@withLock
+            val current = _snapshot.value ?: return@withLock
+            val known = result.sessions.mapTo(HashSet()) { it.client_id }
+            val merged = (result.sessions + current.focus.sessions.filter { it.client_id !in known && it.started_at >= result.since }).sortedBy { it.started_at }
+            publish(owner, current.copy(focus = current.focus.copy(sessions = merged, since = result.since)))
+            _focusHistory.value = FocusHistoryStatus(owner, since, failed = result.since > since, attempted = true, refreshVersion = refreshVersion)
+        } catch (e: CancellationException) {
+            if (session == owner && token() == owner && generation.get() == version) _focusHistory.value = FocusHistoryStatus(refreshVersion = refreshVersion)
+            throw e
+        } catch (e: Exception) {
+            if (session == owner && token() == owner && generation.get() == version) {
+                _focusHistory.value = FocusHistoryStatus(owner, since, failed = true, attempted = true, refreshVersion = refreshVersion)
+                reportError(e.message ?: "Request failed")
+            }
+        }
+    }
+
+    suspend fun saveFocusSettingsCanonical(owner: String, body: kotlinx.serialization.json.JsonObject): com.knhdixh.attendance80.net.FocusSettingsDto? {
+        var saved: com.knhdixh.attendance80.net.FocusSettingsDto? = null
+        val success = mutate({ it }, { api.saveFocusSettings(body).also { saved = it.settings } },
+            { data, result -> data.copy(focus = data.focus.copy(settings = result.settings)) }, expectedOwner = owner)
+        return if (success) saved else null
+    }
+
+    suspend fun saveFocusSettings(owner: String, body: kotlinx.serialization.json.JsonObject): Boolean = saveFocusSettingsCanonical(owner, body) != null
+
+    suspend fun deleteFocus(owner: String, id: Long): Boolean =
+        mutate({ it }, { api.deleteFocus(id) },
+            { data, _ -> data.copy(focus = data.focus.copy(sessions = data.focus.sessions.filterNot { it.id == id })) }, expectedOwner = owner)
+
     private suspend fun refreshLocked(): Boolean {
         val active = session ?: return false
         if (token() != active) return false
@@ -96,6 +146,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
             } finally { temporary.delete() }
             if (token() != active) return false
             val synced = clock.now()
+            _focusHistory.value = FocusHistoryStatus(refreshVersion = _focusHistory.value.refreshVersion + 1)
             publish(active, data, synced)
             _lastSynced.value = synced
             true
@@ -111,20 +162,21 @@ class DataRepository(private val api: Api, private val directory: File, private 
                            expectedOwner: String? = null, preserveError: Boolean = false): Boolean = mutex.withLock {
         val active = session ?: return@withLock false
         if (expectedOwner != null && expectedOwner != active) return@withLock false
+        val version = generation.get()
         val before = _snapshot.value ?: return@withLock false
         if (token() != active) return@withLock false
         if (!preserveError) clearErrors()
         publish(active, optimistic(before))
         try {
             val result = request()
-            if (token() != active) return@withLock false
+            if (token() != active || generation.get() != version) return@withLock false
             publish(active, apply(_snapshot.value ?: before, result))
             if (reload) refreshLocked() else true
         } catch (e: CancellationException) {
-            if (token() == active) publish(active, before)
+            if (token() == active && generation.get() == version) publish(active, before)
             throw e
         } catch (e: Exception) {
-            if (token() == active) {
+            if (token() == active && generation.get() == version) {
                 publish(active, before)
                 reportError(e.message ?: "Request failed", preserveError)
             }

@@ -135,7 +135,8 @@ abstract class ShellScreenshotTest {
                 Attendance80Theme(darkTheme = theme == "dark") {
                     baseline = rememberTextMeasurer().measure(title, style = MaterialTheme.typography.titleLarge,
                         density = Density(density.density, 1f)).size.height
-                    Shell(ShellState(data = if (empty) com.knhdixh.attendance80.net.ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()) else screenshotData()), {}, {}, {}, initialRoute = route,
+                    val snapshot = if (empty) com.knhdixh.attendance80.net.ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()) else screenshotData()
+                    Shell(ShellState(data = if (route == "focus") snapshot.copy(focus = snapshot.focus.copy(since = 0)) else snapshot), {}, {}, {}, initialRoute = route,
                         now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris"))
                 }
             }

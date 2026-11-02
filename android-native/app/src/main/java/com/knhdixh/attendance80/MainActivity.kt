@@ -123,6 +123,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                     kotlinx.coroutines.delay(60_000)
                 }
             }
+            val focusHistory by shellViewModel.focusHistory.collectAsState()
             Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
                 shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
                 pendingRoute = pendingRoute, onPendingConsumed = pendingRouteViewModel::clear,
@@ -134,7 +135,12 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 pendingDelete = pendingDelete?.takeIf { it.owner == token },
                 onDeleteHomework = { shellViewModel.deleteHomework(token, it) },
                 onFinishHomeworkDelete = { undo, expected -> shellViewModel.finishHomeworkDelete(undo, expected) },
-                onSaveHomework = { id, body -> shellViewModel.saveHomework(token, id, body) })
+                onSaveHomework = { id, body -> shellViewModel.saveHomework(token, id, body) },
+                focusHistory = focusHistory,
+                onFocusHistory = { since -> shellViewModel.ensureFocusHistory(token, since) },
+                onSaveFocus = { body -> shellViewModel.saveFocusSettings(token, body) },
+                onSaveFocusList = { body -> shellViewModel.saveFocusList(token, body) },
+                onDeleteFocus = { id -> shellViewModel.deleteFocus(token, id) })
         }
     }
 }

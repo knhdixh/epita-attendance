@@ -74,6 +74,12 @@ class LocalServerTest {
         waitText("E2E shared lecture")
     }
 
+    private fun waitFocusSession() {
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("focus-list").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("focus-list").performScrollToNode(hasText("E2E focus"))
+        waitText("E2E focus")
+    }
+
     private fun dataFromServer(): JSONObject {
         val login = (URL("http://10.0.2.2:8787/auth/dev?email=e2e%40example.test").openConnection() as HttpURLConnection)
             .apply { instanceFollowRedirects = false; connectTimeout = 5000; readTimeout = 5000 }
@@ -186,7 +192,7 @@ class LocalServerTest {
         val homeworkAfter = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
         assertTrue(truth(homeworkAfter.getValue(createdId).opt("done")))
         homeworkBefore.forEach { (id, old) -> assertEquals(old.toString(), homeworkAfter.getValue(id).toString()) }
-        goBottom("Focus"); waitText("E2E focus")
+        goBottom("Focus"); waitFocusSession()
         more("Upcoming"); waitText("E2E shared lecture")
         ui.onNodeWithTag("upcoming-next").performClick()
         val nextMonday = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).plusWeeks(1)
@@ -246,7 +252,22 @@ class LocalServerTest {
         ui.onNodeWithTag("result-homework:$homeworkId").performClick()
         waitText("E2E homework")
         openLink("a80://focus")
-        waitText("E2E focus")
+        waitFocusSession()
+        val firstWeek = com.knhdixh.attendance80.logic.addDays(com.knhdixh.attendance80.logic.weekStart(System.currentTimeMillis(), java.time.ZoneId.systemDefault()), -52 * 7, java.time.ZoneId.systemDefault())
+        ui.waitUntil(30_000) { (app.container.dataRepository.snapshot.value?.focus?.since ?: Long.MAX_VALUE) <= firstWeek }
+        val focusId = dataFromServer().getJSONObject("focus").getJSONArray("sessions").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("label") == "E2E focus" }.getLong("id") }
+        ui.onNodeWithText("Delete").performClick()
+        waitText("Delete this focus session from your stats?")
+        ui.onAllNodesWithText("Delete").onLast().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.focus?.sessions?.none { it.id == focusId } == true }
+        val sessionsAfterDelete = dataFromServer().getJSONObject("focus").getJSONArray("sessions")
+        assertTrue((0 until sessionsAfterDelete.length()).none { sessionsAfterDelete.getJSONObject(it).getLong("id") == focusId })
+        ui.onNodeWithTag("focus-list").performScrollToNode(hasText("Daily goal"))
+        ui.onNodeWithText("Daily goal").performScrollTo().performTextReplacement("3")
+        ui.onNodeWithTag("focus-list").performScrollToNode(hasText("Save"))
+        ui.onNodeWithText("Save").performScrollTo().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.focus?.settings?.goal == 3 }
+        assertEquals(3, dataFromServer().getJSONObject("focus").getJSONObject("settings").getInt("goal"))
         openLink("a80://homework")
         waitText("E2E homework")
         openLink("a80://session/$sessionId")
