@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Runs one phase of docs/native-android-plan.md in a fresh, headless Claude Code session, as cheaply as is sensible:
-# Sonnet at medium effort, a fresh context per phase, a hard dollar cap, and /goal so it keeps going until the checks
+# Sonnet at medium effort, a fresh context per phase, no dollar cap (it runs on the subscription; set BUDGET to add one), and /goal so it keeps going until the checks
 # pass and the progress log is committed. Never pushes, merges or deploys (denied below, as AGENTS.md says).
 #
 #   android-native/tools/run-phase.sh 5            # Phase 5 on native/phase-5 (created from the current branch)
-#   BUDGET=20 MODEL=opus android-native/tools/run-phase.sh 7
+#   MODEL=opus BUDGET=20 android-native/tools/run-phase.sh 7
 #   android-native/tools/run-phase.sh 5 --resume   # carry on the last Phase 5 session if it stopped early
 #
 # Output: android-native/build/phase-runs/phase-<n>.json (cost, session id) and .log (the run, streamed).
@@ -14,7 +14,7 @@ phase="${1:?usage: run-phase.sh <phase> [--resume]}"
 mode="${2:-}"
 MODEL="${MODEL:-sonnet}"
 EFFORT="${EFFORT:-medium}"
-BUDGET="${BUDGET:-15}"
+BUDGET="${BUDGET:-}"   # empty = no cap
 
 root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 cd "$root"
@@ -22,12 +22,12 @@ out="android-native/build/phase-runs"
 mkdir -p "$out"
 branch="native/phase-$phase"
 
-if [[ -n "$(git status --porcelain)" ]]; then
+if [[ "$mode" != "--resume" && -n "$(git status --porcelain)" ]]; then
   echo "The working tree has uncommitted changes. Commit or stash them first." >&2
   exit 1
 fi
 if git show-ref --quiet "refs/heads/$branch"; then git switch -q "$branch"; else git switch -q -c "$branch"; fi
-echo "Phase $phase on $branch with $MODEL/$EFFORT, budget \$$BUDGET."
+echo "Phase $phase on $branch with $MODEL/$EFFORT, budget ${BUDGET:+\$}${BUDGET:-none}."
 
 # What the agent must never do, enforced by Claude Code whatever the prompt says.
 deny=(
@@ -55,14 +55,16 @@ goal="/goal Phase $phase of docs/native-android-plan.md is implemented on $branc
 BUILD SUCCESSFUL with 0 test failures, npm test passed, and a Phase $phase entry in docs/native-android-progress.md was
 committed (git log shows it). Or: the agent wrote in the log that it is blocked and why."
 
-args=(-p --model "$MODEL" --effort "$EFFORT" --max-budget-usd "$BUDGET"
+args=(-p --model "$MODEL" --effort "$EFFORT"
       --permission-mode auto --permission-prompts none
       --append-system-prompt "$prompt"
       --disallowedTools "${deny[@]}"
       --output-format stream-json --verbose)
+[[ -n "$BUDGET" ]] && args+=(--max-budget-usd "$BUDGET")
 
 if [[ "$mode" == "--resume" ]]; then
-  sid="$(jq -r 'select(.type=="result") | .session_id' "$out/phase-$phase.log" | tail -1)"
+  # Any line carries the session id, so this also works when the run was cut off before its result line.
+  sid="$(jq -r '.session_id // empty' "$out/phase-$phase.log" 2>/dev/null | tail -1)"
   [[ -n "$sid" && "$sid" != "null" ]] || { echo "No earlier session for Phase $phase." >&2; exit 1; }
   claude "${args[@]}" --resume "$sid" "Carry on with Phase $phase until the goal is met." | tee -a "$out/phase-$phase.log" >/dev/null
 else
