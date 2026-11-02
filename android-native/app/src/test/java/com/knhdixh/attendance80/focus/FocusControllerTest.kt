@@ -2,6 +2,7 @@ package com.knhdixh.attendance80.focus
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.knhdixh.attendance80.Clock
+import com.knhdixh.attendance80.toLogic
 import com.knhdixh.attendance80.logic.FocusSettings
 import com.knhdixh.attendance80.logic.FocusTarget
 import com.knhdixh.attendance80.logic.FocusTimer
@@ -231,5 +232,12 @@ class FocusControllerTest {
         assertEquals(setOf(log.client_id, "x"), store.outbox().map { it.client_id }.toSet())
         store.removeLogs(setOf("x"))
         assertEquals(1, store.outbox().size)
+    }
+}
+
+class FocusSettingsMappingTest {
+    @Test fun theAccountsSettingsReachTheController() {
+        val dto = com.knhdixh.attendance80.net.FocusSettingsDto(focus = 50, short = 10, long = 20, longEvery = 3, goal = 6, autoBreaks = false, autoFocus = true, sound = false, notify = false, tasks = listOf("a"), tags = listOf("b"))
+        assertEquals(FocusSettings(50, 10, 20, 3, 6, false, true, false, false, listOf("a"), listOf("b")), dto.toLogic())
     }
 }

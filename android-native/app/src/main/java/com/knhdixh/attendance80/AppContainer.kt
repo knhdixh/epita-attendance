@@ -87,7 +87,10 @@ class DefaultAppContainer(
                 if (data != null) focusController.updateSettings(data.focus.settings.toLogic())
             }
         }
-        scope.launch { focusController.restore() }
+        scope.launch {
+            runCatching { LegacyFocusMigration(context.getSharedPreferences("focus", Context.MODE_PRIVATE), focusStore, focusController, WorkOutboxScheduler(context)).run() }
+            focusController.restore()
+        }
         WorkOutboxScheduler(context).requestFlush()
         scope.launch {
             tokenStore.awaitToken()
