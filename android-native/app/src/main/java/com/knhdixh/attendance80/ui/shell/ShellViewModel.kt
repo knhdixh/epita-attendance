@@ -38,6 +38,24 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     suspend fun saveFocusSettings(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettings(owner, body)
     suspend fun saveFocusList(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettingsCanonical(owner, body)
     suspend fun deleteFocus(owner: String, id: Long) = container.dataRepository.deleteFocus(owner, id)
+    private fun plural(n: Int, word: String) = "$n $word${if (n == 1) "" else "s"}"
+    /** Saving a break marks many sessions, so reload afterwards as the web does. */
+    suspend fun saveBreak(owner: String, from: String, to: String, label: String): Boolean {
+        val repo = container.dataRepository
+        var marked = 0
+        val success = repo.mutate({ it }, { container.api.createBreak(com.knhdixh.attendance80.net.BreakCreateRequest(from, to, label.trim(), clock.zone().id)).also { marked = it.sessions } },
+            { d, r -> d.copy(breaks = d.breaks.filterNot { it.id == r.`break`.id } + r.`break`) }, reload = true, expectedOwner = owner)
+        if (success) repo.reportMessage(owner, "Break saved: ${plural(marked, "session")} marked as planned absences.")
+        return success
+    }
+    suspend fun removeBreak(owner: String, id: Long): Boolean {
+        val repo = container.dataRepository
+        var restored = 0
+        val success = repo.mutate({ it }, { container.api.deleteBreak(id).also { restored = it.restored } },
+            { d, _ -> d.copy(breaks = d.breaks.filterNot { it.id == id }) }, reload = true, expectedOwner = owner)
+        if (success) repo.reportMessage(owner, "Break removed, ${plural(restored, "session")} restored.")
+        return success
+    }
     val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
         container.dataRepository.loading, container.dataRepository.error) { owned, selected, loading, error ->
         ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third)

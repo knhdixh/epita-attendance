@@ -230,7 +230,10 @@ class LocalServerTest {
         val restored = dataFromServer().getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getLong("id") == targetId } }
         assertEquals(originallyTracked, truth(restored.opt("tracked")))
         more("Calendar"); waitText("E2E shared lecture")
-        more("Breaks"); waitText("E2E break")
+        more("Breaks")
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("breaks-list").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("breaks-list").performScrollToNode(hasText("E2E break", substring = true))
+        waitText("E2E break")
         more("Habits"); waitText("E2E habit")
         more("Countdowns"); waitText("E2E countdown")
         more("Settings"); waitText("e2e@example.test")

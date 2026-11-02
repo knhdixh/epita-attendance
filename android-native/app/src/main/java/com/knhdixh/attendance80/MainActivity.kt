@@ -140,7 +140,9 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onFocusHistory = { since -> shellViewModel.ensureFocusHistory(token, since) },
                 onSaveFocus = { body -> shellViewModel.saveFocusSettings(token, body) },
                 onSaveFocusList = { body -> shellViewModel.saveFocusList(token, body) },
-                onDeleteFocus = { id -> shellViewModel.deleteFocus(token, id) })
+                onDeleteFocus = { id -> shellViewModel.deleteFocus(token, id) },
+                onSaveBreak = { from, to, label -> shellViewModel.saveBreak(token, from, to, label) },
+                onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) })
         }
     }
 }

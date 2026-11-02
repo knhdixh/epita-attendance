@@ -166,7 +166,17 @@ class ShellUiTest {
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithTag("shell-title").assertTextEquals("Today")
     }
-    @Test fun breaks() = content("breaks", "Saved breaks", "All Saints Break")
+    @Test fun breaks() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "breaks",
+            now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("breaks-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("breaks-list").performScrollToNode(hasText("No safe 7-day break left in your calendar."))
+        compose.runOnIdle { data = populated }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("saved-break-1").fetchSemanticsNodes().isNotEmpty() ||
+            runCatching { compose.onNodeWithTag("breaks-list").performScrollToNode(hasText("All Saints Break")) }.isSuccess }
+        compose.onNodeWithText("All Saints Break").assertExists()
+    }
     @Test fun settings() = content("settings", "newuser", "student")
 
     @Test fun scopeNavigationAndSignOut() {
