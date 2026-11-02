@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,7 +50,7 @@ class CourseViewModel : ViewModel() {
         val minute = now / 60000 * 60000
         if (mutable.value?.let { it.data == data && it.id == id && it.now == minute && it.zone == zone } == true) { generation++; return }
         val version = ++generation
-        if (mutable.value?.data != data || mutable.value?.id != id) mutable.value = null
+        if (mutable.value?.id != id) mutable.value = null
         if (data == null) { mutable.value = null; return }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { derive(data, id, minute, zone) }
@@ -74,7 +75,8 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
     model: CourseViewModel = viewModel()) {
     LaunchedEffect(data, id, now / 60000, zone) { model.update(data, id, now, zone) }
     val derived by model.state.collectAsState()
-    val state = derived?.takeIf { it.data == data && it.id == id && it.now == now / 60000 * 60000 && it.zone == zone }
+    val listState = rememberLazyListState()
+    val state = derived?.takeIf { it.id == id } // the last result of this course stays while the next is worked out
     if (data == null) { Text("Loading…", Modifier.padding(16.dp)); return }
     if (state == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val course = state.course
@@ -82,7 +84,7 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
     val stats = requireNotNull(state.stats)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val tone = when (stats.level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }
-    LazyColumn(Modifier.fillMaxSize().testTag("course-detail"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("course-detail"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item("course") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(course.name, style = MaterialTheme.typography.headlineSmall)

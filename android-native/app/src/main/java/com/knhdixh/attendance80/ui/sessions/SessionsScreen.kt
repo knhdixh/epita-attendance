@@ -3,6 +3,7 @@ package com.knhdixh.attendance80.ui.sessions
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -135,13 +136,14 @@ fun SessionsScreen(data: AppData?, now: Long, zone: ZoneId, filter: SessionFilte
     LaunchedEffect(search) { if (search != null) { onFilter(filter.copy(query = search, whenFilter = "all")); consumeSearch() } }
     LaunchedEffect(data, now / 60000, zone, filter) { model.update(data, now, zone, filter) }
     val state by model.state.collectAsState()
-    val s = state?.takeIf { it.data == data && it.filter == filter && it.now == now / 60000 * 60000 && it.zone == zone }
+    val listState = rememberLazyListState()
+    val s = state
     LaunchedEffect(s?.events) { s?.let { selected = selected.intersect(it.events.map { event -> event.id }.toSet()) } }
     if (data == null || s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val allFamilies = groupFamilies(data.courses)
     val families = if (allFamilies.any { f -> f.courses.any { it.tracked } }) emptyList() else allFamilies
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    LazyColumn(Modifier.fillMaxSize().testTag("sessions-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("sessions-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (families.isNotEmpty()) item("groups") { Column { Text("Pick your groups for ${families.joinToString { it.family }}."); TextButton(onClick = { onNavigate("courses") }) { Text("Choose groups") } } }
         item("filters") { Column {
             OutlinedButton(onClick = { menu = true }) { Text(data.courses.find { it.id == course }?.name ?: if (hidden) "All courses" else "All tracked courses") }

@@ -29,7 +29,8 @@ import kotlin.math.roundToInt
 fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
-    val s = state?.takeIf { it.data == data }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val s = state
     if (data == null || s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val plan = s.plan
     val events = s.data.events.associateBy { it.id }
@@ -62,7 +63,7 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
         if (firstGap != null) add("${if (firstGap.start <= plan.now + 60000) "Now" else "Free from ${time(firstGap.start)}"}: ${firstGap.fits.first().title}.")
         else plan.todo.firstOrNull()?.takeIf { it.urgency == "overdue" }?.let { add("${it.title} is overdue.") }
     }.joinToString(" ")
-    LazyColumn(Modifier.fillMaxSize().testTag("today-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("today-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item("headline") { Text(headline) }
         items(s.countdowns, key = { "countdown:${it.c.id}" }) { c ->
             TodayRow("${if (c.v.state == "today") "Today" else c.v.parts} ${c.c.title}", when(c.v.state) { "future" -> "to go"; "up" -> "since"; else -> "" }) { onNavigate("countdowns/${c.c.id}") }

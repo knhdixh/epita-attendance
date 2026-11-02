@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +41,6 @@ class CoursesViewModel : ViewModel() {
         val minute = now / 60000 * 60000
         if (mutable.value?.let { it.data == data && it.now == minute && it.zone == zone } == true) { generation++; return }
         val version = ++generation
-        if (mutable.value?.data != data) mutable.value = null
         if (data == null) { mutable.value = null; return }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { derive(data, minute, zone) }
@@ -70,13 +70,15 @@ fun CoursesScreen(data: AppData?, allEvents: List<EventDto>?, now: Long, zone: Z
     onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: CoursesViewModel = viewModel()) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val derived by model.state.collectAsState()
-    val state = derived?.takeIf { it.data == data && it.now == now / 60000 * 60000 && it.zone == zone }
+    // The last result stays on screen while the next one is worked out; the spinner is only for the first.
+    val listState = rememberLazyListState()
+    val state = derived
     if (data == null) { Text("Loading…", Modifier.padding(16.dp)); return }
     if (state == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val grouped = state.families.flatMap { it.courses }.map { it.id }.toSet()
     val memberships = courseCalendars(allEvents ?: data.events)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    LazyColumn(Modifier.fillMaxSize().testTag("courses-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("courses-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (state.families.isNotEmpty()) {
             item("groups-heading") {
                 Column { Text("Your groups", style = MaterialTheme.typography.titleMedium)

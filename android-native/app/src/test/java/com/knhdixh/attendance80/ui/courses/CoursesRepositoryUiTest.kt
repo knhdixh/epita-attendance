@@ -65,7 +65,11 @@ class CoursesRepositoryUiTest {
             }
             ui.waitUntil(10_000) { ui.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }
             fun row() = "course-row-${course.id}"
-            fun scrollRow() { ui.onNodeWithTag("courses-list").performScrollToNode(hasTestTag(row())) }
+            // Wait for the list itself (not just the repository) after every refresh, then scroll.
+            fun scrollRow() {
+                ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); ui.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }
+                ui.onNodeWithTag("courses-list").performScrollToNode(hasTestTag(row()))
+            }
             fun inRow(matcher: SemanticsMatcher) = matcher and hasAnyAncestor(hasTestTag(row()))
             scrollRow()
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot update course\"}"))
@@ -94,6 +98,7 @@ class CoursesRepositoryUiTest {
             ui.waitUntil(10_000) { repo.snapshot.value?.courses?.first()?.tag == "exam" }
             val grouped = tagged.copy(courses = tagged.courses.map { if (it.id == course.id) it.copy(tracked = false) else if (it.id == sibling.id) it.copy(tracked = true) else it })
             server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), grouped)))
+            ui.waitUntil(10_000) { ui.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }
             ui.onNodeWithTag("courses-list").performScrollToNode(hasText("GR1")); ui.onNodeWithText("GR1").performClick(); ui.onNodeWithText("GR2").performClick()
             val groupRequest = server.takeRequest(5, TimeUnit.SECONDS)!!
             assertEquals("/api/courses/tracked", groupRequest.path)

@@ -37,7 +37,8 @@ private fun skips(s: AttendanceStats, unit: String): String {
 fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: AttendanceViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
-    val s = state?.takeIf { it.data == data }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val s = state
     if (s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     fun tone(level: String): Color = when (level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }
@@ -46,7 +47,7 @@ fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (Strin
     val closest = s.courses.firstOrNull()
     val line = "${when (s.overall.level) { "fail" -> "Below"; "risk" -> "Close to"; else -> "On track for" }} ${pct(s.data.user.threshold)}." +
         (closest?.takeIf { it.stats.level != "ok" }?.let { " ${it.course.name}: ${skips(it.stats, unit)}." } ?: "")
-    LazyColumn(Modifier.fillMaxSize().testTag("attendance-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("attendance-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (s.families.isNotEmpty()) item("groups") { Column { Text("Pick your groups for ${s.families.joinToString(", ")}."); TextButton(onClick = { onNavigate("courses") }) { Text("Choose groups") } } }
         item("overview") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

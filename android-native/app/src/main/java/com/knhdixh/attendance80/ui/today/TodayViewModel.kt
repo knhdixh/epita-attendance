@@ -21,7 +21,6 @@ class TodayViewModel : ViewModel() {
     private var generation = 0
     fun update(data: AppData?, now: Long, zone: ZoneId) {
         val version = ++generation
-        if (mutable.value?.data != data) mutable.value = null
         if (data == null) { mutable.value = null; return }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { derive(data, now / 60000 * 60000, zone) }
