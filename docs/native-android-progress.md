@@ -578,3 +578,44 @@ Built by Claude in this session, following `public/breaks-ui.js`.
 - **Tests:** `BreaksModelTest` (tap rules, use/clear, derive and state compared with the ported maths on a seven-week fixture), `BreaksUiTest` (empty calendar, pick → Safe → save → cleared, remove with confirmation, a failing break asks first, length chips and a suggestion fill the range, month limits and the saved-break label at 200%), `BreaksActionsTest` (MockWebServer: exact POST body, DELETE path, reload after each, messages, server error kept, no request for another account), `BreaksScreenshotTest` (main, picked, fail, saved, empty; light and dark; phone and tablet; main at 200%). `ShellUiTest.breaks` and `ShellScreenshotTest` now wait for and scroll to the Breaks content, because it is worked out off the main thread. `LocalServerTest` scrolls to the seeded break.
 - **Checks:** `npm test`: 104 passed, 0 failed or skipped. `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: exit 0, 628 tests, 0 failures or skips. The first full run had 2 failures: `TabletShellScreenshotTest.light_breaks` captured the spinner (fixed by the wait above), and `AppNavAccountTest` hit a 60 s "Compose did not get idle" timeout under load. It passed alone and in the next full run, so it may be flaky; this is noted, not hidden. Screenshots: 24 new and 4 changed Breaks PNGs. Claude looked at the phone light main (100% and 200%) and dark fail screenshots. `tools/e2e.sh`: exit 0, smoke check verified 48 events, `pixel6Api35` ran 2 tests with 0 failed or skipped.
 - **Unverified:** behaviour on a real device.
+
+### Phase 4.11 Settings (2026-11-02)
+
+Built by Claude in this session, following `renderSettings` in `public/app.js`, `calendars-ui.js`, `tokens-ui.js`, `notify-ui.js` and `integrationsPanel` in `homework-ui.js`.
+
+- **Built:** `ui/settings/SettingsScreen.kt`, with the sections in the web's order:
+  - **Account:** avatar via Coil, falling back to the initial, plus name, email and Sign out.
+  - **Attendance rules:** minimum % and unit, using `PATCH /api/settings`.
+  - **Notifications:** classes with lead time, habits and focus, saved on change with `PUT /api/notify/settings` plus the device `tz` (8.5).
+  - **Calendars:** rows with site or file, sessions, "attendance not counted" and status or error. Update now (links), upload a newer version (files), inline edit (name, first day for links, Count attendance), and remove with the web's shared/only-session question. The add box takes a link with name and first day (plus the Zeus guide link) or a file from the system picker. Files over 5 MB are refused before sending (5.4). A file with the same name updates that calendar, as on the web. "Recent updates" shows the sync log.
+  - **Sign-in methods:** Google, and passkeys with "synced", added and last-used dates, remove, and add.
+  - **Claude Code access:** tokens list, create (shown once, in memory only, Copy) and revoke.
+  - **Subscribe in your calendar app:** timetable and homework links with the group chips, Copy, Share and Add to Google Calendar, plus Reset links.
+  - **Google Calendar sync:** connect, reconnect, Sync now (loops while `remaining`) and disconnect.
+  - **Danger zone and legal:** Delete all my data (then Today), Delete my account (type DELETE), and the privacy and terms links.
+
+  Messages and confirmation questions are the web's.
+- **Actions:** `ui/settings/SettingsActions.kt` holds `AccountSettingsActions(container, owner)`. Every call is dropped once `owner` is no longer the signed-in session. Many-row changes (calendars, feed, Google Calendar, passkeys, delete data) reload, as the web does. The palette's "Update <calendar>" now goes through it, so it reports the same message.
+- **Google Calendar connect (plan 2.4):** `POST /api/app/web-link` with `next=/auth/google/calendar?app=1`, opened in a Custom Tab. `MainActivity` now handles `com.knhdixh.attendance80:/gcal`: it opens Settings (`PendingRouteViewModel.go`), then shows "Google Calendar connected. Syncing…" and runs a quiet resync, or the web's error message.
+- **Fixed on the way:**
+  1. Adding a passkey while signed in would have failed: `AuthInterceptor` adds the bearer only to `/api/*`, so the server saw `/auth/passkey/register/*` as a new-account sign-up ("Enter your name."). `Api.passkeyRegisterOptions/Verify` and `AuthRepository.registerPasskey` now take the bearer explicitly, and a signed-in add never replaces the stored token.
+  2. A failed calendar update first showed the server's error, then reloaded. The reload clears messages, so it now reloads first and shows the error after.
+  3. `InputStream.readNBytes` needs API 33 (lint NewApi; minSdk is 26), so it is replaced by `readAtMost`.
+- **Deviations:**
+  - **Notifications:** the panel has no device on/off, test or permission controls, because those are Web Push. The hint says the app will post them itself in a coming update (Phase 7).
+  - **Feeds:** "Apple Calendar / Outlook" (`webcal:`) is replaced by Share.
+  - **Delete account:** the web's `prompt()` became an inline field in the Delete data section, because an `AlertDialog` with a text field never went idle in Robolectric (OutOfMemoryError in `ShadowTrace` after about 34 s). The cause was not found; the inline version passes.
+  - **Layout:** sections stack in one column on tablets.
+  - **Keyboard hints:** "Press N/T" hints are not used.
+- **Tests:**
+  - `SettingsActionsTest` (MockWebServer): exact bodies and paths for rules, notify with `tz`, link/file/edit/remove/sync, the sync error kept after its reload, the resync loop and its message, the web-link URL, feed rotate, token create/revoke/error, delete data, delete account, and logout clearing the token. Also: no request for another account, the passkey bearer on `/auth/passkey/register/*` (and none when signing up), `readAtMost`, and `importSummary`/`gcalErrorMessage`/`timetableFeedUrl`.
+  - `SettingsUiTest` (8 Robolectric tests): add box with no calendar, rules validation and save, notifications, sign out, calendar sync/edit/remove and log, tokens shown once, feed group links, Google Calendar error and resync, delete data and the account check, passkeys at 200%, and the Shell route.
+  - `SettingsScreenshotTest`: top, calendars, add, access, feeds, danger; light and dark; phone and tablet; top and danger at 200%.
+  - `LocalServerTest` now changes the minimum to 75% on the real local server, checks it, and restores it.
+- **Checks:**
+  - `npm test`: 104 passed, 0 failed or skipped.
+  - `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: exit 0, 672 tests, 0 failures or skips. The first run failed lint (NewApi above).
+  - Screenshots: 30 new and 4 changed PNGs. Claude looked at phone light top, dark calendars, light feeds and light danger at 200%.
+  - `tools/e2e.sh`: exit 0, smoke check verified 48 events, `pixel6Api35` ran 2 tests with 0 failed or skipped.
+- **Unverified / Needs a device:** adding a passkey with a real provider, Google Calendar connect in a real Custom Tab and its return link, the system file picker with real `.ics` files, and clipboard and share sheet.
+- **Open question:** account deletion and sign-out leave that session's `data.json` cache on disk (existing behaviour, also on sign-out). Should Phase 8 delete it?

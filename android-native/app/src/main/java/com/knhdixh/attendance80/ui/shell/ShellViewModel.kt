@@ -38,6 +38,17 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     suspend fun saveFocusSettings(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettings(owner, body)
     suspend fun saveFocusList(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettingsCanonical(owner, body)
     suspend fun deleteFocus(owner: String, id: Long) = container.dataRepository.deleteFocus(owner, id)
+    fun settingsActions(owner: String): com.knhdixh.attendance80.ui.settings.SettingsActions =
+        com.knhdixh.attendance80.ui.settings.AccountSettingsActions(container, owner)
+    /** Back from connecting Google Calendar in the browser (`com.knhdixh.attendance80:/gcal`). */
+    fun gcalReturned(result: String?, error: String?) {
+        val owner = container.dataRepository.sessionSnapshot.value.first ?: return
+        val actions = settingsActions(owner)
+        viewModelScope.launch {
+            if (result == "connected") { actions.message("Google Calendar connected. Syncing…"); actions.gcalResync(quiet = true) }
+            else if (error != null) { actions.message(com.knhdixh.attendance80.ui.settings.gcalErrorMessage(error)); container.dataRepository.refresh() }
+        }
+    }
     private fun plural(n: Int, word: String) = "$n $word${if (n == 1) "" else "s"}"
     /** Saving a break marks many sessions, so reload afterwards as the web does. */
     suspend fun saveBreak(owner: String, from: String, to: String, label: String): Boolean {
@@ -179,7 +190,7 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
                     { api.createCatchup(com.knhdixh.attendance80.net.CatchupRequest(event.id, clock.zone().id)) },
                     { d, h -> d.copy(homework = (d.homework.filterNot { it.id == h.id } + h).sortedBy { it.due_at }) }, expectedOwner = owner)
             }
-            is PaletteAction.SyncCalendar -> repo.mutate({ it }, { api.syncCalendar(action.id) }, { d, _ -> d }, reload = true, expectedOwner = submittedOwner)
+            is PaletteAction.SyncCalendar -> settingsActions(submittedOwner).syncCalendar(action.id)
             is PaletteAction.ToggleHomework -> {
                 var saved: HomeworkDto? = null
                 val success = repo.mutate(

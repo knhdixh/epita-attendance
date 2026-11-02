@@ -23,11 +23,12 @@ interface Api {
     suspend fun exchangeToken(@Body req: TokenExchangeRequest): TokenResponse
 
     @POST("auth/passkey/register/options")
-    suspend fun passkeyRegisterOptions(@Body req: PasskeyRegisterOptionsRequest): JsonElement
+    // /auth/* gets no bearer from the interceptor: pass it to add a passkey to the signed-in account.
+    suspend fun passkeyRegisterOptions(@Body req: PasskeyRegisterOptionsRequest, @Header("Authorization") authorization: String? = null): JsonElement
 
     @Headers("X-A80-App: 1")
     @POST("auth/passkey/register/verify")
-    suspend fun passkeyRegisterVerify(@Body req: PasskeyRegisterVerifyRequest): PasskeyRegisterVerifyResponse
+    suspend fun passkeyRegisterVerify(@Body req: PasskeyRegisterVerifyRequest, @Header("Authorization") authorization: String? = null): PasskeyRegisterVerifyResponse
 
     @POST("auth/passkey/login/options")
     suspend fun passkeyLoginOptions(): JsonElement

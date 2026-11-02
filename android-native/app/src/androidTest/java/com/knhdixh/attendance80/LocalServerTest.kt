@@ -237,6 +237,21 @@ class LocalServerTest {
         more("Habits"); waitText("E2E habit")
         more("Countdowns"); waitText("E2E countdown")
         more("Settings"); waitText("e2e@example.test")
+        // Attendance rules saved through the real API, then put back.
+        val thresholdBefore = dataFromServer().getJSONObject("user").getDouble("threshold")
+        ui.onNodeWithTag("settings-threshold").performTextReplacement("75")
+        ui.onNodeWithTag("settings-list").performScrollToNode(hasTestTag("settings-rules-save"))
+        ui.onNodeWithTag("settings-rules-save").performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.user?.threshold == 0.75 }
+        assertEquals(0.75, dataFromServer().getJSONObject("user").getDouble("threshold"), 1e-9)
+        ui.onNodeWithTag("settings-list").performScrollToNode(hasTestTag("settings-threshold"))
+        ui.onNodeWithTag("settings-threshold").performTextReplacement(Math.round(thresholdBefore * 100).toString())
+        ui.onNodeWithTag("settings-list").performScrollToNode(hasTestTag("settings-rules-save"))
+        ui.onNodeWithTag("settings-rules-save").performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.user?.threshold == thresholdBefore }
+        assertEquals(thresholdBefore, dataFromServer().getJSONObject("user").getDouble("threshold"), 1e-9)
+        // Personal tokens are loaded from the server when Settings opens.
+        ui.onNodeWithTag("settings-list").performScrollToNode(hasText("Claude Code access"))
 
         // Scope applies to sessions, including shared lectures, and is persisted.
         more("Sessions")

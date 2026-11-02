@@ -24,12 +24,13 @@ interface AppContainer {
     val authRepository: AuthRepository
     val dataRepository: DataRepository
     val calendarScope: Scope
+    val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
 class DefaultAppContainer(
     override val context: Context,
     override val clock: Clock = SystemClock(),
-    baseUrl: String = BuildConfig.BASE_URL,
+    override val baseUrl: String = BuildConfig.BASE_URL,
 ) : AppContainer {
     private val scope = CoroutineScope(Dispatchers.IO)
 

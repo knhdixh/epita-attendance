@@ -71,9 +71,10 @@ class AuthRepository(
         }
     }
 
-    suspend fun registerPasskey(activity: Activity, name: String): Result<Unit> {
+    /** [bearer]: the signed-in session, to add a passkey to it; null creates a new account. */
+    suspend fun registerPasskey(activity: Activity, name: String, bearer: String? = null): Result<Unit> {
         return try {
-            val optionsJson = api.passkeyRegisterOptions(PasskeyRegisterOptionsRequest(name)).toString()
+            val optionsJson = api.passkeyRegisterOptions(PasskeyRegisterOptionsRequest(name), bearer?.let { "Bearer $it" }).toString()
             val createRequest = CreatePublicKeyCredentialRequest(optionsJson)
             val result = credentialManager.createCredential(activity, createRequest)
             val regResponse = result.data.getString("androidx.credentials.BUNDLE_KEY_REGISTRATION_RESPONSE_JSON")
@@ -82,9 +83,10 @@ class AuthRepository(
                 PasskeyRegisterVerifyRequest(
                     response = ApiClient.json.parseToJsonElement(regResponse),
                     deviceName = Build.MODEL,
-                )
+                ),
+                bearer?.let { "Bearer $it" },
             )
-            verifyRes.token?.let { tokenStore.setToken(it) }
+            if (bearer == null) verifyRes.token?.let { tokenStore.setToken(it) }
             Result.success(Unit)
         } catch (_: CreateCredentialCancellationException) {
             Result.success(Unit)

@@ -100,6 +100,7 @@ fun Shell(
     onDeleteFocus: suspend (Long) -> Boolean = { false },
     onSaveBreak: suspend (String, String, String) -> Boolean = { _, _, _ -> false },
     onRemoveBreak: suspend (Long) -> Boolean = { false },
+    settingsActions: com.knhdixh.attendance80.ui.settings.SettingsActions = com.knhdixh.attendance80.ui.settings.NoSettingsActions,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -247,6 +248,10 @@ fun Shell(
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
                             else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList)
+                            else if (route == "settings") key(accountKey) {
+                                com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
+                                    onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) })
+                            }
                             else if (route == "breaks") key(accountKey) {
                                 val pick = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.breaks.BreakPick>(breakPick) }.getOrDefault(com.knhdixh.attendance80.ui.breaks.BreakPick())
                                 com.knhdixh.attendance80.ui.breaks.BreaksScreen(visibleData, now, zone, pick, { breakPick = ApiClient.json.encodeToString(it) },
@@ -327,7 +332,6 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         route == "sessions" || route == "calendar" -> events.filter { event -> action !is PaletteAction.SessionSearch || (courses.any { it.id == event.course_id && it.tracked } && "${event.summary} ${event.location} ${event.note}".contains(action.query, ignoreCase = true)) }.map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
         route == "courses" -> courses.map { RowData(it.name, route = "course/${it.id}") }
         route == "focus" -> data?.focus?.sessions.orEmpty().map { RowData(it.label ?: "Focus", date(it.started_at, zone), key = "focus:${it.client_id}") }
-        route == "settings" -> data?.user?.let { listOf(RowData(it.name ?: it.email.orEmpty(), it.email.orEmpty())) }.orEmpty()
         (route == "homework" || route == "homework/new") -> data?.homework.orEmpty().map { RowData(it.title, it.due_date?.let(::dateOnly).orEmpty(), "homework/${it.id}") }
         route.startsWith("homework/") -> data?.homework.orEmpty().filter { "homework/${it.id}" == route }.map { RowData(it.title, listOfNotNull(it.due_date?.let(::dateOnly), it.notes.takeIf(String::isNotBlank)).joinToString(" · "), key = "homework:${it.id}") }
         route == "habits" || route == "habits/new" -> data?.habits?.list.orEmpty().filterNot { it.archived }.map { RowData(it.name, route = "habits/${it.id}") }
@@ -371,7 +375,6 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
-            if (route == "settings") item { OutlinedButton(onClick = onSignOut) { Text("Sign out") } }
         }
     }
 }

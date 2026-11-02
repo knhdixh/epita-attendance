@@ -96,6 +96,10 @@ class MainActivity : ComponentActivity() {
         val data = intent?.data ?: return
         if (data.scheme == "a80") pendingRouteViewModel.accept(data.toString())
         if (data.scheme == "com.knhdixh.attendance80") {
+            if (data.path == "/gcal") {
+                pendingRouteViewModel.go("settings")
+                shellViewModel.gcalReturned(data.getQueryParameter("result"), data.getQueryParameter("error"))
+            }
             if (data.path == "/auth") {
                 val code = data.getQueryParameter("code")
                 if (!code.isNullOrBlank()) {
@@ -142,7 +146,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onSaveFocusList = { body -> shellViewModel.saveFocusList(token, body) },
                 onDeleteFocus = { id -> shellViewModel.deleteFocus(token, id) },
                 onSaveBreak = { from, to, label -> shellViewModel.saveBreak(token, from, to, label) },
-                onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) })
+                onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) },
+                settingsActions = androidx.compose.runtime.remember(token) { shellViewModel.settingsActions(token) })
         }
     }
 }
