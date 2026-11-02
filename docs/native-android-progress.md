@@ -718,3 +718,47 @@ Built by Claude in this session, following `public/habits-ui.js` (maths from the
   - Screenshots: 24 new and 12 changed PNGs. Claude looked at phone light list and quick add, and phone dark detail.
   - `tools/e2e.sh`: exit 0, 2/2 passed.
 - **Unverified / Needs a device:** reminder posting (Phase 7), and the long-press feel on real hardware.
+
+### Phase 4.14 Countdowns (2026-11-02)
+
+Built by Claude in this session, following `public/countdowns-ui.js` (maths from the ported `Countdowns`).
+
+- **Built:** `ui/countdowns/CountdownsScreen.kt`.
+  - **Page:** Coming up / Counting up / Past (expandable), the empty sentences and "Nothing coming up.".
+  - **Rows:** colour dot, title with the pin mark, when (with the year when it isn't this year), repeat, units, the linked session's room, note, progress bar, the figure with bold numbers and "to go/since/ago", pin/unpin, and delete with the web's question.
+  - **Live clocks:** tick every second, only while one is shown.
+  - **Quick add:** `parseCountdown` chips with the web's hints; Add, More options and Cancel; the web's errors for no date or no name.
+  - **Editor:** title, date and time pickers (All day), repeats, show as, once it's reached, progress bar from, colour, pin, note, a live preview, Save/Add, Cancel and Delete.
+  - **"From your timetable":** exams in the next six months, one per course and day, added pinned and red with `event_id`, or dismissed.
+  - **Routes:** `countdowns/{id}` (Today's pinned countdowns) opens that countdown's editor; `countdowns/new` and the palette's "New countdown" open the add row.
+- **Writes:** `ShellViewModel.countdownActions(owner)` calls `POST/PATCH/DELETE /api/countdowns`. PATCH is optimistic and put back with the server's message, as on the web. Messages: "Added “X”: … to go.", "Countdown saved.", "Pinned “X” to Today and the sidebar.", "Unpinned.", "Deleted “X”.".
+- **Deviations:**
+  - **Dismissed exams:** kept per account for the session (`rememberSaveable`), not in storage as on the web.
+  - **Keyboard shortcuts:** ⌘↵ and N are not used.
+  - **No sidebar:** pinned countdowns show on Today, as built in 4.1.
+- **Tests:**
+  - `CountdownsModelTest`: suggestions (dismissed, already linked), the exact body, figure/direction/when.
+  - `CountdownsUiTest` (8):
+    - Sections, figures and Past.
+    - Quick add errors and the parsed body.
+    - The editor preview and save body (units, progress start, pin, note).
+    - Pin and delete.
+    - An exam from the timetable, and dismissing one.
+    - A link from Today opens the editor.
+    - Empty state.
+    - The `countdowns/new` route.
+  - `CountdownActionsTest` (MockWebServer): create, PATCH body, revert with message, applied row, delete, nothing for another account.
+  - `CountdownsScreenshotTest`: list, quick add, editor, empty; light/dark; phone/tablet; list and editor at 200%.
+  - `ShellUiTest.newCountdown` expects the add row.
+  - `LocalServerTest` pins and unpins the seeded countdown on the real server.
+- **Checks:**
+  - `npm test`: 104 passed.
+  - First full Gradle run: 774 tests, 1 failure in `CoursesRepositoryUiTest.trackedControlRollsBackAndPersists` (4.4, not touched here): "could not find courses-list" mid-scroll. It passed 3 times alone with `--rerun-tasks`, and the next full run had exit 0, 774 tests and 0 failures. It looks like the same flash-to-spinner race fixed for Breaks in 4.9 and should be checked in the Phase 4 review.
+  - Screenshots: 16 new and 12 changed PNGs. Claude looked at the phone light list and the phone dark editor.
+  - `tools/e2e.sh`: exit 0, 2/2 passed.
+
+### Phase 4 — all screens implemented; ready for the whole-phase review (2026-11-02)
+
+- 4.1–4.7 by Codex; 4.8 finished and 4.9, 4.11, 4.12, 4.13 and 4.14 built by Claude, all on `native/phase-4`. 4.10 (Assistant) was removed from the product.
+- Owed to later phases, as planned: the live focus timer (Phase 5), local notifications for classes, habits, homework and check-ins (Phase 7), list-detail tablet layouts and a design pass (Phase 8), and the durable offline outbox (Phase 11).
+- To look at in the review: `CoursesRepositoryUiTest` flakiness (above), the Robolectric native-graphics note for bottom panels (4.12), the Settings dialog OOM that led to the inline account deletion (4.11), and the open question about cached `data.json` after sign-out or account deletion (4.11).

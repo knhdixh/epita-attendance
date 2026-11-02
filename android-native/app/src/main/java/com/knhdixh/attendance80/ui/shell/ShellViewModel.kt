@@ -83,6 +83,21 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
             { d -> d.copy(habits = d.habits.copy(list = d.habits.list.map { h -> ids.indexOf(h.id).takeIf { it >= 0 }?.let { h.copy(position = it) } ?: h })) },
             { api.orderHabits(com.knhdixh.attendance80.net.HabitOrderRequest(ids)) }, { d, _ -> d }, expectedOwner = owner)
     }
+    /** Countdowns: create, fine-tune (optimistic, as the web), pin and delete. */
+    fun countdownActions(owner: String) = object : com.knhdixh.attendance80.ui.countdowns.CountdownActions {
+        private val repo get() = container.dataRepository
+        override fun message(text: String) = repo.reportMessage(owner, text)
+        override suspend fun create(body: JsonObject): com.knhdixh.attendance80.net.CountdownDto? {
+            var row: com.knhdixh.attendance80.net.CountdownDto? = null
+            val ok = repo.mutate({ it }, { container.api.createCountdown(body).also { row = it } }, { d, c -> d.copy(countdowns = d.countdowns + c) }, expectedOwner = owner)
+            return row?.takeIf { ok }
+        }
+        override suspend fun update(id: Long, body: JsonObject) = repo.mutate(
+            { d -> d.copy(countdowns = d.countdowns.map { c -> if (c.id != id) c else com.knhdixh.attendance80.net.ApiClient.json.decodeFromJsonElement(com.knhdixh.attendance80.net.CountdownDto.serializer(),
+                JsonObject(com.knhdixh.attendance80.net.ApiClient.json.encodeToJsonElement(com.knhdixh.attendance80.net.CountdownDto.serializer(), c).jsonObject + body)) }) },
+            { container.api.updateCountdown(id, body) }, { d, row -> d.copy(countdowns = d.countdowns.map { if (it.id == row.id) row else it }) }, expectedOwner = owner)
+        override suspend fun delete(id: Long) = repo.mutate({ it }, { container.api.deleteCountdown(id) }, { d, _ -> d.copy(countdowns = d.countdowns.filterNot { it.id == id }) }, expectedOwner = owner)
+    }
     fun settingsActions(owner: String): com.knhdixh.attendance80.ui.settings.SettingsActions =
         com.knhdixh.attendance80.ui.settings.AccountSettingsActions(container, owner)
     /** Back from connecting Google Calendar in the browser (`com.knhdixh.attendance80:/gcal`). */

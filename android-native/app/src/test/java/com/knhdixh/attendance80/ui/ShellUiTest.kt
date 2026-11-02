@@ -118,7 +118,8 @@ class ShellUiTest {
     @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
     // The add row is open, so the empty sentence gives way to it, as on the web.
     @Test fun newHabit() = content("habits/new", "Every day", "Read")
-    @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
+    // The add row is open, so the empty sentence gives way to it, as on the web.
+    @Test fun newCountdown() = content("countdowns/new", "Type a name and a date", "Exam")
     @Test fun sessionDetail() = content("session/1", "Session not found.", "Mathématiques")
     @Test fun courseDetail() {
         var data by mutableStateOf(empty)

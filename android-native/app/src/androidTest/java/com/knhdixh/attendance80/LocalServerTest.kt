@@ -266,6 +266,15 @@ class LocalServerTest {
         ui.onNodeWithTag("habit-check-$habitId").performTouchInput { longClick() }
         ui.waitUntil(30_000) { serverCount() == maxOf(0, countAfter - 1) }
         more("Countdowns"); waitText("E2E countdown")
+        // Pin and unpin on the real server.
+        fun serverCountdown() = dataFromServer().getJSONArray("countdowns").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getString("title") == "E2E countdown" }
+        val countdownId = serverCountdown().getLong("id")
+        val pinnedBefore = truth(serverCountdown().opt("pinned"))
+        ui.onNodeWithTag("countdowns-list").performScrollToNode(hasTestTag("countdown-pin-$countdownId"))
+        ui.onNodeWithTag("countdown-pin-$countdownId").performClick()
+        ui.waitUntil(30_000) { truth(serverCountdown().opt("pinned")) != pinnedBefore }
+        ui.onNodeWithTag("countdown-pin-$countdownId").performClick()
+        ui.waitUntil(30_000) { truth(serverCountdown().opt("pinned")) == pinnedBefore }
         more("Settings"); waitText("e2e@example.test")
         // Attendance rules saved through the real API, then put back.
         val thresholdBefore = dataFromServer().getJSONObject("user").getDouble("threshold")

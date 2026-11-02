@@ -103,6 +103,7 @@ fun Shell(
     settingsActions: com.knhdixh.attendance80.ui.settings.SettingsActions = com.knhdixh.attendance80.ui.settings.NoSettingsActions,
     calendarActions: com.knhdixh.attendance80.ui.calendar.CalendarActions = com.knhdixh.attendance80.ui.calendar.NoCalendarActions,
     habitActions: com.knhdixh.attendance80.ui.habits.HabitActions = com.knhdixh.attendance80.ui.habits.NoHabitActions,
+    countdownActions: com.knhdixh.attendance80.ui.countdowns.CountdownActions = com.knhdixh.attendance80.ui.countdowns.NoCountdownActions,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -133,6 +134,7 @@ fun Shell(
     var sessionQuery by rememberSaveable(accountKey) { mutableStateOf("") }
     var sessionHidden by rememberSaveable(accountKey) { mutableStateOf(false) }
     var upcomingWeek by rememberSaveable(accountKey) { mutableIntStateOf(0) }
+    var countdownsUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.countdowns.CountdownsUi())) }
     var habitsUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.habits.HabitsUi())) }
     var calendarUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.calendar.CalendarUi())) }
     var breakPick by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.breaks.BreakPick())) }
@@ -255,6 +257,13 @@ fun Shell(
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
                                     onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) })
+                            }
+                            else if (route == "countdowns" || route.startsWith("countdowns/")) key(accountKey) {
+                                val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrDefault(com.knhdixh.attendance80.ui.countdowns.CountdownsUi())
+                                com.knhdixh.attendance80.ui.countdowns.CountdownsScreen(visibleData, now, zone, ui, { countdownsUi = ApiClient.json.encodeToString(it) }, countdownActions,
+                                    pending = route.substringAfter("countdowns/", "").toLongOrNull(),
+                                    pendingAdd = route == "countdowns/new" || (action as? PaletteAction.OpenForm)?.form == "countdown",
+                                    onPendingConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null })
                             }
                             else if (route == "habits" || route == "habits/new") key(accountKey) {
                                 val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.habits.HabitsUi>(habitsUi) }.getOrDefault(com.knhdixh.attendance80.ui.habits.HabitsUi())
