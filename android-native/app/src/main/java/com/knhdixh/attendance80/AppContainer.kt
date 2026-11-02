@@ -28,6 +28,7 @@ interface AppContainer {
     val calendarScope: Scope
     /** The one focus timer on the device. Null in tests that don't need it. */
     val focusController: FocusController? get() = null
+    val focusOutbox: Outbox? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
@@ -66,8 +67,12 @@ class DefaultAppContainer(
         FocusController(
             store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
             surfaces = object : FocusSurfaces { override fun refresh() {} },
-            outbox = object : OutboxScheduler { override fun requestFlush() {} },
+            outbox = WorkOutboxScheduler(context),
         )
+    }
+
+    override val focusOutbox: Outbox by lazy {
+        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
     }
 
     override val dataRepository: DataRepository by lazy {
@@ -82,6 +87,7 @@ class DefaultAppContainer(
             }
         }
         scope.launch { focusController.restore() }
+        WorkOutboxScheduler(context).requestFlush()
         scope.launch {
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->

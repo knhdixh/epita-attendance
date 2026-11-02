@@ -19,6 +19,7 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val container = app.container
         if (container.tokenStore.awaitToken() == null) return Result.success()
         container.dataRepository.start()
+        container.focusOutbox?.flush()
         return if (container.dataRepository.refresh()) Result.success() else Result.retry()
     }
 }

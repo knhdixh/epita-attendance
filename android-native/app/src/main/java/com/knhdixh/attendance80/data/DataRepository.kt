@@ -124,6 +124,13 @@ class DataRepository(private val api: Api, private val directory: File, private 
 
     suspend fun saveFocusSettings(owner: String, body: kotlinx.serialization.json.JsonObject): Boolean = saveFocusSettingsCanonical(owner, body) != null
 
+    /** A session the server has just recorded (or already had): in the snapshot once, by `client_id`. */
+    suspend fun recordFocus(session: com.knhdixh.attendance80.net.FocusSessionDto): Boolean =
+        mutate({ it }, { session }, { data, row ->
+            val sessions = (data.focus.sessions.filterNot { it.client_id == row.client_id } + row).sortedBy { it.started_at }
+            data.copy(focus = data.focus.copy(sessions = sessions))
+        })
+
     suspend fun deleteFocus(owner: String, id: Long): Boolean =
         mutate({ it }, { api.deleteFocus(id) },
             { data, _ -> data.copy(focus = data.focus.copy(sessions = data.focus.sessions.filterNot { it.id == id })) }, expectedOwner = owner)
