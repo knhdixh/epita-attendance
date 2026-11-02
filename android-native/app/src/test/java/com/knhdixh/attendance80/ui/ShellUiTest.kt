@@ -110,7 +110,7 @@ class ShellUiTest {
     }
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
     @Test fun courses() = content("courses", "Add your Zeus link to keep it up to date automatically, or upload an .ics file. You can add more calendars later in Settings.", "Algorithmique")
-    @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")
+    @Test fun calendar() = content("calendar", "Every open to-do has a time. Tap an empty slot to add one.", "Algorithmique")
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun homeworkDetail() = content("homework/1", "Homework not found.", "Maths Exercise 4")

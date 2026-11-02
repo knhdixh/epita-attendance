@@ -158,9 +158,14 @@ class HomeworkNavigationUiTest {
         ui.waitUntil(10000) { ui.onAllNodes(hasText("planned", substring = true) and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
         ui.onNode(hasText("planned", substring = true) and hasClickAction()).performClick()
         ui.onNodeWithTag("shell-title").assertTextEquals("Calendar")
-        ui.runOnIdle { Assert.assertEquals(PaletteAction.OpenForm("calendar-show", input = planned.toString()), ApiClient.json.decodeFromString<PaletteAction>(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")!!)) }
+        // The Calendar acts on the request: it opens on the planned day and clears it, and keeps that day after restoration.
+        val plannedDay = java.time.Instant.ofEpochMilli(planned).atZone(ZoneId.of("Europe/Paris")).toLocalDate().toString()
+        ui.waitUntil(10000) { ui.onAllNodesWithTag("calendar-day-$plannedDay").fetchSemanticsNodes().isNotEmpty() }
+        ui.runOnIdle { Assert.assertNull(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")) }
+        ui.onNodeWithTag("calendar-plan-17").assertExists()
         restoration.emulateSavedInstanceStateRestore()
-        ui.runOnIdle { Assert.assertEquals(PaletteAction.OpenForm("calendar-show", input = planned.toString()), ApiClient.json.decodeFromString<PaletteAction>(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")!!)) }
+        ui.onNodeWithTag("calendar-day-$plannedDay").assertExists()
+        ui.runOnIdle { Assert.assertNull(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")) }
     }
     @Test fun longDeleteConfirmationKeepsActionsReachableAtDoubleTextSize() {
         val data = ApiClient.json.decodeFromString<AppData>(javaClass.getResource("/api/data_empty.json")!!.readText())

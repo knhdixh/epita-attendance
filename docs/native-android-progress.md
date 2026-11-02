@@ -619,3 +619,58 @@ Built by Claude in this session, following `renderSettings` in `public/app.js`, 
   - `tools/e2e.sh`: exit 0, smoke check verified 48 events, `pixel6Api35` ran 2 tests with 0 failed or skipped.
 - **Unverified / Needs a device:** adding a passkey with a real provider, Google Calendar connect in a real Custom Tab and its return link, the system file picker with real `.ics` files, and clipboard and share sheet.
 - **Open question:** account deletion and sign-out leave that session's `data.json` cache on disk (existing behaviour, also on sign-out). Should Phase 8 delete it?
+
+### Phase 4.12 Calendar (2026-11-02)
+
+Built by Claude in this session, following `public/calendar-ui.js` and `public/calendar.js` (ported earlier as `CalendarMath`).
+
+- **Built:** `ui/calendar/CalendarModel.kt` holds the pure parts: `collect`/`dayItems` (sessions of tracked courses, planned blocks, proposals as ghosts, deadlines, focus time, countdown occurrences, breaks, all filtered by the layers), `unplannedTodos` (overdue first, then latest start), `autoPlanNow` (busy times, existing blocks, two weeks ahead, eight days of room, as the web), `hourRange` (7:00–22:00, stretched), `clashes`, and the plan/keep JSON bodies. `ui/calendar/CalendarScreen.kt` has:
+  - **Bar:** previous/Today/next; the title opens a date picker; Day, 3 days, Week and Month; Plan my week.
+  - **Day headers:** pinned with week number, today, and "N h class · N planned" in the day view. An all-day row has breaks, all-day sessions, all-day deadlines and countdowns.
+  - **Grid:** sessions in course colours (`ui/theme/CoursePalette.kt`, the web's `--c-*` light and dark) with attendance state, exam and clash borders, overlapping items side by side (`CalendarMath.layout`), timed deadlines (several at one time share a line), focus time, a now line, and narrow empty weekend days in the week view.
+  - **Month:** dots, exams, deadlines, planned items, countdowns, a break tint and "N more"; tap opens the day.
+  - **Swipe:** left and right between periods.
+  - **"To plan" list:** under the grid on phones, beside it on tablets, with the layer switches.
+  - **Panel at the bottom:**
+    - Session: ✓/✗/E, overlaps, due homework, and links to the session and course.
+    - Planned block: done, Focus now, length, Move, Unplan, Edit details.
+    - Empty slot: new to-do, planned or as a deadline, or "plan one here".
+  - **Planning:** tap a to-do, then a time, to plan it. Long-press and drag a block to move it (also across days); long-press its bottom edge to resize. Both snap to 15 minutes. Plan my week shows proposals with Keep/Discard, and tapping a proposal leaves it out.
+  - **Palette requests:** `calendar-plan`, `calendar-view` and `calendar-show` (the Homework "planned" chip), which 4.7 left pending, are now acted on.
+- **Writes:** `ShellViewModel.calendarActions(owner)` handles plan/move/resize/unplan (`PATCH /api/homework/{id}` with `planned_at`/`planned_minutes`, optimistic and put back with the server's message), Keep (`POST /api/homework/plan`) and new to-dos (`saveHomework`). It reports the web's messages and nothing for another account.
+- **Deviations:**
+  1. **Popover:** a panel docked at the bottom on every width (the web's phone layout), not a popover beside the item. Opening one scrolls the item above it.
+  2. **Drag from "To plan":** not built; tap then tap a time, which the web's phone version also uses. Moving and resizing planned blocks is by long-press drag.
+  3. **Keyboard shortcuts:** not used (Android).
+  4. **Persistence:** the view and layers are kept per account for the session (`rememberSaveable`), not in storage.
+  5. **TalkBack:** has no equivalent of tapping an empty slot.
+- **Found and fixed:**
+  1. **Move landed on resize:** Compose widens touch targets to 48dp, so the 12dp resize grip on a one-hour block covered the whole block, and a long-press move resized instead. Move and resize are now one gesture, chosen by where the long press starts.
+  2. **Planned blocks had no click action:** they used a raw tap detector, so TalkBack couldn't open them; the device test caught it. They are now `clickable`.
+  3. **Bar scrolled away:** the bar scrolled off when jumping to now. Only the grid scrolls now, and the headers are pinned.
+- **Test note:** touches on the bottom panel are lost in Robolectric's legacy graphics mode. Its top-rounded clip is hit-tested with `Path.contains`, which legacy mode doesn't implement; `ModalBottomSheet` failed the same way. Confirmed with logging and a replica: four equal corners worked, and the same code works in native mode. `CalendarUiTest` therefore runs with `@GraphicsMode(NATIVE)`. No product change.
+- **Tests:**
+  - `CalendarModelTest` (6): collect/dayItems, layers, ghosts, "To plan" order, Plan my week against the ported maths and its two messages, hours/titles/bodies.
+  - `CalendarUiTest` (10, plus 1 tablet):
+    - Views and navigation.
+    - A session marked from its panel.
+    - Empty slot → planned to-do and → deadline, with exact bodies.
+    - Tap-to-place.
+    - Block length/Focus/Unplan/Move.
+    - Long-press move and edge resize.
+    - Plan my week → leave one out → Keep.
+    - Layers and palette requests.
+    - The nothing-to-plan message.
+    - The Shell route.
+    - Tablet week with the side tray.
+  - `CalendarActionsTest` (MockWebServer): PATCH bodies, revert with message, the Keep body, another account.
+  - `CalendarScreenshotTest`: main, month, day, proposal, tray, session panel, new panel; light/dark; phone/tablet; main at 200%.
+  - `HomeworkNavigationUiTest.focusAndCalendarRequestsRemainPendingAcrossRestoration` now checks that the Calendar opens on the planned day and clears the request (it used to check that the request stayed pending).
+  - `ShellUiTest.calendar` uses the Calendar's empty text.
+  - `LocalServerTest` plans an open to-do tomorrow morning on the real server, checks `planned_at` on the server and the day, then unplans it.
+- **Checks:**
+  - `npm test`: 104 passed.
+  - `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: exit 0, 712 tests, 0 failures or skips.
+  - Screenshots: 22 new and 4 changed PNGs. Claude looked at the phone light main, month and session panel, the phone dark new-to-do panel and the tablet dark proposal.
+  - `tools/e2e.sh`: first run exit 1. The planned block had no OnClick, and the dependent offline test failed with it. After the fix: exit 0, 2/2 passed.
+- **Unverified / Needs a device:** drag feel and swipe thresholds on real touch hardware, and the date picker.

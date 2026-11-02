@@ -230,6 +230,24 @@ class LocalServerTest {
         val restored = dataFromServer().getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getLong("id") == targetId } }
         assertEquals(originallyTracked, truth(restored.opt("tracked")))
         more("Calendar"); waitText("E2E shared lecture")
+        // Plan an open to-do tomorrow morning by tapping it, then a time; then unplan it. Both through the real API.
+        val openTodo = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+            .first { !truth(it.opt("done")) && it.isNull("planned_at") && !it.isNull("due_at") }.getLong("id")
+        ui.onNodeWithTag("calendar-list").performScrollToNode(hasTestTag("calendar-todo-$openTodo"))
+        ui.onNodeWithTag("calendar-todo-$openTodo").performClick()
+        ui.onNodeWithTag("calendar-list").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) { it(0f, -100_000f) }
+        val tomorrow = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).plusDays(1).toString()
+        ui.onNodeWithTag("calendar-col-$tomorrow").performTouchInput { click(androidx.compose.ui.geometry.Offset(centerX, height * 0.08f)) }
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == openTodo }?.planned_at != null }
+        val plannedAt = app.container.dataRepository.snapshot.value!!.homework.first { it.id == openTodo }.planned_at!!
+        val serverTodo = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }
+        assertEquals(plannedAt, serverTodo.getLong("planned_at"))
+        assertEquals(java.time.LocalDate.now(java.time.ZoneId.systemDefault()).plusDays(1), java.time.Instant.ofEpochMilli(plannedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+        ui.onNodeWithTag("calendar-plan-$openTodo").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("calendar-plan-unplan").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("calendar-plan-unplan").performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == openTodo }?.planned_at == null }
+        assertTrue(dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }.isNull("planned_at"))
         more("Breaks")
         ui.waitUntil(30_000) { ui.onAllNodesWithTag("breaks-list").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithTag("breaks-list").performScrollToNode(hasText("E2E break", substring = true))

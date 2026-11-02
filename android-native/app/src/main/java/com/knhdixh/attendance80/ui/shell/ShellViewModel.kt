@@ -38,6 +38,26 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     suspend fun saveFocusSettings(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettings(owner, body)
     suspend fun saveFocusList(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettingsCanonical(owner, body)
     suspend fun deleteFocus(owner: String, id: Long) = container.dataRepository.deleteFocus(owner, id)
+    /** The calendar's writes: optimistic, put back with the server's message if it says no. */
+    fun calendarActions(owner: String) = object : com.knhdixh.attendance80.ui.calendar.CalendarActions {
+        private val repo get() = container.dataRepository
+        override fun message(text: String) = repo.reportMessage(owner, text)
+        override suspend fun setPlan(h: HomeworkDto, plannedAt: Long?, minutes: Int?): Boolean {
+            var saved: HomeworkDto? = null
+            val ok = repo.mutate({ d -> d.copy(homework = d.homework.map { if (it.id == h.id) it.copy(planned_at = plannedAt, planned_minutes = if (plannedAt == null) null else minutes) else it }) },
+                { container.api.updateHomework(h.id, com.knhdixh.attendance80.ui.calendar.planBody(plannedAt, minutes)).also { saved = it } },
+                { d, row -> d.copy(homework = d.homework.map { if (it.id == row.id) row else it }) }, expectedOwner = owner)
+            saved?.sync_error?.takeIf { ok }?.let { message("Saved, but Google Calendar sync failed: $it") }
+            return ok
+        }
+        override suspend fun keep(items: List<com.knhdixh.attendance80.ui.calendar.Proposal>): Boolean {
+            val byId = items.associateBy { it.id }
+            return repo.mutate({ d -> d.copy(homework = d.homework.map { h -> byId[h.id]?.let { h.copy(planned_at = it.start, planned_minutes = it.minutes) } ?: h }) },
+                { container.api.planHomework(com.knhdixh.attendance80.ui.calendar.keepBody(items)) },
+                { d, r -> val rows = r.homework.associateBy { it.id }; d.copy(homework = d.homework.map { rows[it.id] ?: it }) }, expectedOwner = owner)
+        }
+        override suspend fun create(body: JsonObject) = saveHomework(owner, null, body)
+    }
     fun settingsActions(owner: String): com.knhdixh.attendance80.ui.settings.SettingsActions =
         com.knhdixh.attendance80.ui.settings.AccountSettingsActions(container, owner)
     /** Back from connecting Google Calendar in the browser (`com.knhdixh.attendance80:/gcal`). */

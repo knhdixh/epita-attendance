@@ -101,6 +101,7 @@ fun Shell(
     onSaveBreak: suspend (String, String, String) -> Boolean = { _, _, _ -> false },
     onRemoveBreak: suspend (Long) -> Boolean = { false },
     settingsActions: com.knhdixh.attendance80.ui.settings.SettingsActions = com.knhdixh.attendance80.ui.settings.NoSettingsActions,
+    calendarActions: com.knhdixh.attendance80.ui.calendar.CalendarActions = com.knhdixh.attendance80.ui.calendar.NoCalendarActions,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -131,6 +132,7 @@ fun Shell(
     var sessionQuery by rememberSaveable(accountKey) { mutableStateOf("") }
     var sessionHidden by rememberSaveable(accountKey) { mutableStateOf(false) }
     var upcomingWeek by rememberSaveable(accountKey) { mutableIntStateOf(0) }
+    var calendarUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.calendar.CalendarUi())) }
     var breakPick by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.breaks.BreakPick())) }
     var lastHomeworkCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var homeworkDrafts by rememberSaveable(accountKey) { mutableStateOf(hashMapOf<String, String>()) }
@@ -252,6 +254,14 @@ fun Shell(
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
                                     onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) })
                             }
+                            else if (route == "calendar") key(accountKey) {
+                                val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.calendar.CalendarUi>(calendarUi) }.getOrDefault(com.knhdixh.attendance80.ui.calendar.CalendarUi())
+                                com.knhdixh.attendance80.ui.calendar.CalendarScreen(visibleData, now, zone, ui, { calendarUi = ApiClient.json.encodeToString(it) },
+                                    calendarActions, onAction, onNavigate = { navigate(it) },
+                                    onFocus = { id -> pending(PaletteAction.Focus("target", homeworkId = id), "focus") },
+                                    pending = (action as? PaletteAction.OpenForm)?.takeIf { it.form.startsWith("calendar-") },
+                                    onPendingConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null })
+                            }
                             else if (route == "breaks") key(accountKey) {
                                 val pick = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.breaks.BreakPick>(breakPick) }.getOrDefault(com.knhdixh.attendance80.ui.breaks.BreakPick())
                                 com.knhdixh.attendance80.ui.breaks.BreaksScreen(visibleData, now, zone, pick, { breakPick = ApiClient.json.encodeToString(it) },
@@ -329,7 +339,7 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
             .map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
         route == "attendance" -> courses.filter { it.tracked }.map { RowData(it.name, route = "course/${it.id}") }
         route == "upcoming" -> events.filter { it.end_at >= now }.map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
-        route == "sessions" || route == "calendar" -> events.filter { event -> action !is PaletteAction.SessionSearch || (courses.any { it.id == event.course_id && it.tracked } && "${event.summary} ${event.location} ${event.note}".contains(action.query, ignoreCase = true)) }.map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
+        route == "sessions" -> events.filter { event -> action !is PaletteAction.SessionSearch || (courses.any { it.id == event.course_id && it.tracked } && "${event.summary} ${event.location} ${event.note}".contains(action.query, ignoreCase = true)) }.map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
         route == "courses" -> courses.map { RowData(it.name, route = "course/${it.id}") }
         route == "focus" -> data?.focus?.sessions.orEmpty().map { RowData(it.label ?: "Focus", date(it.started_at, zone), key = "focus:${it.client_id}") }
         (route == "homework" || route == "homework/new") -> data?.homework.orEmpty().map { RowData(it.title, it.due_date?.let(::dateOnly).orEmpty(), "homework/${it.id}") }
@@ -352,7 +362,7 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         "today" -> "No classes today."
         "attendance", "courses" -> "No tracked courses."
         "sessions" -> "No sessions match."
-        "upcoming", "calendar" -> "Nothing scheduled"
+        "upcoming" -> "Nothing scheduled"
         "homework", "homework/new" -> "Nothing due."
         "habits", "habits/new" -> "Build habits that stick. Add one, tick it off each day, and watch the grid fill in."
         "countdowns", "countdowns/new" -> "Count down to what matters, or count up from when something began."
