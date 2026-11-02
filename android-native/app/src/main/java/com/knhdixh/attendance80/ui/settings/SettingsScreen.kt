@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,7 +92,8 @@ fun timetableFeedUrl(feedUrl: String, ids: List<Long>): String {
 @Composable
 fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>, now: Long, zone: ZoneId,
                    actions: SettingsActions, onSignOut: () -> Unit, onNavigate: (String) -> Unit,
-                   baseUrl: String = BuildConfig.BASE_URL) {
+                   baseUrl: String = BuildConfig.BASE_URL,
+                   request: com.knhdixh.attendance80.ui.search.PaletteAction.OpenForm? = null, onRequestConsumed: () -> Unit = {}) {
     if (data == null) { Box(Modifier.fillMaxSize().padding(16.dp)) { CircularProgressIndicator() }; return }
     val context = LocalContext.current
     val coroutines = rememberCoroutineScope()
@@ -127,7 +129,22 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
     }
     fun pickFile(replaceId: Long? = null) { replacing = replaceId; picker.launch(arrayOf("text/calendar", "text/plain", "application/octet-stream")) }
 
-    LazyColumn(Modifier.fillMaxSize().imePadding().testTag("settings-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    var focusLink by remember { mutableIntStateOf(0) }
+    // Saved palette requests: "Upload .ics file" opens the picker, "Add calendar" opens the add box and focuses its link field.
+    // Each is cleared as soon as it is acted on, so restoring the screen never replays it.
+    LaunchedEffect(request) {
+        when (request?.form) {
+            "calendar-upload" -> { onRequestConsumed(); pickFile() }
+            "calendar" -> {
+                adding = true
+                // account, rules, notify, the Calendars heading, then one item per calendar, then the add box.
+                listState.scrollToItem(4 + data.calendars.size)
+                onRequestConsumed(); focusLink++
+            }
+        }
+    }
+    LazyColumn(Modifier.fillMaxSize().imePadding().testTag("settings-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item("account") { AccountPanel(data.user, onSignOut) }
         item("rules") { RulesPanel(data.user, busy) { t, u -> run { actions.saveRules(t, u) } } }
         item("notify") { NotifyPanel(data.notifications.settings, busy) { body -> run { actions.saveNotify(body) } } }
@@ -137,7 +154,7 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
             onSync = { run { actions.syncCalendar(it) } }, onReplace = { pickFile(it) },
             onRemove = { c, text -> confirm = Confirm(text, "Remove") { actions.removeCalendar(c.id) } },
             onAddLink = { url, name, from -> run { if (actions.addLink(url, name, from)) adding = false } },
-            onPick = { pickFile() }, onOpen = { open(baseUrl + it) })
+            onPick = { pickFile() }, onOpen = { open(baseUrl + it) }, focusLink = focusLink)
         item("signin") {
             SignInPanel(data.account, data.user, now, zone, busy,
                 onAdd = { context.activity()?.let { a -> run { actions.addPasskey(a) } } },
@@ -284,7 +301,7 @@ private fun LazyListScope.calendarsPanel(
     data: AppData, allEvents: List<EventDto>, now: Long, zone: ZoneId, busy: Boolean, editing: Long?, adding: Boolean,
     onEdit: (Long?) -> Unit, onAdding: (Boolean) -> Unit, onSave: (Long, String, Boolean, String?) -> Unit,
     onSync: (Long) -> Unit, onReplace: (Long) -> Unit, onRemove: (CalendarDto, String) -> Unit,
-    onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit,
+    onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit, focusLink: Int = 0,
 ) {
     val list = data.calendars
     item("calendars-heading") {
@@ -307,7 +324,7 @@ private fun LazyListScope.calendarsPanel(
     }
     item("calendar-add") {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (adding || list.isEmpty()) AddBox(busy, cancel = list.isNotEmpty(), onCancel = { onAdding(false) }, onAddLink = onAddLink, onPick = onPick, onOpen = onOpen)
+            if (adding || list.isEmpty()) AddBox(busy, cancel = list.isNotEmpty(), onCancel = { onAdding(false) }, onAddLink = onAddLink, onPick = onPick, onOpen = onOpen, focusRequest = focusLink)
             else TextButton(onClick = { onAdding(true) }, modifier = Modifier.testTag("calendar-add-open")) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(6.dp)); Text("Add calendar") }
             Hint("A session in several calendars (like a lecture for every group) is stored and counted once, and labelled with each calendar's name. Use Count at the top to count only some of them.")
             SyncLog(data.calendarSyncs, list, zone)
@@ -370,14 +387,16 @@ private fun CalendarEdit(c: CalendarDto, busy: Boolean, onCancel: () -> Unit, on
 }
 
 @Composable
-private fun AddBox(busy: Boolean, cancel: Boolean, onCancel: () -> Unit, onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit) {
+private fun AddBox(busy: Boolean, cancel: Boolean, onCancel: () -> Unit, onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit, focusRequest: Int = 0) {
+    val linkFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    LaunchedEffect(focusRequest) { if (focusRequest > 0) runCatching { linkFocus.requestFocus() } }
     var url by rememberSaveable { mutableStateOf("") }
     var name by rememberSaveable { mutableStateOf("") }
     var from by rememberSaveable { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("calendar-add")) {
         Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Link, null); Spacer(Modifier.width(6.dp)); Text("From a link", fontWeight = FontWeight.Bold); Spacer(Modifier.width(6.dp)); Hint("updates every hour") }
         OutlinedTextField(url, { url = it }, placeholder = { Text("Zeus, Sisu (Export into external calendar) or any webcal:// link") }, label = { Text("Calendar link") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), singleLine = true, modifier = Modifier.fillMaxWidth().testTag("calendar-link-url"))
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), singleLine = true, modifier = Modifier.fillMaxWidth().focusRequester(linkFocus).testTag("calendar-link-url"))
         OutlinedTextField(name, { name = it.take(60) }, label = { Text("Name (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("calendar-link-name"))
         DateButton("Import classes from", from, { from = it }, "calendar-link-from")
         Row(verticalAlignment = Alignment.CenterVertically) {

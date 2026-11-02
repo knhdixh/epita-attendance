@@ -259,7 +259,9 @@ fun Shell(
                             else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList, focusTimer, timerActions, { backStackEntry.savedStateHandle["paletteAction"] = null }, timerNow)
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
-                                    onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) })
+                                    onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) },
+                                    request = (action as? PaletteAction.OpenForm)?.takeIf { it.form == "calendar" || it.form == "calendar-upload" },
+                                    onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null })
                             }
                             else if (route == "countdowns" || route.startsWith("countdowns/")) key(accountKey) {
                                 val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrDefault(com.knhdixh.attendance80.ui.countdowns.CountdownsUi())
