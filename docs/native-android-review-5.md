@@ -1,6 +1,6 @@
 # Phase 5 review
 
-Verdict: **FIX**. Two blocking findings. Reviewed `git diff native/phase-4...native/phase-5` without PNGs and without `824f41d`, which only changes `tools/run-phase.sh` and is outside this review. The controller, alarm, receiver, notifications, tile, sheet, outbox and migration are close to the plan. The controller tests are meaningful: they use a fake clock and alarm, and they cover the stale-finish and early-alarm guards. Both blocking problems are at the boundaries: which account a recorded session belongs to, and when the TWA migration runs.
+Verdict: **FIX after round 1**: one item left, in the finding 2 path. Round 1 (`077c603`, `ffb9044`, log `fa5040f`) fixes finding 1, and fixes finding 2 except for the TWA timer's own session, which is still dropped in a real upgrade. The initial findings are kept below; the re-review is at the end.
 
 ## Findings
 
@@ -63,3 +63,50 @@ Fix it by holding the response on a latch-based `Dispatcher` (or `SocketPolicy` 
   - **Outbox errors.** A 400 drops the entry; 401, 429, 5xx and offline keep it in order.
 - **Not run by the reviewer:** Gradle and npm, at the owner's request (a parallel run was in progress). This relies on the worker's logged run: `npm test` 104/104, and the combined Gradle command with 847 unit tests, 0 failures, and e2e 2/2. Everything in the worker's Unverified list still needs a device.
 - No server, website, migration, secret or `android/` changes in the Phase 5 diff.
+
+
+## Re-review — round 1 (`077c603`, `ffb9044`)
+
+**Finding 1 (account ownership): resolved.**
+- Queued sessions and pending tasks are stored as `OutboxItem` and `PendingTask`, each with a lower-cased owner email taken from the snapshot. The wire body is unchanged, and a test asserts that.
+- `Outbox.flush()` sends only the current account's entries and re-reads the account for each entry.
+- `syncPendingTasks` merges only into a snapshot whose `user.email` matches.
+- `signedOut()` runs from the token collector on every sign-out. It stops a running timer, records the session for the account that started it, clears the target and forgets the account.
+- Account deletion purges that account's items.
+- `FocusAccountTest` exercises the real `Outbox` against MockWebServer:
+  - A→B sends no request and shows none of A's tasks;
+  - re-signing in as A with a new token and different letter case sends A's entry with the new token;
+  - a timer that crosses sign-out is recorded for A, then stopped and cleared;
+  - B's snapshot never receives A's tasks.
+- The existing tests were only given an account in their set-up; none was weakened.
+- **Owner decision, not a defect:** sessions finished while nobody is signed in are not queued (the logged deviation). The same applies between sign-in and the first snapshot, because the account comes only from a snapshot. Keeping them unowned for the next sign-in would bring back the original bug, so the current choice is the safe default.
+- **Non-blocking hardening (Phase 11):** `flush()` trusts that `signedOut()` ran. Comparing the snapshot email with the account before sending, as `syncPendingTasks` already does, would close the theoretical gap where the collector is cancelled between a null token and a new one.
+
+**Finding 2 (migration entry points): mostly resolved, one gap.**
+- The migration now writes straight into the store and runs from the `beforeFirstLoad` hook inside `ensureLoaded`, under the controller mutex and once per process.
+- `restore()` (receiver), `load()`/`toggle()` (tile) and the UI all pass through it.
+- `toggle()` finishes a due phase before toggling.
+- `FocusMigrationEntryPointsTest` uses a cold controller on the on-disk store with the real `LegacyFocusMigration`. It checks that `restore()` arms the alarm and shows the TWA run, that a cold tile toggle pauses the adopted timer, and that concurrent entry points migrate exactly once.
+
+### Remaining item for fix round 2
+
+1. **The TWA timer's own session is dropped in a real upgrade.**
+   - **Where.** `FocusController.change()` (`FocusController.kt`, `store.account()?.let { … }`) queues a log only when an account is set. Right after a TWA→native update the native store has no account: the native app has no token yet, and the TWA's web cookies don't carry over. The first account appears only with the first snapshot after the user signs in.
+   - **Failure scenario.**
+     1. The update lands with the TWA timer running.
+     2. `MY_PACKAGE_REPLACED` → `restore()` migrates and arms the alarm.
+     3. The phase ends, or the user taps the tile after it ended. `phaseEnded()` / `finish()` produces the TWA run's log, and `change()` discards it because the account is null.
+
+     The TWA's already-unsent `logs` survive, because they are stored unowned and claimed by the first account. Only the session of the timer that was running is lost: exactly the session finding 2 was about.
+   - **Why the tests miss it.** `FocusMigrationEntryPointsTest.setUp` and `LegacyFocusMigrationTest.anOldTimerThatEndedWhileUpdatingIsFinishedAndRecorded` (`store.setAccount(ME)` at line 90) both set an account before the finish. That is not the upgrade state, so `aTileToggleAfterTheLegacyPhaseEndedFinishesAndLogsItFirst` and the restore case pass only because of their set-up.
+   - **A fix must cover:**
+     - Treat the adopted legacy run like the other TWA items. When it finishes with no account, its log is stored unowned and claimed by the first account that signs in, the same as `addLegacy`. Recording the adopted `run` id at migration is enough.
+     - Sessions of new native runs while signed out stay unqueued, as decided above.
+     - Add or adjust tests that start with **no account**: a migrated timer finishing via `restore()`/`phaseEnded()` and via a cold tile toggle, followed by `setAccount(A)` that sends exactly that `client_id`, then `setAccount(B)` that sends nothing. Keep the existing account-set cases.
+
+### Evidence
+
+- The reviewer read `git show` for `077c603`, `ffb9044` and `fa5040f` (main sources and all test changes) and the "Review 5 fixes" log entry.
+- **Not run by the reviewer:** Gradle and npm, at the owner's request. The worker reports Gradle 864 unit tests with 0 failures, Roborazzi unchanged, and e2e 2/2.
+- **`npm test` is not clean:** the worker reports 103/104. The known clock-dependent `test/habits.test.js:222` failure (plan 8.2) is there, and this branch has no diff under `src/`, `public/`, `test/` or `migrations/`. Merging still needs the owner to rerun `npm test` at a passing hour, or to fix that test's clock separately.
+- The deferred items above are unchanged and still deferred.

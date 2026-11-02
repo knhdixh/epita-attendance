@@ -1,6 +1,6 @@
 # Phase 4 review
 
-Verdict: **FIX**. Reviewed `native/phase-4` at `b126115` against `native/phase-3` (98 files, PNGs excluded), plan sections A, B, 0, 4 (Phase 4), 5.2–5.4 and 8.3, and the Phase 4 log entries. The screens are broadly complete and the data layer is sound: owner checks and the mutation generation guard, `tz` on homework/break/notify writes, the 5 MB upload limit, the signed-in passkey bearer, and the focus-history merge are all correct. Four findings block the merge. All are small.
+Verdict: **PASS after round 1**, provided the coordinator's full check of `native/phase-5` passes. The fix round is `1b449fc`, `88a5472`, `58b4242` and `656c55f`, logged in `fa5040f`. The initial FIX review is kept below; the acceptance is at the end.
 
 ## Findings
 
@@ -68,3 +68,37 @@ Verdict: **FIX**. Reviewed `native/phase-4` at `b126115` against `native/phase-3
 - No server source, existing migration, `android/`, secret or plan edits in the diff.
 - No Gradle or npm was run by the reviewer for this review (the coordinator's run was in progress). Evidence for finding 3 is the coordinator's failing run and its Roborazzi compare images.
 - Once the four fixes are in, rerun `npm test` and `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --rerun-tasks`, plus `tools/e2e.sh`, and log them under "Review 4 fixes".
+
+
+## Re-review — round 1 (PASS)
+
+Reviewed `git show` for each fix commit and the "Review 4 fixes" log entry. I ran no Gradle or npm; the coordinator is running the full check.
+
+1. **Fixed: cached account data (`1b449fc`).**
+   - Snapshots now live in `filesDir/snapshots/`. `DataRepository.start()` purges every `data-*.json` and `snapshot-*.tmp` that doesn't belong to the current token.
+   - `start()` runs on every token change through `startData()`'s `tokenStore.token.collectLatest`, which covers sign-out, a 401 and a new sign-in. `deleteAccount()` also calls it directly.
+   - Legacy `filesDir/data-*.json` files are deleted when the container builds the repository. A refresh that finishes after the token changed deletes the file it just wrote. `refreshLocked` calls `mkdirs()` before writing, so the new directory is safe on first run.
+   - `snapshots` is excluded from full backup, cloud backup and device transfer.
+   - The tests are real file-system assertions: sign-out leaves no file, one file per sign-in, Delete all my data rewrites the file on reload, stale-file cleanup keeps unrelated files, and `deleteAccount` goes through MockWebServer and checks the file is gone.
+2. **Fixed: lists flashing to a spinner (`88a5472`).**
+   - The five screens keep the last derived state, hoist their `LazyListState`, and no longer null their view model on a data change. Course still resets for a different id.
+   - `SessionsNoFlashTest` uses the production Shell, the real repository and MockWebServer. It scrolls to row 30 of 40, marks it, and asserts the list and row stay displayed, including after a minute advance.
+   - The row-displayed assertion fails on the old screens, because recreating the list reset its scroll. The log reports confirming this by stashing the fix.
+   - `CoursesRepositoryUiTest` now waits for the screen's list, not the repository, with no retries and no weakened assertions.
+3. **Fixed: Breaks verdict race (`58b4242`).**
+   - The verdict, Save and the failing-break confirmation render only when the derived `len`, `from` and `to` equal the pick. Otherwise the panel shows "Working it out…".
+   - The screenshot and UI tests wait for the result node carrying the exact range.
+   - The new test changes to a failing range through the calendar and checks that Save asks for confirmation and saves nothing.
+   - `git diff a2f366a..HEAD --stat -- '*.png'` is empty: no PNGs were re-recorded, so the committed `breaks_fail` references must verify unchanged.
+   - The Sessions "Past" screenshot wait was moved to the row only Past shows. That is the right audit result for the new keep-last-state behaviour.
+4. **Fixed: palette requests for Settings (`656c55f`).**
+   - "Upload .ics file" opens `ACTION_OPEN_DOCUMENT`. "Add calendar" opens the add box, scrolls to it and focuses the link field. Each request is cleared when consumed.
+   - `SettingsPaletteRequestTest` drives the real palette and Shell route. It asserts the intent, the focus and the cleared saved state, and that nothing replays after state restoration.
+
+### Deferred, non-blocking (Phase 8)
+
+- **No owner guard on the kept list.** The derived list is now kept with no check against the account, so account B could see account A's previous list for one derivation. The risk is low: a sign-in always goes through the signed-out state, and the purged cache means B starts from `data == null`, which clears the models. Phase 8 should still tie the kept list to the owning session.
+- **Sessions bulk "shown" actions can briefly use the previous filter's list.** After a filter change, the list for the previous filter stays on screen until the new one is worked out, and bulk "shown" actions use it. Phase 8 should disable bulk actions while the filter is pending.
+- **The Breaks range label is tautological.** The `break-result` state description comes from `pick`, not from the derived state. Given the new guard it is equivalent, but taking it from `s.from`/`s.to` would make the test's invariant independent of the guard.
+- **The "Add calendar" scroll uses a hard-coded index.** It scrolls to `4 + calendars.size`, which breaks silently if Settings sections are reordered. Scrolling by key would be sturdier.
+- The earlier deferred items still stand: Undo delete durability (Phase 11), session-only calendar view/layers and dismissed exams, the Countdowns wall-clock message, and tablet layouts (Phase 8).
