@@ -23,6 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
@@ -59,6 +61,17 @@ class MainActivity : ComponentActivity() {
         viewModelFactory { initializer { PendingRouteViewModel(createSavedStateHandle()) } }
     }
 
+    private val notifications = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        // Draw the timer notification now that it may be shown.
+        lifecycleScope.launch { (application as App).container.focusController?.restore() }
+    }
+
+    /** Asked in context, the first time a timer starts, and at most once. Never at launch. */
+    private fun askNotifications() {
+        val store = (application as App).container.focusStore ?: return
+        lifecycleScope.launch { com.knhdixh.attendance80.focus.askNotificationsOnce(this@MainActivity, store) { notifications.launch(android.Manifest.permission.POST_NOTIFICATIONS) } }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -79,6 +92,7 @@ class MainActivity : ComponentActivity() {
                             signInViewModel = signInViewModel,
                             shellViewModel = shellViewModel,
                             pendingRouteViewModel = pendingRouteViewModel,
+                            onAskNotifications = ::askNotifications,
                         )
                     }
                 }
@@ -112,7 +126,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel) {
+fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel, onAskNotifications: () -> Unit = {}) {
     if (token.isNullOrBlank()) {
         SignInScreen(viewModel = signInViewModel)
     } else {
@@ -128,6 +142,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 }
             }
             val focusHistory by shellViewModel.focusHistory.collectAsState()
+            val focusTimer by shellViewModel.focusTimer.collectAsStateWithLifecycle()
             Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
                 shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
                 pendingRoute = pendingRoute, onPendingConsumed = pendingRouteViewModel::clear,
@@ -150,7 +165,10 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 settingsActions = androidx.compose.runtime.remember(token) { shellViewModel.settingsActions(token) },
                 calendarActions = androidx.compose.runtime.remember(token) { shellViewModel.calendarActions(token) },
                 habitActions = androidx.compose.runtime.remember(token) { shellViewModel.habitActions(token) },
-                countdownActions = androidx.compose.runtime.remember(token) { shellViewModel.countdownActions(token) })
+                countdownActions = androidx.compose.runtime.remember(token) { shellViewModel.countdownActions(token) },
+                focusTimer = focusTimer,
+                timerNow = { shellViewModel.clock.now() },
+                timerActions = androidx.compose.runtime.remember(token, onAskNotifications) { shellViewModel.timerActions?.let { com.knhdixh.attendance80.focus.AskingActions(it, onAskNotifications) } })
         }
     }
 }

@@ -73,7 +73,8 @@ fun FocusScreen(data: AppData?, owner: String?, now: Long, zone: ZoneId, history
     onHistory: suspend (Long) -> Unit, onSave: suspend (JsonObject) -> Boolean,
     onDelete: suspend (Long) -> Boolean, message: suspend (String) -> Unit,
     pending: PaletteAction.Focus?, onPending: (PaletteAction.Focus) -> Unit,
-    onSaveList: suspend (JsonObject) -> FocusSettingsDto? = { null }) {
+    onSaveList: suspend (JsonObject) -> FocusSettingsDto? = { null },
+    timerState: com.knhdixh.attendance80.ui.shell.FocusTimerState? = null, timerActions: TimerActions? = null, onConsumed: () -> Unit = {}, timerNow: (() -> Long)? = null) {
     var range by rememberSaveable(owner) { mutableIntStateOf(7) }
     var deleting by rememberSaveable(owner) { mutableStateOf<Long?>(null) }
     var saving by remember { mutableStateOf(false) }
@@ -81,6 +82,26 @@ fun FocusScreen(data: AppData?, owner: String?, now: Long, zone: ZoneId, history
     val latestDraft by rememberUpdatedState(storedDraft)
     val latestOwner by rememberUpdatedState(owner)
     val first = addDays(weekStart(now, zone), -52 * 7, zone)
+    // A palette command ("Pause timer", "Focus on: …") runs once, then clears itself.
+    LaunchedEffect(pending, timerActions != null, timerState != null) {
+        val actions = timerActions; val state = timerState
+        if (pending == null || actions == null || state == null) return@LaunchedEffect
+        val t = state.timer
+        when (pending.command) {
+            "start" -> if (!t.running()) actions.toggle()
+            "pause" -> if (t.running() && !t.paused()) actions.toggle()
+            "resume" -> if (t.paused()) actions.toggle()
+            "skip" -> if (t.running() || t.next != "focus") actions.skip()
+            "stop" -> actions.stop()
+            "target" -> {
+                val keep = t.target?.tags.orEmpty()
+                val hw = pending.homeworkId?.let { id -> data?.homework?.firstOrNull { it.id == id && !it.done } }
+                if (hw != null) actions.focusOn(FocusTarget(homework_id = hw.id, course_id = hw.course_id, label = hw.title, tags = keep))
+                else if (pending.task != null) actions.focusOn(FocusTarget(label = pending.task, tags = keep))
+            }
+        }
+        if (pending.command != "new-task") onConsumed()
+    }
     LaunchedEffect(owner, first, data?.focus?.since, history.refreshVersion) { if (owner != null && data != null && data.focus.since > first) onHistory(first) }
     if (data == null) { Box(Modifier.fillMaxSize().padding(16.dp)) { CircularProgressIndicator() }; return }
     val settings = data.focus.settings
@@ -111,7 +132,9 @@ fun FocusScreen(data: AppData?, owner: String?, now: Long, zone: ZoneId, history
     val top = maxOf(goalMin.toDouble(), st.week.maxOfOrNull { it.minutes } ?: 0.0, 1.0)
     val courseNames = data.courses.associate { it.id to it.name }
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().imePadding().testTag("focus-list"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item("boundary") { Text(if (pending != null) "Focus request saved for the timer." else "Timer controls are coming in the next phase.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (timerState != null && timerActions != null) item("timer") {
+            TimerPanel(timerState.timer, timerState.settings, data, timerState.pendingTasks, timerNow ?: { now }, timerActions, startWithNewTask = pending?.command == "new-task")
+        } else if (pending != null) item("boundary") { Text("Focus request saved for the timer.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item("today") {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Today", style = MaterialTheme.typography.titleMedium)
@@ -225,7 +248,6 @@ fun FocusScreen(data: AppData?, owner: String?, now: Long, zone: ZoneId, history
                 check("Start the next focus after a break automatically", draft.autoFocus) { edit(draft.copy(autoFocus = it)) }
                 check("Play a sound when a phase ends", draft.sound) { edit(draft.copy(sound = it)) }
                 check("Notify me when a phase ends", draft.notify) { edit(draft.copy(notify = it)) }
-                Text("Android notifications and timer delivery will be available with the native timer.", style = MaterialTheme.typography.bodySmall)
                 Text("Your tasks", style = MaterialTheme.typography.titleSmall)
                 if (draft.tasks.isEmpty()) Text("No tasks yet.")
                 if (draft.tasks.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { draft.tasks.forEach { task -> removable(task, "Remove $task") { saveList(draft.tasks - task, true) } } }

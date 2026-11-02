@@ -34,6 +34,8 @@ class RecordingActions : TimerActions {
     override fun setLength(min: Int) { calls += "length $min" }
     override fun setTarget(target: FocusTarget?) { chosen = target; calls += "target" }
     override fun addTask(label: String) { calls += "task $label" }
+    var focused: FocusTarget? = null
+    override fun focusOn(target: FocusTarget) { focused = target; calls += "focusOn" }
 }
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

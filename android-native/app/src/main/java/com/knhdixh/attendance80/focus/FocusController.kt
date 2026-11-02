@@ -88,6 +88,17 @@ class FocusController(
         change(start(t, _settings.value, now, newRun()), null, now)
     }
 
+    /** "Focus on this": a focus already running on something else is stopped (and recorded) first, then this one starts. */
+    suspend fun focusOn(target: FocusTarget) = mutex.withLock {
+        ensureLoaded()
+        val now = clock.now()
+        var t = _timer.value
+        val same = t.running() && t.phase == "focus" && t.target?.homework_id == target.homework_id && t.target?.label == target.label
+        if (same) { if (t.paused()) change(resume(t, now), null, now); return@withLock }
+        if (t.running()) { val r = stop(t, now); change(r.next, r.log, now); t = _timer.value }
+        change(start(t.copy(target = target, next = "focus", custom = null), _settings.value, now, newRun()), null, now)
+    }
+
     suspend fun pause() = mutex.withLock {
         ensureLoaded()
         val now = clock.now()

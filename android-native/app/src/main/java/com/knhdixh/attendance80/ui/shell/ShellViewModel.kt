@@ -32,7 +32,23 @@ data class ShellState(
     val lastSynced: Long? = null,
 )
 
+/** What the Focus screen shows of the timer. */
+data class FocusTimerState(val timer: com.knhdixh.attendance80.logic.FocusTimer, val settings: com.knhdixh.attendance80.logic.FocusSettings, val pendingTasks: List<String>)
+
 class ShellViewModel(private val container: AppContainer) : ViewModel() {
+    /** Null when there is no controller (tests that don't need one). */
+    val focusTimer: kotlinx.coroutines.flow.StateFlow<FocusTimerState?> by lazy {
+        val c = container.focusController; val store = container.focusStore
+        if (c == null || store == null) MutableStateFlow<FocusTimerState?>(null).asStateFlow()
+        else combine(c.timer, c.settings, store.pendingTasksFlow) { t, s, p -> FocusTimerState(t, s, p) as FocusTimerState? }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }
+    val timerActions: com.knhdixh.attendance80.ui.focus.TimerActions? by lazy {
+        val c = container.focusController; val store = container.focusStore
+        if (c == null || store == null) null
+        else com.knhdixh.attendance80.focus.ControllerActions(c, store, viewModelScope, com.knhdixh.attendance80.focus.WorkOutboxScheduler(container.context))
+    }
+    init { container.focusController?.let { c -> viewModelScope.launch { c.load() } } }
     val focusHistory = container.dataRepository.focusHistory
     suspend fun ensureFocusHistory(owner: String, since: Long) = container.dataRepository.ensureFocusHistory(owner, since)
     suspend fun saveFocusSettings(owner: String, body: JsonObject) = container.dataRepository.saveFocusSettings(owner, body)

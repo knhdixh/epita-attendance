@@ -104,6 +104,9 @@ fun Shell(
     calendarActions: com.knhdixh.attendance80.ui.calendar.CalendarActions = com.knhdixh.attendance80.ui.calendar.NoCalendarActions,
     habitActions: com.knhdixh.attendance80.ui.habits.HabitActions = com.knhdixh.attendance80.ui.habits.NoHabitActions,
     countdownActions: com.knhdixh.attendance80.ui.countdowns.CountdownActions = com.knhdixh.attendance80.ui.countdowns.NoCountdownActions,
+    focusTimer: FocusTimerState? = null,
+    timerActions: com.knhdixh.attendance80.ui.focus.TimerActions? = null,
+    timerNow: (() -> Long)? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -253,7 +256,7 @@ fun Shell(
                                 navController.popBackStack()
                             }
                             if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
-                            else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList)
+                            else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList, focusTimer, timerActions, { backStackEntry.savedStateHandle["paletteAction"] = null }, timerNow)
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
                                     onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) })

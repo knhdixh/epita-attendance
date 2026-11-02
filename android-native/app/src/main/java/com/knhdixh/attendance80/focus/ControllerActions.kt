@@ -20,6 +20,8 @@ class ControllerActions(
     override fun setLength(min: Int) { scope.launch { controller.setLength(min) } }
     override fun setTarget(target: FocusTarget?) { scope.launch { controller.setTarget(target) } }
 
+    override fun focusOn(target: FocusTarget) { scope.launch { controller.focusOn(target); after() } }
+
     /** Saved on the device first, so it works offline; the outbox worker sends it to the account. */
     override fun addTask(label: String) {
         scope.launch {
@@ -29,4 +31,10 @@ class ControllerActions(
             outbox.requestFlush()
         }
     }
+}
+
+/** Asks for the notification permission (once, in context) just before a timer starts. */
+class AskingActions(private val inner: TimerActions, private val ask: () -> Unit) : TimerActions by inner {
+    override fun toggle() { ask(); inner.toggle() }
+    override fun focusOn(target: FocusTarget) { ask(); inner.focusOn(target) }
 }

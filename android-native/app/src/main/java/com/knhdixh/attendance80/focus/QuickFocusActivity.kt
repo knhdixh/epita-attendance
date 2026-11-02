@@ -59,6 +59,7 @@ class QuickFocusActivity : ComponentActivity() {
             override fun setLength(min: Int) = inner.setLength(min)
             override fun setTarget(target: com.knhdixh.attendance80.logic.FocusTarget?) = inner.setTarget(target)
             override fun addTask(label: String) = inner.addTask(label)
+            override fun focusOn(target: com.knhdixh.attendance80.logic.FocusTarget) = inner.focusOn(target)
         }
         setContent {
             val timer by controller.timer.collectAsState()

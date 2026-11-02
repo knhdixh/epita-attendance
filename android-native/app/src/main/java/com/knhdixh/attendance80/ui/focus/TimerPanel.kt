@@ -1,6 +1,5 @@
 package com.knhdixh.attendance80.ui.focus
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +30,7 @@ interface TimerActions {
     fun setLength(min: Int)
     fun setTarget(target: FocusTarget?)
     fun addTask(label: String)
+    fun focusOn(target: FocusTarget)
 }
 
 private val PRESETS = mapOf(
@@ -76,7 +76,7 @@ internal fun targetOptions(data: AppData?, settings: FocusSettings, pendingTasks
 @Composable
 fun TimerPanel(
     timer: FocusTimer, settings: FocusSettings, data: AppData?, pendingTasks: List<String>,
-    now: () -> Long, actions: TimerActions, modifier: Modifier = Modifier,
+    now: () -> Long, actions: TimerActions, modifier: Modifier = Modifier, startWithNewTask: Boolean = false,
 ) {
     var tick by remember { mutableLongStateOf(now()) }
     val animating = timer.running() && !timer.paused()
@@ -96,7 +96,7 @@ fun TimerPanel(
     val current = nextLength(timer, settings)
     val doneInSet = minOf(timer.done, settings.longEvery)
     var picking by remember { mutableStateOf(false) }
-    var newTask by remember { mutableStateOf<String?>(null) }
+    var newTask by remember(startWithNewTask) { mutableStateOf<String?>(if (startWithNewTask) "" else null) }
     val options = remember(data, settings, pendingTasks, timer.target) { targetOptions(data, settings, pendingTasks, timer.target) }
     val selected = options.firstOrNull { it.key == targetKey(timer.target) } ?: options.first()
     Column(modifier.testTag("timer-panel"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
