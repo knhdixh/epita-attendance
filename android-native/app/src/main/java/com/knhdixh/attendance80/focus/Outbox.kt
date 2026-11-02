@@ -69,7 +69,9 @@ class OutboxWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         if (container.tokenStore.awaitToken() == null) return Result.success()
         container.dataRepository.start()
         val outbox = container.focusOutbox ?: return Result.success()
-        return if (outbox.flush()) Result.success() else Result.retry()
+        val logsDone = outbox.flush()
+        val tasksDone = (container as? com.knhdixh.attendance80.DefaultAppContainer)?.let { syncPendingTasks(it) } ?: true
+        return if (logsDone && tasksDone) Result.success() else Result.retry()
     }
 }
 
@@ -82,4 +84,20 @@ class WorkOutboxScheduler(private val context: Context) : OutboxScheduler {
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork("focus-outbox", ExistingWorkPolicy.KEEP, request)
     }
+}
+
+/** Tasks added while offline go to the account's focus settings, newest first as on the web. @return true when none are left. */
+internal suspend fun syncPendingTasks(container: com.knhdixh.attendance80.DefaultAppContainer): Boolean {
+    val pending = container.focusStore.pendingTasks()
+    if (pending.isEmpty()) return true
+    val owner = container.tokenStore.currentToken() ?: return true
+    val data = container.dataRepository.snapshot.value ?: return false
+    val merged = com.knhdixh.attendance80.logic.cleanTasks(pending + data.focus.settings.tasks, com.knhdixh.attendance80.logic.MAX_TASKS)
+    val body = kotlinx.serialization.json.buildJsonObject {
+        put("tasks", kotlinx.serialization.json.JsonArray(merged.map { kotlinx.serialization.json.JsonPrimitive(it) }))
+    }
+    val saved = container.dataRepository.saveFocusSettingsCanonical(owner, body) ?: return false
+    // Only what we sent: a task typed in the meantime stays pending.
+    container.focusStore.savePendingTasks(container.focusStore.pendingTasks().filter { t -> saved.tasks.none { it.equals(t, ignoreCase = true) } })
+    return true
 }

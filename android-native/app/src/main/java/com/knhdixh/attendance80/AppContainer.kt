@@ -29,6 +29,7 @@ interface AppContainer {
     /** The one focus timer on the device. Null in tests that don't need it. */
     val focusController: FocusController? get() = null
     val focusOutbox: Outbox? get() = null
+    val focusStore: FocusStore? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
@@ -61,12 +62,12 @@ class DefaultAppContainer(
 
     override val calendarScope: Scope by lazy { Scope(context.authDataStore) }
 
-    val focusStore: FocusStore by lazy { FocusStore(context.focusDataStore) }
+    override val focusStore: FocusStore by lazy { FocusStore(context.focusDataStore) }
 
     override val focusController: FocusController by lazy {
         FocusController(
             store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
-            surfaces = object : FocusSurfaces { override fun refresh() {} },
+            surfaces = AndroidFocusSurfaces(context),
             outbox = WorkOutboxScheduler(context),
         )
     }

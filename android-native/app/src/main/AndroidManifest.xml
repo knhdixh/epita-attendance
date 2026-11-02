@@ -71,6 +71,35 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- The tile: start, pause or resume. Long-press opens the quick-focus sheet. -->
+        <service
+            android:name=".focus.FocusTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_focus"
+            android:label="Focus"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
+        </service>
+
+        <!-- Quick-focus sheet: from the tile's long-press and the widget. Its own task, so the app doesn't come up behind it. -->
+        <activity
+            android:name=".focus.QuickFocusActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="Focus"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/QuickFocusTheme"
+            android:windowSoftInputMode="adjustResize|stateHidden">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

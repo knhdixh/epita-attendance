@@ -10,7 +10,9 @@ import android.content.Context
 import com.knhdixh.attendance80.logic.FocusLogEntry
 import com.knhdixh.attendance80.logic.FocusSettings
 import com.knhdixh.attendance80.logic.FocusTimer
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -25,6 +27,7 @@ class FocusStore(private val store: DataStore<Preferences>) {
     private val settingsKey = stringPreferencesKey("settings")
     private val outboxKey = stringPreferencesKey("outbox")
     private val tasksKey = stringPreferencesKey("pending_tasks")
+    private val askedKey = booleanPreferencesKey("notifications_asked")
     private val migratedKey = booleanPreferencesKey("twa_migrated")
 
     suspend fun timer(): FocusTimer = read(timerKey, FocusTimer.serializer()) ?: FocusTimer()
@@ -58,6 +61,13 @@ class FocusStore(private val store: DataStore<Preferences>) {
     suspend fun savePendingTasks(tasks: List<String>) {
         store.edit { it[tasksKey] = json.encodeToString(ListSerializer(kotlinx.serialization.serializer<String>()), tasks) }
     }
+
+    /** Tasks typed on the quick-focus sheet or the timer that the server hasn't been told about yet. */
+    val pendingTasksFlow: Flow<List<String>> get() = store.data.map { p -> p[tasksKey]?.let { runCatching { json.decodeFromString(ListSerializer(kotlinx.serialization.serializer<String>()), it) }.getOrNull() } ?: emptyList() }
+
+    /** The notification permission is asked in context, the first time a timer starts, and at most once. */
+    suspend fun notificationsAsked(): Boolean = store.data.first()[askedKey] == true
+    suspend fun markNotificationsAsked() { store.edit { it[askedKey] = true } }
 
     suspend fun migrated(): Boolean = store.data.first()[migratedKey] == true
     suspend fun markMigrated() { store.edit { it[migratedKey] = true } }
