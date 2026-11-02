@@ -11,6 +11,8 @@ import com.knhdixh.attendance80.net.Api
 import com.knhdixh.attendance80.data.DataRepository
 import com.knhdixh.attendance80.data.Scope
 import com.knhdixh.attendance80.net.ApiClient
+import com.knhdixh.attendance80.focus.*
+import com.knhdixh.attendance80.logic.FocusSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +26,8 @@ interface AppContainer {
     val authRepository: AuthRepository
     val dataRepository: DataRepository
     val calendarScope: Scope
+    /** The one focus timer on the device. Null in tests that don't need it. */
+    val focusController: FocusController? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
@@ -56,6 +60,16 @@ class DefaultAppContainer(
 
     override val calendarScope: Scope by lazy { Scope(context.authDataStore) }
 
+    val focusStore: FocusStore by lazy { FocusStore(context.focusDataStore) }
+
+    override val focusController: FocusController by lazy {
+        FocusController(
+            store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
+            surfaces = object : FocusSurfaces { override fun refresh() {} },
+            outbox = object : OutboxScheduler { override fun requestFlush() {} },
+        )
+    }
+
     override val dataRepository: DataRepository by lazy {
         DataRepository(api, context.filesDir, clock) { tokenStore.currentToken() }
     }
@@ -64,8 +78,10 @@ class DefaultAppContainer(
         scope.launch {
             dataRepository.snapshot.collect { data ->
                 if (data != null) calendarScope.reconcile(data.calendars)
+                if (data != null) focusController.updateSettings(data.focus.settings.toLogic())
             }
         }
+        scope.launch { focusController.restore() }
         scope.launch {
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
@@ -83,3 +99,8 @@ class DefaultAppContainer(
         )
     }
 }
+
+fun com.knhdixh.attendance80.net.FocusSettingsDto.toLogic() = FocusSettings(
+    focus = focus, short = short, long = long, longEvery = longEvery, goal = goal, autoBreaks = autoBreaks,
+    autoFocus = autoFocus, sound = sound, notify = notify, tasks = tasks, tags = tags,
+)
