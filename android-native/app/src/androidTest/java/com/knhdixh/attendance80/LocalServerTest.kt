@@ -58,6 +58,22 @@ class LocalServerTest {
         ui.onNodeWithText(label).performScrollTo().performClick()
     }
 
+    private fun imeVisible(): Boolean {
+        var visible = false
+        instrumentation.runOnMainSync {
+            val activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).firstOrNull()
+            visible = activity?.window?.decorView?.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == true
+        }
+        return visible
+    }
+
+    private fun waitTodayLecture() {
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("today-list").performScrollToNode(hasText("E2E shared lecture"))
+        waitText("E2E shared lecture")
+    }
+
     private fun dataFromServer(): JSONObject {
         val login = (URL("http://10.0.2.2:8787/auth/dev?email=e2e%40example.test").openConnection() as HttpURLConnection)
             .apply { instanceFollowRedirects = false; connectTimeout = 5000; readTimeout = 5000 }
@@ -108,7 +124,7 @@ class LocalServerTest {
         waitText("GR1 - E2E Algorithms")
         ui.onNodeWithText("Close").performClick()
         goBottom("Today")
-        waitText("E2E shared lecture")
+        waitTodayLecture()
         ui.onNodeWithText("E2E shared lecture").assertExists()
         goBottom("Attendance")
         ui.waitUntil(30_000) { ui.onAllNodesWithTag("attendance-list").fetchSemanticsNodes().isNotEmpty() }
@@ -141,12 +157,25 @@ class LocalServerTest {
         goBottom("Homework"); waitText("E2E homework")
         val homeworkBefore = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
         ui.onNodeWithText("Add homework").performClick()
+        ui.onNodeWithText("What's due").assertIsFocused()
+        ui.waitUntil(30_000) { imeVisible() }
         ui.onNodeWithText("What's due").performTextInput("Device-created homework")
         ui.onNodeWithText("Notes").performTextInput("Created by local device test")
-        ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
+        ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().assertIsDisplayed()
+        assertTrue("Keyboard remains visible while Add is accessible", imeVisible())
+        ui.onNode(hasText("Add homework") and hasClickAction()).performClick()
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.title == "Device-created homework" } == true }
+        ui.waitUntil(30_000) { ui.onAllNodes(hasText("What's due") and isFocused()).fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithText("What's due").assertIsDisplayed().assertIsFocused()
+        ui.waitUntil(30_000) { imeVisible() }
+        ui.onNodeWithText("What's due").performTextInput("Device second homework")
+        ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().assertIsDisplayed().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.title == "Device second homework" } == true }
         runBlocking { assertTrue(app.container.dataRepository.refresh()) }
         val created = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device-created homework" } }
+        val secondCreated = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device second homework" } }
+        assertTrue(secondCreated.getLong("id") != created.getLong("id"))
+        assertEquals("", secondCreated.optString("notes"))
         val createdId = created.getLong("id")
         assertEquals("Created by local device test", created.getString("notes"))
         goBottom("Homework"); waitText("Device-created homework")
@@ -254,7 +283,7 @@ class LocalServerTest {
         val persistedCourses = dataFromServer().getJSONArray("courses")
         assertEquals("mandatory", (0 until persistedCourses.length()).map { persistedCourses.getJSONObject(it) }.first { it.getLong("id") == courseId }.getString("tag"))
         openLink("a80://today")
-        waitText("E2E shared lecture")
+        waitTodayLecture()
         // Orchestrator destroys this process after this method. The next test launches the app offline.
         app.filesDir.resolve("e2e-restart-marker").writeText(android.os.Process.myPid().toString())
         val cutoff = (URL("http://10.0.2.2:8787/__e2e/offline").openConnection() as HttpURLConnection)
@@ -276,7 +305,7 @@ class LocalServerTest {
             }.isFailure
             assertTrue("Device still reaches the server; offline restart was not exercised", unavailable)
             launch()
-            waitText("E2E shared lecture")
+            waitTodayLecture()
             goBottom("Homework"); waitText("E2E homework")
         }
     }

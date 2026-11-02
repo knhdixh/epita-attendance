@@ -3,6 +3,8 @@ package com.knhdixh.attendance80.ui.homework
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,8 +16,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -163,6 +168,7 @@ private fun <T> Choice(label: String, value: T, options: List<Pair<T, String>>, 
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HomeworkForm(data: AppData?, id: Long?, now: Long, zone: ZoneId, initialInput: String,
     onBack: () -> Unit, onSave: suspend (Long?, JsonObject) -> Boolean, lastCourse: Long?, onLastCourse: (Long?) -> Unit,
@@ -187,12 +193,23 @@ fun HomeworkForm(data: AppData?, id: Long?, now: Long, zone: ZoneId, initialInpu
     }
     var saving by remember(id) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val titleFocus = remember { FocusRequester() }
+    val titleBringIntoView = remember { BringIntoViewRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    var focusGeneration by remember(id) { mutableIntStateOf(0) }
+    LaunchedEffect(id, focusGeneration) {
+        if (id == null) {
+            titleFocus.requestFocus()
+            keyboard?.show()
+            titleBringIntoView.bringIntoView()
+        }
+    }
     val context = LocalContext.current
     val pickerTheme = if (MaterialTheme.colorScheme.background.luminance() < .5f) com.knhdixh.attendance80.R.style.HomeworkPickerDark else com.knhdixh.attendance80.R.style.HomeworkPickerLight
     val courseChoices = listOf(null to "No course") + data.courses.filter { it.tracked || it.id == original?.course_id }.map { it.id as Long? to it.name }
     val sessions = homeworkSessions(data.events, course, now)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(title, { title = it.take(200); draftTouched = true }, Modifier.fillMaxWidth(), label = { Text("What's due") }, singleLine = true)
+    Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(title, { title = it.take(200); draftTouched = true }, Modifier.fillMaxWidth().focusRequester(titleFocus).bringIntoViewRequester(titleBringIntoView), label = { Text("What's due") }, singleLine = true)
         OutlinedTextField(notes, { notes = it.take(4000); draftTouched = true }, Modifier.fillMaxWidth(), label = { Text("Notes") })
         val civilDate = runCatching { LocalDate.parse(date) }.getOrElse { Instant.ofEpochMilli(now).atZone(zone).toLocalDate() }
         OutlinedButton(onClick = {
@@ -226,7 +243,7 @@ fun HomeworkForm(data: AppData?, id: Long?, now: Long, zone: ZoneId, initialInpu
                     val success = onSave(id, body)
                     withContext(Dispatchers.Main.immediate) {
                         saving = false
-                        if (success) { onLastCourse(course); if (id != null) onBack() else { title = ""; notes = ""; date = Instant.ofEpochMilli(now + 86_400_000).atZone(zone).toLocalDate().toString(); time = ""; reminder = 1440; effort = null; draftTouched = false } }
+                        if (success) { onLastCourse(course); if (id != null) onBack() else { title = ""; notes = ""; date = Instant.ofEpochMilli(now + 86_400_000).atZone(zone).toLocalDate().toString(); time = ""; reminder = 1440; effort = null; draftTouched = false; focusGeneration++ } }
                     }
                 }
             }) { Text(if (id == null) "Add homework" else "Save") }

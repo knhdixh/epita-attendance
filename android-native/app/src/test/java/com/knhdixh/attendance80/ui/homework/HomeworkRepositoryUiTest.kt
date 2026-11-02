@@ -29,6 +29,73 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], qualifiers = "w411dp-h891dp-mdpi")
 class HomeworkRepositoryUiTest {
     @get:Rule val ui = createComposeRule()
+    @Test fun quickAddReturnsToTitleAfterCanonicalCreate() = runBlocking {
+        val server = MockWebServer(); server.start()
+        val dir = Files.createTempDirectory(java.nio.file.Paths.get("/tmp/epita-native-night"), "homework-ui").toFile()
+        val storeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val clock = object : Clock { override fun now() = 1793198400000L; override fun zone() = ZoneId.of("Europe/Paris") }
+            val token = object : TokenStore {
+                override val token = MutableStateFlow<String?>("token"); override val isLoaded = MutableStateFlow(true)
+                override suspend fun awaitToken() = token.value
+                override suspend fun setToken(token: String) { this.token.value = token }
+                override suspend fun clearToken() { token.value = null }
+            }
+            val api = ApiClient.createApi(server.url("/").toString(), { token.currentToken() }, {})
+            val repo = DataRepository(api, dir, clock) { token.currentToken() }
+            val sessionStart = clock.now() + 3_600_000
+            val sessionLocal = java.time.Instant.ofEpochMilli(sessionStart).atZone(clock.zone())
+            val base = ApiClient.json.decodeFromString<AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()).copy(
+                courses = listOf(CourseDto(5, "Session course")), events = listOf(EventDto(51, 5, "Session", start_at = sessionStart, end_at = sessionStart + 3600000)))
+            repo.start(); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), base)))
+            assertTrue(repo.refresh()); server.takeRequest(2, TimeUnit.SECONDS)
+            val container = object : AppContainer {
+                override val context: Context = ApplicationProvider.getApplicationContext(); override val clock = clock
+                override val tokenStore = token; override val api: Api = api; override val dataRepository = repo
+                override val authRepository: AuthRepository get() = error("unused")
+                override val calendarScope = Scope(PreferenceDataStoreFactory.create(scope = storeScope) { dir.resolve("scope.preferences_pb") })
+            }
+            val vm = ShellViewModel(container)
+            ui.setContent {
+                val snapshot by repo.snapshot.collectAsState(); val error by repo.error.collectAsState(); val pending by vm.pendingHomeworkDelete.collectAsState()
+                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(androidx.compose.ui.platform.LocalDensity.current.density, 2f)) { Attendance80Theme { Shell(ShellState(data = snapshot, session = "token", error = error), {}, {}, {}, initialRoute = "homework", now = clock.now(), zone = clock.zone(), onAction = vm::dispatch,
+                    onErrorConsumed = { vm.consumeError(it, "token") }, pendingDelete = pending, onDeleteHomework = { vm.deleteHomework("token", it) }, onFinishHomeworkDelete = { undo, expected -> vm.finishHomeworkDelete(undo, expected) },
+                    onSaveHomework = { id, body -> vm.saveHomework("token", id, body) }) } }
+            }
+            ui.waitUntil(10000) { ui.onAllNodesWithText("Nothing due. Press Q to add homework.").fetchSemanticsNodes().isNotEmpty() }
+            ui.onNodeWithText("Add homework").performClick()
+            ui.onNodeWithText("What's due").assertIsDisplayed().assertIsFocused()
+            ui.onNodeWithText("What's due").performTextInput("First task")
+            ui.onNodeWithText("Course: No course").performScrollTo().performClick()
+            ui.onNodeWithText("Session course").performClick()
+            ui.onNodeWithText("Notes").performScrollTo().performTextInput("First notes")
+            ui.onNodeWithText("Notes").assertIsFocused()
+            val expected = buildJsonObject { put("title", "First task"); put("notes", "First notes"); put("course_id", 5); put("due_date", "2026-10-29"); put("due_time", JsonNull); put("tz", "Europe/Paris"); put("remind_minutes", 1440); put("effort_minutes", JsonNull) }
+            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Create refused\"}"))
+            ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
+            ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.error.value == "Create refused" }
+            val failed = server.takeRequest(5, TimeUnit.SECONDS)!!
+            assertEquals("POST", failed.method); assertEquals("/api/homework", failed.path); assertEquals(expected, Json.parseToJsonElement(failed.body.readUtf8()))
+            ui.onNodeWithText("First task").assertExists(); ui.onNodeWithText("First notes").assertExists()
+            val saved = HomeworkDto(88, course_id = 5, title = "First task", notes = "First notes", due_date = "2026-10-29", remind_minutes = 1440)
+            server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(HomeworkDto.serializer(), saved)))
+            ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
+            ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.any { it.id == 88L } == true }
+            val first = server.takeRequest(5, TimeUnit.SECONDS)!!
+            assertEquals("POST", first.method); assertEquals("/api/homework", first.path); assertEquals(expected, Json.parseToJsonElement(first.body.readUtf8()))
+            ui.onNodeWithText("What's due").assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString(""))).assertIsDisplayed().assertIsFocused()
+            ui.onNodeWithText("What's due").performTextInput("Second task")
+            ui.onNodeWithText("Course: Session course").performScrollTo().assertExists()
+            server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(HomeworkDto.serializer(), saved.copy(id = 89, title = "Second task", notes = ""))))
+            ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
+            ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.any { it.id == 89L } == true }
+            val second = server.takeRequest(5, TimeUnit.SECONDS)!!
+            assertEquals("POST", second.method); assertEquals("/api/homework", second.path)
+            assertEquals(buildJsonObject { put("title", "Second task"); put("notes", ""); put("course_id", 5); put("due_date", "2026-10-29"); put("due_time", JsonNull); put("tz", "Europe/Paris"); put("remind_minutes", 1440); put("effort_minutes", JsonNull) }, Json.parseToJsonElement(second.body.readUtf8()))
+            assertEquals(setOf(88L, 89L), repo.snapshot.value!!.homework.map { it.id }.toSet())
+            Unit
+        } finally { storeScope.cancel(); server.shutdown(); dir.deleteRecursively() }
+    }
     @Test fun formAndDeletionUseRealRepository() = runBlocking {
         val server = MockWebServer(); server.start()
         val dir = Files.createTempDirectory(java.nio.file.Paths.get("/tmp/epita-native-night"), "homework-ui").toFile()
