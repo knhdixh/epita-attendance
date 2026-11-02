@@ -39,6 +39,9 @@ class DataRepository(private val api: Api, private val directory: File, private 
     @Synchronized private fun reportError(message: String, preserve: Boolean = false) {
         if (preserve && _error.value != null) deferredErrors.addLast(message) else { deferredErrors.clear(); _error.value = message }
     }
+    fun reportMessage(owner: String, message: String) {
+        if (session == owner && token() == owner) reportError(message, preserve = true)
+    }
     private val _lastSynced = MutableStateFlow<Long?>(null)
     val lastSynced = _lastSynced.asStateFlow()
 

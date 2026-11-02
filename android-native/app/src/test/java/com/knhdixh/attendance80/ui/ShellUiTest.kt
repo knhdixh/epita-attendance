@@ -53,7 +53,7 @@ class ShellUiTest {
         compose.onNodeWithText("Mathématiques").assertExists()
     }
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
-    @Test fun homework() = content("homework", "Nothing due.", "Maths Exercise 4")
+    @Test fun homework() = content("homework", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
     @Test fun focus() = content("focus", "Your focus sessions will show here.", "Algorithms revision")
     @Test fun upcoming() {
         var data by mutableStateOf(empty)
@@ -105,7 +105,7 @@ class ShellUiTest {
     @Test fun calendar() = content("calendar", "Nothing scheduled", "Algorithmique")
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
-    @Test fun homeworkDetail() = content("homework/1", "Nothing due.", "Maths Exercise 4")
+    @Test fun homeworkDetail() = content("homework/1", "Homework not found.", "Maths Exercise 4")
     @Test fun habitDetail() = content("habits/1", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
@@ -119,7 +119,14 @@ class ShellUiTest {
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Mathématiques").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("course-detail").assertIsDisplayed()
     }
-    @Test fun newHomeworkRoute() = content("homework/new", "Nothing due.", "Maths Exercise 4")
+    @Test fun newHomeworkRoute() {
+        var data by mutableStateOf(empty)
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, initialRoute = "homework/new", now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.onNodeWithText("What's due").assertExists()
+        compose.runOnIdle { data = populated }
+        compose.onNodeWithText("What's due").assertExists()
+        compose.onNodeWithText("No time means end of day.").assertExists()
+    }
     @Test fun pendingRouteIsRetainedUntilRefreshSucceeds() {
         var state by mutableStateOf(ShellState(data = populated))
         var consumed = 0
@@ -159,7 +166,7 @@ class ShellUiTest {
         var signedOut = false
         val data = populated.copy(calendars = listOf(CalendarDto(1, "link", "First"), CalendarDto(2, "link", "Second")))
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, { selected = it }, { signedOut = true }) } }
-        compose.onNodeWithText("First").performClick()
+        compose.onNodeWithTag("scope-1").performClick()
         compose.runOnIdle { assertEquals("1", selected) }
         compose.onNodeWithText("More").performClick()
         compose.onNodeWithText("Settings").performScrollTo().performClick()
@@ -170,6 +177,7 @@ class ShellUiTest {
         var refreshes = 0
         var state by mutableStateOf(ShellState(data = populated))
         compose.setContent { Attendance80Theme { Shell(state, { refreshes++ }, {}, {}) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("today-list").performTouchInput { swipeDown(startY = 0f, endY = 500f) }
         compose.runOnIdle { assertEquals(1, refreshes); state = state.copy(error = "Try again") }
         compose.onNodeWithText("Try again").assertIsDisplayed()

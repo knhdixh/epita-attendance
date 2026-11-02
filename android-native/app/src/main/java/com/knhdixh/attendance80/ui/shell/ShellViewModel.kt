@@ -14,6 +14,13 @@ import com.knhdixh.attendance80.logic.Habits
 import com.knhdixh.attendance80.logic.Countdowns
 import com.knhdixh.attendance80.net.HabitLogRequest
 import kotlinx.serialization.json.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import com.knhdixh.attendance80.net.HomeworkDto
+
+data class PendingHomeworkDelete(val owner: String, val item: HomeworkDto, val sequence: Long)
 
 data class ShellState(
     val data: com.knhdixh.attendance80.net.AppData? = null,
@@ -36,6 +43,42 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     fun recordRecent(id: String) { viewModelScope.launch { recentsStore.record(id) } }
 
     val clock get() = container.clock
+
+    private val deleting = MutableStateFlow<PendingHomeworkDelete?>(null)
+    val pendingHomeworkDelete = deleting.asStateFlow()
+    private var deleteJob: Job? = null
+    private var deleteSequence = 0L
+
+    suspend fun saveHomework(owner: String, id: Long?, body: JsonObject): Boolean {
+        var saved: HomeworkDto? = null
+        val repo = container.dataRepository
+        val success = repo.mutate({ it }, {
+            (if (id == null) container.api.createHomework(body) else container.api.updateHomework(id, body)).also { saved = it }
+        }, { data, item -> data.copy(homework = (data.homework.filterNot { it.id == item.id } + item).sortedBy { it.due_at }) }, expectedOwner = owner)
+        saved?.sync_error?.takeIf { success }?.let { repo.reportMessage(owner, "Saved, but Google Calendar sync failed: $it") }
+        return success
+    }
+
+    fun deleteHomework(owner: String, item: HomeworkDto) {
+        if (container.dataRepository.sessionSnapshot.value.first != owner) return
+        if (deleting.value?.let { it.owner == owner && it.item.id == item.id } == true) return
+        finishHomeworkDelete(undo = false)
+        val pending = PendingHomeworkDelete(owner, item, ++deleteSequence)
+        deleting.value = pending
+        deleteJob = viewModelScope.launch { delay(5000); finishHomeworkDelete(undo = false, expected = pending) }
+    }
+
+    fun finishHomeworkDelete(undo: Boolean, expected: PendingHomeworkDelete? = null) {
+        val pending = deleting.value ?: return
+        if (expected != null && expected != pending) return
+        deleting.value = null
+        deleteJob?.cancel()
+        deleteJob = null
+        if (!undo) viewModelScope.launch {
+            container.dataRepository.mutate({ it }, { container.api.deleteHomework(pending.item.id) },
+                { data, _ -> data.copy(homework = data.homework.filterNot { it.id == pending.item.id }) }, expectedOwner = pending.owner)
+        }
+    }
 
     fun refresh() { viewModelScope.launch { container.dataRepository.refresh() } }
     fun consumeError(message: String, owner: String?) {
@@ -114,10 +157,14 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
                     { d, h -> d.copy(homework = (d.homework.filterNot { it.id == h.id } + h).sortedBy { it.due_at }) }, expectedOwner = owner)
             }
             is PaletteAction.SyncCalendar -> repo.mutate({ it }, { api.syncCalendar(action.id) }, { d, _ -> d }, reload = true, expectedOwner = submittedOwner)
-            is PaletteAction.ToggleHomework -> repo.mutate(
-                { d -> d.copy(homework = d.homework.map { if (it.id == action.id) it.copy(done = action.done) else it }) },
-                { api.updateHomework(action.id, buildJsonObject { put("done", action.done) }) },
-                { d, h -> d.copy(homework = d.homework.map { if (it.id == h.id) h else it }) }, expectedOwner = submittedOwner)
+            is PaletteAction.ToggleHomework -> {
+                var saved: HomeworkDto? = null
+                val success = repo.mutate(
+                    { d -> d.copy(homework = d.homework.map { if (it.id == action.id) it.copy(done = action.done) else it }) },
+                    { api.updateHomework(action.id, buildJsonObject { put("done", action.done) }).also { saved = it } },
+                    { d, h -> d.copy(homework = d.homework.map { if (it.id == h.id) h else it }) }, expectedOwner = submittedOwner)
+                saved?.sync_error?.takeIf { success }?.let { repo.reportMessage(submittedOwner, "Saved, but Google Calendar sync failed: $it") }
+            }
             is PaletteAction.CheckHabit -> repo.mutate({ d -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == action.id && it.day == action.day } + com.knhdixh.attendance80.net.HabitLogDto(action.id, action.day, action.count))) }, { api.logHabit(action.id, HabitLogRequest(action.day, action.count)) },
                 { d, log -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == log.habit_id && it.day == log.day } + log)) }, expectedOwner = submittedOwner)
             is PaletteAction.AddHabit -> {

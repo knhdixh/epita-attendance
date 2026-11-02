@@ -1,3 +1,9 @@
 <resources>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar" />
+    <style name="HomeworkPickerLight" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#2A6AE0</item>
+    </style>
+    <style name="HomeworkPickerDark" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#5D8FF0</item>
+    </style>
 </resources>

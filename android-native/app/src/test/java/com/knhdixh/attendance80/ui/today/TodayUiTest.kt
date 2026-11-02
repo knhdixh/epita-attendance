@@ -51,7 +51,7 @@ class TodayUiTest {
         var route = ""
         compose.setContent { Attendance80Theme { TodayScreen(data, now, ZoneId.of("Europe/Paris"), { route = it }, { action = it }) } }
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Prepare report").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Prepare report").performClick()
+        compose.onAllNodesWithText("Prepare report").onFirst().performClick()
         compose.runOnIdle { assertEquals("homework/8", route) }
         compose.onNodeWithTag("today-list").performScrollToNode(hasText("Read daily"))
         compose.onNodeWithContentDescription("Check Read daily").performClick()

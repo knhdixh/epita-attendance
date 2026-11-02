@@ -71,7 +71,7 @@ class UpcomingViewModel : ViewModel() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffset: (Int) -> Unit,
-    onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: UpcomingViewModel = viewModel()) {
+    onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: UpcomingViewModel = viewModel(), allEvents: List<EventDto>? = null, onDelete: (HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var previousOffset by remember { mutableIntStateOf(offset) }
@@ -129,31 +129,8 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
             }
             if (day.sessions.isEmpty() && day.homework.isEmpty()) item("empty:${day.date}") { Text("Nothing scheduled", Modifier.padding(vertical = 8.dp)) }
             day.sessions.forEach { event -> item("session:${event.id}") { SessionRow(event, data, now, zone, onNavigate, onAction) } }
-            day.homework.forEach { hw -> item("homework:${hw.id}") { UpcomingHomework(hw, data, s.today, zone, onNavigate, onAction) } }
+            day.homework.forEach { hw -> item("homework:${hw.id}") { Box(Modifier.testTag("upcoming-homework-${hw.id}")) { com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, data, allEvents ?: data.events, now, zone, onNavigate, onAction, onDelete, onPending) } } }
         }
         item("more") { TextButton(onClick = { onOffset(offset + 1) }, modifier = Modifier.testTag("upcoming-more-next")) { Text("Next week") } }
     }
-}
-
-@Composable
-private fun UpcomingHomework(hw: HomeworkDto, data: AppData, today: LocalDate, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit) {
-    val uri = LocalUriHandler.current
-    Row(Modifier.fillMaxWidth().testTag("upcoming-homework-${hw.id}")) {
-        Checkbox(checked = hw.done, onCheckedChange = { onAction(PaletteAction.ToggleHomework(hw.id, it)) }, modifier = Modifier.semantics { contentDescription = "Done: ${hw.title}" })
-        Column(Modifier.weight(1f).clickable { onNavigate("homework/${hw.id}") }.padding(vertical = 8.dp)) {
-            Text(hw.title, style = MaterialTheme.typography.titleSmall)
-            if (hw.notes.isNotBlank()) Text(hw.notes, style = MaterialTheme.typography.bodySmall)
-            val course = data.courses.find { it.id == hw.course_id }?.name
-            val date = hw.due_at?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
-            val day = when (date) { today -> "Today"; today.plusDays(1) -> "Tomorrow"; today.minusDays(1) -> "Yesterday"; null -> ""; else -> date.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())) }
-            val due = day + if (hw.due_time != null && hw.due_at != null) " ${Dates.formatTime(hw.due_at, zone)}" else ""
-            val reminders = mapOf(0 to "At the deadline", 30 to "30 min before", 60 to "1 hour before", 180 to "3 hours before", 1440 to "1 day before", 2880 to "2 days before", 10080 to "1 week before")
-            val focused = data.focus.sessions.filter { it.homework_id == hw.id }.sumOf { it.focus_seconds } / 60
-            val sync = if (data.integrations.gcal == null) null else when { hw.sync_error != null -> "not synced"; hw.gcal_event_id != null -> "synced"; else -> "syncing" }
-            val planned = hw.planned_at?.let { "planned ${Dates.formatDate(it, zone)} ${Dates.formatTime(it, zone)}" }
-            Text(listOfNotNull(due.takeIf { it.isNotBlank() }, hw.kind?.takeIf { it == "catchup" }?.let { "catch-up" }, planned, focused.takeIf { it >= 1 }?.let { "$it min focused" }, hw.remind_minutes?.let { reminders[it]?.let { label -> "reminder $label" } }, sync, course).joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-            if (hw.kind == "catchup") Regex("(?m)^Recording: (https?://\\S+)").find(hw.notes)?.groupValues?.get(1)?.let { url -> TextButton(onClick = { uri.openUri(url) }) { Text("recording ↗") } }
-        }
-    }
-    HorizontalDivider()
 }

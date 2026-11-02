@@ -12,7 +12,7 @@ fun internalRoute(value: String): String? {
     return when {
         host in setOf("today", "focus") && path.isEmpty() -> host
         host == "homework" && path in setOf("", "/new") -> host + path
-        host in setOf("session", "course") && path.matches(Regex("/[1-9][0-9]*")) -> host + path
+        host in setOf("session", "course", "homework") && path.matches(Regex("/[1-9][0-9]*")) -> host + path
         else -> null
     }
 }

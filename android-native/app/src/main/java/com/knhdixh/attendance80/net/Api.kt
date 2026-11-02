@@ -76,7 +76,7 @@ interface Api {
     suspend fun createCatchup(@Body req: CatchupRequest): HomeworkDto
 
     @POST("api/homework")
-    suspend fun createHomework(@Body req: HomeworkCreateRequest): HomeworkDto
+    suspend fun createHomework(@Body req: JsonObject): HomeworkDto
 
     @PATCH("api/homework/{id}")
     suspend fun updateHomework(@Path("id") id: Long, @Body req: JsonObject): HomeworkDto

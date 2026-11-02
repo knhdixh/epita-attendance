@@ -88,7 +88,9 @@ class UpcomingUiTest {
             }
         }
         compose.waitUntil(10000) { compose.onAllNodesWithTag("upcoming-homework-9").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Today · catch-up · reminder 1 hour before").assertExists()
+        compose.onNode(hasText("Today") and hasAnyAncestor(hasTestTag("upcoming-homework-9")), useUnmergedTree = true).assertExists()
+        compose.onNode(hasText("catch-up") and hasAnyAncestor(hasTestTag("upcoming-homework-9")), useUnmergedTree = true).assertExists()
+        compose.onNode(hasText("reminder 1 hour before") and hasAnyAncestor(hasTestTag("upcoming-homework-9")), useUnmergedTree = true).assertExists()
         compose.onNodeWithText("recording ↗").performClick()
         compose.runOnIdle { assertEquals("https://example.test/lecture", opened) }
     }

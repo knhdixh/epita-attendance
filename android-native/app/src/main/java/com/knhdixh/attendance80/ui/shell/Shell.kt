@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -87,8 +88,12 @@ fun Shell(
     onRecent: (String) -> Unit = {},
     onErrorConsumed: (String) -> Unit = {},
     accountKey: String? = state.session,
+    pendingDelete: PendingHomeworkDelete? = null,
+    onDeleteHomework: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {},
+    onFinishHomeworkDelete: (Boolean, PendingHomeworkDelete) -> Unit = { _, _ -> },
+    onSaveHomework: suspend (Long?, kotlinx.serialization.json.JsonObject) -> Boolean = { _, _ -> false },
+    navController: NavHostController = rememberNavController(),
 ) {
-    val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
     val route = entry?.destination?.route?.let { pattern ->
         if (pattern.contains("{id}")) pattern.replace("{id}", entry?.arguments?.getString("id").orEmpty()) else pattern
@@ -117,6 +122,8 @@ fun Shell(
     var sessionQuery by rememberSaveable(accountKey) { mutableStateOf("") }
     var sessionHidden by rememberSaveable(accountKey) { mutableStateOf(false) }
     var upcomingWeek by rememberSaveable(accountKey) { mutableIntStateOf(0) }
+    var lastHomeworkCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
+    var homeworkDrafts by rememberSaveable(accountKey) { mutableStateOf(hashMapOf<String, String>()) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val largeText = LocalDensity.current.fontScale > 1.3f
     val title = when {
@@ -132,6 +139,21 @@ fun Shell(
     }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(state.error) { state.error?.let { snack.showSnackbar(it); onErrorConsumed(it) } }
+    LaunchedEffect(pendingDelete) {
+        if (pendingDelete != null) {
+            val result = snack.showSnackbar("Homework deleted.", actionLabel = "Undo", withDismissAction = true, duration = SnackbarDuration.Indefinite)
+            onFinishHomeworkDelete(result == SnackbarResult.ActionPerformed, pendingDelete)
+        }
+    }
+    val visibleData = state.data?.let { d -> pendingDelete?.let { p -> d.copy(homework = d.homework.filterNot { it.id == p.item.id }) } ?: d }
+    fun pending(action: PaletteAction, destination: String) {
+        navigate(destination)
+        navController.currentBackStackEntry?.savedStateHandle?.set("paletteAction", ApiClient.json.encodeToString(action))
+    }
+    fun deleteHomework(item: com.knhdixh.attendance80.net.HomeworkDto) {
+        snack.currentSnackbarData?.dismiss()
+        onDeleteHomework(item)
+    }
     Scaffold(
         topBar = {
             Column {
@@ -184,15 +206,41 @@ fun Shell(
                 NavHost(navController, startDestination = initialRoute) {
                     (destinations.map { it.route } + "more" + listOf("homework/new", "habits/new", "countdowns/new", "session/{id}", "course/{id}", "homework/{id}", "habits/{id}", "countdowns/{id}")).forEach { destination ->
                         composable(destination) { backStackEntry ->
+                            val route = backStackEntry.destination.route?.let { pattern ->
+                                if (pattern.contains("{id}")) pattern.replace("{id}", backStackEntry.arguments?.getString("id").orEmpty()) else pattern
+                            } ?: destination
                             val encoded by backStackEntry.savedStateHandle.getStateFlow<String?>("paletteAction", null).collectAsState()
                             val action = encoded?.let { runCatching { ApiClient.json.decodeFromString<PaletteAction>(it) }.getOrNull() }
                             BackHandler(enabled = navController.previousBackStackEntry != null) {
                                 if (pendingRoute != null) onPendingConsumed()
                                 navController.popBackStack()
                             }
-                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction)
-                            else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(state.data, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents)
-                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(state.data, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction) }
+                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
+                            else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
+                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
+                            else if (route == "homework") key(accountKey) { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, { navigate(it) }, onAction, ::deleteHomework, ::pending) }
+                            else if (route.startsWith("homework/")) key(accountKey) {
+                                val id = route.substringAfter('/').takeUnless { it == "new" }?.toLongOrNull()
+                                val draftKey = id?.toString() ?: "new"
+                                var input by remember { mutableStateOf("") }
+                                LaunchedEffect(encoded) {
+                                    val form = action as? PaletteAction.OpenForm
+                                    if (form != null && ((route == "homework/new" && form.form == "homework") || (id != null && form.form == "homework-edit" && form.entityId == id))) {
+                                        input = form.input
+                                        backStackEntry.savedStateHandle["paletteAction"] = null
+                                    }
+                                }
+                                com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
+                                        onBack = {
+                                            homeworkDrafts = HashMap(homeworkDrafts).apply { remove(draftKey) }
+                                            if (pendingRoute != null) onPendingConsumed()
+                                            if (!navController.popBackStack()) navigate("homework")
+                                        }, onSave = onSaveHomework,
+                                        lastCourse = lastHomeworkCourse, onLastCourse = { lastHomeworkCourse = it },
+                                        storedDraft = homeworkDrafts[draftKey], onDraft = { draft ->
+                                            if (homeworkDrafts[draftKey] != draft) homeworkDrafts = HashMap(homeworkDrafts).apply { put(draftKey, draft) }
+                                        })
+                            }
                             else if (route == "sessions") key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
                                 com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
                                 { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },

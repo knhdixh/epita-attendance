@@ -110,7 +110,10 @@ class LocalServerTest {
         goBottom("Today")
         waitText("E2E shared lecture")
         ui.onNodeWithText("E2E shared lecture").assertExists()
-        goBottom("Attendance"); waitText("GR1 - E2E Algorithms")
+        goBottom("Attendance")
+        ui.waitUntil(30_000) { ui.onAllNodesWithTag("attendance-list").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("attendance-list").performScrollToNode(hasText("GR1 - E2E Algorithms"))
+        ui.onNodeWithText("GR1 - E2E Algorithms").assertExists()
         val before = dataFromServer()
         val coursesById = before.getJSONArray("courses").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
         val eventsBefore = before.getJSONArray("events").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
@@ -122,6 +125,7 @@ class LocalServerTest {
         }.map { it.getLong("id") }.toSet()
         assertTrue("seed must contain unmarked tracked past events", ids.isNotEmpty())
         val button = "Mark ${ids.size} as attended"
+        ui.onNodeWithTag("attendance-list").performScrollToNode(hasText(button))
         waitText(button)
         ui.onNodeWithText(button).performClick()
         ui.waitUntil(30_000) { ui.onAllNodesWithText(button).fetchSemanticsNodes().isEmpty() }
@@ -135,6 +139,24 @@ class LocalServerTest {
         }
         assertTrue(app.container.dataRepository.snapshot.value!!.events.filter { it.id in ids }.all { it.status == "present" })
         goBottom("Homework"); waitText("E2E homework")
+        val homeworkBefore = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        ui.onNodeWithText("Add homework").performClick()
+        ui.onNodeWithText("What's due").performTextInput("Device-created homework")
+        ui.onNodeWithText("Notes").performTextInput("Created by local device test")
+        ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.title == "Device-created homework" } == true }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val created = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device-created homework" } }
+        val createdId = created.getLong("id")
+        assertEquals("Created by local device test", created.getString("notes"))
+        goBottom("Homework"); waitText("Device-created homework")
+        ui.onNodeWithTag("homework-list").performScrollToNode(hasTestTag("homework-row-$createdId"))
+        ui.onNodeWithContentDescription("Done: Device-created homework").performClick()
+        ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == createdId }?.done == true }
+        runBlocking { assertTrue(app.container.dataRepository.refresh()) }
+        val homeworkAfter = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getLong("id") } }
+        assertTrue(truth(homeworkAfter.getValue(createdId).opt("done")))
+        homeworkBefore.forEach { (id, old) -> assertEquals(old.toString(), homeworkAfter.getValue(id).toString()) }
         goBottom("Focus"); waitText("E2E focus")
         more("Upcoming"); waitText("E2E shared lecture")
         ui.onNodeWithTag("upcoming-next").performClick()

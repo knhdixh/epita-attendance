@@ -26,7 +26,7 @@ import java.time.format.FormatStyle
 import kotlin.math.roundToInt
 
 @Composable
-fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel()) {
+fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val s = state?.takeIf { it.data == data }
@@ -77,9 +77,9 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
         item("todo-heading") { Heading("Do next", "all homework") { onNavigate("homework") } }
         if (plan.todo.isEmpty()) item("todo-empty") { Text("Nothing due in the next 7 days.") }
         items(plan.todo, key = { "todo:${it.id}" }) { h ->
-            Row(Modifier.fillMaxWidth()) {
-                Checkbox(checked = false, onCheckedChange = { onAction(PaletteAction.ToggleHomework(h.id, true)) }, modifier = Modifier.semantics { contentDescription = "Complete ${h.title}" })
-                TodayRow(h.title, "${h.urgency} · ${due(h)} · start by ${Dates.formatDate(h.latestStart, zone)} ${time(h.latestStart)} · ${h.effort} min${h.course?.let { " · $it" } ?: ""}") { onNavigate("homework/${h.id}") }
+            s.data.homework.find { it.id == h.id }?.let { hw ->
+                com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, s.data, allEvents ?: s.data.events, now, zone, onNavigate, onAction, onDelete, onPending,
+                    "${h.urgency} · start by ${Dates.formatDate(h.latestStart, zone)} ${time(h.latestStart)} · ${h.effort} min")
             }
         }
         if (plan.later > 0) item("later") { Text("${plan.later} more due later.") }
@@ -103,8 +103,10 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
                 is com.knhdixh.attendance80.logic.PlannedItem -> "planned:${block.id}:${block.start}"
                 else -> error("Unknown Today block")
             } }) { (_, b) -> when (b) {
-                is com.knhdixh.attendance80.logic.PlanGap -> Column { Text("${time(b.start)}–${time(b.end)} · ${minutes(b.minutes)} free"); b.fits.forEach { f -> TextButton(onClick = { onNavigate("homework/${f.id}") }) { Text("${if (f.partial) "start " else ""}${f.title} (${minutes(f.minutes)})") } } }
-                is com.knhdixh.attendance80.logic.PlannedItem -> TodayRow(b.title, "${time(b.start)}–${time(b.end)} · planned, ${minutes(b.minutes)}") { onNavigate("homework/${b.id}") }
+                is com.knhdixh.attendance80.logic.PlanGap -> Column { Text("${time(b.start)}–${time(b.end)} · ${minutes(b.minutes)} free"); b.fits.forEach { f ->
+                    s.data.homework.find { it.id == f.id }?.let { hw -> com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, s.data, allEvents ?: s.data.events, now, zone, onNavigate, onAction, onDelete, onPending, "${if (f.partial) "start · " else ""}${minutes(f.minutes)}") }
+                } }
+                is com.knhdixh.attendance80.logic.PlannedItem -> s.data.homework.find { it.id == b.id }?.let { hw -> com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, s.data, allEvents ?: s.data.events, now, zone, onNavigate, onAction, onDelete, onPending, "${time(b.start)}–${time(b.end)} · planned, ${minutes(b.minutes)}") }
             } }
         }
         item("sessions-heading") { Heading("Today's sessions", "week") { onNavigate("upcoming") } }

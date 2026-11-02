@@ -34,7 +34,7 @@ private fun skips(s: AttendanceStats, unit: String): String {
 }
 
 @Composable
-fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: AttendanceViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null) {
+fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: AttendanceViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val s = state?.takeIf { it.data == data }
@@ -79,10 +79,7 @@ fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (Strin
         if (s.homework.isNotEmpty()) {
             item("homework-heading") { SectionHeading("Homework", "all ${s.openHomework} →") { onNavigate("homework") } }
             items(s.homework, key = { "homework:${it.id}" }) { h ->
-                Row(Modifier.fillMaxWidth()) {
-                    Checkbox(false, { onAction(PaletteAction.ToggleHomework(h.id, true)) }, Modifier.semantics { contentDescription = "Complete ${h.title}" })
-                    Column(Modifier.weight(1f).clickable { onNavigate("homework/${h.id}") }.padding(8.dp)) { Text(h.title); h.due_at?.let { Text(Dates.formatDate(it, zone), style = MaterialTheme.typography.bodySmall) } }
-                }
+                com.knhdixh.attendance80.ui.homework.HomeworkRow(h, s.data, allEvents ?: s.data.events, now, zone, onNavigate, onAction, onDelete, onPending)
             }
         }
         item("courses-heading") { Text("Courses", style = MaterialTheme.typography.titleMedium) }

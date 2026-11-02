@@ -143,6 +143,7 @@ abstract class ShellScreenshotTest {
         compose.mainClock.advanceTimeBy(500)
         if (route.startsWith("course/")) { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("course-detail").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
         if (route == "courses") { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("courses-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
+        if (route == "homework") { compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("homework-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false }
         if (route == "sessions" || route == "attendance" || route == "upcoming") {
             val contentTag = when (route) { "sessions" -> "sessions-list"; "upcoming" -> "upcoming-list"; else -> "attendance-list" }
             compose.mainClock.autoAdvance = true

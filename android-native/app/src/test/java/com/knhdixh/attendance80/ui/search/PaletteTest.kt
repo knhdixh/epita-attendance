@@ -6,14 +6,17 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import org.junit.Assert.*
 import org.junit.Test
+import java.time.ZoneId
 
 class PaletteTest {
     private val data = screenshotData()
     @Test fun searchesEachEntityAndRoutesToItsItem() {
+        val now = data.events.single { it.id == 1L }.start_at - 1
+        val zone = ZoneId.of("UTC")
         for ((query, route) in listOf("mathematiques" to "course/1", "amphi" to "session/1", "exercise" to "homework/1", "read" to "habits/1", "exam" to "countdowns/1")) {
-            assertTrue(query, searchPalette(data, query).any { it.route == route })
+            assertTrue(query, searchPalette(data, query, now = now, zone = zone).any { it.route == route })
         }
-        assertTrue(searchPalette(data, "xyzzy").any { it.action is PaletteAction.SessionSearch })
+        assertTrue(searchPalette(data, "xyzzy", now = now, zone = zone).any { it.action is PaletteAction.SessionSearch })
     }
     @Test fun oneSessionPerTrackedSummaryChoosesNextOrLast() {
         val event = data.events.first()

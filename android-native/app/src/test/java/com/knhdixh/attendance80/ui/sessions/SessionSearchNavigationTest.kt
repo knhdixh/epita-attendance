@@ -42,6 +42,7 @@ class SessionSearchNavigationTest {
         ui.waitUntil(10000) { ui.onAllNodesWithTag("sessions-list").fetchSemanticsNodes().isNotEmpty() }
         ui.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("sessions-list"))).performTextInput("private query")
         ui.runOnIdle { state = state.copy(data = data.copy(), loading = true) }
+        ui.waitUntil(10000) { ui.onAllNodesWithText("private query").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithText("private query").assertExists()
         ui.runOnIdle { state = ShellState(data = null, session = null) }
         ui.runOnIdle { state = ShellState(data = data.copy(), session = "b") }
