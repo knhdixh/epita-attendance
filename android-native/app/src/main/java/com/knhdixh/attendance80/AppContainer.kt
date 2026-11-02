@@ -77,7 +77,9 @@ class DefaultAppContainer(
     }
 
     override val dataRepository: DataRepository by lazy {
-        DataRepository(api, context.filesDir, clock) { tokenStore.currentToken() }
+        // Own directory, so backup rules can exclude it (they take no wildcards). Older builds wrote data-*.json to filesDir itself.
+        context.filesDir.listFiles()?.forEach { if (it.name.startsWith("data-") && it.name.endsWith(".json")) it.delete() }
+        DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock) { tokenStore.currentToken() }
     }
 
     fun startData() {

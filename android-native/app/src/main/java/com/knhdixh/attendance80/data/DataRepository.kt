@@ -57,6 +57,16 @@ class DataRepository(private val api: Api, private val directory: File, private 
         return File(directory, "data-$hash.json")
     }
 
+    /** Deletes every cached snapshot (and half-written temporary file) except the one for [keep]. */
+    private fun purgeCaches(keep: String?) {
+        val keepName = keep?.let { cacheFile(it).name }
+        directory.listFiles()?.forEach { f ->
+            val stale = (f.name.startsWith("data-") && f.name.endsWith(".json") && f.name != keepName) ||
+                (f.name.startsWith("snapshot-") && f.name.endsWith(".tmp"))
+            if (stale) f.delete()
+        }
+    }
+
     suspend fun start() {
         if (session != token()) {
             generation.incrementAndGet()
@@ -72,6 +82,8 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 publish(null, null)
                 _lastSynced.value = null
                 clearErrors()
+                // Sign-out, account deletion, a 401 or a new sign-in: nothing of another session stays on disk.
+                purgeCaches(current)
                 if (current != null) {
                     val cached = runCatching {
                         ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
@@ -151,7 +163,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 temporary.writeText(raw)
                 check(rename(temporary, target)) { "Could not save snapshot" }
             } finally { temporary.delete() }
-            if (token() != active) return false
+            if (token() != active) { target.delete(); return false }
             val synced = clock.now()
             _focusHistory.value = FocusHistoryStatus(refreshVersion = _focusHistory.value.refreshVersion + 1)
             publish(active, data, synced)

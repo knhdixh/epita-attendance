@@ -198,6 +198,7 @@ class AccountSettingsActions(private val container: AppContainer, private val ow
     override suspend fun deleteAccount(): Boolean {
         if (call { api.deleteAccount(AccountDeleteRequest()) } == null) return false
         container.authRepository.logout()
+        repo.start() // the token is gone: drops the cached snapshot of the deleted account
         return true
     }
 }

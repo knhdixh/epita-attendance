@@ -64,6 +64,47 @@ class DataRepositoryTest {
         } finally { server.shutdown(); dir.deleteRecursively() }
     }
 
+    private fun caches(dir: java.io.File) = dir.listFiles()!!.filter { it.name.startsWith("data-") || it.name.endsWith(".tmp") }
+
+    @Test fun signOutDeletesTheCachedSnapshotAndSignInAfterwardsLeavesOneFile() = runBlocking {
+        val server = MockWebServer(); server.start()
+        val dir = Files.createTempDirectory("snapshot").toFile()
+        var token: String? = "first"
+        try {
+            val api = ApiClient.createApi(server.url("/").toString(), { token }, {})
+            val repo = DataRepository(api, dir, clock) { token }
+            repo.start(); server.enqueue(MockResponse().setBody(fixture())); assertTrue(repo.refresh())
+            assertEquals(1, caches(dir).size)
+            token = null; repo.start()
+            assertEquals(0, caches(dir).size)
+            assertNull(repo.snapshot.value)
+            // A new sign-in gets a new token: still one file, never an orphan per sign-in.
+            token = "second"; repo.start(); server.enqueue(MockResponse().setBody(fixture())); assertTrue(repo.refresh())
+            assertEquals(1, caches(dir).size)
+            // After "Delete all my data" the reload writes the cache again.
+            server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(fixture()))
+            assertTrue(repo.mutate({ it }, { api.deleteData() }, { d, _ -> d }, reload = true))
+            assertEquals(1, caches(dir).size)
+        } finally { server.shutdown(); dir.deleteRecursively() }
+    }
+
+    @Test fun startRemovesStaleSnapshotsAndTemporaryFilesOfOtherSessions() = runBlocking {
+        val server = MockWebServer(); server.start()
+        val dir = Files.createTempDirectory("snapshot").toFile()
+        try {
+            val api = ApiClient.createApi(server.url("/").toString(), { "mine" }, {})
+            dir.resolve("data-0123abcd.json").writeText("{}"); dir.resolve("snapshot-1.tmp").writeText("{")
+            dir.resolve("unrelated.txt").writeText("keep")
+            val repo = DataRepository(api, dir, clock) { "mine" }
+            repo.start(); server.enqueue(MockResponse().setBody(fixture())); assertTrue(repo.refresh())
+            assertEquals(1, caches(dir).size)
+            assertFalse(dir.resolve("data-0123abcd.json").exists())
+            assertTrue(dir.resolve("unrelated.txt").exists())
+            val restarted = DataRepository(api, dir, clock) { "mine" }; restarted.start()
+            assertEquals(repo.snapshot.value, restarted.snapshot.value)
+        } finally { server.shutdown(); dir.deleteRecursively() }
+    }
+
     @Test fun renameFailureKeepsPreviousSnapshotOnDiskAndCleansTemporaryFile() = runBlocking {
         val server = MockWebServer(); server.start()
         val dir = Files.createTempDirectory("snapshot").toFile()

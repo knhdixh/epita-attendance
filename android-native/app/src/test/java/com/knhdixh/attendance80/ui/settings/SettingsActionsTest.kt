@@ -164,6 +164,9 @@ class SettingsActionsTest {
         take().let { assertEquals("DELETE /api/account", it.line()); assertEquals(buildJsonObject { put("confirm", "DELETE") }, it.json()) }
         assertEquals("POST /auth/logout", take().line())
         assertNull(tokenStore.token.value)
+        // The deleted account's cached snapshot is gone from disk.
+        assertTrue(dir.listFiles()!!.none { it.name.startsWith("data-") })
+        assertNull(repo.snapshot.value)
     }
 
     @Test fun addingAPasskeySignedInSendsTheBearerToAuthEndpoints() = runBlocking {
