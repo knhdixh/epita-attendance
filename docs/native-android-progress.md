@@ -871,3 +871,10 @@ Both blocking findings of `docs/native-android-review-5.md`. Their code was writ
 - `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 864 unit tests, 0 failures, 0 errors, 0 skipped (from the result XML). Roborazzi verified with no PNG re-recorded or changed (`git status` clean).
 - `tools/e2e.sh`: BUILD SUCCESSFUL, 2/2 instrumented tests passed ("Both local-server instrumented tests passed.").
 - **Unverified:** the Settings picker and focus on a real device and keyboard; the exact-alarm, notification and tile behaviour of Phase 5 (still Needs a device); backup exclusion of `snapshots/` on a real backup/restore; the migration over a real TWA install. The new `SessionsNoFlashTest` shows no spinner in Robolectric, not on a slow device.
+
+### Blocked: `npm test` cannot pass in this session (2026-11-02)
+
+- `npm test` gives 104 tests, 103 pass, 1 fail, again on a second run at 19:36 CET. The failing test is "habits and countdowns API…" at `test/habits.test.js:222`: the countdown `days` is 11, expected 10. The test reads the real clock, so its result depends on the hour. Plan 8.2 lists it as "Known, not yours to fix".
+- It fails with `TZ` set to UTC, Europe/Paris, Pacific/Kiritimati and America/Los_Angeles, so changing the zone does not get around it. This branch has no diff against `main` under `src/`, `public/`, `test/` or `migrations/`, so the Android fixes cannot have caused it.
+- I did not edit the test or fake the clock. That would change a server test outside this task, and plan section B forbids weakening a test to make it pass. **Needs the owner:** fix the test to use a fixed clock, or rerun `npm test` at an hour when it passes.
+- Everything else is done and logged above: the Gradle check (864 unit tests, 0 failures) and `tools/e2e.sh` (2/2) passed.
