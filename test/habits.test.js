@@ -200,7 +200,8 @@ test('habits and countdowns API: create, check in, edit, isolate users, and summ
   assert.equal((await updateHabit(env, me, gym.id, { target: 2, schedule: { type: 'daily' } })).target, 2);
   await assert.rejects(updateHabit(env, other, gym.id, { name: 'Mine' }), { status: 404 });
 
-  const exam = await createCountdown(env, me, { title: 'Exam', at: Date.now() + 10 * 86400000, units: 'weeks', homework_id: 999 });
+  // UTC midnight: /api/plan reads all-day dates 6 h later, so now + 10 d would drift to 11 after 18:00 UTC.
+  const exam = await createCountdown(env, me, { title: 'Exam', at: Date.parse(today) + 10 * 86400000, units: 'weeks', homework_id: 999 });
   assert.deepEqual([exam.units, exam.homework_id, exam.pinned], ['weeks', null, 0], 'a link to someone else\'s homework is dropped');
   assert.equal((await updateCountdown(env, me, exam.id, { pinned: true })).pinned, 1);
   await assert.rejects(updateCountdown(env, other, exam.id, { pinned: false }), { status: 404 });
