@@ -5,7 +5,7 @@ import okhttp3.Response
 
 class AuthInterceptor(
     private val tokenProvider: () -> String?,
-    private val onUnauthorized: () -> Unit,
+    private val onUnauthorized: (String?) -> Unit,
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -26,13 +26,13 @@ class AuthInterceptor(
             response = chain.proceed(newRequest)
         } catch (e: ApiError) {
             if (isApi && e.status == 401 && carriedBearer) {
-                onUnauthorized()
+                onUnauthorized(newRequest.header("Authorization")?.removePrefix("Bearer "))
             }
             throw e
         }
 
         if (isApi && response.code == 401 && carriedBearer) {
-            onUnauthorized()
+            onUnauthorized(newRequest.header("Authorization")?.removePrefix("Bearer "))
         }
         return response
     }

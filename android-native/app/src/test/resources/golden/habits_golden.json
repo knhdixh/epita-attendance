@@ -1,0 +1,895 @@
+{
+  "schedules": [
+    {
+      "clean": {
+        "type": "daily"
+      },
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "days",
+        "days": [
+          1,
+          5
+        ]
+      },
+      "label": "Mon, Fri"
+    },
+    {
+      "clean": {
+        "type": "daily"
+      },
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "daily"
+      },
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "monthly",
+        "n": 3
+      },
+      "label": "3× a month"
+    },
+    {
+      "clean": {
+        "type": "daily"
+      },
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "interval",
+        "n": 3
+      },
+      "label": "Every 3 days"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 1
+      },
+      "label": "Once a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": {
+        "type": "weekly",
+        "n": 2
+      },
+      "label": "2× a week"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": {
+        "type": "days",
+        "days": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "label": "Mon, Tue, Wed, Thu"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    },
+    {
+      "clean": null,
+      "label": "Every day"
+    }
+  ],
+  "habits": [
+    [
+      {
+        "ok": true,
+        "value": {
+          "name": "Read",
+          "color": "blue",
+          "schedule": {
+            "type": "daily"
+          },
+          "target": 2
+        }
+      },
+      {
+        "ok": true,
+        "value": {
+          "name": "Read",
+          "color": "blue",
+          "target": 2
+        }
+      }
+    ],
+    [
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      },
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      }
+    ],
+    [
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      },
+      {
+        "ok": false,
+        "error": "The daily target is a number from 1 to 99."
+      }
+    ],
+    [
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      },
+      {
+        "ok": true,
+        "value": {
+          "archived": 1
+        }
+      }
+    ],
+    [
+      {
+        "ok": true,
+        "value": {
+          "name": "Water",
+          "icon": "💧",
+          "color": "blue",
+          "schedule": {
+            "type": "daily"
+          },
+          "target": 1,
+          "unit": "glasses",
+          "remind_at": "08:30"
+        }
+      },
+      {
+        "ok": true,
+        "value": {
+          "name": "Water",
+          "icon": "💧",
+          "unit": "glasses",
+          "remind_at": "08:30"
+        }
+      }
+    ],
+    [
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      },
+      {
+        "ok": false,
+        "error": "Invalid reminder time."
+      }
+    ],
+    [
+      {
+        "ok": false,
+        "error": "Give the habit a name."
+      },
+      {
+        "ok": false,
+        "error": "Invalid schedule."
+      }
+    ]
+  ],
+  "sentences": [
+    {
+      "schedule": {
+        "type": "days",
+        "days": [
+          1,
+          3,
+          5
+        ]
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Gym",
+      "chips": [
+        "Mon, Wed, Fri"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "weekly",
+        "n": 3
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Read 20 pages",
+      "chips": [
+        "3× a week"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "daily"
+      },
+      "target": 8,
+      "unit": "glasses",
+      "icon": "💧",
+      "name": "Water",
+      "chips": [
+        "8 glasses a day"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "interval",
+        "n": 2
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Stretch",
+      "chips": [
+        "Every other day"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "days",
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Meditate",
+      "chips": [
+        "Weekdays"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "weekly",
+        "n": 2
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Call home",
+      "chips": [
+        "2× a week"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "days",
+        "days": [
+          1,
+          4
+        ]
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Review notes",
+      "chips": [
+        "Mon, Thu"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "daily"
+      },
+      "target": 3,
+      "unit": null,
+      "icon": null,
+      "name": "Pushups",
+      "chips": [
+        "3× a day"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "daily"
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Journal",
+      "chips": []
+    },
+    {
+      "schedule": {
+        "type": "days",
+        "days": [
+          6,
+          7
+        ]
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Walk",
+      "chips": [
+        "Weekends"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "interval",
+        "n": 3
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Exercise",
+      "chips": [
+        "Every 3 days"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "monthly",
+        "n": 2
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Visit",
+      "chips": [
+        "2× a month"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "monthly",
+        "n": 1
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Study",
+      "chips": [
+        "Once a month"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "daily"
+      },
+      "target": 1,
+      "unit": null,
+      "icon": null,
+      "name": "Run",
+      "chips": [
+        "Every day"
+      ]
+    },
+    {
+      "schedule": {
+        "type": "daily"
+      },
+      "target": 8,
+      "unit": null,
+      "icon": null,
+      "name": "Drink",
+      "chips": [
+        "8× a day"
+      ]
+    }
+  ],
+  "stats": [
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": true,
+        "streak": 1,
+        "best": 2,
+        "unit": "day",
+        "progress": null,
+        "rate": 0.75,
+        "total": 3,
+        "checkins": 3,
+        "weekdays": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        "start": "2026-10-24"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 3
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": true,
+        "streak": 3,
+        "best": 3,
+        "unit": "day",
+        "progress": null,
+        "rate": 0.75,
+        "total": 3,
+        "checkins": 3,
+        "weekdays": [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0
+        ],
+        "start": "2026-10-19"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 3
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 5,
+        "todayDone": false,
+        "due": true,
+        "streak": 1,
+        "best": 1,
+        "unit": "day",
+        "progress": null,
+        "rate": 1,
+        "total": 1,
+        "checkins": 13,
+        "weekdays": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "start": "2026-10-27"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 2
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": true,
+        "streak": 2,
+        "best": 2,
+        "unit": "week",
+        "progress": {
+          "done": 1,
+          "of": 2
+        },
+        "rate": 1,
+        "total": 5,
+        "checkins": 5,
+        "weekdays": [
+          0,
+          3,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        "start": "2026-10-13"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 5
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": false,
+        "streak": 3,
+        "best": 3,
+        "unit": "month",
+        "progress": {
+          "done": 1,
+          "of": 1
+        },
+        "rate": 1,
+        "total": 3,
+        "checkins": 3,
+        "weekdays": [
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "start": "2026-08-03"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 1
+        },
+        {
+          "month": "2026-09",
+          "days": 1
+        },
+        {
+          "month": "2026-10",
+          "days": 1
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": true,
+        "streak": 3,
+        "best": 3,
+        "unit": "time",
+        "progress": {
+          "since": 3
+        },
+        "rate": 1,
+        "total": 3,
+        "checkins": 3,
+        "weekdays": [
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1
+        ],
+        "start": "2026-10-19"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 3
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 1,
+        "todayDone": true,
+        "due": true,
+        "streak": 1,
+        "best": 1,
+        "unit": "week",
+        "progress": {
+          "done": 1,
+          "of": 2
+        },
+        "rate": 1,
+        "total": 3,
+        "checkins": 3,
+        "weekdays": [
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        "start": "2026-03-25"
+      },
+      "months": [
+        {
+          "month": "2025-12",
+          "days": 0
+        },
+        {
+          "month": "2026-01",
+          "days": 0
+        },
+        {
+          "month": "2026-02",
+          "days": 0
+        },
+        {
+          "month": "2026-03",
+          "days": 3
+        }
+      ]
+    },
+    {
+      "stats": {
+        "today": 0,
+        "todayDone": false,
+        "due": false,
+        "streak": 2,
+        "best": 2,
+        "unit": "day",
+        "progress": null,
+        "rate": 1,
+        "total": 2,
+        "checkins": 2,
+        "weekdays": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        "start": "2026-10-23"
+      },
+      "months": [
+        {
+          "month": "2026-07",
+          "days": 0
+        },
+        {
+          "month": "2026-08",
+          "days": 0
+        },
+        {
+          "month": "2026-09",
+          "days": 0
+        },
+        {
+          "month": "2026-10",
+          "days": 2
+        }
+      ]
+    }
+  ],
+  "dates": [
+    {
+      "valid": true,
+      "ms": 1774656000000,
+      "plus": "2026-03-30",
+      "diff": 86,
+      "dow": 6,
+      "week": "2026-03-23",
+      "month": "2026-03"
+    },
+    {
+      "valid": true,
+      "ms": 1792886400000,
+      "plus": "2026-10-27",
+      "diff": 297,
+      "dow": 7,
+      "week": "2026-10-19",
+      "month": "2026-10"
+    },
+    {
+      "valid": false
+    },
+    {
+      "valid": false
+    },
+    {
+      "valid": true,
+      "ms": 1793145600000,
+      "plus": "2026-10-30",
+      "diff": 300,
+      "dow": 3,
+      "week": "2026-10-26",
+      "month": "2026-10"
+    }
+  ],
+  "times": [
+    {
+      "key": "2026-03-29",
+      "reminder": null
+    },
+    {
+      "key": "2026-03-29",
+      "reminder": null
+    },
+    {
+      "key": "2026-10-25",
+      "reminder": null
+    },
+    {
+      "key": "2026-10-25",
+      "reminder": null
+    },
+    {
+      "key": "2026-10-25",
+      "reminder": null
+    }
+  ],
+  "labels": [
+    "0 days",
+    "0 weeks",
+    "0 months",
+    "0 times",
+    "1 day",
+    "1 week",
+    "1 month",
+    "1 time",
+    "2 days",
+    "2 weeks",
+    "2 months",
+    "2 times"
+  ]
+}

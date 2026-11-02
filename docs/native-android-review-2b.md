@@ -1,0 +1,64 @@
+# Native Android Phase 2b review
+
+Current verdict: **PASS after fix round 2**, reviewed 2026-10-30 at `4fe80d7` (app/test commit `af8a72c`). Merge into native/night is authorised under overnight-run.md. The original FIX review and re-review are preserved below.
+
+## Initial review — FIX (2026-10-30)
+
+Reviewed committed implementation through `91cf2b0`, plus the UI worker's uncommitted changes and untracked test files/PNGs. The UI worker correctly stopped without committing because its required checks failed. Preserve that work and finish it in the first fix round.
+
+## Findings
+
+1. **High — 200% font coverage is missing and both screenshot tests fail.** `android-native/app/src/test/java/com/knhdixh/attendance80/ui/ScreenScreenshotTest.kt:33` changes density in a single long-lived composition; the assertion at line 64 fails with `200% font must increase text height`. The earlier font1/font2 sign-in PNG pairs were byte-identical; the worker removed the eight misleading font2 files, leaving only 16 provisional PNGs. Establish the actual 2.0 configuration before the target content is measured (isolated configurations/test cases are an option), retain an assertion proving enlarged text, and record the full light/dark phone/tablet matrix including both main screens at 2.0. Keep content scrollable and actions reachable, without clipped text. Unfiltered record and verify must pass; do not disable or weaken the assertion.
+
+2. **High — the create-account interaction does not become idle.** `android-native/app/src/test/java/com/knhdixh/attendance80/ui/SignInUiTest.kt:60` fails with `Compose did not get idle after 325618 attempts in 60 SECONDS`. Reviewer thread inspection independently showed the test in `RobolectricIdlingStrategy.runUntilIdle` while asserting the dialog. Correct the test host, state/lifecycle or layout scheduling so the real dialog can be opened, empty creation refused, name entered and submitted, reopened and cancelled, and developer sign-in exercised. Keep actual behaviour assertions; no skipped tests or replacing the dialog with a fake. The complete unit suite must finish and pass.
+
+3. **Medium — Habits validation differs from JavaScript.** `android-native/app/src/main/java/com/knhdixh/attendance80/logic/Habits.kt:25` treats any primitive whose content is `true`/`false` as a boolean, including strings. JS `cleanSchedule({type:'weekly',n:'true'})` returns null, while Kotlin returns a weekly schedule; for `{type:'days',days:['true',2]}` JS keeps only day 2. Reviewer temporarily extended the resource fixtures and expectations using the real JS functions: `HabitsGoldenTest` failed at `$.schedules[11].clean`, expected JsonNull, actual JsonObject. Both files were restored byte-for-byte and the ordinary 35-test suite passed before UI additions. Distinguish string and boolean conversion, retain JS Number semantics for supported JSON values, and add permanent source fixtures generated through golden.mjs. Also avoid throwing on a non-primitive schedule type where JS returns null. Do not hand-edit expected outputs.
+
+4. **Medium — dialog screenshot framing differs from the other captures.** `android-native/app/src/test/java/com/knhdixh/attendance80/ui/ScreenScreenshotTest.kt:67` emits a full activity image for the dialog node, including an extra native `Attendance80` title bar absent from the sign-in/loading captures. The light dialog also blends into the underlying form. Configure a consistent host matching the app, then capture either the actual dialog bounds or the complete correctly hosted screen, with its real surface/overlay. Inspect and replace all four dialog PNGs. This is about accurate visual evidence; do not alter production copy or simulate a dialog for the test.
+
+## Independent checks and evidence
+
+- `npm test`: 104 tests, **103 passed, 1 failed, 0 skipped**. Only the explicitly permitted countdown time-of-day assertion (`test/habits.test.js:222`, expected 10, got 11).
+- `cd android-native && ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug`: exit 1 after 1m15s. XML: **40 tests, 37 passed, 3 failed, 0 errors, 0 skipped**. Failures: phone screenshot, tablet screenshot and dialog interaction. Breakdown: 23 golden tests passed; 11 ordinary JVM tests passed; existing Robolectric ViewModel test passed; Compose interaction tests 2/3 passed; screenshot tests 0/2 passed. Instrumented tests: not introduced until Phase 3.
+- Separate `./gradlew lintProdDebug assembleProdDebug`: **BUILD SUCCESSFUL**, exit 0. A building APK does not establish passing tests.
+- `./gradlew verifyRoborazziProdDebug --tests '*PhoneScreenshotTest'`: exit 1 after 7s, same font-growth assertion. No whole-matrix verification claimed.
+- Inspected **all 16 remaining PNGs** (four labelled contact sheets, plus original-size spot checks) under `app/src/test/screenshots/`: phone 411x891, tablet 840x1000; light/dark; sign-in/loading/placeholder/create-account dialog. No accepted 200% images exist. Native rendering replaced initial diagnostic dumps. Main screen backgrounds and accent token pixel values agree with the plan for these normal-font captures.
+- `git diff --check`: passed. No server source or migration changes, so no new D1 query-plan requirement. Existing migrations and `android/` are unchanged. Plan changes are confined to permitted section 4 endpoint corrections. Assistant API/DTO removal and new generated API fixtures are present.
+- Logic goldens are generated from the real JS modules. Worker mutation checks are documented; reviewer additionally reproduced the coercion defect using JS-computed expectations. No secrets or deployment changes were added to the reviewed paths.
+
+Local evidence: `/tmp/epita-native-night/review-2b-initial-{npm,gradle,build,verify}.log`, `review-2b-test-thread.txt`, `review-habits-coercion.log`, and `screenshots-review-0.jpg` through `screenshots-review-3.jpg`. These are local review aids; durable findings and counts are recorded here.
+
+## Re-review gate
+
+Fix every finding on `native/phase-2b`, append a `Review 2b fixes — round 1` entry with exact counts/commands/commit references, and commit only after required checks pass. Then stop for independent review. Maximum three fix rounds, per overnight-run.md. The night branch remains at its last independently building state until PASS.
+
+## Re-review after fix round 1 — FIX (2026-10-30)
+
+Round 1 ended without a commit because required checks still fail. Preserve the working tree. One of three fix rounds is now consumed.
+
+- Independently ran `./gradlew testProdDebugUnitTest --tests '*HabitsGoldenTest' --tests '*SignInUiTest.actionsAndDialog' --tests '*PhoneScreenshotTest.light_signin_font2' lintProdDebug assembleProdDebug`: **3 tests, 2 passed, 1 failed**, 0 skipped; exit 1 after 1m10s. Habits generated regressions and the isolated 200% phone capture pass. The real dialog still fails with `AppNotIdleException` at `SignInUiTest.kt:60`. No passing full-suite claim.
+- Inspected the new original-size phone light 200% sign-in PNG: text is visibly larger, multi-line buttons expand, and content is not clipped. Finding 1 is partly addressed, but the complete matrix and verification remain pending. Finding 3's specified regression cases pass. Findings 2 and 4 remain open; new dialog captures have not been proven.
+- `npm test`: **103/104**, only the allowed countdown failure. Separate reviewer `./gradlew lintProdDebug assembleProdDebug`: BUILD SUCCESSFUL, exit 0. `git diff --check` passes.
+- A primary upstream report provides a concrete lead: [Robolectric #8460](https://github.com/robolectric/robolectric/issues/8460) reproduces non-idle text fields inside dialogs when a non-default width qualifier is used. Its later reproduction distinguishes width from height and reports stable sizing with `DialogProperties(usePlatformDefaultWidth = false)` or an explicit constrained width. This is a diagnostic lead, not proof that any workaround fixes this app. Keep the required 411dp/840dp captures and real dialog assertions; verify any responsive sizing change on both sizes rather than removing coverage or faking content.
+
+Fix round 2 must finish the real dialog, full screenshot matrix, action reachability and all unfiltered checks, retaining the successful font and Habits regressions. Continue to append progress rather than rewriting previous entries.
+
+
+## Re-review after fix round 2 — PASS (2026-10-30)
+
+All four findings are resolved for the Phase 2b scope. Two fix rounds were used.
+
+1. Fixed configurations now start isolated compositions; measured text-height comparisons and actual callback checks at 2.0 remain. All 24 PNGs exist and are committed. Reviewer inspected every PNG using six labelled contact sheets, plus original-size phone 200% and phone/tablet dialog images. Enlarged text and multi-line controls remain readable; no clipped target content observed.
+2. The real account dialog uses responsive explicit constraints, 24dp side padding, maximum 560dp and `usePlatformDefaultWidth = false`. Native-graphics interaction tests exercise empty submission, trimmed name submission, reopen/cancel and developer sign-in. All pass without fakes, ignores or weakened assertions.
+3. Permanent JS-generated fixtures cover string/boolean distinctions, arrays, numeric prefixes and non-primitive schedule types. Reviewer regenerated every logic golden with `node android-native/tools/golden.mjs`: exit 0, no tracked fixture/golden changes. The specified coercion defect is fixed.
+4. The no-action-bar host and responsive dialog surface remove the extra title bar and produce consistent framing. Window dimming is not reproduced by the full-window Robolectric capture and is explicitly left for a real-device check; no claim of physical-device rendering is made.
+
+Independent final checks, run against the committed phase:
+
+- `npm test`: **103/104**, 1 known countdown failure, 0 skipped, allowed by overnight instructions.
+- `./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug`: **BUILD SUCCESSFUL**, 62 tests, 0 failures/errors/skips. Tests executed rather than being up-to-date.
+- `./gradlew verifyRoborazziProdDebug`: **BUILD SUCCESSFUL**, 62 tests, 0 failures/errors/skips, all 24 image baselines verified. Breakdown: 23 golden methods; 11 ordinary JVM methods; 1 existing Robolectric ViewModel method; 3 Compose interaction methods; 24 screenshot methods. Instrumented tests start in Phase 3.
+- Negative verification probe: temporarily corrupted one committed placeholder PNG and ran `verifyRoborazziProdDebug --tests '*PhoneScreenshotTest.light_placeholder_font1'`; it failed (exit 1). Restored its original bytes in a finally block, then the full unfiltered verification passed. `git status` confirms no tracked changes from this probe.
+- `git diff --check`: passed. No changes to server source, public JS, existing migrations, android/, secrets or main. The existing endpoint corrections are restricted to permitted plan section 4. No extra phase screens added.
+
+Final evidence: `/tmp/epita-native-night/review-2b-final-{npm,gradle,verify,generate}.log`, `review-2b-verify-negative.log`, and `fix2-review-0.jpg` through `fix2-review-5.jpg`. Worker log and commit mapping are in the append-only progress log.

@@ -148,6 +148,21 @@ async function generateFull() {
     }),
   }), env);
 
+  // Exercise fields added since the original fixture, through the same endpoints as the app.
+  async function post(path, body, method = 'POST') {
+    const response = await worker.fetch(new Request(`https://app.test${path}`, {
+      method, headers: authHeader, body: JSON.stringify(body),
+    }), env);
+    if (!response.ok) throw new Error(`${method} ${path}: ${response.status} ${await response.text()}`);
+    return response.json();
+  }
+  await post('/api/homework/plan', { items: [{ id: 2, planned_at: now, planned_minutes: 45 }] });
+  const habit = await post('/api/habits', { name: 'Read', schedule: { type: 'days', days: [1, 3, 5] }, target: 2, unit: 'pages', remind_at: '09:30' });
+  const today = new Date().toISOString().slice(0, 10);
+  await post(`/api/habits/${habit.id}/log`, { day: today, count: 2 }, 'PUT');
+  await post('/api/countdowns', { title: 'Exam', at: 1794000000000, all_day: false, repeat: 'monthly', units: 'days', after: 'past', pinned: true, homework_id: 2 });
+  await post('/api/notify/settings', { classes: false, classLead: 30, tz: 'Europe/Helsinki' }, 'PUT');
+
   // 7. Data
   const dataRes = await worker.fetch(new Request('https://app.test/api/data', {
     headers: { Authorization: `Bearer ${token}` },

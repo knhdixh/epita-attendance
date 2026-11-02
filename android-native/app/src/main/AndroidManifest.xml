@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
 
     <application
         android:name=".App"
@@ -16,6 +16,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:theme="@style/AppTheme"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true">
 
@@ -26,6 +27,18 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="a80" android:host="today" />
+                <data android:scheme="a80" android:host="focus" />
+                <data android:scheme="a80" android:host="homework" />
+                <data android:scheme="a80" android:host="session" />
+                <data android:scheme="a80" android:host="course" />
             </intent-filter>
 
             <!-- Auth callback: com.knhdixh.attendance80:/auth -->
@@ -46,6 +59,45 @@
                 <data
                     android:scheme="com.knhdixh.attendance80"
                     android:path="/gcal" />
+            </intent-filter>
+        </activity>
+
+        <!-- Focus timer: notification and tile buttons, the end-of-phase alarm, and re-arming after reboots and clock changes. -->
+        <receiver android:name=".focus.FocusReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- The tile: start, pause or resume. Long-press opens the quick-focus sheet. -->
+        <service
+            android:name=".focus.FocusTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_focus"
+            android:label="Focus"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
+        </service>
+
+        <!-- Quick-focus sheet: from the tile's long-press and the widget. Its own task, so the app doesn't come up behind it. -->
+        <activity
+            android:name=".focus.QuickFocusActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="Focus"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/QuickFocusTheme"
+            android:windowSoftInputMode="adjustResize|stateHidden">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
         </activity>
     </application>

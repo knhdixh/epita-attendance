@@ -35,7 +35,9 @@ class DataDtoTest {
         assertTrue(data.calendars.isEmpty())
         assertTrue(data.calendarSyncs.isEmpty())
 
-        assertNull(data.assistant)
+        assertTrue(data.habits.list.isEmpty())
+        assertTrue(data.countdowns.isEmpty())
+        assertEquals("Europe/Paris", data.notifications.settings.tz)
         assertTrue(data.integrations.feedUrl.startsWith("https://app.test/feed/"))
         assertNull(data.integrations.gcal)
 
@@ -83,6 +85,22 @@ class DataDtoTest {
         assertEquals(60, hwWithRemind.remind_minutes)
         assertEquals("17:00", hwWithRemind.due_time)
         assertEquals(120, hwWithRemind.effort_minutes)
+        assertEquals(1793188000000L, hwWithRemind.planned_at)
+        assertEquals(45, hwWithRemind.planned_minutes)
+
+        val habit = data.habits.list.single()
+        assertEquals("Read", habit.name)
+        assertEquals(listOf(1, 3, 5), habit.schedule.days)
+        assertEquals(2, habit.target)
+        assertEquals("09:30", habit.remind_at)
+        assertEquals(2, data.habits.logs.single().count)
+        val countdown = data.countdowns.single()
+        assertEquals("Exam", countdown.title)
+        assertEquals("monthly", countdown.repeat)
+        assertTrue(countdown.pinned)
+        assertEquals(2L, countdown.homework_id)
+        assertEquals(30, data.notifications.settings.classLead)
+        assertEquals("Europe/Helsinki", data.notifications.settings.tz)
 
         assertEquals(1, data.breaks.size)
         val brk = data.breaks[0]

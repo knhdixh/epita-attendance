@@ -13,10 +13,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.knhdixh.attendance80.ui.shell.Shell
+import com.knhdixh.attendance80.ui.shell.ShellViewModel
+import com.knhdixh.attendance80.navigation.PendingRouteViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
@@ -42,23 +50,49 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val shellViewModel: ShellViewModel by viewModels {
+        viewModelFactory { initializer {
+            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as App
+            ShellViewModel(app.container)
+        } }
+    }
+
+    private val pendingRouteViewModel: PendingRouteViewModel by viewModels {
+        viewModelFactory { initializer { PendingRouteViewModel(createSavedStateHandle()) } }
+    }
+
+    private val notifications = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        // Draw the timer notification now that it may be shown.
+        lifecycleScope.launch { (application as App).container.focusController?.restore() }
+    }
+
+    /** Asked in context, the first time a timer starts, and at most once. Never at launch. */
+    private fun askNotifications() {
+        val store = (application as App).container.focusStore ?: return
+        lifecycleScope.launch { com.knhdixh.attendance80.focus.askNotificationsOnce(this@MainActivity, store) { notifications.launch(android.Manifest.permission.POST_NOTIFICATIONS) } }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        (application as App).startData()
         if (savedInstanceState == null) {
-            handleAuthIntent(intent)
+            handleIntent(intent)
         }
 
         setContent {
             Attendance80Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val app = application as App
-                    val isLoaded by app.container.tokenStore.isLoaded.collectAsState()
-                    val token by app.container.tokenStore.token.collectAsState()
+                    val isLoaded by app.container.tokenStore.isLoaded.collectAsStateWithLifecycle()
+                    val token by app.container.tokenStore.token.collectAsStateWithLifecycle()
                     if (isLoaded) {
                         AppNav(
                             token = token,
                             signInViewModel = signInViewModel,
+                            shellViewModel = shellViewModel,
+                            pendingRouteViewModel = pendingRouteViewModel,
+                            onAskNotifications = ::askNotifications,
                         )
                     }
                 }
@@ -69,12 +103,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleAuthIntent(intent)
+        handleIntent(intent)
     }
 
-    private fun handleAuthIntent(intent: Intent?) {
+    private fun handleIntent(intent: Intent?) {
         val data = intent?.data ?: return
+        if (data.scheme == "a80") pendingRouteViewModel.accept(data.toString())
         if (data.scheme == "com.knhdixh.attendance80") {
+            if (data.path == "/gcal") {
+                pendingRouteViewModel.go("settings")
+                shellViewModel.gcalReturned(data.getQueryParameter("result"), data.getQueryParameter("error"))
+            }
             if (data.path == "/auth") {
                 val code = data.getQueryParameter("code")
                 if (!code.isNullOrBlank()) {
@@ -87,27 +126,49 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNav(
-    token: String?,
-    signInViewModel: SignInViewModel,
-) {
-    val navController = rememberNavController()
-    val startDest = if (token.isNullOrBlank()) "signin" else "main"
-
-    NavHost(navController = navController, startDestination = startDest) {
-        composable("signin") {
-            SignInScreen(viewModel = signInViewModel)
-        }
-        composable("main") {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Welcome to Attendance80",
-                    style = MaterialTheme.typography.titleMedium,
-                )
+fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel, onAskNotifications: () -> Unit = {}) {
+    if (token.isNullOrBlank()) {
+        SignInScreen(viewModel = signInViewModel)
+    } else {
+        key(token) {
+            val state by shellViewModel.state.collectAsStateWithLifecycle()
+            val pendingRoute by pendingRouteViewModel.pending.collectAsStateWithLifecycle()
+            val recents by shellViewModel.recents.collectAsStateWithLifecycle()
+            val pendingDelete by shellViewModel.pendingHomeworkDelete.collectAsStateWithLifecycle()
+            val now by produceState(initialValue = shellViewModel.clock.now()) {
+                while (true) {
+                    value = shellViewModel.clock.now()
+                    kotlinx.coroutines.delay(60_000)
+                }
             }
+            val focusHistory by shellViewModel.focusHistory.collectAsState()
+            val focusTimer by shellViewModel.focusTimer.collectAsStateWithLifecycle()
+            Shell(if (state.session == token) state else com.knhdixh.attendance80.ui.shell.ShellState(),
+                shellViewModel::refresh, shellViewModel::toggleScope, shellViewModel::signOut,
+                pendingRoute = pendingRoute, onPendingConsumed = pendingRouteViewModel::clear,
+                onValidatePending = { route ->
+                    if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
+                },
+                now = now, zone = shellViewModel.clock.zone(), onAction = { shellViewModel.dispatch(it, token) },
+                recents = recents, onRecent = shellViewModel::recordRecent, onErrorConsumed = { shellViewModel.consumeError(it, token) }, accountKey = token,
+                pendingDelete = pendingDelete?.takeIf { it.owner == token },
+                onDeleteHomework = { shellViewModel.deleteHomework(token, it) },
+                onFinishHomeworkDelete = { undo, expected -> shellViewModel.finishHomeworkDelete(undo, expected) },
+                onSaveHomework = { id, body -> shellViewModel.saveHomework(token, id, body) },
+                focusHistory = focusHistory,
+                onFocusHistory = { since -> shellViewModel.ensureFocusHistory(token, since) },
+                onSaveFocus = { body -> shellViewModel.saveFocusSettings(token, body) },
+                onSaveFocusList = { body -> shellViewModel.saveFocusList(token, body) },
+                onDeleteFocus = { id -> shellViewModel.deleteFocus(token, id) },
+                onSaveBreak = { from, to, label -> shellViewModel.saveBreak(token, from, to, label) },
+                onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) },
+                settingsActions = androidx.compose.runtime.remember(token) { shellViewModel.settingsActions(token) },
+                calendarActions = androidx.compose.runtime.remember(token) { shellViewModel.calendarActions(token) },
+                habitActions = androidx.compose.runtime.remember(token) { shellViewModel.habitActions(token) },
+                countdownActions = androidx.compose.runtime.remember(token) { shellViewModel.countdownActions(token) },
+                focusTimer = focusTimer,
+                timerNow = { shellViewModel.clock.now() },
+                timerActions = androidx.compose.runtime.remember(token, onAskNotifications) { shellViewModel.timerActions?.let { com.knhdixh.attendance80.focus.AskingActions(it, onAskNotifications) } })
         }
     }
 }

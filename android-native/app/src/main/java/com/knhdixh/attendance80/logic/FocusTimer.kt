@@ -333,3 +333,23 @@ fun stop(t: FocusTimer, now: Long): FinishResult =
 
 fun skipIdle(t: FocusTimer): FocusTimer =
     if (t.next == "focus") t else idle(done = if (t.next == "long") 0 else t.done, next = "focus", target = t.target)
+
+// Typed time follows the web's minutes, minutes:seconds, or hours:minutes:seconds grammar.
+fun parseClock(text: String): Long? {
+    val parts = text.trim().split(':')
+    if (parts.size > 3 || parts.any { !Regex("[0-9]{1,3}").matches(it) }) return null
+    val n = parts.map { it.toLong() }
+    if (n.drop(1).any { it > 59 }) return null
+    return when (n.size) {
+        1 -> n[0] * MIN_MS
+        2 -> (n[0] * 60 + n[1]) * 1000
+        else -> ((n[0] * 60 + n[1]) * 60 + n[2]) * 1000
+    }
+}
+
+fun setRemaining(t: FocusTimer, settings: FocusSettings, ms: Long, now: Long): FocusTimer {
+    if (t.phase == "idle") return setLength(t, settings, (ms.toDouble() / MIN_MS).roundToInt())
+    val from = t.pausedAt ?: now
+    val ceiling = t.startedAt + t.pausedMs + MAX_PHASE_MIN * MIN_MS
+    return t.copy(endsAt = max(from + MIN_MS, minOf(ceiling, from + ms)))
+}

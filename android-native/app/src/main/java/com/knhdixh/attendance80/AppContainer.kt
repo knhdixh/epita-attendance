@@ -8,10 +8,15 @@ import com.knhdixh.attendance80.auth.EncryptedTokenStore
 import com.knhdixh.attendance80.auth.TokenStore
 import com.knhdixh.attendance80.auth.authDataStore
 import com.knhdixh.attendance80.net.Api
+import com.knhdixh.attendance80.data.DataRepository
+import com.knhdixh.attendance80.data.Scope
 import com.knhdixh.attendance80.net.ApiClient
+import com.knhdixh.attendance80.focus.*
+import com.knhdixh.attendance80.logic.FocusSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 
 interface AppContainer {
     val context: Context
@@ -19,12 +24,19 @@ interface AppContainer {
     val tokenStore: TokenStore
     val api: Api
     val authRepository: AuthRepository
+    val dataRepository: DataRepository
+    val calendarScope: Scope
+    /** The one focus timer on the device. Null in tests that don't need it. */
+    val focusController: FocusController? get() = null
+    val focusOutbox: Outbox? get() = null
+    val focusStore: FocusStore? get() = null
+    val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
 class DefaultAppContainer(
     override val context: Context,
     override val clock: Clock = SystemClock(),
-    baseUrl: String = BuildConfig.BASE_URL,
+    override val baseUrl: String = BuildConfig.BASE_URL,
 ) : AppContainer {
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -42,10 +54,59 @@ class DefaultAppContainer(
             tokenProvider = {
                 kotlinx.coroutines.runBlocking { tokenStore.awaitToken() }
             },
-            onUnauthorized = {
-                scope.launch { tokenStore.clearToken() }
+            onUnauthorized = { rejectedToken ->
+                if (rejectedToken != null) scope.launch { tokenStore.clearTokenIfMatches(rejectedToken) }
             },
         )
+    }
+
+    override val calendarScope: Scope by lazy { Scope(context.authDataStore) }
+
+    override val focusStore: FocusStore by lazy { FocusStore(context.focusDataStore) }
+
+    override val focusController: FocusController by lazy {
+        FocusController(
+            store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
+            surfaces = AndroidFocusSurfaces(context),
+            outbox = WorkOutboxScheduler(context),
+            // The TWA's timer, sessions and tasks move over before anything reads the store: the receiver and the tile get here first.
+            beforeFirstLoad = { runCatching { LegacyFocusMigration(context.getSharedPreferences("focus", Context.MODE_PRIVATE), focusStore, WorkOutboxScheduler(context)).run() } },
+        )
+    }
+
+    override val focusOutbox: Outbox by lazy {
+        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
+    }
+
+    override val dataRepository: DataRepository by lazy {
+        // Own directory, so backup rules can exclude it (they take no wildcards). Older builds wrote data-*.json to filesDir itself.
+        context.filesDir.listFiles()?.forEach { if (it.name.startsWith("data-") && it.name.endsWith(".json")) it.delete() }
+        DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock) { tokenStore.currentToken() }
+    }
+
+    fun startData() {
+        scope.launch {
+            dataRepository.snapshot.collect { data ->
+                if (data != null) calendarScope.reconcile(data.calendars)
+                if (data != null) {
+                    focusController.updateSettings(data.focus.settings.toLogic())
+                    data.user.email?.let { focusController.setAccount(it) }
+                }
+            }
+        }
+        scope.launch {
+            focusController.restore() // loads (and so migrates), then finishes what is due or re-arms
+        }
+        WorkOutboxScheduler(context).requestFlush()
+        scope.launch {
+            tokenStore.awaitToken()
+            tokenStore.token.collectLatest { token ->
+                // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
+                if (token == null) focusController.signedOut()
+                dataRepository.start()
+                if (token != null) dataRepository.refresh()
+            }
+        }
     }
 
     override val authRepository: AuthRepository by lazy {
@@ -56,3 +117,8 @@ class DefaultAppContainer(
         )
     }
 }
+
+fun com.knhdixh.attendance80.net.FocusSettingsDto.toLogic() = FocusSettings(
+    focus = focus, short = short, long = long, longEvery = longEvery, goal = goal, autoBreaks = autoBreaks,
+    autoFocus = autoFocus, sound = sound, notify = notify, tasks = tasks, tags = tags,
+)

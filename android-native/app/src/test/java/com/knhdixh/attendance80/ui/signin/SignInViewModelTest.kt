@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 import java.net.URLDecoder
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
+@Config(manifest = Config.NONE, sdk = [35])
 class SignInViewModelTest {
 
     private class FakeTokenStore : TokenStore {

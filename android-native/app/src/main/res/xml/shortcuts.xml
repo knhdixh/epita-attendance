@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="focus" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_focus">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://focus" />
+    </shortcut>
+    <shortcut android:shortcutId="today" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_today">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://today" />
+    </shortcut>
+    <shortcut android:shortcutId="homework" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_homework">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://homework" />
+    </shortcut>
+    <shortcut android:shortcutId="add-homework" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_add_homework">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://homework/new" />
+    </shortcut>
+</shortcuts>

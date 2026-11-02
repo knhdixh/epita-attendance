@@ -1,11 +1,14 @@
 package com.knhdixh.attendance80.net
 
+import okhttp3.ResponseBody
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.Headers
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -20,11 +23,12 @@ interface Api {
     suspend fun exchangeToken(@Body req: TokenExchangeRequest): TokenResponse
 
     @POST("auth/passkey/register/options")
-    suspend fun passkeyRegisterOptions(@Body req: PasskeyRegisterOptionsRequest): JsonElement
+    // /auth/* gets no bearer from the interceptor: pass it to add a passkey to the signed-in account.
+    suspend fun passkeyRegisterOptions(@Body req: PasskeyRegisterOptionsRequest, @Header("Authorization") authorization: String? = null): JsonElement
 
     @Headers("X-A80-App: 1")
     @POST("auth/passkey/register/verify")
-    suspend fun passkeyRegisterVerify(@Body req: PasskeyRegisterVerifyRequest): PasskeyRegisterVerifyResponse
+    suspend fun passkeyRegisterVerify(@Body req: PasskeyRegisterVerifyRequest, @Header("Authorization") authorization: String? = null): PasskeyRegisterVerifyResponse
 
     @POST("auth/passkey/login/options")
     suspend fun passkeyLoginOptions(): JsonElement
@@ -34,13 +38,16 @@ interface Api {
     suspend fun passkeyLoginVerify(@Body req: PasskeyLoginVerifyRequest): PasskeyLoginVerifyResponse
 
     @POST("auth/logout")
-    suspend fun logout(): OkResponse
+    suspend fun logout(@Header("Authorization") authorization: String? = null): OkResponse
 
     @GET("api/me")
     suspend fun me(): MeResponse
 
     @GET("api/data")
     suspend fun data(): AppData
+
+    @GET("api/data")
+    suspend fun rawData(): ResponseBody
 
     @GET("api/focus")
     suspend fun listFocus(@Query("since") since: Long): FocusListResponse
@@ -52,16 +59,16 @@ interface Api {
     suspend fun deleteFocus(@Path("id") id: Long): OkResponse
 
     @PUT("api/focus/settings")
-    suspend fun saveFocusSettings(@Body settings: FocusSettingsDto): FocusSettingsResponse
+    suspend fun saveFocusSettings(@Body settings: JsonObject): FocusSettingsResponse
 
     @PATCH("api/attendance/{id}")
-    suspend fun updateAttendance(@Path("id") id: Long, @Body req: AttendanceUpdateRequest): OkResponse
+    suspend fun updateAttendance(@Path("id") id: Long, @Body req: JsonObject): OkResponse
 
     @POST("api/attendance/bulk")
-    suspend fun bulkAttendance(@Body req: AttendanceBulkRequest): AttendanceBulkResponse
+    suspend fun bulkAttendance(@Body req: JsonObject): AttendanceBulkResponse
 
     @PATCH("api/courses/{id}")
-    suspend fun updateCourse(@Path("id") id: Long, @Body req: CourseUpdateRequest): OkResponse
+    suspend fun updateCourse(@Path("id") id: Long, @Body req: JsonObject): OkResponse
 
     @POST("api/courses/tracked")
     suspend fun updateCoursesTracked(@Body req: CourseTrackedBulkRequest): OkResponse
@@ -70,13 +77,43 @@ interface Api {
     suspend fun createCatchup(@Body req: CatchupRequest): HomeworkDto
 
     @POST("api/homework")
-    suspend fun createHomework(@Body req: HomeworkCreateRequest): HomeworkDto
+    suspend fun createHomework(@Body req: JsonObject): HomeworkDto
 
     @PATCH("api/homework/{id}")
-    suspend fun updateHomework(@Path("id") id: Long, @Body req: HomeworkUpdateRequest): HomeworkDto
+    suspend fun updateHomework(@Path("id") id: Long, @Body req: JsonObject): HomeworkDto
 
     @DELETE("api/homework/{id}")
     suspend fun deleteHomework(@Path("id") id: Long): OkResponse
+
+    @POST("api/homework/plan")
+    suspend fun planHomework(@Body req: JsonObject): HomeworkPlanResponse
+
+    @POST("api/habits")
+    suspend fun createHabit(@Body req: JsonObject): HabitDto
+
+    @PATCH("api/habits/{id}")
+    suspend fun updateHabit(@Path("id") id: Long, @Body req: JsonObject): HabitDto
+
+    @DELETE("api/habits/{id}")
+    suspend fun deleteHabit(@Path("id") id: Long): OkResponse
+
+    @PUT("api/habits/{id}/log")
+    suspend fun logHabit(@Path("id") id: Long, @Body req: HabitLogRequest): HabitLogDto
+
+    @POST("api/habits/order")
+    suspend fun orderHabits(@Body req: HabitOrderRequest): OkResponse
+
+    @POST("api/countdowns")
+    suspend fun createCountdown(@Body req: JsonObject): CountdownDto
+
+    @PATCH("api/countdowns/{id}")
+    suspend fun updateCountdown(@Path("id") id: Long, @Body req: JsonObject): CountdownDto
+
+    @DELETE("api/countdowns/{id}")
+    suspend fun deleteCountdown(@Path("id") id: Long): OkResponse
+
+    @PUT("api/notify/settings")
+    suspend fun saveNotifySettings(@Body req: JsonObject): NotifySettingsResponse
 
     @POST("api/breaks")
     suspend fun createBreak(@Body req: BreakCreateRequest): BreakCreateResponse
@@ -88,7 +125,7 @@ interface Api {
     suspend fun addCalendar(@Body req: CalendarAddRequest): CalendarImportSummary
 
     @PATCH("api/calendars/{id}")
-    suspend fun updateCalendar(@Path("id") id: Long, @Body req: CalendarUpdateRequest): CalendarUpdateResponse
+    suspend fun updateCalendar(@Path("id") id: Long, @Body req: JsonObject): CalendarImportSummary
 
     @POST("api/calendars/{id}/sync")
     suspend fun syncCalendar(@Path("id") id: Long): CalendarImportSummary
@@ -119,15 +156,6 @@ interface Api {
 
     @DELETE("api/tokens/{id}")
     suspend fun deleteToken(@Path("id") id: Long): OkResponse
-
-    @PUT("api/ai-key")
-    suspend fun setAiKey(@Body req: AiKeyRequest): AiKeyResponse
-
-    @DELETE("api/ai-key")
-    suspend fun deleteAiKey(): AiUsageResponse
-
-    @POST("api/assistant/chat")
-    suspend fun chat(@Body req: ChatRequest): ChatResponse
 
     @DELETE("api/passkeys/{id}")
     suspend fun deletePasskey(@Path("id") id: String): OkResponse
