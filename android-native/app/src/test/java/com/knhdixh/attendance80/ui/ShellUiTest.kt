@@ -114,9 +114,10 @@ class ShellUiTest {
     @Test fun habits() = content("habits", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
     @Test fun countdowns() = content("countdowns", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun homeworkDetail() = content("homework/1", "Homework not found.", "Maths Exercise 4")
-    @Test fun habitDetail() = content("habits/1", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
+    @Test fun habitDetail() = content("habits/1", "This habit is gone.", "Read")
     @Test fun countdownDetail() = content("countdowns/1", "Count down to what matters, or count up from when something began.", "Exam")
-    @Test fun newHabit() = content("habits/new", "Build habits that stick. Add one, tick it off each day, and watch the grid fill in.", "Read")
+    // The add row is open, so the empty sentence gives way to it, as on the web.
+    @Test fun newHabit() = content("habits/new", "Every day", "Read")
     @Test fun newCountdown() = content("countdowns/new", "Count down to what matters, or count up from when something began.", "Exam")
     @Test fun sessionDetail() = content("session/1", "Session not found.", "Mathématiques")
     @Test fun courseDetail() {

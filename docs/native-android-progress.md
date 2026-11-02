@@ -674,3 +674,47 @@ Built by Claude in this session, following `public/calendar-ui.js` and `public/c
   - Screenshots: 22 new and 4 changed PNGs. Claude looked at the phone light main, month and session panel, the phone dark new-to-do panel and the tablet dark proposal.
   - `tools/e2e.sh`: first run exit 1. The planned block had no OnClick, and the dependent offline test failed with it. After the fix: exit 0, 2/2 passed.
 - **Unverified / Needs a device:** drag feel and swipe thresholds on real touch hardware, and the date picker.
+
+### Phase 4.13 Habits (2026-11-02)
+
+Built by Claude in this session, following `public/habits-ui.js` (maths from the ported `Habits`).
+
+- **Built:** `ui/habits/HabitsScreen.kt`.
+  - **Habits page:** List/Grid views; "Longest streak" line; the empty sentences; Today with the date, "Nothing due today.", Not due today and Archived (expandable, Restore).
+  - **Rows:** the round check button (a ring that fills to the target; tap adds one, long press takes one off), name, meta (schedule, × a day, streak with flame, N/M this week/month, "last N days ago", "not due today"), the last-7-days strip (tap a day to fill it in), and Edit.
+  - **Grid view:** cards with 26 weeks of cells.
+  - **Quick add:** typed sentence → `parseHabit` chips, Add, More options, Cancel.
+  - **Form:** emoji, name, repeat (5 types), days, how often, each day + unit, reminder time (picker), colour swatches, Add/Save, Cancel, Archive/Restore, Delete with the web's question, and Move up/down to reorder.
+  - **Habit page** (`habits/{id}`): back, the check with − and N/target, current/best streak, 30-day rate, days done (and check-ins), the 12-month heatmap (tap to change a day), days per month, by weekday, and Edit/Archive/Delete. The "Stats cover the last 13 months" note shows when the server's window starts after the habit.
+  - **Milestones:** the toast at 7, 14, 30 … days.
+  - **Routes:** `habits/new` and the palette's "New habit" open the add row.
+- **Writes:** `ShellViewModel.habitActions(owner)` calls `PUT /api/habits/{id}/log` (optimistic, put back on error), `POST/PATCH/DELETE /api/habits` and `POST /api/habits/order`, with the web's messages ("Added “X” · schedule.", "Habit saved.", "Archived …", "Restored …", "Deleted …").
+- **Deviations:**
+  - **Gestures:** right-click/shift-click to take one off became a long press.
+  - **Reorder:** the web has `move()` but no control for it; here it is Move up/down in the edit form.
+  - **Grid tooltips:** replaced by content descriptions.
+  - **Keyboard shortcuts:** not used.
+- **Tests:**
+  - `HabitsModelTest`: tap counts, day toggles, `countsOf`, the exact habit body, stats.
+  - `HabitsUiTest` (10):
+    - Due/rest/archived and restore.
+    - Check-in and long-press counts, plus the 7-day milestone message.
+    - A forgotten day in the strip.
+    - Quick add with the exact schedule.
+    - More options keeps what was typed.
+    - Reorder and delete from the form.
+    - Grid view and the empty state.
+    - Habit page −, the sections and delete.
+    - Habit page edit, which keeps `remind_at`.
+    - The `habits/new` route.
+  - `HabitActionsTest` (MockWebServer): create message, log body, revert with message, archive, order body, delete removes the logs too, nothing for another account.
+  - `HabitsScreenshotTest`: list, grid, quick add, form, detail, empty; light/dark; phone/tablet; list and detail at 200%.
+  - `ShellUiTest.habitDetail/newHabit` expect the real pages' text.
+  - `LocalServerTest` checks in on the real server and takes it off with a long press, verified by the server's count.
+- **Checks:**
+  - `npm test`: 104 passed.
+  - `./gradlew testProdDebugUnitTest`: 748 tests, 0 failures.
+  - `lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug`: exit 0. The first combined run stopped at compiling the instrumented test (a duplicate `todayKey`), which was fixed.
+  - Screenshots: 24 new and 12 changed PNGs. Claude looked at phone light list and quick add, and phone dark detail.
+  - `tools/e2e.sh`: exit 0, 2/2 passed.
+- **Unverified / Needs a device:** reminder posting (Phase 7), and the long-press feel on real hardware.

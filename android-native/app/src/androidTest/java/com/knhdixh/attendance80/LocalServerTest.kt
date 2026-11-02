@@ -253,6 +253,18 @@ class LocalServerTest {
         ui.onNodeWithTag("breaks-list").performScrollToNode(hasText("E2E break", substring = true))
         waitText("E2E break")
         more("Habits"); waitText("E2E habit")
+        // Check in on the real server, then take it off again with a long press.
+        val habitId = dataFromServer().getJSONObject("habits").getJSONArray("list").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getString("name") == "E2E habit" }.getLong("id")
+        val habitDay = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).toString()
+        fun serverCount() = dataFromServer().getJSONObject("habits").getJSONArray("logs").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+            .firstOrNull { it.getLong("habit_id") == habitId && it.getString("day") == habitDay }?.getInt("count") ?: 0
+        val countBefore = serverCount()
+        ui.onNodeWithTag("habits-list").performScrollToNode(hasTestTag("habit-check-$habitId"))
+        ui.onNodeWithTag("habit-check-$habitId").performClick()
+        ui.waitUntil(30_000) { serverCount() != countBefore }
+        val countAfter = serverCount()
+        ui.onNodeWithTag("habit-check-$habitId").performTouchInput { longClick() }
+        ui.waitUntil(30_000) { serverCount() == maxOf(0, countAfter - 1) }
         more("Countdowns"); waitText("E2E countdown")
         more("Settings"); waitText("e2e@example.test")
         // Attendance rules saved through the real API, then put back.

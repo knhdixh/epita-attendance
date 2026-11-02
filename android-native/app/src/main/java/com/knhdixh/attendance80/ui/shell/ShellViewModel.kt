@@ -58,6 +58,31 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         }
         override suspend fun create(body: JsonObject) = saveHomework(owner, null, body)
     }
+    /** Habits: check-ins and edits, optimistic where the web is, put back with the server's message. */
+    fun habitActions(owner: String) = object : com.knhdixh.attendance80.ui.habits.HabitActions {
+        private val repo get() = container.dataRepository
+        private val api get() = container.api
+        override fun message(text: String) = repo.reportMessage(owner, text)
+        override suspend fun setCount(id: Long, day: String, count: Int) = repo.mutate(
+            { d -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == id && it.day == day } + listOfNotNull(com.knhdixh.attendance80.net.HabitLogDto(id, day, count).takeIf { count > 0 }))) },
+            { api.logHabit(id, HabitLogRequest(day, count)) },
+            { d, _ -> d }, expectedOwner = owner)
+        override suspend fun create(body: JsonObject): com.knhdixh.attendance80.net.HabitDto? {
+            var row: com.knhdixh.attendance80.net.HabitDto? = null
+            val ok = repo.mutate({ it }, { api.createHabit(body).also { row = it } }, { d, h -> d.copy(habits = d.habits.copy(list = d.habits.list + h)) }, expectedOwner = owner)
+            return row?.takeIf { ok }?.also { message("Added “${it.name}” · ${Habits.scheduleLabel(it.schedule)}.") }
+        }
+        override suspend fun update(id: Long, body: JsonObject): com.knhdixh.attendance80.net.HabitDto? {
+            var row: com.knhdixh.attendance80.net.HabitDto? = null
+            val ok = repo.mutate({ it }, { api.updateHabit(id, body).also { row = it } }, { d, h -> d.copy(habits = d.habits.copy(list = d.habits.list.map { if (it.id == h.id) h else it })) }, expectedOwner = owner)
+            return row?.takeIf { ok }
+        }
+        override suspend fun delete(id: Long) = repo.mutate({ it }, { api.deleteHabit(id) },
+            { d, _ -> d.copy(habits = d.habits.copy(list = d.habits.list.filterNot { it.id == id }, logs = d.habits.logs.filterNot { it.habit_id == id })) }, expectedOwner = owner)
+        override suspend fun order(ids: List<Long>) = repo.mutate(
+            { d -> d.copy(habits = d.habits.copy(list = d.habits.list.map { h -> ids.indexOf(h.id).takeIf { it >= 0 }?.let { h.copy(position = it) } ?: h })) },
+            { api.orderHabits(com.knhdixh.attendance80.net.HabitOrderRequest(ids)) }, { d, _ -> d }, expectedOwner = owner)
+    }
     fun settingsActions(owner: String): com.knhdixh.attendance80.ui.settings.SettingsActions =
         com.knhdixh.attendance80.ui.settings.AccountSettingsActions(container, owner)
     /** Back from connecting Google Calendar in the browser (`com.knhdixh.attendance80:/gcal`). */

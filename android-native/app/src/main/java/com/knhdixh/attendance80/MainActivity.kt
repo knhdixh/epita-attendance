@@ -148,7 +148,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onSaveBreak = { from, to, label -> shellViewModel.saveBreak(token, from, to, label) },
                 onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) },
                 settingsActions = androidx.compose.runtime.remember(token) { shellViewModel.settingsActions(token) },
-                calendarActions = androidx.compose.runtime.remember(token) { shellViewModel.calendarActions(token) })
+                calendarActions = androidx.compose.runtime.remember(token) { shellViewModel.calendarActions(token) },
+                habitActions = androidx.compose.runtime.remember(token) { shellViewModel.habitActions(token) })
         }
     }
 }
