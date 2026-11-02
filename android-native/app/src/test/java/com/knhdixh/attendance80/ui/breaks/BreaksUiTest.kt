@@ -2,6 +2,7 @@ package com.knhdixh.attendance80.ui.breaks
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
@@ -42,7 +43,7 @@ class BreaksUiTest {
         ui.onNodeWithTag("break-day-2026-11-04").performClick()
         ui.onNodeWithText("Now tap your last day off, or keep it to one day.").assertExists()
         ui.onNodeWithTag("break-day-2026-11-05").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("break-verdict").fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodes(hasTestTag("break-result") and SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2026-11-04 to 2026-11-05")).fetchSemanticsNodes().isNotEmpty() }
         ui.waitUntil(10_000) { ui.onAllNodesWithText("2 days · skips 3 sessions").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithTag("break-verdict").assertTextEquals("Safe")
         ui.onNodeWithTag("breaks-list").performScrollToNode(hasTestTag("break-label"))
@@ -65,7 +66,7 @@ class BreaksUiTest {
         var saved = 0
         ui.setContent { Attendance80Theme { BreaksScreen(breaksData(), breaksNow, breaksZone, pick, { pick = it }, { saved++; true }, {}) } }
         waitList()
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("break-verdict").fetchSemanticsNodes().isNotEmpty() }
+        ui.waitUntil(10_000) { ui.onAllNodes(hasTestTag("break-result") and SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2026-11-12 to 2026-11-13")).fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithTag("break-verdict").assertTextEquals("Not possible")
         ui.onNodeWithText("Can't miss:").assertExists()
         ui.onNodeWithTag("breaks-list").performScrollToNode(hasTestTag("break-save"))
@@ -76,6 +77,33 @@ class BreaksUiTest {
         ui.onNodeWithTag("break-save").performClick()
         ui.onAllNodesWithText("Save break").onLast().performClick()
         ui.waitUntil(5_000) { saved == 1 }
+    }
+
+    @Test fun savingAJustChangedFailingRangeStillAsksAndNeverShowsTheOldVerdict() {
+        var pick by mutableStateOf(BreakPick(from = "2026-11-04", to = "2026-11-05"))
+        var saved = 0
+        ui.setContent { Attendance80Theme { BreaksScreen(breaksData(), breaksNow, breaksZone, pick, { pick = it }, { saved++; true }, {}) } }
+        waitList()
+        fun resultFor(range: String) = hasTestTag("break-result") and SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, range)
+        ui.waitUntil(10_000) { ui.onAllNodes(resultFor("2026-11-04 to 2026-11-05")).fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("break-verdict").assertTextEquals("Safe")
+        // Change the pick to the failing range through the calendar, as a user would.
+        ui.onNodeWithTag("break-day-2026-11-12").performClick()
+        ui.onNodeWithTag("break-day-2026-11-13").performClick()
+        // At every moment from here, any verdict on screen is for 12–13 Nov, and Save exists only with it.
+        val seen = mutableListOf<String>()
+        ui.waitUntil(10_000) {
+            ui.onAllNodes(hasTestTag("break-result")).fetchSemanticsNodes().forEach { seen += it.config[SemanticsProperties.StateDescription] }
+            ui.onAllNodes(hasTestTag("break-save")).fetchSemanticsNodes().isEmpty() ||
+                ui.onAllNodes(resultFor("2026-11-12 to 2026-11-13")).fetchSemanticsNodes().isNotEmpty()
+        }
+        ui.waitUntil(10_000) { ui.onAllNodes(resultFor("2026-11-12 to 2026-11-13")).fetchSemanticsNodes().isNotEmpty() }
+        assertTrue(seen.toString(), seen.all { it == "2026-11-12 to 2026-11-13" })
+        ui.onNodeWithTag("break-verdict").assertTextEquals("Not possible")
+        ui.onNodeWithTag("breaks-list").performScrollToNode(hasTestTag("break-save"))
+        ui.onNodeWithTag("break-save").performClick()
+        ui.onNodeWithText("This break would drop a course below the minimum or miss an exam/mandatory session. Save it anyway?").assertExists()
+        ui.runOnIdle { assertEquals(0, saved) }
     }
 
     @Test fun lengthChipsChangeSuggestionsAndASuggestionFillsTheRange() {

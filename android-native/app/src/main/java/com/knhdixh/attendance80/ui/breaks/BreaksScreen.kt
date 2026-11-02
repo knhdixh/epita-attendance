@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -158,7 +159,10 @@ fun BreaksScreen(data: AppData?, now: Long, zone: ZoneId, pick: BreakPick, onPic
                 }
                 Text(when { pick.from.isEmpty() -> "Tap your first day off on the calendar."; pick.phase == "end" -> "Now tap your last day off, or keep it to one day."; else -> "Tap a day to start a new break." },
                     color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                s.sim?.let { sim -> SimulationPanel(sim, pick, data.user.unit, data, zone, busy, onPick, onSubmit = { if (sim.level == "fail") confirmFail = true else save() }) }
+                // The verdict (and Save) belong to the range it was worked out for; right after a tap it is still the previous pick's.
+                val current = s.len == pick.len && s.from == pick.from && s.to == pick.to
+                if (current) s.sim?.let { sim -> SimulationPanel(sim, pick, data.user.unit, data, zone, busy, onPick, onSubmit = { if (sim.level == "fail") confirmFail = true else save() }) }
+                else if (pick.from.isNotEmpty() && pick.to >= pick.from) Text("Working it out…", Modifier.testTag("break-pending"), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             }
         }
         item("suggestions-heading") {
@@ -287,7 +291,7 @@ private fun SimulationPanel(sim: BreakSimulation, pick: BreakPick, unit: String,
     val facts = listOfNotNull(plural(sim.days, "day"), if (sim.sessions.isNotEmpty()) "skips ${plural(sim.sessions.size, "session")}" else "no classes missed",
         sim.holidayDays.takeIf { it > 0 }?.let { plural(it, "holiday day") })
     val groups = remember(data.events) { courseCalendars(data.events) }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("break-result")) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("break-result").semantics { stateDescription = "${pick.from} to ${pick.to}" }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(VERDICT[level].orEmpty(), color = levelColor(level), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).testTag("break-verdict"))
             TextButton(onClick = { onPick(pick.clear()) }) { Text("Clear") }

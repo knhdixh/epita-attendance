@@ -2,6 +2,7 @@ package com.knhdixh.attendance80.ui.breaks
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
@@ -41,7 +42,9 @@ abstract class BreaksScreenshotTest {
             "picked", "fail" -> {
                 ui.onNodeWithTag(if (kind == "picked") "break-day-2026-11-04" else "break-day-2026-11-12").performClick()
                 ui.onNodeWithTag(if (kind == "picked") "break-day-2026-11-06" else "break-day-2026-11-13").performClick()
-                ui.waitUntil(10_000) { ui.onAllNodesWithTag("break-verdict").fetchSemanticsNodes().isNotEmpty() }
+                // Wait for the verdict of this very range, not just any verdict.
+                val range = if (kind == "picked") "2026-11-04 to 2026-11-06" else "2026-11-12 to 2026-11-13"
+                ui.waitUntil(10_000) { ui.onAllNodes(hasTestTag("break-result") and SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, range)).fetchSemanticsNodes().isNotEmpty() }
                 ui.onNodeWithTag("breaks-list").performScrollToNode(hasTestTag("break-verdict"))
             }
             "saved" -> ui.onNodeWithTag("breaks-list").performScrollToNode(hasTestTag("saved-break-5"))

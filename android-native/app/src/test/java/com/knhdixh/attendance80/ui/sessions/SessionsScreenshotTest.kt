@@ -54,7 +54,9 @@ abstract class SessionsScreenshotTest {
             Attendance80Theme(darkTheme = dark) { Shell(ShellState(data = data, session = "test"), {}, {}, {}, initialRoute = "sessions", now = now, zone = ZoneId.of("Europe/Paris")) }
         } }
         ui.waitUntil(10000) { ui.onAllNodesWithTag("sessions-list").fetchSemanticsNodes().isNotEmpty() }
-        if (past) { ui.onNodeWithText("Past").performClick(); ui.waitUntil(10000) { ui.onAllNodesWithTag("sessions-list").fetchSemanticsNodes().isNotEmpty() } }
+        if (past) { ui.onNodeWithText("Past").performClick()
+            // The list stays on screen while the new filter is worked out: wait for the row only "Past" shows.
+            ui.waitUntil(10000) { ui.onAllNodesWithTag("session-row-901").fetchSemanticsNodes().isNotEmpty() } }
         if (kind == "menu") ui.onNodeWithText("All tracked courses").performClick()
         if (kind in listOf("selected", "sheet", "past", "pastSheet", "pastSheetScrolled")) {
             ui.onNodeWithTag("sessions-list").performScrollToNode(hasTestTag("session-row-901"))
