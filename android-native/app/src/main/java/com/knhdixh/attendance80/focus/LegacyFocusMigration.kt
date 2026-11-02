@@ -35,7 +35,7 @@ class LegacyFocusMigration(
         // Straight into the store, before the controller's first read: it needs no controller, so any entry point can run it.
         // The caller renders (alarm, notification) once it has loaded.
         val adopted = timer != null && !store.timer().running()
-        if (adopted) store.saveTimer(timer!!)
+        if (adopted) { store.saveTimer(timer!!); store.setLegacyRun(timer.run) }
         store.markMigrated()
         prefs.edit().clear().apply()
         if (logs.isNotEmpty() || tasks.isNotEmpty()) outbox.requestFlush()

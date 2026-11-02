@@ -218,7 +218,12 @@ class FocusController(
         _timer.value = t
         store.saveTimer(t)
         // A session belongs to the signed-in account. With none (signed out) there is nobody to record it for.
-        if (log != null) store.account()?.let { store.addLogs(listOf(log), it); outbox.requestFlush() }
+        // The adopted TWA run is the exception: it was started before any sign-in, so it is stored unowned like the TWA's
+        // other items, and the first account to sign in claims it.
+        if (log != null) {
+            val owner = store.account()
+            if (owner != null || log.client_id == store.legacyRun()) { store.addLogs(listOf(log), owner); outbox.requestFlush() }
+        }
         render(t)
     }
 

@@ -84,4 +84,41 @@ class FocusMigrationEntryPointsTest {
         assertEquals(listOf("aaaaaaaa-1"), store.outbox().map { it.client_id })
         assertEquals("old-run-123", controller.timer.value.run)
     }
+
+    // Review 5, round 2: in a real upgrade nobody is signed in yet, so the adopted run's own session must be kept unowned.
+    private fun signedOutUpgrade() = runBlocking { store.setAccount(null) }
+
+    @Test fun theAdoptedRunFinishedByRestoreWithNoAccountIsKeptForTheFirstAccountOnly() = runBlocking {
+        signedOutUpgrade()
+        prefs.edit().putString("timer", runningJson(clock.now + 10 * min)).commit()
+        val first = coldController(FakeAlarm(), FakeNotifier())
+        first.restore()
+        clock.now += 11 * min
+        first.phaseEnded() // the alarm
+        assertTrue(store.outbox("a@x.test").isEmpty())
+        store.setAccount("a@x.test")
+        assertEquals(listOf("old-run-123"), store.outbox().map { it.client_id })
+        store.setAccount("b@x.test")
+        assertTrue(store.outbox().isEmpty())
+    }
+
+    @Test fun theAdoptedRunFinishedByAColdTileToggleWithNoAccountIsKept() = runBlocking {
+        signedOutUpgrade()
+        prefs.edit().putString("timer", runningJson(clock.now - 5 * min)).commit()
+        coldController(FakeAlarm(), FakeNotifier()).toggle()
+        store.setAccount("a@x.test")
+        assertEquals(listOf("old-run-123"), store.outbox().map { it.client_id })
+        store.setAccount("b@x.test")
+        assertTrue(store.outbox().isEmpty())
+    }
+
+    @Test fun aNewNativeRunFinishedWithNoAccountIsStillNotQueued() = runBlocking {
+        signedOutUpgrade()
+        prefs.edit().putString("timer", runningJson(clock.now + 10 * min)).commit()
+        val c = coldController(FakeAlarm(), FakeNotifier())
+        c.load(); c.stop() // the adopted run, recorded unowned
+        c.start(); clock.now += 5 * min; c.stop() // a new run while signed out
+        store.setAccount("a@x.test")
+        assertEquals(listOf("old-run-123"), store.outbox().map { it.client_id })
+    }
 }

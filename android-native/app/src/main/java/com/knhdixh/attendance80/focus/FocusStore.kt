@@ -36,6 +36,7 @@ class FocusStore(private val store: DataStore<Preferences>) {
     private val accountKey = stringPreferencesKey("account")
     private val askedKey = booleanPreferencesKey("notifications_asked")
     private val migratedKey = booleanPreferencesKey("twa_migrated")
+    private val legacyRunKey = stringPreferencesKey("twa_run")
 
     suspend fun timer(): FocusTimer = read(timerKey, FocusTimer.serializer()) ?: FocusTimer()
     suspend fun saveTimer(t: FocusTimer) { store.edit { it[timerKey] = json.encodeToString(FocusTimer.serializer(), t) } }
@@ -140,6 +141,9 @@ class FocusStore(private val store: DataStore<Preferences>) {
     suspend fun markNotificationsAsked() { store.edit { it[askedKey] = true } }
 
     suspend fun migrated(): Boolean = store.data.first()[migratedKey] == true
+    /** The run id of the TWA timer that was adopted: its session is stored unowned when it finishes with nobody signed in. */
+    suspend fun legacyRun(): String? = store.data.first()[legacyRunKey]
+    suspend fun setLegacyRun(run: String?) { store.edit { if (run == null) it.remove(legacyRunKey) else it[legacyRunKey] = run } }
     suspend fun markMigrated() { store.edit { it[migratedKey] = true } }
 
     private suspend fun <T> read(key: Preferences.Key<String>, serializer: kotlinx.serialization.KSerializer<T>): T? =
