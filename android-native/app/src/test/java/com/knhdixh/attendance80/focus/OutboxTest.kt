@@ -37,9 +37,12 @@ class OutboxTest {
     private fun row(id: String) = ApiClient.json.encodeToString(FocusSessionDto.serializer(),
         FocusSessionDto(id = 9, client_id = id, started_at = 1000, ended_at = 1_501_000, focus_seconds = 1500))
 
+    private suspend fun queue(vararg e: FocusLogEntry) = store.addLogs(e.toList(), ME)
+
     @Before fun setUp() {
         server.start()
         store = FocusStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("focus.preferences_pb") })
+        runBlocking { store.setAccount(ME) }
         val api = ApiClient.createApi(server.url("/").toString(), { "token" }, {})
         outbox = Outbox(store, api, { recorded += it }, { e, why -> dropped += e.client_id to why })
     }
@@ -47,7 +50,7 @@ class OutboxTest {
     @After fun tearDown() { server.shutdown(); scope.cancel(); dir.deleteRecursively() }
 
     @Test fun sendsEntriesInOrderWithTheSessionJsonAndRemovesThemAfter2xx() = runBlocking {
-        store.addLogs(listOf(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000)))
+        queue(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000))
         server.enqueue(MockResponse().setBody(row("aaaaaaaa-1")))
         server.enqueue(MockResponse().setBody(row("bbbbbbbb-2")))
         assertTrue(outbox.flush())
@@ -65,7 +68,7 @@ class OutboxTest {
     }
 
     @Test fun aServerErrorKeepsTheEntryAndStopsSoOrderIsKept() = runBlocking {
-        store.addLogs(listOf(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000)))
+        queue(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000))
         server.enqueue(MockResponse().setResponseCode(500).setBody("{\"error\":\"Try later\"}"))
         assertFalse(outbox.flush())
         assertEquals(1, server.requestCount)
@@ -78,7 +81,7 @@ class OutboxTest {
     }
 
     @Test fun aBadRequestIsDroppedAndLoggedAndTheNextOneStillGoes() = runBlocking {
-        store.addLogs(listOf(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000)))
+        queue(entry("aaaaaaaa-1"), entry("bbbbbbbb-2", 5000))
         server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Invalid client_id.\"}"))
         server.enqueue(MockResponse().setBody(row("bbbbbbbb-2")))
         assertTrue(outbox.flush())
@@ -88,7 +91,7 @@ class OutboxTest {
     }
 
     @Test fun noNetworkAndAnExpiredTokenKeepTheEntry() = runBlocking {
-        store.addLogs(listOf(entry("aaaaaaaa-1")))
+        queue(entry("aaaaaaaa-1"))
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
         assertFalse(outbox.flush())
         server.enqueue(MockResponse().setResponseCode(401).setBody("{\"error\":\"Sign in\"}"))
@@ -98,11 +101,11 @@ class OutboxTest {
     }
 
     @Test fun sendingTheSameSessionTwiceIsSafe() = runBlocking {
-        store.addLogs(listOf(entry("aaaaaaaa-1")))
+        queue(entry("aaaaaaaa-1"))
         server.enqueue(MockResponse().setBody(row("aaaaaaaa-1")))
         assertTrue(outbox.flush())
         // The app was killed after the server answered but before the entry was removed: it comes back.
-        store.addLogs(listOf(entry("aaaaaaaa-1")))
+        queue(entry("aaaaaaaa-1"))
         server.enqueue(MockResponse().setBody(row("aaaaaaaa-1")))
         assertTrue(outbox.flush())
         assertTrue(store.outbox().isEmpty())

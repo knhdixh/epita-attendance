@@ -28,7 +28,7 @@ class LegacyFocusMigrationTest {
     private val outbox = CountingOutbox()
     private val store = FocusStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("focus.preferences_pb") })
     private val controller = FocusController(store, clock, alarm, FakeNotifier(), CountingSurfaces(), outbox) { "new-run" }
-    private val migration = LegacyFocusMigration(prefs, store, controller, outbox)
+    private val migration = LegacyFocusMigration(prefs, store, outbox)
     @After fun tearDown() { scope.cancel(); dir.deleteRecursively() }
 
     // What FocusTimer.toJson() in the TWA wrote.
@@ -40,6 +40,7 @@ class LegacyFocusMigrationTest {
         prefs.edit().putString("timer", runningJson()).putString("settings", "{\"focus\":50}").commit()
         val r = migration.run()
         assertTrue(r.timer)
+        controller.restore() // the first read finds the adopted timer; restore draws it and sets the alarm
         val t = controller.timer.value
         assertEquals("old-run-123", t.run)
         assertEquals(2, t.done)
@@ -55,24 +56,29 @@ class LegacyFocusMigrationTest {
         prefs.edit().putString("logs", "[${logJson("aaaaaaaa-1")},{\"nope\":1},${logJson("bbbbbbbb-2")},${logJson("aaaaaaaa-1")}]").commit()
         val r = migration.run()
         assertEquals(3, r.logs)
+        store.setAccount(ME) // the first account to sign in takes over what the TWA left
         assertEquals(listOf("aaaaaaaa-1", "bbbbbbbb-2"), store.outbox().map { it.client_id })
         assertEquals(1, outbox.flushes)
         assertTrue(prefs.all.isEmpty())
     }
 
     @Test fun pendingTasksAreKeptForTheAccount() = runBlocking {
+        store.setAccount(ME)
         store.savePendingTasks(listOf("Newer"))
         prefs.edit().putString("pendingTasks", "[\"Thesis\",\"thesis\",\"Reading\"]").commit()
         assertEquals(2, migration.run().tasks)
+        store.setAccount(ME)
         assertEquals(listOf("Thesis", "Reading", "Newer"), store.pendingTasks())
         assertEquals(1, outbox.flushes)
     }
 
     @Test fun aTimerRunningHereIsNotReplacedAndRunningTwiceDoesNothing() = runBlocking {
+        store.setAccount(ME)
         controller.start()
         val mine = controller.timer.value
         prefs.edit().putString("timer", runningJson()).commit()
         migration.run()
+        controller.restore()
         assertEquals(mine.run, controller.timer.value.run)
         assertTrue(prefs.all.isEmpty())
         prefs.edit().putString("logs", "[${logJson("cccccccc-3")}]").commit()
@@ -81,8 +87,10 @@ class LegacyFocusMigrationTest {
     }
 
     @Test fun anOldTimerThatEndedWhileUpdatingIsFinishedAndRecorded() = runBlocking {
+        store.setAccount(ME)
         prefs.edit().putString("timer", runningJson(endsAt = clock.now - 60 * 60_000L)).commit()
         migration.run()
+        controller.restore()
         assertEquals("idle", controller.timer.value.phase)
         assertEquals("old-run-123", store.outbox().single().client_id)
     }

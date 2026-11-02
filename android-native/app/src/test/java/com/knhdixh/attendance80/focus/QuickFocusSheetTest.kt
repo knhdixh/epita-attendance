@@ -60,6 +60,7 @@ class QuickFocusSheetTest {
     }
 
     @Test fun aTaskAddedHereIsKeptOnTheDeviceAndSelected() {
+        runBlocking { store.setAccount(ME) } // tasks queue for the signed-in account
         val actions = ControllerActions(controller, store, scope, outbox)
         compose.setContent {
             val timer by controller.timer.collectAsState()

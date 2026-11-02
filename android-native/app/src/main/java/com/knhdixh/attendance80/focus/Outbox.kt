@@ -40,10 +40,15 @@ class Outbox(
 ) {
     private val mutex = Mutex()
 
-    /** @return true when nothing is left to send. */
+    /**
+     * Sends the signed-in account's sessions only. Another account's stay queued for when it signs in again, and
+     * nothing is sent while signed out (the account is read again for every entry, so a sign-out stops the loop).
+     * @return true when nothing is left to send.
+     */
     suspend fun flush(): Boolean = mutex.withLock {
         while (true) {
-            val next = store.outbox().firstOrNull() ?: break
+            val account = store.account() ?: return@withLock true
+            val next = store.outbox(account).firstOrNull() ?: break
             try {
                 recorded(api.logFocus(next.toRequest()))
                 store.removeLogs(setOf(next.client_id))
@@ -87,17 +92,24 @@ class WorkOutboxScheduler(private val context: Context) : OutboxScheduler {
 }
 
 /** Tasks added while offline go to the account's focus settings, newest first as on the web. @return true when none are left. */
-internal suspend fun syncPendingTasks(container: com.knhdixh.attendance80.DefaultAppContainer): Boolean {
-    val pending = container.focusStore.pendingTasks()
+internal suspend fun syncPendingTasks(container: com.knhdixh.attendance80.DefaultAppContainer): Boolean =
+    syncPendingTasks(container.focusStore, container.dataRepository) { container.tokenStore.currentToken() }
+
+internal suspend fun syncPendingTasks(store: FocusStore, repo: com.knhdixh.attendance80.data.DataRepository, token: () -> String?): Boolean {
+    val account = store.account() ?: return true
+    val pending = store.pendingTasks()
     if (pending.isEmpty()) return true
-    val owner = container.tokenStore.currentToken() ?: return true
-    val data = container.dataRepository.snapshot.value ?: return false
+    val owner = token() ?: return true
+    val data = repo.snapshot.value ?: return false
+    // The snapshot must be this account's, or its tasks would be merged into someone else's list.
+    if (data.user.email?.lowercase() != account) return false
     val merged = com.knhdixh.attendance80.logic.cleanTasks(pending + data.focus.settings.tasks, com.knhdixh.attendance80.logic.MAX_TASKS)
     val body = kotlinx.serialization.json.buildJsonObject {
         put("tasks", kotlinx.serialization.json.JsonArray(merged.map { kotlinx.serialization.json.JsonPrimitive(it) }))
     }
-    val saved = container.dataRepository.saveFocusSettingsCanonical(owner, body) ?: return false
+    val saved = repo.saveFocusSettingsCanonical(owner, body) ?: return false
+    if (store.account() != account) return true // signed out meanwhile: nothing to tidy
     // Only what we sent: a task typed in the meantime stays pending.
-    container.focusStore.savePendingTasks(container.focusStore.pendingTasks().filter { t -> saved.tasks.none { it.equals(t, ignoreCase = true) } })
+    store.savePendingTasks(store.pendingTasks().filter { t -> saved.tasks.none { it.equals(t, ignoreCase = true) } })
     return true
 }

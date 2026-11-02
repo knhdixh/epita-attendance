@@ -21,7 +21,6 @@ import kotlinx.serialization.json.jsonPrimitive
 class LegacyFocusMigration(
     private val prefs: SharedPreferences,
     private val store: FocusStore,
-    private val controller: FocusController,
     private val outbox: OutboxScheduler,
 ) {
     data class Result(val timer: Boolean, val logs: Int, val tasks: Int)
@@ -32,16 +31,15 @@ class LegacyFocusMigration(
         val logs = parseLogs(prefs.getString("logs", null))
         val tasks = parseTasks(prefs.getString("pendingTasks", null))
         // Everything is in our store before the old file is cleared, so a crash in between loses nothing.
-        store.addLogs(logs)
-        if (tasks.isNotEmpty()) {
-            val now = store.pendingTasks()
-            store.savePendingTasks((tasks + now).distinctBy { it.lowercase() }.take(MAX_TASKS))
-        }
-        if (timer != null) { controller.adopt(timer); controller.restore() }
+        store.addLegacy(logs, tasks.take(MAX_TASKS))
+        // Straight into the store, before the controller's first read: it needs no controller, so any entry point can run it.
+        // The caller renders (alarm, notification) once it has loaded.
+        val adopted = timer != null && !store.timer().running()
+        if (adopted) store.saveTimer(timer!!)
         store.markMigrated()
         prefs.edit().clear().apply()
         if (logs.isNotEmpty() || tasks.isNotEmpty()) outbox.requestFlush()
-        return Result(timer != null, logs.size, tasks.size)
+        return Result(adopted, logs.size, tasks.size)
     }
 
     private fun parseTimer(text: String?): FocusTimer? {

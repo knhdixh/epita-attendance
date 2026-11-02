@@ -69,6 +69,8 @@ class DefaultAppContainer(
             store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
             surfaces = AndroidFocusSurfaces(context),
             outbox = WorkOutboxScheduler(context),
+            // The TWA's timer, sessions and tasks move over before anything reads the store: the receiver and the tile get here first.
+            beforeFirstLoad = { runCatching { LegacyFocusMigration(context.getSharedPreferences("focus", Context.MODE_PRIVATE), focusStore, WorkOutboxScheduler(context)).run() } },
         )
     }
 
@@ -86,17 +88,21 @@ class DefaultAppContainer(
         scope.launch {
             dataRepository.snapshot.collect { data ->
                 if (data != null) calendarScope.reconcile(data.calendars)
-                if (data != null) focusController.updateSettings(data.focus.settings.toLogic())
+                if (data != null) {
+                    focusController.updateSettings(data.focus.settings.toLogic())
+                    data.user.email?.let { focusController.setAccount(it) }
+                }
             }
         }
         scope.launch {
-            runCatching { LegacyFocusMigration(context.getSharedPreferences("focus", Context.MODE_PRIVATE), focusStore, focusController, WorkOutboxScheduler(context)).run() }
-            focusController.restore()
+            focusController.restore() // loads (and so migrates), then finishes what is due or re-arms
         }
         WorkOutboxScheduler(context).requestFlush()
         scope.launch {
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
+                // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
+                if (token == null) focusController.signedOut()
                 dataRepository.start()
                 if (token != null) dataRepository.refresh()
             }

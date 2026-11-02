@@ -196,7 +196,11 @@ class AccountSettingsActions(private val container: AppContainer, private val ow
     }
 
     override suspend fun deleteAccount(): Boolean {
+        val email = repo.sessionSnapshot.value.second?.user?.email
         if (call { api.deleteAccount(AccountDeleteRequest()) } == null) return false
+        // The account is gone: so are its queued sessions and tasks, and its timer.
+        container.focusController?.signedOut() // stops a running timer, which records one last session for the account...
+        container.focusStore?.let { s -> email?.let { s.purgeAccount(it) } } // ...and then everything of the account goes
         container.authRepository.logout()
         repo.start() // the token is gone: drops the cached snapshot of the deleted account
         return true

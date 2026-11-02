@@ -38,6 +38,8 @@ class FakeNotifier : FocusNotifier {
 class CountingSurfaces : FocusSurfaces { var refreshes = 0; override fun refresh() { refreshes++ } }
 class CountingOutbox : OutboxScheduler { var flushes = 0; override fun requestFlush() { flushes++ } }
 
+const val ME = "a@x.test"
+
 class FocusControllerTest {
     private val dir = Files.createTempDirectory("focus-controller").toFile()
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -52,6 +54,7 @@ class FocusControllerTest {
 
     @Before fun setUp() {
         store = FocusStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("focus.preferences_pb") })
+        runBlocking { store.setAccount(ME) } // sessions are recorded for the signed-in account
         controller = FocusController(store, clock, alarm, notifier, surfaces, outbox) { "run-${++runs}" }
     }
 
@@ -228,7 +231,7 @@ class FocusControllerTest {
     @Test fun outboxKeepsOneEntryPerClientId() = runBlocking {
         controller.start(); clock.now += 5 * min; controller.stop()
         val log = store.outbox().single()
-        store.addLogs(listOf(log, log.copy(client_id = "x")))
+        store.addLogs(listOf(log, log.copy(client_id = "x")), ME)
         assertEquals(setOf(log.client_id, "x"), store.outbox().map { it.client_id }.toSet())
         store.removeLogs(setOf("x"))
         assertEquals(1, store.outbox().size)

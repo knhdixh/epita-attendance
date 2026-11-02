@@ -50,6 +50,8 @@ class FocusController(
     private val notifier: FocusNotifier,
     private val surfaces: FocusSurfaces,
     private val outbox: OutboxScheduler,
+    /** Runs once before the first read of the store, whichever entry point gets there first (the TWA migration). */
+    private val beforeFirstLoad: suspend () -> Unit = {},
     private val newRun: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val mutex = Mutex()
@@ -62,6 +64,7 @@ class FocusController(
     /** Reads what was saved. Everything else calls this first, so a receiver in a cold process is safe. */
     private suspend fun ensureLoaded() {
         if (loaded) return
+        beforeFirstLoad()
         _timer.value = store.timer()
         _settings.value = store.settings()
         loaded = true
@@ -114,6 +117,8 @@ class FocusController(
     /** Start when idle, resume when paused, pause when running: the tile and notification button. */
     suspend fun toggle() {
         load()
+        // A phase that ended while nobody was looking is finished (and logged) before the toggle is applied to what is next.
+        if (isDue(_timer.value, clock.now())) phaseEnded()
         val t = _timer.value
         when {
             !t.running() -> start()
@@ -139,6 +144,24 @@ class FocusController(
         if (!t.running()) return@withLock
         val r = stop(t, now)
         change(r.next, r.log, now)
+    }
+
+    /** The account whose sessions and tasks the timer records, from the snapshot. */
+    suspend fun setAccount(email: String?) = mutex.withLock { store.setAccount(email) }
+
+    /**
+     * Signed out (button, 401 or account deletion): a running timer is stopped and recorded for the account that
+     * started it, the target is cleared, and the account is forgotten, so nothing recorded from now on can reach
+     * whoever signs in next. What was queued stays with its account.
+     */
+    suspend fun signedOut() = mutex.withLock {
+        ensureLoaded()
+        if (store.account() == null) return@withLock
+        val now = clock.now()
+        val t = _timer.value
+        if (t.running()) { val r = stop(t, now); change(r.next, r.log, now) }
+        change(_timer.value.copy(target = null), null, now)
+        store.setAccount(null)
     }
 
     /** Moves the end of a running phase, or the length the next one will have. */
@@ -194,7 +217,8 @@ class FocusController(
         val t = if (next == _timer.value) next else next.copy(updatedAt = now)
         _timer.value = t
         store.saveTimer(t)
-        if (log != null) { store.addLogs(listOf(log)); outbox.requestFlush() }
+        // A session belongs to the signed-in account. With none (signed out) there is nobody to record it for.
+        if (log != null) store.account()?.let { store.addLogs(listOf(log), it); outbox.requestFlush() }
         render(t)
     }
 
