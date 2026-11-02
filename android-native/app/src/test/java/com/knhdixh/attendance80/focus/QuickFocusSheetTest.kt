@@ -71,7 +71,7 @@ class QuickFocusSheetTest {
         compose.onNodeWithTag("target-new").performClick()
         compose.onNodeWithTag("timer-new-task").performTextInput("Thesis")
         compose.onNodeWithText("Add").performClick()
-        compose.waitUntil(5_000) { controller.timer.value.target?.label == "Thesis" }
+        compose.waitUntil(5_000) { controller.timer.value.target?.label == "Thesis" && outbox.flushes == 1 }
         assertEquals(listOf("Thesis"), runBlocking { store.pendingTasks() })
         assertEquals(1, outbox.flushes)
         compose.onNodeWithTag("timer-target").assertTextContains("Working on: Thesis", substring = true)
