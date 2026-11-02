@@ -79,7 +79,8 @@ class QuickFocusSheetTest {
 
     @Test fun closeCallsBack() {
         var closed = false
-        compose.setContent { Attendance80Theme { QuickFocusSheet(controller.timer.value, controller.settings.value, data, emptyList(), { clock.now }, RecordingActions(), { closed = true }) } }
+        val timer = controller.timer.value; val settings = controller.settings.value
+        compose.setContent { Attendance80Theme { QuickFocusSheet(timer, settings, data, emptyList(), { clock.now }, RecordingActions(), { closed = true }) } }
         compose.onNodeWithTag("quick-focus-close").performClick()
         assertTrue(closed)
     }

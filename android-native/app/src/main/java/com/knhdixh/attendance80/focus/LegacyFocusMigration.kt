@@ -39,7 +39,7 @@ class LegacyFocusMigration(
         }
         if (timer != null) { controller.adopt(timer); controller.restore() }
         store.markMigrated()
-        prefs.edit().clear().commit()
+        prefs.edit().clear().apply()
         if (logs.isNotEmpty() || tasks.isNotEmpty()) outbox.requestFlush()
         return Result(timer != null, logs.size, tasks.size)
     }
