@@ -33,7 +33,11 @@ interface FocusNotifier {
 }
 
 /** Redraws everything that shows the timer apart from the notification: the quick-settings tile and the widget. */
-interface FocusSurfaces { fun refresh() }
+interface FocusSurfaces {
+    fun refresh()
+    /** The timer as it is now, for surfaces that keep their own copy (the widget). */
+    fun timerChanged(timer: FocusTimer, settings: FocusSettings, now: Long) {}
+}
 
 /** Asks for finished sessions to be sent to the server when there is a network. */
 interface OutboxScheduler { fun requestFlush() }
@@ -230,6 +234,7 @@ class FocusController(
     private fun render(t: FocusTimer) {
         alarm.schedule(if (t.running() && !t.paused()) t.endsAt else null)
         notifier.showTimer(t, _settings.value, clock.now())
+        surfaces.timerChanged(t, _settings.value, clock.now())
         surfaces.refresh()
     }
 }

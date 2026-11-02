@@ -23,3 +23,11 @@ class WidgetStore(private val file: File) {
         if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
     }
 }
+
+/** One store per process, so the two writers and the widget share its lock. */
+object WidgetStores {
+    @Volatile private var store: WidgetStore? = null
+    fun get(context: android.content.Context): WidgetStore = store ?: synchronized(this) {
+        store ?: WidgetStore(File(context.applicationContext.filesDir, "snapshots/widget.json")).also { store = it }
+    }
+}
