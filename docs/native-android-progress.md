@@ -878,3 +878,20 @@ Both blocking findings of `docs/native-android-review-5.md`. Their code was writ
 - It fails with `TZ` set to UTC, Europe/Paris, Pacific/Kiritimati and America/Los_Angeles, so changing the zone does not get around it. This branch has no diff against `main` under `src/`, `public/`, `test/` or `migrations/`, so the Android fixes cannot have caused it.
 - I did not edit the test or fake the clock. That would change a server test outside this task, and plan section B forbids weakening a test to make it pass. **Needs the owner:** fix the test to use a fixed clock, or rerun `npm test` at an hour when it passes.
 - Everything else is done and logged above: the Gradle check (864 unit tests, 0 failures) and `tools/e2e.sh` (2/2) passed.
+
+### Review 5 fixes, round 2 (2026-11-02)
+
+The one remaining item of the re-review in `docs/native-android-review-5.md`: the TWA timer's own session was dropped in a real upgrade.
+
+1. **Adopted TWA run's session with no account (`813c5e9`).**
+   - `LegacyFocusMigration` records the adopted timer's `run` id in the store (`twa_run`). `FocusController.change()` now queues a log when an account is signed in, or when its `client_id` is that adopted run. With no account the entry is stored unowned, like `addLegacy` items, so the first account to sign in claims it and no later account does. New native runs finished while signed out are still not queued.
+   - Tests (`FocusMigrationEntryPointsTest`, all start with no account): a migrated timer finishing via `restore()` then `phaseEnded()`; a cold tile toggle on an already-ended legacy timer; each followed by `setAccount(A)`, which holds exactly `old-run-123`, then `setAccount(B)`, which holds nothing. A third test checks that a new native run finished while signed out is still not queued. The existing account-set cases are unchanged. With `app/src/main` stashed, the three new tests fail; with the fix, all 7 pass.
+   - The wire body is unchanged. No `outbox.requestFlush()` change was needed, because an unowned entry is not sent until claimed.
+   - The sending side is covered at store level (`store.outbox()` is what `Outbox.flush()` sends); I did not add a MockWebServer case for this item.
+
+#### Checks (after `813c5e9`)
+
+- `npm test`: 104 tests, **104 pass, 0 fail** (the habits clock test was fixed in `ed19faf`).
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 867 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Roborazzi verified; no PNG changed (`git status` clean).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
+- **Unverified:** the migration and exact alarm over a real TWA install with a running timer (needs a device); the deferred items in the review are unchanged.
