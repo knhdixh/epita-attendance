@@ -1,6 +1,6 @@
 # Phase 5 review
 
-Verdict: **FIX after round 1**: one item left, in the finding 2 path. Round 1 (`077c603`, `ffb9044`, log `fa5040f`) fixes finding 1, and fixes finding 2 except for the TWA timer's own session, which is still dropped in a real upgrade. The initial findings are kept below; the re-review is at the end.
+Verdict: **PASS after round 2**. Accepted implementation `813c5e9` on `native/phase-5`, plus `ed19faf` for the test clock. The initial FIX findings and the round 1 history are kept below; the final acceptance is at the end.
 
 ## Findings
 
@@ -110,3 +110,24 @@ Fix it by holding the response on a latch-based `Dispatcher` (or `SocketPolicy` 
 - **Not run by the reviewer:** Gradle and npm, at the owner's request. The worker reports Gradle 864 unit tests with 0 failures, Roborazzi unchanged, and e2e 2/2.
 - **`npm test` is not clean:** the worker reports 103/104. The known clock-dependent `test/habits.test.js:222` failure (plan 8.2) is there, and this branch has no diff under `src/`, `public/`, `test/` or `migrations/`. Merging still needs the owner to rerun `npm test` at a passing hour, or to fix that test's clock separately.
 - The deferred items above are unchanged and still deferred.
+
+
+## Re-review — round 2 (`813c5e9`): PASS
+
+The remaining item is resolved.
+
+- **How it works.** The migration records the adopted TWA run id (`FocusStore.legacyRun`, set only when the TWA timer is actually adopted). `FocusController.change()` still queues a log under the signed-in account when there is one. With no account, it now queues the log only if its `client_id` is that legacy run, and stores it unowned. `setAccount` gives unowned items to the first account that signs in, so the next account never sees them. Native runs that finish while signed out are still not queued, as decided in round 1.
+- **The tests now start from the real upgrade state, with no account.** `FocusMigrationEntryPointsTest` covers three cases:
+  - the adopted run finished by the alarm after a cold `restore()`;
+  - the adopted run finished by a cold tile toggle on an already-due timer;
+  - a new native run while signed out.
+
+  In each, A claims exactly `old-run-123` and B then sees nothing; in the third, the native run's session is not queued. The earlier account-set cases are unchanged.
+- **The habits test clock fix (`ed19faf`) is a legitimate fix, not a weakening.** It pins the countdown's input to UTC midnight and keeps the assertion as it was. It is a separate server-test commit, so it doesn't mix with the Android commits.
+- **Checks: reported by the worker, not rerun by the reviewer, at the owner's request.** `npm test` 104/104; the combined Gradle command BUILD SUCCESSFUL with 867 unit tests, 0 failures, and no PNG changes; `tools/e2e.sh` 2/2.
+- **Still deferred.** The deferred, non-blocking items listed above stay with their phases:
+  - Phase 8: the Live Update permission, the sheet's permission result, stale notifications, and the OfflineShellTest latch;
+  - Phase 11: the single-edit finish, `APPEND_OR_REPLACE`, queued sessions shown in the stats, and the snapshot-email check in `flush()`;
+  - Phase 6: explicit start/pause/resume for the palette and widget;
+  - Phase 9: the legacy `settings` key.
+- **Still needs a device.** Everything in the worker's Unverified list (alarm in Doze, reboot, tile, lock-screen countdown, Live Update, and the migration over a real TWA install).
