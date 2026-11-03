@@ -28,7 +28,6 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
@@ -114,10 +113,6 @@ class FocusGlanceWidget : GlanceAppWidget() {
         // Nothing is read out here: a session that is still alive does not run provideGlance again, so the content reads the store itself.
         provideContent { GlanceTheme { WidgetHost(store) } }
     }
-}
-
-class FocusWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = FocusGlanceWidget()
 }
 
 /** Start, pause or resume, without opening the app (the same toggle as the tile and the notification). */
