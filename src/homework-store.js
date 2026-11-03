@@ -2,6 +2,8 @@
 import { HttpError } from './http.js';
 import { REMIND_OPTIONS, NO_DATE, isValidTimeZone, dueInstant } from './homework.js';
 import { syncHomework, deleteGcalEvent } from './gcal.js';
+import { cleanRecurrence, parseRecurrence, nextOccurrence } from '../public/recurrence.js';
+import { keyInZone } from '../public/habits.js';
 import { resolvePlacement, nextPosition, moveTasks, withDescendants } from './placement.js';
 import { HOMEWORK_COLUMNS, CLIENT_ID, taskRow } from './homework-columns.js';
 
@@ -56,10 +58,16 @@ export async function homeworkInput(env, user, b) {
   if (!(Number.isInteger(priority) && priority >= 1 && priority <= 4)) throw new HttpError(400, 'Priority is 1 to 4 (4 is the most urgent).');
   const deadline = b.deadline_date ?? null;
   if (deadline !== null && !realDate(deadline)) throw new HttpError(400, 'Invalid deadline.');
-  const recurrence = typeof b.recurrence === 'string' && b.recurrence.trim() ? b.recurrence.trim() : null;
   if (b.recurrence != null && typeof b.recurrence !== 'string') throw new HttpError(400, 'Invalid repeat.');
-  if (recurrence && recurrence.length > MAX_RECURRENCE) throw new HttpError(400, 'That repeat is too long.');
-  if (recurrence && undated) throw new HttpError(400, 'A repeating task needs a date.');
+  let recurrence = null;
+  if (typeof b.recurrence === 'string' && b.recurrence.trim()) {
+    if (b.recurrence.length > MAX_RECURRENCE) throw new HttpError(400, 'That repeat is too long.');
+    if (undated) throw new HttpError(400, 'A repeating task needs a date.');
+    // Stored in its canonical form ("every Mon,Wed" becomes "every mon, wed").
+    const r = cleanRecurrence(b.recurrence, { today: keyInZone(Date.now(), tz), due: dueDate });
+    if (!r.ok) throw new HttpError(400, r.error);
+    recurrence = r.text;
+  }
   const dueAt = dueInstant(dueDate, dueTime, tz);
   if (!Number.isFinite(dueAt)) throw new HttpError(400, 'Invalid due date.');
   return {
@@ -170,15 +178,36 @@ export async function planHomework(env, user, body) {
   return { homework: out.flatMap((r) => r.results ?? []) };
 }
 
-// Completing a task completes the open tasks below it too. (Repeating tasks move to their next date instead:
-// see completeRecurring.)
+const ROW = (env, user, id) => env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
+const marks = (ids) => ids.map(() => '?').join(', ');
+
+// Completing a task completes the open tasks below it too. A repeating task moves to its next date instead (and
+// its subtasks open again), leaving a row in `completions`; when its series has ended it is completed for good.
 export async function completeTask(env, user, id, appUrl, now = Date.now()) {
-  const current = await env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
+  const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
   if (current.done) return current;
   const ids = await withDescendants(env, user, [id]);
+  if (current.recurrence && current.due_date !== NO_DATE) {
+    const parsed = parseRecurrence(current.recurrence, { today: keyInZone(now, current.tz), due: current.due_date });
+    const done = keyInZone(now, current.tz);
+    const nextDate = parsed.ok ? nextOccurrence(parsed.rule, { due: current.due_date, done }) : null;
+    if (nextDate) {
+      const [hw] = (await env.DB.batch([
+        env.DB.prepare(`UPDATE homework SET due_date = ?, due_at = ?, planned_at = NULL, planned_minutes = NULL, updated_at = ?
+          WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
+          .bind(nextDate, dueInstant(nextDate, current.due_time, current.tz), now, id, user.id),
+        env.DB.prepare('INSERT INTO completions (user_id, homework_id, completed_at, due_date) VALUES (?, ?, ?, ?)').bind(user.id, id, now, current.due_date),
+        env.DB.prepare(`UPDATE homework SET done = 0, completed_at = NULL, updated_at = ? WHERE user_id = ? AND done = 1 AND id IN (${marks(ids)}) AND id != ?`)
+          .bind(now, user.id, ...ids, id),
+      ])).map((r) => r.results?.[0]);
+      return syncTask(env, user, hw, appUrl);
+    }
+    // The series is over: it is completed like any task, and the completion is kept for the history.
+    await env.DB.prepare('INSERT INTO completions (user_id, homework_id, completed_at, due_date) VALUES (?, ?, ?, ?)').bind(user.id, id, now, current.due_date).run();
+  }
   const rows = (await env.DB.prepare(`UPDATE homework SET done = 1, completed_at = ?, updated_at = ?
-    WHERE user_id = ? AND done = 0 AND id IN (${ids.map(() => '?').join(', ')}) RETURNING ${HOMEWORK_COLUMNS}`)
+    WHERE user_id = ? AND done = 0 AND id IN (${marks(ids)}) RETURNING ${HOMEWORK_COLUMNS}`)
     .bind(now, now, user.id, ...ids).all()).results;
   let out = null;
   for (const hw of rows) {
@@ -188,12 +217,25 @@ export async function completeTask(env, user, id, appUrl, now = Date.now()) {
   return out;
 }
 
+// Undo. A repeating task that moved on goes back to the date it was completed on; one that was completed for good
+// opens again. Either way the completion row goes.
 export async function uncompleteTask(env, user, id, appUrl) {
-  const current = await env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
+  const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
-  if (!current.done) return current;
-  const hw = await env.DB.prepare(`UPDATE homework SET done = 0, completed_at = NULL, updated_at = ? WHERE id = ? AND user_id = ?
-    RETURNING ${HOMEWORK_COLUMNS}`).bind(Date.now(), id, user.id).first();
+  const last = await env.DB.prepare('SELECT id, completed_at, due_date FROM completions WHERE homework_id = ? AND user_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1')
+    .bind(id, user.id).first();
+  const now = Date.now();
+  if (current.done) {
+    const stmts = [env.DB.prepare(`UPDATE homework SET done = 0, completed_at = NULL, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`).bind(now, id, user.id)];
+    if (last && last.completed_at === current.completed_at) stmts.push(env.DB.prepare('DELETE FROM completions WHERE id = ?').bind(last.id));
+    return syncTask(env, user, (await env.DB.batch(stmts))[0].results[0], appUrl);
+  }
+  if (!current.recurrence || !last?.due_date || last.completed_at < now - 86400000) return current;   // Undo, not rewind
+  const hw = (await env.DB.batch([
+    env.DB.prepare(`UPDATE homework SET due_date = ?, due_at = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
+      .bind(last.due_date, dueInstant(last.due_date, current.due_time, current.tz), now, id, user.id),
+    env.DB.prepare('DELETE FROM completions WHERE id = ?').bind(last.id),
+  ]))[0].results[0];
   return syncTask(env, user, hw, appUrl);
 }
 

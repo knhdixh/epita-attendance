@@ -367,3 +367,55 @@ test('API tokens: write scope can move and complete, read scope cannot; project 
   assert.equal((await call(w.token, 'POST', '/api/projects', { name: 'x' })).status, 403);
   assert.equal((await call(r.token, 'GET', '/api/data')).status, 200);
 });
+
+test('repeats: stored in canonical form and checked', async () => {
+  const { me } = setup();
+  assert.equal(ok(await hw(me, { recurrence: ' Every  Mon,Wed ' })).recurrence, 'every mon, wed');
+  bad(await hw(me, { recurrence: 'every fortnight' }), /couldn't read/);
+  bad(await hw(me, { recurrence: 'every day until 2020-01-01 starting 2021-01-01' }), /before the start/);
+  const t = ok(await hw(me, { recurrence: 'every month', due_date: '2030-01-31' }));
+  assert.equal(t.recurrence, 'every month on the 31st');
+  assert.equal(ok(await me('PATCH', `/api/homework/${t.id}`, { recurrence: null })).recurrence, null);
+  bad(await me('PATCH', `/api/homework/${t.id}`, { recurrence: 'whenever' }), /couldn't read/);
+});
+
+test('completing a repeating task moves it on, keeps a completions row, reopens subtasks; undo puts it back', async () => {
+  const { me, db } = setup();
+  const t = ok(await hw(me, { title: 'Water plants', due_date: '2030-03-30', due_time: '09:00', tz: 'Europe/Paris', recurrence: 'every day', planned_at: 5, planned_minutes: 30 }));
+  const sub = ok(await hw(me, { title: 'sub', parent_id: t.id }));
+  ok(await me('PATCH', `/api/homework/${sub.id}`, { done: true }));
+  const r = ok(await me('POST', `/api/homework/${t.id}/complete`));
+  assert.deepEqual([r.due_date, r.due_time, r.done, r.completed_at, r.planned_at], ['2030-03-31', '09:00', 0, null, null]);
+  assert.equal(r.due_at, Date.UTC(2030, 2, 31, 7), '09:00 in Paris after the clocks went forward (31 March) is 07:00 UTC');
+  assert.equal(t.due_at, Date.UTC(2030, 2, 30, 8));
+  assert.equal(db.prepare('SELECT done FROM homework WHERE id = ?').get(sub.id).done, 0, 'subtasks open again');
+  const c = db.prepare('SELECT * FROM completions WHERE homework_id = ?').all(t.id);
+  assert.deepEqual(c.map((x) => x.due_date), ['2030-03-30']);
+  assert.deepEqual((await me('GET', '/api/completions')).completions.map((x) => x.homework_id), [t.id]);
+  const back = ok(await me('POST', `/api/homework/${t.id}/uncomplete`));
+  assert.deepEqual([back.due_date, back.due_at], ['2030-03-30', t.due_at]);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM completions').get().n, 0);
+  assert.equal(ok(await me('POST', `/api/homework/${t.id}/uncomplete`)).due_date, '2030-03-30', 'nothing more to undo');
+  // PATCH done on a repeating task is the same thing as completing it.
+  const p = ok(await me('PATCH', `/api/homework/${t.id}`, { done: true }));
+  assert.deepEqual([p.due_date, p.done], ['2030-03-31', 0]);
+});
+
+test('completing the last occurrence of a series completes the task, and undo opens it again', async () => {
+  const { me, db } = setup();
+  const t = ok(await hw(me, { due_date: '2030-01-04', recurrence: 'every day until 2030-01-04' }));
+  const r = ok(await me('POST', `/api/homework/${t.id}/complete`));
+  assert.deepEqual([r.done, r.due_date], [1, '2030-01-04']);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM completions').get().n, 1);
+  const u = ok(await me('POST', `/api/homework/${t.id}/uncomplete`));
+  assert.equal(u.done, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM completions').get().n, 0);
+});
+
+test('an overdue repeating task moves on from the day it was completed', async () => {
+  const { me } = setup();
+  const t = ok(await hw(me, { due_date: '2020-01-01', recurrence: 'every week' }));
+  const r = ok(await me('POST', `/api/homework/${t.id}/complete`));
+  assert.ok(r.due_date > new Date(Date.now() - 86400000).toISOString().slice(0, 10), `moved into the future, not to the next week after 2020: ${r.due_date}`);
+  assert.equal(new Date(r.due_date + 'T00:00:00Z').getUTCDay(), 3, 'still a Wednesday (1 Jan 2020 was one)');
+});
