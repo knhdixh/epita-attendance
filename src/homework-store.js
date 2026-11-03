@@ -112,6 +112,10 @@ export async function syncTask(env, user, hw, appUrl) {
   return syncHomework(env, user.id, hw, await courseName(env, user, hw.course_id), appUrl);
 }
 
+const savedTz = (user) => {
+  try { const tz = JSON.parse(user.notify_settings || 'null')?.tz; return typeof tz === 'string' && isValidTimeZone(tz) ? tz : null; } catch { return null; }
+};
+
 // New tasks accept `client_id`: sending the same one again returns the task made the first time.
 export async function createHomework(env, user, body, appUrl) {
   const clientId = body.client_id ?? null;
@@ -149,7 +153,15 @@ export async function updateHomework(env, user, id, body, appUrl) {
     if (Object.keys(rest).length) await updateHomework(env, user, id, rest, appUrl);
     return done ? completeTask(env, user, id, appUrl) : uncompleteTask(env, user, id, appUrl);
   }
-  const input = await homeworkInput(env, user, { ...current, ...body, done: body.done ?? current.done });
+  // An undated task has no time zone of its own unless it was sent one ('UTC' is only the stored placeholder). Giving it a
+  // date needs one: the body's `tz`, else the one it was created with, else the user's saved notification time zone.
+  const dates = body.due_date && body.due_date !== NO_DATE && current.due_date === NO_DATE;
+  let tz = body.tz;
+  if (dates && !tz) {
+    tz = current.tz !== 'UTC' ? current.tz : savedTz(user);
+    if (!tz) throw new HttpError(400, 'Send your time zone (tz) when you give an undated task a date.');
+  }
+  const input = await homeworkInput(env, user, { ...current, ...body, ...(tz ? { tz } : {}), done: body.done ?? current.done });
   const labels = await labelIds(env, user, body);
   const now = Date.now();
   const completedAt = input.done ? (current.done ? current.completed_at : now) : null;

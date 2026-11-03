@@ -77,6 +77,25 @@ test('tasks without a date: stored with a placeholder, shown as null, hidden fro
   assert.ok(dated.id);
 });
 
+test('an undated task keeps its time zone, and a date for it needs one', async () => {
+  const { me, db } = setup();
+  const paris = (date, time) => new Date(`${date}T${time}:00+01:00`).getTime();   // Paris is UTC+1 in November
+  const u = ok(await me('POST', '/api/homework', { title: 'later', due_date: null, tz: 'Europe/Paris' }));
+  assert.equal(u.tz, 'Europe/Paris');
+  const d = ok(await me('PATCH', `/api/homework/${u.id}`, { due_date: '2026-11-10', due_time: '09:00' }));
+  assert.deepEqual([d.tz, d.due_at], ['Europe/Paris', paris('2026-11-10', '09:00')]);
+  assert.equal(ok(await me('PATCH', `/api/homework/${u.id}`, { due_date: null })).due_at, null);
+  assert.equal(ok(await me('PATCH', `/api/homework/${u.id}`, { due_date: '2026-11-10', due_time: '09:00', tz: 'Europe/Helsinki' })).due_at,
+    new Date('2026-11-10T09:00:00+02:00').getTime(), 'a tz in the body wins');
+  // Created without a time zone: the user's saved one, else a plain-English 400.
+  const n = ok(await me('POST', '/api/homework', { title: 'no tz', due_date: null }));
+  bad(await me('PATCH', `/api/homework/${n.id}`, { due_date: '2026-11-10', due_time: '09:00' }), /Send your time zone/);
+  assert.equal(ok(await me('PATCH', `/api/homework/${n.id}`, { due_date: '2026-11-10', due_time: '09:00', tz: 'Europe/Paris' })).due_at, paris('2026-11-10', '09:00'));
+  const m = ok(await me('POST', '/api/homework', { title: 'saved tz', due_date: null }));
+  db.exec(`UPDATE users SET notify_settings = '{"tz":"Europe/Helsinki"}' WHERE id = 1`);
+  assert.equal(ok(await me('PATCH', `/api/homework/${m.id}`, { due_date: '2026-11-10', due_time: '09:00' })).due_at, new Date('2026-11-10T09:00:00+02:00').getTime());
+});
+
 test('projects: create, update, validate, nest, delete with their tasks', async () => {
   const { me, other, db } = setup();
   bad(await me('POST', '/api/projects', {}), /Name is required/);
