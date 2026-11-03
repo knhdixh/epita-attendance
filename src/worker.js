@@ -126,6 +126,9 @@ async function startAppSession(env, userId) {
   const sid = APP_SESSION_PREFIX + randomToken(32);
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND expires_at < ?').bind(userId, Date.now()),
+    // The native app posts reminders itself. The TWA it replaces registered Web Push (app = 1); drop those so
+    // reminders don't arrive twice. Browser subscriptions (app = 0) stay.
+    env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ? AND app = 1').bind(userId),
     env.DB.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
       .bind(sid, userId, Date.now() + SESSION_TTL_MS),
   ]);
