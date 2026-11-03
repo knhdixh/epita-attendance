@@ -244,7 +244,9 @@ class LocalServerTest {
         ui.onNodeWithTag("calendar-todo-$openTodo").performClick()
         ui.onNodeWithTag("calendar-list").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) { it(0f, -100_000f) }
         val tomorrow = java.time.LocalDate.now(java.time.ZoneId.systemDefault()).plusDays(1).toString()
-        ui.onNodeWithTag("calendar-col-$tomorrow").performTouchInput { click(androidx.compose.ui.geometry.Offset(centerX, height * 0.08f)) }
+        // 20% down the day is about 05:00. The seed puts a session two hours after "now", so late in the evening it lands in
+        // tomorrow's first hours; a tap up there opens that session instead of planning the to-do (the old 8% failed after 22:00).
+        ui.onNodeWithTag("calendar-col-$tomorrow").performTouchInput { click(androidx.compose.ui.geometry.Offset(centerX, height * 0.2f)) }
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == openTodo }?.planned_at != null }
         val plannedAt = app.container.dataRepository.snapshot.value!!.homework.first { it.id == openTodo }.planned_at!!
         val serverTodo = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }
