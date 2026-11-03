@@ -49,3 +49,16 @@ Branch `native/phase-11` (`c6ae372..5103e2b`), reviewed 2026-11-04.
 - "Every mutation" is deliberately limited to the task, habit and notification paths. The remaining `mutate` callers
   are online-only screens, which is acceptable and logged.
 - Deploy: `0020` and `0021` both need applying to prod. Owner's call.
+
+---
+
+# Re-review round 1 (2026-11-04): PASS
+
+Checked `5eb94eb..6104422`: `npm test` 471/471 (re-run by me), and the diffs for all three findings read. `readJson` takes an empty
+body, so older clients that POST `/uncomplete` without one still work. Not `UNICODE_CHARACTER_CLASS` is the right call (JS `\d` is ASCII).
+
+1. Fixed. 2. Fixed. 3. Fixed.
+
+**Deferred to Phase 12 (Calendar):** `LocalServerTest.kt:258` reads the server right after the snapshot shows `planned_at`, which
+races the PATCH. Wait on `dataFromServer()` instead. Also consider moving the Calendar's plan blocks onto the outbox when Phase 12
+adds drag-to-another-day in Upcoming, so both paths behave the same offline.
