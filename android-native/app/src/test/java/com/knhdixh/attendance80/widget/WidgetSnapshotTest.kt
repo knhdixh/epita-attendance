@@ -50,6 +50,21 @@ class WidgetSnapshotTest {
         assertNull(during.currentClass(at("2026-11-05T00:00:00Z")))
     }
 
+    @Test fun listCoversTheNextDaysBeyondEightSessionsWithinTheWindow() {
+        val now = at("2026-11-02T07:00:00Z")
+        val template = base.events.first()
+        // Six sessions a day for ten days: 60 sessions; only the next 8 days (up to 24) are kept.
+        val many = (0 until 60).map { i ->
+            val start = now + (i / 6) * 86_400_000L + (i % 6) * 3_600_000L + 3_600_000L
+            template.copy(id = 1000L + i, start_at = start, end_at = start + 3_000_000L)
+        }
+        val s = buildWidgetPlan(base.copy(events = many), now, zone)
+        assertEquals(24, s.classes.size)
+        assertTrue("covers the third day", s.classes.last().start >= now + 3 * 86_400_000L)
+        val sparse = many.filter { it.start_at < now + 9 * 86_400_000L && (it.id % 6L) == 0L }
+        assertTrue(buildWidgetPlan(base.copy(events = sparse), now, zone).classes.all { it.start < now + 8 * 86_400_000L })
+    }
+
     @Test fun untrackedExcusedAndFutureAbsentSessionsAreLeftOutLikeThePlan() {
         val now = at("2026-11-02T07:00:00Z")
         val untracked = base.copy(courses = base.courses.map { if (it.id == 1L) it.copy(tracked = false) else it })

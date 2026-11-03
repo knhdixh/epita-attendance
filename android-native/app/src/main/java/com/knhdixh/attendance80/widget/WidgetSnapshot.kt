@@ -48,7 +48,9 @@ data class WidgetSnapshot(
     fun currentClass(now: Long): WidgetClass? = classes.firstOrNull { it.end > now }
 
     companion object {
-        const val MAX_CLASSES = 8
+        /** The TWA widget's window: classes ending after now and starting within 8 days, up to 24. */
+        const val MAX_CLASSES = 24
+        const val WINDOW_MS = 8L * 24 * 60 * 60 * 1000
         const val MAX_TODO = 3
         const val TIMED_LIMIT_MS = 20L * 60 * 60 * 1000
     }
@@ -62,7 +64,7 @@ fun buildWidgetPlan(data: AppData?, now: Long, zone: ZoneId): WidgetSnapshot {
         .filter { e ->
             val c = courses[e.course_id]
             c?.tracked == true && !(e.status == "absent" && e.start_at > now) && e.status != "excused" &&
-                e.end_at - e.start_at < WidgetSnapshot.TIMED_LIMIT_MS && e.end_at > now
+                e.end_at - e.start_at < WidgetSnapshot.TIMED_LIMIT_MS && e.end_at > now && e.start_at < now + WidgetSnapshot.WINDOW_MS
         }
         .sortedBy { it.start_at }
         .take(WidgetSnapshot.MAX_CLASSES)
