@@ -105,7 +105,7 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <!-- Android 12: revoking exact alarms drops the armed one; this re-plans (and falls back to the inexact window). -->
+                <!-- Sent when the exact-alarm permission is granted (not when revoked: the system drops the alarms then). Re-arms with an exact alarm. -->
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
@@ -117,7 +117,7 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <!-- Android 12: revoking exact alarms drops the armed one; this re-plans (and falls back to the inexact window). -->
+                <!-- Sent when the exact-alarm permission is granted (not when revoked: the system drops the alarms then). Re-arms with an exact alarm. -->
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>

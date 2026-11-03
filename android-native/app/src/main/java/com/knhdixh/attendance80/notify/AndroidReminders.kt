@@ -17,7 +17,8 @@ import com.knhdixh.attendance80.R
  * Exact while idle, so a class reminder is posted at its time and not hours late (an inexact alarm may slip by up to 75% of
  * the time left, and a class reminder is dropped once the class starts). The app already holds USE_EXACT_ALARM for the
  * focus timer, and reminders for calendar events are what that permission is for. It is one alarm at a time, for the next
- * reminder. If the user has revoked exact alarms (Android 12), a 10 minute window still bounds the delay.
+ * reminder. If exact alarms are not allowed (a user can turn them off in system settings), a 10 minute window still bounds the delay;
+ * the system sends SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED when the permission is granted again, and the receiver re-plans.
  */
 class AndroidReminderAlarm(private val context: Context) : ReminderAlarm {
     companion object { const val WINDOW = 10 * 60_000L }
