@@ -1091,3 +1091,23 @@ Review 1: Keystore instrumented test; test rename. Review 4: Countdowns wall clo
 - Live Update promotion with the new permission (Android 16), and the sheet's permission flow.
 - Refresh-before-check-in timing within a receiver's ~10 s, exact-alarm revoke on Android 12.
 - TalkBack speech itself (only labels are tested), 200% font on real screens.
+
+## Review 8 fixes (2026-11-03)
+
+Branch `native/phase-8`. No server, migration, secret or `android/` change.
+
+1. **"Focus done" survives a redraw (`b9b9690`).** `showTimer` no longer cancels id 42. `FocusNotifier` has a new `clearDone()`, called by the user's commands in `FocusController`: `start`, `focusOn`, `pause`, `resume`, `skip`, `stop` (so also `toggle`, the tile, the widget, the notification buttons and the sheet). `restore()`, `updateSettings`, `phaseEnded` and `onResume` leave it alone; tapping it still removes it (`setAutoCancel`). Tests: `FocusNotificationsTest.phaseDoneStaysWhenTheRunningTimerIsRedrawnAndGoesOnClearDone` replaces the over-broad one; `FocusControllerTest.restoreAndSettingsChangesLeavePhaseDoneAlone` (cold controller after `phaseEnded` with an auto-break, `restore()` and a changed `updateSettings`) and `commandsFromTheUserClearPhaseDone`.
+2. **Keyboard (`26ca79a`).** `.imePadding()` on the Breaks `LazyColumn`. Rechecked every `TextField` outside dialogs: Sessions' list (search field) and Sign-in (name field) also lacked it, so both got it. The others (Settings, Countdowns, Habits, Focus, homework form, calendar sheet, quick-focus sheet) already had it; Course, Search and the Sessions/Course dialogs manage their own windows. The earlier "edge-to-edge already in place" was true for the bars, not the keyboard. No test (insets are not simulated in Robolectric): **Unverified** on a device.
+3. **Back and rotation on wide screens (`072c7bf`).** New `paneSync` in `Shell.kt`, used by Homework, Sessions and Courses: `BackHandler(enabled = wide && sel != null)` (composed after the shell's, so it wins) clears `sel` and, when the route is `…/{id}`, replaces it with the list route (`popUpTo` the current entry, inclusive). Going narrow with `sel` set on the list route clears `sel` and navigates to the item route. The homework form's Cancel and the Sessions/Course `onBack` use the same close. Tests (`TabletTwoPaneTest`): `backClosesTheOpenedCourseBeforeLeavingCourses` and `backOnAnItemRouteReplacesItWithTheList`; both fail without the change (checked by reverting `Shell.kt`). Rotation itself is not simulated: **Unverified** on a device.
+   - **Deviation, recorded as the review asked:** the plan names `ListDetailPaneScaffold`; Phase 8 used a hand-made `TwoPane` (two weighted boxes) because the plan lists no adaptive library (rule 7) and nothing more was needed. The first Phase 8 log did not say so.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass.
+- `ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL; 1068 unit tests, 0 failures, 0 errors, 0 skipped (result XML); `git status` clean afterwards (no PNG changed or re-recorded).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5/5 on `pixel6Api35`, "Both local-server instrumented tests passed".
+
+### Unverified (device checklist, from the review)
+
+- "Focus done" after a cold-process phase end; Breaks name with the keyboard open; back and rotation in landscape.
+- Deferred items in the review stay deferred (exact-alarm comment, startup measurement, Sessions detail pane, Today notice, 200% shots, TalkBack test depth, overrun countdown, `ContentResolver` leak).
