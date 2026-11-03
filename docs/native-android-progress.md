@@ -962,3 +962,7 @@ Deferred items in the review are unchanged (updatePeriodMillis, overrun countdow
 - `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 904 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Roborazzi verified; no PNG changed (`git status` clean before the last commit's test edit).
 - `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
 - **Unverified (needs a device):** live Glance session redraw, update over a TWA with its widget placed, everything in the Phase 6 Unverified list.
+
+### Review 6 fixes — round 2 (2026-11-03)
+
+- Finding 3's test: `WidgetPlanWriterTest.coldStartWithSavedTokenNeverWritesSignedOut` now starts `onSnapshot(null)` with `CoroutineStart.UNDISPATCHED` and asserts it is still waiting and nothing is written before `tokens.load()` (`2c76cea`, by Claude). Checked by hand: with `currentToken()` in place of `awaitToken()` in `WidgetPlanWriter`, the test fails ("waits for the token store"); restored, 3/3 pass.

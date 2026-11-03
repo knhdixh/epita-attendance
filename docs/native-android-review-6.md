@@ -1,6 +1,6 @@
 # Phase 6 review
 
-Verdict: **FIX after round 1**. Re-reviewed the fix round `1fa7161`…`42ffcb5` on `native/phase-6`. Findings 1, 2, 4, 5 and 6 are resolved. One item is left: the cold-start test for finding 3 doesn't exercise the late token load, so it would pass without the fix (see "Re-review — round 1" at the end). The initial findings are kept below.
+Verdict: **PASS after round 2**. Round 1 (`1fa7161`…`42ffcb5`) resolved findings 1, 2, 4, 5 and 6; round 2 made finding 3's cold-start test exercise the late token load (see the round-2 section at the end). The initial findings are kept below.
 
 ## Findings
 
@@ -153,3 +153,7 @@ Verdict: **FIX after round 1**. Re-reviewed the fix round `1fa7161`…`42ffcb5` 
   - an update over a TWA with its widget placed;
   - the rest of the Phase 6 Unverified list.
 - The deferred items above are unchanged.
+
+## Re-review — round 2 (2026-11-03)
+
+Finding 3's test fixed in `2c76cea`: the null snapshot is dispatched undispatched before the token store loads, and the test asserts it waits and writes nothing. Reverting the writer to `currentToken()` makes it fail. All six findings are resolved; the deferred items stay with Phase 8.
