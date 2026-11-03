@@ -1,6 +1,6 @@
 # Phase 8 review
 
-Verdict: **FIX**. Three findings. Finding 1 brings back a focus-timer behaviour this phase broke. Findings 2 and 3 are small layout defects that the owner's phone shows: the keyboard covering a field, and back in landscape. Each fix is a few lines. Everything else Phase 8 owed is done, or has a stated reason that I accept. The deferred list is at the end.
+Verdict: **PASS after round 1**. Round 1 (`b9b9690`, `26ca79a`, `072c7bf`, log `ef7cde9`) resolves all three findings; see the round-1 section at the end. The initial findings are kept below.
 
 ## Findings
 
@@ -155,3 +155,46 @@ Verdict: **FIX**. Three findings. Finding 1 brings back a focus-timer behaviour 
   - 1062 unit tests with 0 failures, lint, and Roborazzi verified with `git status` clean;
   - `tools/e2e.sh` 5/5;
   - one `TalkBackLabelsTest` hang that has not come back.
+
+
+## Re-review — round 1 (`b9b9690`, `26ca79a`, `072c7bf`, log `ef7cde9`)
+
+**Finding 1 ("Focus done" cleared by redraws): resolved.**
+- `showTimer` no longer cancels id 42. The new `FocusNotifier.clearDone()` is called only from `start`, `focusOn`, `pause`, `resume`, `skip` and `stop`.
+- `toggle`, `pauseIfRunning` and `resumeIfPaused` (the tile, the widget and the notification buttons) go through those methods, so they clear it as well.
+- `render`, `restore`, `updateSettings` and `phaseEnded` don't touch it.
+- `start` clears only when it actually starts a timer (after the `running()` early return). That is right: pressing Start on a running timer changes nothing.
+- **The tests are real.**
+  - `FocusNotificationsTest` now asserts that id 42 survives a `showTimer` of the running break. Putting the old cancel back in `showTimer` fails it.
+  - `restoreAndSettingsChangesLeavePhaseDoneAlone` replays the cold-process path: `phaseEnded` with an auto-break, then a fresh controller's `restore()` and a changed `updateSettings`. Calling `clearDone()` from `render` would fail it.
+  - `commandsFromTheUserClearPhaseDone` covers every command.
+  - The old test was changed to the new rule. It was not weakened.
+
+**Finding 2 (keyboard): resolved.**
+- `imePadding()` on the Breaks list. The worker's recheck also found the Sessions list (search field) and Sign-in, and fixed both.
+- I agree with the rest of the recheck: every other `TextField` outside a dialog already had the padding.
+- **No test (accepted).** Robolectric doesn't simulate IME insets, and the change is one modifier per screen. It stays on the device checklist.
+
+**Finding 3 (back and rotation on wide screens): resolved.**
+- **`paneSync` back handler.** Its `BackHandler(enabled = wide && sel != null)` is composed after the shell's handler. The dispatcher gives priority to the newest enabled callback, so back closes the item first.
+- **Closing on an item route** (`course/1`, `homework/5`) also replaces the route with the list (`popUpTo` the current entry, inclusive, `launchSingleTop`). Cancel, Save and the Sessions dialog's dismiss use the same `close`.
+- **Rotation, traced by hand:**
+  - **Portrait `homework/5` → landscape → Cancel → portrait.** `close` turns the route into `homework`, so the cancelled form does not reopen.
+  - **Landscape, open an item → portrait.** `sel` survives through `rememberSaveable`. The narrow effect clears it and navigates to `homework/5`, so the form stays open, and the draft is restored from `homeworkDrafts`.
+  - **Back in landscape.** The route `homework/5` rebuilds the pane with that item open. Back then returns to the list entry, whose `sel` the effect had already cleared.
+  - **Phone portrait.** The effect needs `route == list`, so an item route is left alone.
+- **The tests are real.** In both new tablet tests the start destination has no previous entry. Without the fix, back does nothing to the pane and the placeholder assertion fails. The worker also says it checked this by reverting `Shell.kt`.
+- **Test limit (accepted).** Rotation isn't driven by a test. The logic is small and I traced it above; it is on the device checklist.
+- **The deviation is now logged.** It is a hand-made `TwoPane` instead of `ListDetailPaneScaffold`, because no adaptive library is listed (rule 7). This is also stated in the `paneSync` comment.
+
+**PNGs.** `git diff 1c2ff88..HEAD --stat -- '*.png'` is empty.
+
+### Evidence
+
+- **Read by the reviewer:** `git show` of the three fix commits (main sources and tests) and the "Review 8 fixes" log entry. I also checked `toggle`, `pauseIfRunning` and `resumeIfPaused` in `FocusController`.
+- No server, website, migration, secret or `android/` changes in the round.
+- **Not run by the reviewer:** Gradle and npm, at the owner's request. The worker reports:
+  - `npm test` 104/104;
+  - 1068 unit tests with 0 failures, lint, and Roborazzi verified with no PNG changed;
+  - `tools/e2e.sh` 5/5.
+- **Deferred items: unchanged** from the first round (Phase 9: the exact-alarm comment and the focus receiver, measuring startup, the device checklist; later: the Sessions detail pane, the Today notice, the 200% shots, TalkBack test depth, the overrun countdown, the `ContentResolver` leak).
