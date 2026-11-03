@@ -25,7 +25,7 @@ internal fun homework(id: Long, title: String, dueDate: String? = null, dueTime:
 /** The shared fixture with everything cleared, so each test says what it has. */
 internal fun emptyData(
     courses: List<CourseDto> = emptyList(), events: List<EventDto> = emptyList(), homework: List<HomeworkDto> = emptyList(),
-    habits: List<HabitDto> = emptyList(), logs: List<HabitLogDto> = emptyList(), notify: NotifySettingsDto = NotifySettingsDto(tz = "Europe/Paris"), gcal: Boolean = false,
+    habits: List<HabitDto> = emptyList(), logs: List<HabitLogDto> = emptyList(), notify: NotifySettingsDto = NotifySettingsDto(classes = false, habits = false, tz = "Europe/Paris"), gcal: Boolean = false,
 ): AppData {
     val d = reminderBase()
     return d.copy(

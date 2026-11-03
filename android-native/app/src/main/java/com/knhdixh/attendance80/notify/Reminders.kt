@@ -60,6 +60,8 @@ fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId
         if (choices.checkin) addAll(checkIns(data, zone))
         if (choices.homeworkOn(data.integrations.gcal != null)) addAll(homeworkReminders(data, zone))
         if (choices.exam) addAll(examWarnings(data, zone))
+        // These two follow the account's switches (the website's `classes`, `classLead` and `habits`), as the server's cron does.
+        if (data.notifications.settings.classes) addAll(classReminders(data, now, zone))
     }
     val horizon = planHorizon(now, zone)
     return all.filter { it.at <= horizon && it.at >= now - lateWindow(it.kind) }.sortedWith(compareBy({ it.at }, { it.key }))
@@ -162,6 +164,29 @@ fun examWarnings(data: AppData, zone: ZoneId): List<Reminder> {
                            exams == 0 -> if (sorted.size == 1) "Mandatory session today" else "${sorted.size} mandatory sessions today"
                            else -> "${sorted.size} sessions you can't miss today" },
             body = lines.joinToString("\n"), route = "a80://today",
+        )
+    }
+}
+
+/**
+ * The same rule as `collectDue` in `src/notify.js`: tracked courses only, sessions marked present or unmarked (one you
+ * plan to skip or are excused from is left alone), [classLead][com.knhdixh.attendance80.net.NotifySettingsDto.classLead]
+ * minutes before the start. "N min" is counted from when it is posted, so a late alarm doesn't say "in 10 min" at 8 minutes.
+ */
+fun classReminders(data: AppData, now: Long, zone: ZoneId): List<Reminder> {
+    val lead = data.notifications.settings.classLead
+    val courses = data.courses.associateBy { it.id }
+    return data.events.mapNotNull { e ->
+        val course = courses[e.course_id]
+        if (course == null || !course.tracked || (e.status != null && e.status != "present")) return@mapNotNull null
+        val at = e.start_at - lead * MIN
+        val mins = Math.round((e.start_at - maxOf(now, at)).toDouble() / MIN).toInt()
+        val name = course.name
+        Reminder(
+            key = "class:${e.id}:${e.start_at}", kind = Kinds.CLASS, at = at,
+            title = if (mins <= 0) "$name starts now" else "$name in $mins min",
+            body = listOfNotNull("${hhmm(e.start_at, zone)}–${hhmm(e.end_at, zone)}", e.location.ifBlank { null }).joinToString(" · "),
+            route = "a80://session/${e.id}", ref = e.id,
         )
     }
 }
