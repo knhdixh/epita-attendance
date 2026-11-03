@@ -72,6 +72,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
         "section.create" -> data.sections.find { it.client_id == m.clientId }?.id
         "label.create" -> data.labels.find { it.client_id == m.clientId }?.id
         "filter.create" -> data.filters.find { it.client_id == m.clientId }?.id
+        "habit.create" -> data.habits.list.find { it.client_id == m.clientId }?.id
         else -> null
     }
 

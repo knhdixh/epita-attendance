@@ -281,7 +281,7 @@ data class HabitScheduleDto(val type: String, val days: List<Int>? = null, val n
 data class HabitDto(
     val id: Long, val name: String, val icon: String? = null, val color: String,
     val schedule: HabitScheduleDto, val target: Int, val unit: String? = null,
-    val remind_at: String? = null, val position: Int, val archived: Boolean, val created_at: Long,
+    val remind_at: String? = null, val position: Int, val archived: Boolean, val created_at: Long, val client_id: String? = null,
 )
 
 @Serializable

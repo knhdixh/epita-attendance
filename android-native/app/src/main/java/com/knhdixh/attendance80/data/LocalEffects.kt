@@ -233,10 +233,11 @@ object LocalEffects {
     }
 
     private fun createHabit(d: AppData, m: QueuedMutation): AppData {
+        if (d.habits.list.any { it.client_id == m.clientId }) return d
         val b = m.body
         val s = schedule(b["schedule"]) ?: HabitScheduleDto("daily")
         val h = HabitDto(m.temp!!, b.str("name").orEmpty(), b.str("icon"), b.str("color") ?: "blue", s, b.int("target") ?: 1, b.str("unit"), b.str("remind_at"),
-            (d.habits.list.maxOfOrNull { it.position } ?: -1) + 1, false, m.at)
+            (d.habits.list.maxOfOrNull { it.position } ?: -1) + 1, false, m.at, m.clientId)
         return d.copy(habits = d.habits.copy(list = d.habits.list + h))
     }
 

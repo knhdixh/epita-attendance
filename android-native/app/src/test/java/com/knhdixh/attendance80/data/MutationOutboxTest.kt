@@ -289,4 +289,24 @@ class MutationOutboxTest {
             assertTrue(e.fake.log.isEmpty())
         } finally { e.close() }
     }
+
+    @Test fun aHabitTheServerAlreadyMadeIsNotAddedAgainByARefresh() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            e.online.set(false)
+            val queued = repo.enqueue(Mutations.createHabit(body("name" to "Piano", "color" to "blue", "target" to 1, "schedule" to null)))!!
+            assertEquals(1, repo.snapshot.value!!.habits.list.count { it.name == "Piano" })
+            // The request got through and only the answer was lost: the server has the habit, with our client_id.
+            val base = ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(fixture())
+            val made = com.knhdixh.attendance80.net.HabitDto(500, "Piano", null, "blue", com.knhdixh.attendance80.net.HabitScheduleDto("daily"), 1, null, null, 9, false, 5, client_id = queued.clientId)
+            e.fake.data = ApiClient.json.encodeToString(com.knhdixh.attendance80.net.AppData.serializer(), base.copy(habits = base.habits.copy(list = base.habits.list + made)))
+            e.online.set(true)
+            assertTrue(repo.refresh())
+            assertEquals(listOf(500L), repo.snapshot.value!!.habits.list.filter { it.name == "Piano" }.map { it.id })
+            assertEquals("settled by the refresh: nothing left to send", 0, repo.pending.value)
+            e.fake.log.clear()
+            assertTrue(repo.flushQueue()); assertTrue(e.fake.log.isEmpty())
+        } finally { e.close() }
+    }
 }
