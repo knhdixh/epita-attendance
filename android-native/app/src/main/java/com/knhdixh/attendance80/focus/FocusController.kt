@@ -118,11 +118,24 @@ class FocusController(
         change(resume(_timer.value, now), null, now)
     }
 
-    /** Start when idle, resume when paused, pause when running: the tile and notification button. */
-    suspend fun toggle() {
+    /** A phase that ended while nobody was looking is finished (and logged) before a command is applied to what is next. */
+    private suspend fun finishDue() {
         load()
-        // A phase that ended while nobody was looking is finished (and logged) before the toggle is applied to what is next.
         if (isDue(_timer.value, clock.now())) phaseEnded()
+    }
+
+    /** Intent "start": does nothing if a timer is already running, so a stale button can't pause it. */
+    suspend fun startIfIdle() { finishDue(); start() }
+
+    /** Intent "pause": does nothing unless the timer is running. */
+    suspend fun pauseIfRunning() { finishDue(); if (_timer.value.let { it.running() && !it.paused() }) pause() }
+
+    /** Intent "resume": does nothing unless the timer is paused. */
+    suspend fun resumeIfPaused() { finishDue(); if (_timer.value.paused()) resume() }
+
+    /** Start when idle, resume when paused, pause when running: the tile and notification button, which show no state of their own. */
+    suspend fun toggle() {
+        finishDue()
         val t = _timer.value
         when {
             !t.running() -> start()

@@ -50,4 +50,10 @@ class WidgetTextTest {
         assertEquals("Resume", text(paused).button); assertEquals("Paused · 01:30 left", text(paused).timerLine)
         assertEquals("Short break", text(WidgetSnapshot(timer = WidgetTimer(next = "short", nextMinutes = 5))).timerHead)
     }
+
+    @Test fun theButtonCarriesTheIntentItWasDrawnWith() {
+        assertEquals("start", timerCommand(WidgetTimer()))
+        assertEquals("pause", timerCommand(WidgetTimer(running = true)))
+        assertEquals("resume", timerCommand(WidgetTimer(running = true, paused = true)))
+    }
 }

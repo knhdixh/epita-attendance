@@ -28,6 +28,9 @@ class RecordingActions : TimerActions {
     val calls = mutableListOf<String>()
     var chosen: FocusTarget? = null
     override fun toggle() { calls += "toggle" }
+    override fun start() { calls += "start" }
+    override fun pause() { calls += "pause" }
+    override fun resume() { calls += "resume" }
     override fun skip() { calls += "skip" }
     override fun stop() { calls += "stop" }
     override fun adjust(min: Int) { calls += "adjust $min" }

@@ -25,6 +25,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.GlanceAppWidget
@@ -115,12 +116,22 @@ class FocusGlanceWidget : GlanceAppWidget() {
     }
 }
 
-/** Start, pause or resume, without opening the app (the same toggle as the tile and the notification). */
-class ToggleTimerCallback : ActionCallback {
+val TimerCommand = ActionParameters.Key<String>("timer_command")
+
+/** Start, pause or resume, without opening the app. It does what the button said when it was drawn, and nothing if the timer has moved on. */
+class TimerCommandCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        (context.applicationContext as App).container.focusController?.toggle()
+        val controller = (context.applicationContext as App).container.focusController ?: return
+        when (parameters[TimerCommand]) {
+            "start" -> controller.startIfIdle()
+            "pause" -> controller.pauseIfRunning()
+            "resume" -> controller.resumeIfPaused()
+        }
     }
 }
+
+/** What the button does, from what the widget drew. */
+fun timerCommand(t: WidgetTimer): String = when { !t.running -> "start"; t.paused -> "resume"; else -> "pause" }
 
 private fun open(context: Context, uri: String) =
     actionStartActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri), context, MainActivity::class.java))
@@ -186,7 +197,7 @@ internal fun WidgetContent(s: WidgetSnapshot, now: Long) {
                 if (text.timerLine.isNotEmpty()) Text(text.timerLine, style = secondary, maxLines = 1)
             }
             Spacer(GlanceModifier.height(4.dp))
-            Button(text.button, onClick = actionRunCallback<ToggleTimerCallback>(), modifier = GlanceModifier.fillMaxWidth())
+            Button(text.button, onClick = actionRunCallback<TimerCommandCallback>(actionParametersOf(TimerCommand to timerCommand(s.timer))), modifier = GlanceModifier.fillMaxWidth())
         }
     }
 

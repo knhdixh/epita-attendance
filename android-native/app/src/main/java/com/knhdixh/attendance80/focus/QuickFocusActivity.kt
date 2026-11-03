@@ -53,6 +53,12 @@ class QuickFocusActivity : ComponentActivity() {
                 lifecycleScope.launch { askNotificationsOnce(this@QuickFocusActivity, store) { notifications.launch(Manifest.permission.POST_NOTIFICATIONS) } }
                 inner.toggle()
             }
+            override fun start() {
+                lifecycleScope.launch { askNotificationsOnce(this@QuickFocusActivity, store) { notifications.launch(Manifest.permission.POST_NOTIFICATIONS) } }
+                inner.start()
+            }
+            override fun pause() = inner.pause()
+            override fun resume() = inner.resume()
             override fun skip() = inner.skip()
             override fun stop() = inner.stop()
             override fun adjust(min: Int) = inner.adjust(min)
