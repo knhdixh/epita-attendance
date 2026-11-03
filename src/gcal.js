@@ -1,6 +1,6 @@
 // Google Calendar push sync: homework is mirrored into a calendar the app creates in the
 // user's Google account (scope calendar.app.created, so it can't see any other calendar).
-import { buildGcalEvent } from './homework.js';
+import { buildGcalEvent, NO_DATE } from './homework.js';
 
 export const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.app.created';
 const API = 'https://www.googleapis.com/calendar/v3';
@@ -143,7 +143,7 @@ export async function deleteGcalEvent(env, userId, eventId) {
 export async function resync(env, userId, courseNames, appUrl) {
   const link = await getLink(env, userId);
   if (!link) return { synced: 0, remaining: 0 };
-  const pendingSql = `FROM homework WHERE user_id = ? AND (gcal_event_id IS NULL OR sync_error IS NOT NULL)`;
+  const pendingSql = `FROM homework WHERE user_id = ? AND due_date != '${NO_DATE}' AND (gcal_event_id IS NULL OR sync_error IS NOT NULL)`;
   const rows = (await env.DB.prepare(`SELECT * ${pendingSql} ORDER BY due_at DESC LIMIT ?`).bind(userId, RESYNC_BATCH).all()).results;
   let synced = 0, failed = 0;
   for (const hw of rows) {

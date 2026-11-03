@@ -2,6 +2,9 @@
 import { parseDate } from './ics.js';
 
 export const REMIND_OPTIONS = [0, 30, 60, 180, 1440, 2880, 10080];
+// Tasks without a date store this due date (the table needs one). The API shows it as null; the website's lists,
+// /api/plan, the feeds and Google Calendar leave such rows out.
+export const NO_DATE = '9999-12-31';
 const TIMED_EVENT_MINUTES = 30; // a timed homework shows as a 30-min block ending at the deadline
 
 export function isValidTimeZone(tz) {
