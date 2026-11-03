@@ -45,6 +45,7 @@ docs/native-android-progress.md (the last few entries only; it is long). Build f
 android-native/; match its patterns (ShellViewModel actions, DataRepository.mutate, Roborazzi screenshot tests).
 Work in small steps and commit after each numbered task (subject 'Android: …', no server and Android changes in one
 commit). Keep Gradle in the foreground and only print its tail; read test XML for failures.
+Run every command in the foreground (no run_in_background, no Monitor): this is a headless session, and it ends as soon as you wait for a background task.
 Before the last commit run: npm test; and in android-native with ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk:
 ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon
 then tools/e2e.sh. Append a 'Phase $phase' entry to docs/native-android-progress.md with what you did per task and
@@ -67,6 +68,7 @@ few entries only; it is long). Fixes for a review of an earlier phase go on this
 fixed; deferred items stay deferred unless a blocking fix covers them. Match the existing patterns; commit after each
 finding (subject 'Android: …'), never weaken, skip or re-record a test to hide a bug (a review may say which PNGs must
 stay unchanged). Keep Gradle in the foreground and only print its tail; read test XML for failures.
+Run every command in the foreground (no run_in_background, no Monitor): this is a headless session, and it ends as soon as you wait for a background task.
 Before the last commit run: npm test; and in android-native with ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk:
 ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon
 then tools/e2e.sh. Append 'Review <n> fixes' entries to docs/native-android-progress.md: per finding, what changed and the
@@ -88,7 +90,7 @@ if [[ "$mode" == "--resume" ]]; then
   # Any line carries the session id, so this also works when the run was cut off before its result line.
   sid="$(jq -r '.session_id // empty' "$out/$log.log" 2>/dev/null | tail -1)"
   [[ -n "$sid" && "$sid" != "null" ]] || { echo "No earlier session in $out/$log.log." >&2; exit 1; }
-  claude "${args[@]}" --resume "$sid" "Carry on with Phase $phase until the goal is met." | tee -a "$out/$log.log" >/dev/null
+  claude "${args[@]}" --resume "$sid" "Carry on until the goal is met. Run every command in the foreground (no run_in_background, no Monitor): this is a headless session, and it ends as soon as you wait for a background task. If you were waiting on a background task, rerun that command in the foreground." | tee -a "$out/$log.log" >/dev/null
 else
   claude "${args[@]}" "$goal" | tee "$out/$log.log" >/dev/null
 fi

@@ -13,6 +13,8 @@ import com.knhdixh.attendance80.data.Scope
 import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.focus.*
 import com.knhdixh.attendance80.logic.FocusSettings
+import com.knhdixh.attendance80.widget.WidgetStore
+import com.knhdixh.attendance80.widget.redrawWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,12 +64,15 @@ class DefaultAppContainer(
 
     override val calendarScope: Scope by lazy { Scope(context.authDataStore) }
 
+    /** What the widget shows, next to the account snapshot (so backup rules exclude it too). */
+    val widgetStore: WidgetStore by lazy { com.knhdixh.attendance80.widget.WidgetStores.get(context) }
+
     override val focusStore: FocusStore by lazy { FocusStore(context.focusDataStore) }
 
     override val focusController: FocusController by lazy {
         FocusController(
             store = focusStore, clock = clock, alarm = AndroidPhaseAlarm(context), notifier = FocusNotifications(context),
-            surfaces = AndroidFocusSurfaces(context),
+            surfaces = AndroidFocusSurfaces(context, widgetStore),
             outbox = WorkOutboxScheduler(context),
             // The TWA's timer, sessions and tasks move over before anything reads the store: the receiver and the tile get here first.
             beforeFirstLoad = { runCatching { LegacyFocusMigration(context.getSharedPreferences("focus", Context.MODE_PRIVATE), focusStore, WorkOutboxScheduler(context)).run() } },
@@ -93,6 +98,11 @@ class DefaultAppContainer(
                     data.user.email?.let { focusController.setAccount(it) }
                 }
             }
+        }
+        scope.launch {
+            // The widget's plan part follows the snapshot, whoever changed it (screen, refresh, cache on start, sign-out).
+            val writer = com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) }
+            dataRepository.snapshot.collectLatest { data -> writer.onSnapshot(data) }
         }
         scope.launch {
             focusController.restore() // loads (and so migrates), then finishes what is due or re-arms

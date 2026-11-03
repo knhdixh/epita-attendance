@@ -24,6 +24,10 @@ import kotlinx.coroutines.delay
 /** What the timer panel can ask for. The screen and the quick-focus sheet both implement it with the controller. */
 interface TimerActions {
     fun toggle()
+    /** Commands with a known intent (the palette): each does nothing if the timer is not in the state it needs. */
+    fun start()
+    fun pause()
+    fun resume()
     fun skip()
     fun stop()
     fun adjust(min: Int)

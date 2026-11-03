@@ -88,9 +88,10 @@ fun FocusScreen(data: AppData?, owner: String?, now: Long, zone: ZoneId, history
         if (pending == null || actions == null || state == null) return@LaunchedEffect
         val t = state.timer
         when (pending.command) {
-            "start" -> if (!t.running()) actions.toggle()
-            "pause" -> if (t.running() && !t.paused()) actions.toggle()
-            "resume" -> if (t.paused()) actions.toggle()
+            // The controller decides from its own state (the UI's copy can still be the default before load()).
+            "start" -> actions.start()
+            "pause" -> actions.pause()
+            "resume" -> actions.resume()
             "skip" -> if (t.running() || t.next != "focus") actions.skip()
             "stop" -> actions.stop()
             "target" -> {

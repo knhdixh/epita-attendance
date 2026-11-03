@@ -236,6 +236,58 @@ class FocusControllerTest {
         store.removeLogs(setOf("x"))
         assertEquals(1, store.outbox().size)
     }
+
+    // Commands with an intent act on the controller's own state, so a stale button or palette entry cannot do the opposite.
+    @Test fun startIfIdleDoesNothingWhileRunningOrPaused() = runBlocking {
+        controller.start()
+        val running = controller.timer.value
+        controller.startIfIdle()
+        assertEquals(running, controller.timer.value)
+        controller.pause()
+        val paused = controller.timer.value
+        controller.startIfIdle()
+        assertEquals(paused, controller.timer.value)
+        assertEquals(1, runs)
+    }
+
+    @Test fun startIfIdleStartsWhenIdle() = runBlocking {
+        controller.startIfIdle()
+        assertTrue(controller.timer.value.running())
+    }
+
+    @Test fun pauseIfRunningDoesNothingWhenIdleOrPausedAndPausesWhenRunning() = runBlocking {
+        controller.pauseIfRunning()
+        assertFalse(controller.timer.value.running())
+        controller.start()
+        clock.now += 5 * min
+        controller.pauseIfRunning()
+        assertTrue(controller.timer.value.paused())
+        val paused = controller.timer.value
+        clock.now += min
+        controller.pauseIfRunning() // a second tap on a stale "Pause" does not resume it
+        assertEquals(paused, controller.timer.value)
+    }
+
+    @Test fun resumeIfPausedDoesNothingWhenIdleOrRunningAndResumesWhenPaused() = runBlocking {
+        controller.resumeIfPaused()
+        assertFalse(controller.timer.value.running())
+        controller.start()
+        val running = controller.timer.value
+        controller.resumeIfPaused()
+        assertEquals(running, controller.timer.value)
+        controller.pause()
+        controller.resumeIfPaused()
+        assertTrue(controller.timer.value.running() && !controller.timer.value.paused())
+    }
+
+    @Test fun aPhaseThatEndedIsFinishedBeforeTheCommandIsApplied() = runBlocking {
+        controller.start()
+        clock.now += 26 * min // ended while nobody looked; the widget still shows "Pause"
+        controller.pauseIfRunning()
+        // Like toggle(): the ended focus is finished (and counted) first, then the command applies to what follows.
+        assertEquals("focus ended and was finished first", 1, controller.timer.value.done)
+        assertNotEquals("focus", controller.timer.value.phase)
+    }
 }
 
 class FocusSettingsMappingTest {

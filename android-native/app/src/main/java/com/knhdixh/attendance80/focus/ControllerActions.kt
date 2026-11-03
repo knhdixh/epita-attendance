@@ -14,6 +14,9 @@ class ControllerActions(
     private val after: () -> Unit = {},
 ) : TimerActions {
     override fun toggle() { scope.launch { controller.toggle(); after() } }
+    override fun start() { scope.launch { controller.startIfIdle(); after() } }
+    override fun pause() { scope.launch { controller.pauseIfRunning(); after() } }
+    override fun resume() { scope.launch { controller.resumeIfPaused(); after() } }
     override fun skip() { scope.launch { controller.skip(); after() } }
     override fun stop() { scope.launch { controller.stop(); after() } }
     override fun adjust(min: Int) { scope.launch { controller.adjust(min) } }
@@ -36,5 +39,6 @@ class ControllerActions(
 /** Asks for the notification permission (once, in context) just before a timer starts. */
 class AskingActions(private val inner: TimerActions, private val ask: () -> Unit) : TimerActions by inner {
     override fun toggle() { ask(); inner.toggle() }
+    override fun start() { ask(); inner.start() }
     override fun focusOn(target: FocusTarget) { ask(); inner.focusOn(target) }
 }

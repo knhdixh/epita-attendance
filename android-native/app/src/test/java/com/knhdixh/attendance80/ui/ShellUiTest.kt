@@ -48,8 +48,11 @@ class ShellUiTest {
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, {}, {}, now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Nothing due in the next 7 days.").fetchSemanticsNodes().isNotEmpty() }
         compose.runOnIdle { data = populated.copy(events = populated.events.map { it.copy(status = "present") }) }
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Do next").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("today-list").performScrollToNode(hasText("Mathématiques"))
+        // The previous (empty) list stays on screen while the new one is derived, so scrolling can search the old list.
+        // Retry until the new derivation holds the node; then the assertion is as strict as before.
+        compose.waitUntil(10_000) {
+            runCatching { compose.onNodeWithTag("today-list").performScrollToNode(hasText("Mathématiques")) }.isSuccess
+        }
         compose.onNodeWithText("Mathématiques").assertExists()
     }
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")

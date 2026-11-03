@@ -24,9 +24,12 @@ class FocusReceiver : BroadcastReceiver() {
                     ACTION_SKIP -> controller.skip()
                     ACTION_STOP -> controller.stop()
                     ACTION_PHASE_END -> controller.phaseEnded()
+                    ACTION_WIDGET_REFRESH -> Unit
                     Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
                     Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> controller.restore()
                 }
+                // Awaited, so a cached process is not frozen before the widget update is enqueued.
+                com.knhdixh.attendance80.widget.redrawWidget(context)
             } finally { pending.finish() }
         }
     }
@@ -35,6 +38,7 @@ class FocusReceiver : BroadcastReceiver() {
         const val ACTION_TOGGLE = "com.knhdixh.attendance80.FOCUS_TOGGLE"
         const val ACTION_SKIP = "com.knhdixh.attendance80.FOCUS_SKIP"
         const val ACTION_STOP = "com.knhdixh.attendance80.FOCUS_STOP"
+        const val ACTION_WIDGET_REFRESH = "com.knhdixh.attendance80.WIDGET_REFRESH"
         const val ACTION_PHASE_END = "com.knhdixh.attendance80.FOCUS_PHASE_END"
     }
 }

@@ -118,7 +118,9 @@ class CourseRepositoryUiTest {
                 server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), current)))
                 val button = if (index == 0) "Add link" else "Edit link"
                 ui.waitUntil(10_000) { ui.onAllNodesWithTag("course-detail").fetchSemanticsNodes().isNotEmpty() }
-                ui.onNodeWithTag("course-detail").performScrollToNode(hasText(button)); ui.onNodeWithText(button).performClick()
+                // The screen can still be settling from the last save and refresh: wait until the button is one clickable node.
+                ui.waitUntil(10_000) { runCatching { ui.onNodeWithTag("course-detail").performScrollToNode(hasText(button)) }.isSuccess && ui.onAllNodesWithText(button).fetchSemanticsNodes().size == 1 }
+                ui.onNodeWithText(button).performClick()
                 ui.onNodeWithTag("recording-url").performSemanticsAction(SemanticsActions.SetText) { it(AnnotatedString(value)) }
                 ui.onNodeWithText("Save").performClick()
                 ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); server.requestCount >= 11 + index * 2 }

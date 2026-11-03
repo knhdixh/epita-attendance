@@ -86,6 +86,14 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
         </service>
 
+        <!-- Home-screen widget. Same component name as the TWA's FocusWidget, so an update keeps a placed widget. The class you are in or the next one, Do next, and the timer. -->
+        <receiver android:name=".FocusWidget" android:exported="true" android:label="Attendance80">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/focus_widget_info" />
+        </receiver>
+
         <!-- Quick-focus sheet: from the tile's long-press and the widget. Its own task, so the app doesn't come up behind it. -->
         <activity
             android:name=".focus.QuickFocusActivity"

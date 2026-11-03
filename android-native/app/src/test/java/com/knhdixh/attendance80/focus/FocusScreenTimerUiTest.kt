@@ -55,13 +55,15 @@ class FocusScreenTimerUiTest {
     @Test fun paletteCommandsRunOnceAndClear() {
         show(running)
         pending = PaletteAction.Focus("pause"); compose.waitForIdle()
-        assertEquals(listOf("toggle"), actions.calls); assertEquals(1, consumed); assertNull(pending)
+        assertEquals(listOf("pause"), actions.calls); assertEquals(1, consumed); assertNull(pending)
         pending = PaletteAction.Focus("skip"); compose.waitForIdle()
         pending = PaletteAction.Focus("stop"); compose.waitForIdle()
-        assertEquals(listOf("toggle", "skip", "stop"), actions.calls)
+        assertEquals(listOf("pause", "skip", "stop"), actions.calls)
+        // The intent goes to the controller whatever the UI copy says; the controller ignores it if it does not apply.
         pending = PaletteAction.Focus("start"); compose.waitForIdle()
-        assertEquals("start does nothing while a timer runs", 3, actions.calls.size)
-        assertEquals(4, consumed)
+        pending = PaletteAction.Focus("resume"); compose.waitForIdle()
+        assertEquals(listOf("pause", "skip", "stop", "start", "resume"), actions.calls)
+        assertEquals(5, consumed)
     }
 
     @Test fun focusOnHomeworkAndOwnTasksStartsThatTarget() {

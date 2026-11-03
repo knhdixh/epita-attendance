@@ -895,3 +895,75 @@ The one remaining item of the re-review in `docs/native-android-review-5.md`: th
 - `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 867 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Roborazzi verified; no PNG changed (`git status` clean).
 - `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
 - **Unverified:** the migration and exact alarm over a real TWA install with a running timer (needs a device); the deferred items in the review are unchanged.
+
+## Phase 6: widget (2026-11-03)
+
+Branch `native/phase-6`. Server untouched.
+
+### What I did
+
+1. **`WidgetSnapshot` (`677eaf2`).** `widget/WidgetSnapshot.kt`: plain data (signed in, up to 8 upcoming sessions, top 3 *Do next*, the timer). `buildWidgetPlan` uses the same rules as `buildPlan` (tracked courses, no excused or future-absent sessions, no all-day items; *Do next* is `buildPlan(...).todo.take(3)`); `buildWidgetTimer` from `FocusTimer` + settings; `nextWidgetRefresh` for the next redraw. `WidgetStore` writes `filesDir/snapshots/widget.json` (the folder already excluded from backup) atomically; the plan part and the timer part are replaced separately. 14 tests in `WidgetSnapshotTest` (fixture data, in-progress class, hidden sessions, store, refresh time).
+2. **Glance widget and wiring (`d3367d3`; tasks 2 and 3 are one commit because the surfaces call the redraw).**
+   - `FocusGlanceWidget` (Glance 1.1.1, `GlanceTheme` = dynamic colour on Android 12+), `FocusWidgetReceiver`, `focus_widget_info.xml` (4×2 default, resizable to 2×2), manifest receiver. Responsive: 2×2 shows next class and timer; 4×2 and up adds *Do next*. Never touches the network.
+   - Timer: Start / Pause / Resume button runs `FocusController.toggle()` (same as tile and notification). The running countdown is a `Chronometer` through `AndroidRemoteViews`, so the system ticks it with no wake-ups.
+   - Taps: class → `a80://session/{id}`, to-do → `a80://homework/{id}`, timer text → `a80://focus` (existing deep links).
+   - Writers: `FocusController` calls new `FocusSurfaces.timerChanged` on every render (default no-op, so existing fakes are unchanged); `AndroidFocusSurfaces` writes the timer part and redraws. `AppContainer.startData` collects `DataRepository.snapshot` and writes the plan part (skips the empty snapshot before the cache is read).
+   - Redraw: one inexact alarm to `FocusReceiver` (`ACTION_WIDGET_REFRESH`) at the next class boundary, midnight or due time; also the 30 min `updatePeriodMillis`.
+   - Tests: `WidgetTextTest` (6, wording and states), `WidgetRenderTest` (3, real Glance content rendered through Robolectric and read back: 2×2 has no *Do next*, 4×2 has it, signed out), `WidgetTimerWiringTest` (controller → store).
+
+### Checks (after `d3367d3`)
+
+- `npm test`: 104 tests, 104 pass, 0 fail.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 891 unit tests, 0 failures, 0 errors, 0 skipped (result XML). No PNG changed (`git status` clean).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
+- An earlier full run, on a machine with load average above 15, failed 3 tests (`ShellUiTest.today`, `SessionUiTest.selectionUsesVisibleIdsAndClearsWhenFilterChanges`, `OfflineShellTest.cachedShellStaysVisibleWhileRefreshIsDelayed`). Run alone they passed, and the full run then passed. I did not change them; they look load-dependent (the last is the known deferred one).
+
+### Deviations
+
+- The plan part is written by a collector on `DataRepository.snapshot` in `AppContainer`, not inside `DataRepository`, so the repository is unchanged.
+- The timer opens Focus (plan wording), not the quick-focus sheet the old widget opened.
+- `FocusSurfaces` got `timerChanged` (default no-op) rather than a changed `refresh()`.
+- No Roborazzi screenshot of the widget (the render test reads text instead).
+
+### Unverified (needs a real device)
+
+- Placing the widget, the 2×2 / 4×2 layouts and look at real sizes, dynamic colour on Android 12+.
+- The chronometer ticking, and the button toggling the timer from a cold process.
+- The redraw alarm at class boundaries and midnight, and the redraw after boot or a time-zone change.
+- Taps opening the session, to-do and Focus screens from the launcher.
+- The old TWA widget being replaced on an update (it is not removed or migrated).
+
+### Open questions
+
+None.
+
+## Review 6 fixes (2026-11-03)
+
+Fixes for `docs/native-android-review-6.md`, all on `native/phase-6`.
+
+1. **Widget redraw while a Glance session is alive (`1fa7161`).**
+   - `WidgetStore` has a `revision` StateFlow that goes up on every write and on `touch()`. `FocusGlanceWidget.provideGlance` now reads nothing: its content is `WidgetHost(store)`, which collects `revision` and, through `WidgetFromStore`, reads the store and the clock at composition time. The redraw alarm is set from what that composition drew (`SideEffect`).
+   - `redrawWidget` is now `suspend` (touches the store, then `updateAll`). `FocusReceiver` awaits it after every action, before `pending.finish()`. The controller's surfaces use a non-suspending `requestWidgetRedraw`, which touches the store at once.
+   - Tests (`WidgetRenderTest`): start then pause written to a real store and drawn through `WidgetFromStore`, and the second state (Resume) is what is drawn; the alarm comes from the drawn data; every write and `touch` moves the revision.
+   - Deviation: `GlanceRemoteViews.compose` hung when the composition collected a flow (Robolectric main thread), so the collecting part (`WidgetHost`, three lines) is separate from the store-reading part that the test drives. **Unverified:** that a live session really recomposes on a revision change (needs a device).
+   - Device checklist for Phase 9 (there is no checklist file in the repo, so it is recorded here): place the widget, tap Start, then tap Pause within 10 s and check it shows Resume; open the app and start a timer within 45 s of a widget redraw and check the widget follows.
+2. **TWA provider name (`0202cd9`).** The receiver is now `com.knhdixh.attendance80.FocusWidget` (`FocusWidget.kt`, a `GlanceAppWidgetReceiver`), declared as `.FocusWidget`. `WidgetProviderNameTest` (Robolectric) resolves that component as a receiver with `android.appwidget.provider` metadata. **Unverified:** "update over a TWA with the widget placed" on a device (keep in the Phase 9 checklist).
+3. **Null snapshot at cold start (`24f5fc0`).** New `WidgetPlanWriter(tokenStore, store, clock, redraw)`, called by the `AppContainer` collector. It awaits the token store before acting on a null snapshot. Null with no token clears the plan (signed out). Null with a token keeps the plan if it belongs to that account (`owner`, a SHA-256 of the token, stored in `widget.json`), else writes an empty signed-in plan, so account A's items never stay while B's data is pending or offline. `WidgetPlanWriterTest` (3, token store that loads late): cold start with a saved token never writes signed-out; sign-out clears; A→B leaves none of A's titles in the file.
+4. **Class window (`1739bb1`).** The stored list is now the TWA's window: ending after now, starting within 8 days, up to 24. Test with 60 sessions (6 a day): 24 kept, reaching beyond the first day and a half; none starts past 8 days.
+5. **Intent commands (`1f60e62`).** `FocusController.startIfIdle`, `pauseIfRunning`, `resumeIfPaused` finish a due phase first (like `toggle()`, which now shares that step), then act only if the state fits. `TimerActions` has `start`, `pause`, `resume` (controller-backed in `ControllerActions`; the quick-focus sheet and `AskingActions` ask for the notification permission on start). The palette calls them. The widget button passes `TimerCommand` (`start`/`pause`/`resume`, from `timerCommand(drawn timer)`) in `ActionParameters`. Tests: each command against a controller in the opposite state (no-ops), a phase that ended is finished first, `timerCommand`. `FocusScreenTimerUiTest.paletteCommandsRunOnceAndClear` now expects `pause`/`start`/`resume` calls instead of `toggle` (the "start does nothing while running" check moved to the controller tests). Note: after a due focus phase is finished, the command applies to what follows (an auto-started break), as `toggle()` always did.
+6. **Flaky shell tests (`036655c`).** `ShellUiTest.today` retries `performScrollToNode(Mathématiques)` until the new list holds it (the "Do next" heading is drawn in the empty state too, and the populated data has no to-dos at that time, so the empty-text wait I tried first never passed); the assertion is unchanged. `OfflineShellTest.cachedShellStaysVisibleWhileRefreshIsDelayed` holds the second request on a `Dispatcher` latch, waits 60 s for it to arrive, asserts the cached text while it is held, then releases it.
+7. Lint fix for the host test (`8c32af0`): `StateFlow.value` was read inside a composable lambda.
+
+Deferred items in the review are unchanged (updatePeriodMillis, overrun countdown, time zone of *Do next*).
+
+### Checks (after `8c32af0`)
+
+- `npm test`: 104 tests, 104 pass, 0 fail.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 904 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Roborazzi verified; no PNG changed (`git status` clean before the last commit's test edit).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
+- **Unverified (needs a device):** live Glance session redraw, update over a TWA with its widget placed, everything in the Phase 6 Unverified list.
+
+### Review 6 fixes — round 2 (2026-11-03)
+
+- Finding 3's test: `WidgetPlanWriterTest.coldStartWithSavedTokenNeverWritesSignedOut` now starts `onSnapshot(null)` with `CoroutineStart.UNDISPATCHED` and asserts it is still waiting and nothing is written before `tokens.load()` (`2c76cea`, by Claude). Checked by hand: with `currentToken()` in place of `awaitToken()` in `WidgetPlanWriter`, the test fails ("waits for the token store"); restored, 3/3 pass.
+- Final full run: `CourseRepositoryUiTest.trackedControlRollsBackAndPersists` (Phase 4) failed once with "Add link" only in the unmerged tree, mid-settle after a save and refresh. The test now waits until the button is a single clickable node before clicking; assertions unchanged (`10cb072`, by Claude). It passed 3 runs alone.

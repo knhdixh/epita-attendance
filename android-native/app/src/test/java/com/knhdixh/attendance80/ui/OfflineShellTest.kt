@@ -31,27 +31,38 @@ import java.util.concurrent.TimeUnit
 class OfflineShellTest {
     @get:Rule val compose = createComposeRule()
     @Test fun cachedShellStaysVisibleWhileRefreshIsDelayed() = runBlocking {
-        val server = MockWebServer(); server.start()
+        val fixture = javaClass.getResource("/api/data.json")!!.readText()
+        // The second request (the delayed refresh) is held until the test lets it go, however slow the machine is.
+        val arrived = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val requests = java.util.concurrent.atomic.AtomicInteger()
+        val server = MockWebServer()
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest): MockResponse {
+                if (requests.incrementAndGet() == 2) { arrived.countDown(); release.await(60, TimeUnit.SECONDS) }
+                return MockResponse().setBody(fixture)
+            }
+        }
+        server.start()
         val dir = Files.createTempDirectory("offline-shell").toFile()
         val clock = object : Clock { override fun now() = 1793600000000L; override fun zone() = ZoneId.of("Europe/Paris") }
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         try {
             val api = ApiClient.createApi(server.url("/").toString(), { "token" }, {})
-            val fixture = javaClass.getResource("/api/data.json")!!.readText()
             val first = DataRepository(api, dir, clock) { "token" }
-            first.start(); server.enqueue(MockResponse().setBody(fixture)); assertTrue(first.refresh())
+            first.start(); assertTrue(first.refresh())
             val repo = DataRepository(api, dir, clock) { "token" }; repo.start()
-            server.enqueue(MockResponse().setBody(fixture).setBodyDelay(2, TimeUnit.SECONDS))
             val pending = scope.async { repo.refresh() }
-            server.takeRequest(2, TimeUnit.SECONDS)
-            assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
+            assertTrue("the delayed refresh reached the server", arrived.await(60, TimeUnit.SECONDS))
             assertFalse(pending.isCompleted)
             compose.setContent {
                 val snapshot by repo.snapshot.collectAsState()
                 Attendance80Theme { Shell(ShellState(data = snapshot), {}, {}, {}, initialRoute = "courses", now = clock.now(), zone = clock.zone()) }
             }
             compose.onNodeWithText("Algorithmique").assertIsDisplayed()
+            assertFalse("still held while the cached shell is shown", pending.isCompleted)
+            release.countDown()
             assertTrue(pending.await())
-        } finally { scope.cancel(); server.shutdown(); dir.deleteRecursively() }
+        } finally { release.countDown(); scope.cancel(); server.shutdown(); dir.deleteRecursively() }
     }
 }
