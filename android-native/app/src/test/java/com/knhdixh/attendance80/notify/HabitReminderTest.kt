@@ -80,11 +80,12 @@ class HabitReminderTest {
     @After fun tearDown() { scope.cancel(); dir.deleteRecursively() }
 
     @Test fun habitDoneIsQueuedWithTheDayAndTheTarget() = runBlocking {
-        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
-        var flushed = 0
-        ReminderActions(testClock(at("2026-11-03T20:31:00")), store, FakeNotifier(), { flushed++ }, { null })
+        val queued = mutableListOf<Pair<com.knhdixh.attendance80.data.QueuedMutation, String>>()
+        ReminderActions(testClock(at("2026-11-03T20:31:00")), FakeNotifier(), { null }, { m, a -> queued += m to a; true })
             .handle("habit-done", 7, "2026-11-03", 8, "me@example.com", "habit:7")
-        assertEquals(PendingAction("me@example.com", "habit-done", 7, "2026-11-03", 8, at = at("2026-11-03T20:31:00")), store.pendingActions().single())
-        assertEquals(1, flushed)
+        val (m, account) = queued.single()
+        assertEquals("me@example.com", account)
+        assertEquals(listOf("habit.log", "PUT", "api/habits/7/log"), listOf(m.kind, m.method, m.path))
+        assertEquals(kotlinx.serialization.json.buildJsonObject { put("day", kotlinx.serialization.json.JsonPrimitive("2026-11-03")); put("count", kotlinx.serialization.json.JsonPrimitive(8)) }, m.body)
     }
 }

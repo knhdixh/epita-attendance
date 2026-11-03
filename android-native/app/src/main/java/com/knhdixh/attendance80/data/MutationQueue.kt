@@ -29,6 +29,8 @@ data class QueuedMutation(
     /** The change touches many rows (a parent with subtasks, a project's tasks): reload when the queue has been sent. */
     val reload: Boolean = false,
     val at: Long = 0,
+    /** Not sent until this long after it was queued: a delete with an Undo, which [DataRepository.cancelQueued] can still take back. */
+    val holdMs: Long = 0,
 ) {
     val creates get() = kind.endsWith(".create")
 
@@ -102,6 +104,14 @@ class MutationQueue(private val directory: File) {
     @Synchronized fun remove(account: String, clientId: String) {
         val s = state(account)
         save(s.copy(items = s.items.filterNot { it.clientId == clientId }))
+    }
+
+    /** A held change is let go: sent as soon as the flusher gets to it (the Undo window was closed early). */
+    @Synchronized fun release(account: String, clientId: String): Boolean {
+        val s = state(account)
+        if (s.items.none { it.clientId == clientId && it.holdMs > 0 }) return false
+        save(s.copy(items = s.items.map { if (it.clientId == clientId) it.copy(holdMs = 0) else it }))
+        return true
     }
 
     /** A temporary id became [to]: every queued change that named it now names the real one. */

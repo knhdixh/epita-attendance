@@ -19,8 +19,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.knhdixh.attendance80.net.HomeworkDto
+import com.knhdixh.attendance80.data.LocalEffects
+import com.knhdixh.attendance80.data.Mutations
+import com.knhdixh.attendance80.data.QueuedMutation
 
-data class PendingHomeworkDelete(val owner: String, val item: HomeworkDto, val sequence: Long)
+/** A delete waiting out its Undo window. It is already in the outbox (so closing the app can't lose it), held for [ShellViewModel.UNDO_MS]. */
+data class PendingHomeworkDelete(val owner: String, val item: HomeworkDto, val sequence: Long, val rows: List<HomeworkDto> = listOf(item), val clientId: String = "")
 
 data class ShellState(
     val data: com.knhdixh.attendance80.net.AppData? = null,
@@ -79,25 +83,18 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         private val repo get() = container.dataRepository
         private val api get() = container.api
         override fun message(text: String) = repo.reportMessage(owner, text)
-        override suspend fun setCount(id: Long, day: String, count: Int) = repo.mutate(
-            { d -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == id && it.day == day } + listOfNotNull(com.knhdixh.attendance80.net.HabitLogDto(id, day, count).takeIf { count > 0 }))) },
-            { api.logHabit(id, HabitLogRequest(day, count)) },
-            { d, _ -> d }, expectedOwner = owner)
+        private suspend fun q(m: QueuedMutation) = queue(owner, m)
+        override suspend fun setCount(id: Long, day: String, count: Int) = q(Mutations.logHabit(id, day, count)) != null
         override suspend fun create(body: JsonObject): com.knhdixh.attendance80.net.HabitDto? {
-            var row: com.knhdixh.attendance80.net.HabitDto? = null
-            val ok = repo.mutate({ it }, { api.createHabit(body).also { row = it } }, { d, h -> d.copy(habits = d.habits.copy(list = d.habits.list + h)) }, expectedOwner = owner)
-            return row?.takeIf { ok }?.also { message("Added “${it.name}” · ${Habits.scheduleLabel(it.schedule)}.") }
+            val temp = q(Mutations.createHabit(body))?.temp ?: return null
+            return repo.snapshot.value?.habits?.list?.find { it.id == temp }?.also { message("Added “${it.name}” · ${Habits.scheduleLabel(it.schedule)}.") }
         }
         override suspend fun update(id: Long, body: JsonObject): com.knhdixh.attendance80.net.HabitDto? {
-            var row: com.knhdixh.attendance80.net.HabitDto? = null
-            val ok = repo.mutate({ it }, { api.updateHabit(id, body).also { row = it } }, { d, h -> d.copy(habits = d.habits.copy(list = d.habits.list.map { if (it.id == h.id) h else it })) }, expectedOwner = owner)
-            return row?.takeIf { ok }
+            q(Mutations.updateHabit(id, body)) ?: return null
+            return repo.snapshot.value?.habits?.list?.find { it.id == id }
         }
-        override suspend fun delete(id: Long) = repo.mutate({ it }, { api.deleteHabit(id) },
-            { d, _ -> d.copy(habits = d.habits.copy(list = d.habits.list.filterNot { it.id == id }, logs = d.habits.logs.filterNot { it.habit_id == id })) }, expectedOwner = owner)
-        override suspend fun order(ids: List<Long>) = repo.mutate(
-            { d -> d.copy(habits = d.habits.copy(list = d.habits.list.map { h -> ids.indexOf(h.id).takeIf { it >= 0 }?.let { h.copy(position = it) } ?: h })) },
-            { api.orderHabits(com.knhdixh.attendance80.net.HabitOrderRequest(ids)) }, { d, _ -> d }, expectedOwner = owner)
+        override suspend fun delete(id: Long) = q(Mutations.deleteHabit(id)) != null
+        override suspend fun order(ids: List<Long>) = q(Mutations.orderHabits(ids)) != null
     }
     /** Countdowns: create, fine-tune (optimistic, as the web), pin and delete. */
     fun countdownActions(owner: String) = object : com.knhdixh.attendance80.ui.countdowns.CountdownActions {
@@ -158,25 +155,39 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     private val deleting = MutableStateFlow<PendingHomeworkDelete?>(null)
     val pendingHomeworkDelete = deleting.asStateFlow()
     private var deleteJob: Job? = null
+    private var enqueueJob: Job? = null
     private var deleteSequence = 0L
 
-    suspend fun saveHomework(owner: String, id: Long?, body: JsonObject): Boolean {
-        var saved: HomeworkDto? = null
-        val repo = container.dataRepository
-        val success = repo.mutate({ it }, {
-            (if (id == null) container.api.createHomework(body) else container.api.updateHomework(id, body)).also { saved = it }
-        }, { data, item -> data.copy(homework = (data.homework.filterNot { it.id == item.id } + item).sortedBy { it.due_at }) }, expectedOwner = owner)
-        saved?.sync_error?.takeIf { success }?.let { repo.reportMessage(owner, "Saved, but Google Calendar sync failed: $it") }
-        return success
+    /** Queues a change (applied now, sent in order, kept over a restart) and tries to send it at once. */
+    private suspend fun queue(owner: String, m: QueuedMutation): com.knhdixh.attendance80.data.DataRepository.Queued? =
+        container.dataRepository.enqueue(m, expectedOwner = owner)?.also { flushSoon() }
+    private fun flushSoon() { viewModelScope.launch { container.dataRepository.flushQueue() } }
+
+    suspend fun saveHomework(owner: String, id: Long?, body: JsonObject): Boolean =
+        queue(owner, if (id == null) Mutations.createTask(body) else Mutations.updateTask(id, body)) != null
+
+    /** Ticks a task off (or back). A repeating task moves on to its next date; the date the screen saw goes with it, so a retry moves it once. */
+    private suspend fun toggleHomework(owner: String, id: Long, done: Boolean) {
+        val rows = container.dataRepository.snapshot.value?.homework.orEmpty()
+        val row = rows.find { it.id == id }
+        val repeats = row?.recurrence != null
+        val m = if (done) Mutations.completeTask(id, row?.due_date.takeIf { repeats }, reload = repeats || rows.any { it.parent_id == id })
+        else Mutations.uncompleteTask(id, reload = repeats)
+        queue(owner, m)
     }
 
     fun deleteHomework(owner: String, item: HomeworkDto) {
-        if (container.dataRepository.sessionSnapshot.value.first != owner) return
+        val repo = container.dataRepository
+        if (repo.sessionSnapshot.value.first != owner) return
         if (deleting.value?.let { it.owner == owner && it.item.id == item.id } == true) return
         finishHomeworkDelete(undo = false)
-        val pending = PendingHomeworkDelete(owner, item, ++deleteSequence)
+        // In the outbox from the start, held for the Undo window: closing the app within it doesn't bring the item back.
+        val m = Mutations.deleteTask(item.id, UNDO_MS)
+        val rows = repo.snapshot.value?.let { LocalEffects.subtree(it, item.id) }?.takeIf { it.isNotEmpty() } ?: listOf(item)
+        val pending = PendingHomeworkDelete(owner, item, ++deleteSequence, rows, m.clientId)
         deleting.value = pending
-        deleteJob = viewModelScope.launch { delay(5000); finishHomeworkDelete(undo = false, expected = pending) }
+        deleteJob = viewModelScope.launch { delay(UNDO_MS); finishHomeworkDelete(undo = false, expected = pending) }
+        enqueueJob = viewModelScope.launch { if (queue(owner, m) == null && deleting.value == pending) deleting.value = null }
     }
 
     fun finishHomeworkDelete(undo: Boolean, expected: PendingHomeworkDelete? = null) {
@@ -185,11 +196,17 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         deleting.value = null
         deleteJob?.cancel()
         deleteJob = null
-        if (!undo) viewModelScope.launch {
-            container.dataRepository.mutate({ it }, { container.api.deleteHomework(pending.item.id) },
-                { data, _ -> data.copy(homework = data.homework.filterNot { it.id == pending.item.id }) }, expectedOwner = pending.owner)
+        val repo = container.dataRepository
+        val queued = enqueueJob   // finishing right after deleting must find the change in the outbox
+        viewModelScope.launch {
+            queued?.join()
+            if (undo) repo.cancelQueued(pending.clientId) { d ->
+                d.copy(homework = (d.homework + pending.rows.filter { r -> d.homework.none { it.id == r.id } }).sortedBy { it.due_at ?: Long.MAX_VALUE })
+            } else if (repo.release(pending.clientId, pending.owner)) repo.flushQueue()
         }
     }
+
+    companion object { const val UNDO_MS = 5000L }
 
     fun refresh() { viewModelScope.launch { container.dataRepository.refresh() } }
     fun consumeError(message: String, owner: String?) {
@@ -268,16 +285,8 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
                     { d, h -> d.copy(homework = (d.homework.filterNot { it.id == h.id } + h).sortedBy { it.due_at }) }, expectedOwner = owner)
             }
             is PaletteAction.SyncCalendar -> settingsActions(submittedOwner).syncCalendar(action.id)
-            is PaletteAction.ToggleHomework -> {
-                var saved: HomeworkDto? = null
-                val success = repo.mutate(
-                    { d -> d.copy(homework = d.homework.map { if (it.id == action.id) it.copy(done = action.done) else it }) },
-                    { api.updateHomework(action.id, buildJsonObject { put("done", action.done) }).also { saved = it } },
-                    { d, h -> d.copy(homework = d.homework.map { if (it.id == h.id) h else it }) }, expectedOwner = submittedOwner)
-                saved?.sync_error?.takeIf { success }?.let { repo.reportMessage(submittedOwner, "Saved, but Google Calendar sync failed: $it") }
-            }
-            is PaletteAction.CheckHabit -> repo.mutate({ d -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == action.id && it.day == action.day } + com.knhdixh.attendance80.net.HabitLogDto(action.id, action.day, action.count))) }, { api.logHabit(action.id, HabitLogRequest(action.day, action.count)) },
-                { d, log -> d.copy(habits = d.habits.copy(logs = d.habits.logs.filterNot { it.habit_id == log.habit_id && it.day == log.day } + log)) }, expectedOwner = submittedOwner)
+            is PaletteAction.ToggleHomework -> toggleHomework(submittedOwner, action.id, action.done)
+            is PaletteAction.CheckHabit -> queue(submittedOwner, Mutations.logHabit(action.id, action.day, action.count))
             is PaletteAction.AddHabit -> {
                 val parsed = Habits.parseHabit(action.input)
                 val schedule = parsed.schedule ?: return@launch
@@ -286,7 +295,7 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
                     parsed.icon?.let { put("icon", it) }; parsed.unit?.let { put("unit", it) }
                     put("schedule", buildJsonObject { put("type", schedule.type); schedule.n?.let { put("n", it) }; schedule.days?.let { put("days", JsonArray(it.map(::JsonPrimitive))) } })
                 }
-                repo.mutate({ it }, { api.createHabit(body) }, { d, h -> d.copy(habits = d.habits.copy(list = d.habits.list + h)) }, expectedOwner = submittedOwner)
+                queue(submittedOwner, Mutations.createHabit(body))
             }
             is PaletteAction.AddCountdown -> {
                 val parsed = Countdowns.parseCountdown(action.input, clock.now(), clock.zone()) ?: return@launch

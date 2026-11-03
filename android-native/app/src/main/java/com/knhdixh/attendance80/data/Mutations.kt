@@ -9,13 +9,14 @@ import java.util.UUID
  */
 object Mutations {
     private fun cid() = "a" + UUID.randomUUID().toString().replace("-", "").take(28)
-    private fun m(kind: String, method: String, path: String, body: JsonObject = JsonObject(emptyMap()), about: Long? = null, reload: Boolean = false) =
-        QueuedMutation(cid(), kind, method, path, body, about = about, reload = reload)
+    private fun m(kind: String, method: String, path: String, body: JsonObject = JsonObject(emptyMap()), about: Long? = null, reload: Boolean = false, holdMs: Long = 0) =
+        QueuedMutation(cid(), kind, method, path, body, about = about, reload = reload, holdMs = holdMs)
 
     // tasks (homework rows)
     fun createTask(body: JsonObject) = m("task.create", "POST", "api/homework", body)
     fun updateTask(id: Long, body: JsonObject) = m("task.update", "PATCH", "api/homework/$id", body)
-    fun deleteTask(id: Long) = m("task.delete", "DELETE", "api/homework/$id")
+    /** [holdMs]: how long an Undo can still take it back before it is sent. */
+    fun deleteTask(id: Long, holdMs: Long = 0) = m("task.delete", "DELETE", "api/homework/$id", holdMs = holdMs)
     /** [occurrence]: the due date the screen saw. A repeating task is never `done`, so this is what makes a retry move it on once. */
     fun completeTask(id: Long, occurrence: String?, reload: Boolean = false) =
         m("task.complete", "POST", "api/homework/$id/complete", buildJsonObject { occurrence?.let { put("occurrence", it) } }, reload = reload)

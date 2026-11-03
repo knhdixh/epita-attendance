@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -127,28 +128,32 @@ class HomeworkReminderTest {
         return d.copy(focus = d.focus.copy(settings = d.focus.settings.copy(focus = 50)))
     }
 
-    @Test fun doneIsQueuedAndFocusOnThisStartsTheTimer() = runBlocking {
-        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
+    @Test fun doneIsQueuedWithItsOccurrenceAndFocusOnThisStartsTheTimer() = runBlocking {
         val notifier = FakeNotifier()
         val focused = mutableListOf<Long>()
-        var flushed = 0
+        val queued = mutableListOf<com.knhdixh.attendance80.data.QueuedMutation>()
         val loaded = focusData()
-        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, notifier, { flushed++ }, { loaded }, { t, _ -> focused += t.homework_id!! })
-        actions.handle("homework-done", 1, null, null, "me@example.com", "k1")
-        assertEquals(listOf("homework-done"), store.pendingActions().map { it.type })
-        assertEquals(1, flushed)
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), notifier, { loaded }, { m, _ -> queued += m; true }, { t, _ -> focused += t.homework_id!! })
+        actions.handle("homework-done", 1, "2026-11-02", null, "me@example.com", "k1")
+        assertEquals(listOf("task.complete"), queued.map { it.kind })
+        assertEquals("POST api/homework/1/complete", queued.single().let { "${it.method} ${it.path}" })
+        assertEquals("the date the notification was posted for goes along, so a retry moves a repeating task on once", "2026-11-02", queued.single().body["occurrence"]!!.jsonPrimitive.content)
         actions.handle("homework-focus", 1, null, null, "me@example.com", "k1")
         assertEquals(listOf(1L), focused)
-        assertEquals(1, store.pendingActions().size) // focus is not a server change
+        assertEquals(1, queued.size) // focus is not a server change
         assertEquals(listOf("k1", "k1"), notifier.cancelled)
+    }
+
+    @Test fun theDoneButtonCarriesTheDueDate() {
+        val r = homeworkReminders(data(homework(1, "Essay", "2026-11-03", "10:00", remind = 60, course = 1)), PARIS, Locale.ENGLISH).single()
+        assertEquals("2026-11-03", r.actions.single { it.type == "homework-done" }.value)
     }
 
     /** A tap can start a cold process: the snapshot is null until the cache has loaded, and the button must wait for it. */
     @Test fun focusOnThisWaitsForTheSnapshotAndStartsWithTheAccountsLength() = runBlocking {
-        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
         val loading = kotlinx.coroutines.CompletableDeferred<com.knhdixh.attendance80.net.AppData>()
         val started = mutableListOf<Pair<com.knhdixh.attendance80.logic.FocusTarget, Int>>()
-        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, FakeNotifier(), {}, { loading.await() }, { t, d -> started += t to d.focus.settings.focus })
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), FakeNotifier(), { loading.await() }, { _, _ -> true }, { t, d -> started += t to d.focus.settings.focus })
         val tap = scope.launch { actions.handle("homework-focus", 1, null, null, "me@example.com", "k1") }
         kotlinx.coroutines.delay(100)
         assertTrue(started.isEmpty()) // still waiting, not dropped
@@ -158,9 +163,8 @@ class HomeworkReminderTest {
     }
 
     @Test fun focusOnThisIgnoresAnotherAccountsHomework() = runBlocking {
-        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
         val started = mutableListOf<Long>()
-        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, FakeNotifier(), {}, { focusData() }, { t, _ -> started += t.homework_id!! })
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), FakeNotifier(), { focusData() }, { _, _ -> true }, { t, _ -> started += t.homework_id!! })
         actions.handle("homework-focus", 1, null, null, "someone@else.com", "k1")
         assertTrue(started.isEmpty())
     }

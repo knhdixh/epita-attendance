@@ -93,6 +93,9 @@ object LocalEffects {
         else day.atTime(23, 59, 59).atZone(zone).toInstant().toEpochMilli() + 999
     }
 
+    /** [id] and every task below it. */
+    fun subtree(d: AppData, id: Long): List<HomeworkDto> = descendants(d.homework, setOf(id)).let { ids -> d.homework.filter { it.id in ids } }
+
     private fun descendants(rows: List<HomeworkDto>, ids: Set<Long>): Set<Long> {
         val all = ids.toMutableSet()
         var grew = true

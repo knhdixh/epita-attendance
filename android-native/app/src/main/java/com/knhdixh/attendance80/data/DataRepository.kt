@@ -217,20 +217,40 @@ class DataRepository(private val api: Api, private val directory: File, private 
      * Queues a change: applied to the snapshot now, sent later in order. Works without a network. A create gets a negative
      * temporary id until the server answers (returned in [Queued.temp]). Null when there is no snapshot of that session.
      */
-    suspend fun enqueue(m: QueuedMutation, expectedOwner: String? = null): Queued? = mutex.withLock {
+    suspend fun enqueue(m: QueuedMutation, expectedOwner: String? = null, expectedAccount: String? = null): Queued? = mutex.withLock {
         val active = session ?: return@withLock null
         if (expectedOwner != null && expectedOwner != active) return@withLock null
         if (token() != active) return@withLock null
         val data = _snapshot.value ?: return@withLock null
+        if (expectedAccount != null && accountOf(data) != expectedAccount.lowercase()) return@withLock null
         clearErrors()
         val (queued, temp) = queue.add(accountOf(data), m.copy(at = clock.now()))
         publish(active, LocalEffects.apply(data, queued, clock.zone()))
         syncPending()
         onQueued()
-        Queued(temp)
+        Queued(temp, queued.clientId)
     }
 
-    data class Queued(val temp: Long?)
+    data class Queued(val temp: Long?, val clientId: String = "")
+
+    /** Lets a held change go now (the Undo window was closed). Only when [owner] is still the session it was made in. */
+    suspend fun release(clientId: String, owner: String): Boolean = mutex.withLock {
+        if (session != owner) return@withLock false
+        val data = _snapshot.value ?: return@withLock false
+        queue.release(accountOf(data), clientId)
+    }
+
+    /** Takes a held change back out of the queue (Undo) and puts the rows it removed back. False when it has already gone. */
+    suspend fun cancelQueued(clientId: String, restore: (AppData) -> AppData): Boolean = mutex.withLock {
+        val active = session ?: return@withLock false
+        val data = _snapshot.value ?: return@withLock false
+        val account = accountOf(data)
+        if (queue.items(account).none { it.clientId == clientId }) return@withLock false
+        queue.remove(account, clientId)
+        publish(active, restore(data))
+        syncPending()
+        true
+    }
 
     /** Sign-out: the changes that never got sent are dropped with the rest of the account's data. */
     fun signedOut() { queue.purgeAll(); _pending.value = 0 }
@@ -248,7 +268,7 @@ class DataRepository(private val api: Api, private val directory: File, private 
                 val active = session ?: return@withLock null
                 if (token() != active) return@withLock null
                 val account = accountOf(_snapshot.value ?: return@withLock null)
-                queue.items(account).firstOrNull()?.let { Triple(active, account, it) }
+                queue.items(account).firstOrNull()?.takeIf { it.at + it.holdMs <= clock.now() }?.let { Triple(active, account, it) }
             } ?: break
             val (active, account, head) = step
             val outcome: Any = try { sendQueued(head) } catch (e: CancellationException) { throw e

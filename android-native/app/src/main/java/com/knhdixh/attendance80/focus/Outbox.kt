@@ -76,18 +76,19 @@ class OutboxWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val outbox = container.focusOutbox ?: return Result.success()
         val logsDone = outbox.flush()
         val tasksDone = (container as? com.knhdixh.attendance80.DefaultAppContainer)?.let { syncPendingTasks(it) } ?: true
-        return if (logsDone && tasksDone) Result.success() else Result.retry()
+        val changesDone = container.dataRepository.flushQueue()
+        return if (logsDone && tasksDone && changesDone) Result.success() else Result.retry()
     }
 }
 
-/** Network required, exponential backoff, one queue: asking again while one is waiting changes nothing. */
+/** Network required, exponential backoff, one queue. A request made while a worker is running (past its flush loop) runs again after it, so nothing waits for the next hourly refresh. */
 class WorkOutboxScheduler(private val context: Context) : OutboxScheduler {
     override fun requestFlush() {
         val request = OneTimeWorkRequestBuilder<OutboxWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("focus-outbox", ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork("focus-outbox", ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 }
 

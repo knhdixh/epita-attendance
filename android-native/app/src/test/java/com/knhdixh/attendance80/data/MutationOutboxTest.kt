@@ -13,11 +13,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /** The outbox for tasks, projects, labels and the rest: queued offline, kept over a restart, sent once and in order, ids remapped. */
 class MutationOutboxTest {
-    private val clock = object : Clock { override fun now() = 1_000_000L; override fun zone(): ZoneId = ZoneId.of("Europe/Paris") }
+    private var nowMs = 1_000_000L
+    private val clock = object : Clock { override fun now() = nowMs; override fun zone(): ZoneId = ZoneId.of("Europe/Paris") }
     private fun fixture() = javaClass.classLoader!!.getResourceAsStream("api/data.json")!!.bufferedReader().readText()
 
     /** A tiny stand-in for the Worker: hands out ids, and gives back the same row for a repeated `client_id`. */
-    private class FakeServer(val data: String) : Dispatcher() {
+    private class FakeServer(var data: String) : Dispatcher() {
         val log: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
         val bodies: MutableList<JsonObject> = java.util.Collections.synchronizedList(mutableListOf())
         private var next = 100L
@@ -218,6 +219,74 @@ class MutationOutboxTest {
             e.token = "t"; again.start()
             assertEquals(0, again.pending.value)
             assertEquals(0, e.dir.walkTopDown().count { it.name.startsWith("outbox-") && it.isFile })
+        } finally { e.close() }
+    }
+
+    @Test fun aHeldDeleteSurvivesARestartAndIsSentOnlyAfterItsWindow() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            val victim = repo.snapshot.value!!.homework.first()
+            repo.enqueue(Mutations.deleteTask(victim.id, holdMs = 5000))
+            assertTrue("gone from the screen at once", repo.snapshot.value!!.homework.none { it.id == victim.id })
+            e.fake.log.clear()
+            assertFalse("held", repo.flushQueue()); assertTrue(e.fake.log.isEmpty())
+            val restarted = e.repo(); restarted.start()
+            assertEquals("the delete is in the outbox, not only in memory", 1, restarted.pending.value)
+            assertTrue(restarted.snapshot.value!!.homework.none { it.id == victim.id })
+            nowMs += 5001
+            assertTrue(restarted.flushQueue())
+            assertEquals(listOf("DELETE /api/homework/${victim.id}"), e.fake.log)
+        } finally { nowMs = 1_000_000L; e.close() }
+    }
+
+    @Test fun undoTakesAHeldDeleteBackAndPutsTheRowsBack() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            val rows = repo.snapshot.value!!.homework
+            val victim = rows.first()
+            val m = Mutations.deleteTask(victim.id, holdMs = 5000)
+            repo.enqueue(m)
+            assertTrue(repo.cancelQueued(m.clientId) { d -> d.copy(homework = (d.homework + victim).sortedBy { it.due_at ?: Long.MAX_VALUE }) })
+            assertEquals(rows.map { it.id }.toSet(), repo.snapshot.value!!.homework.map { it.id }.toSet())
+            assertEquals(0, repo.pending.value)
+            nowMs += 6000; e.fake.log.clear()
+            assertTrue(repo.flushQueue()); assertTrue("nothing to send", e.fake.log.isEmpty())
+            assertFalse("a sent change can't be taken back", repo.cancelQueued(m.clientId) { it })
+        } finally { nowMs = 1_000_000L; e.close() }
+    }
+
+    @Test fun anotherAccountsChangesAreDroppedAndNeverSentFromThisOne() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            e.online.set(false)
+            repo.enqueue(Mutations.create("label", body("name" to "mine")))
+            e.online.set(true)
+            e.fake.data = fixture().replace("student@epita.fr", "someone.else@example.com")
+            e.token = "another-token"
+            val other = e.repo(); other.start()
+            assertTrue(other.refresh())
+            assertEquals(0, other.pending.value)
+            e.fake.log.clear()
+            assertTrue(other.flushQueue())
+            assertTrue("the first account's label was never sent as someone else", e.fake.log.isEmpty())
+            assertTrue(other.snapshot.value!!.labels.none { it.name == "mine" })
+        } finally { e.close() }
+    }
+
+    @Test fun nothingIsSentWhileSignedOut() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            e.online.set(false)
+            repo.enqueue(Mutations.create("label", body("name" to "x")))
+            e.online.set(true); e.fake.log.clear()
+            e.token = null
+            repo.start()
+            assertTrue(repo.flushQueue())
+            assertTrue(e.fake.log.isEmpty())
         } finally { e.close() }
     }
 }
