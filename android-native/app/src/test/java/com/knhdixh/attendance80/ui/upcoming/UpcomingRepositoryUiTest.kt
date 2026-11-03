@@ -116,7 +116,7 @@ class UpcomingRepositoryUiTest {
             val canonical = data.copy(events = data.events.map { if (it.id == 99L) it.copy(status = "present", note = "Canonical") else it })
             server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), canonical)))
             assertTrue(repo.refresh())
-            assertEquals("/api/data", server.takeRequest(10, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(10, TimeUnit.SECONDS)!!.path)
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); upcoming.state.value?.data?.events?.find { it.id == 99L }?.note == "Canonical" }
             ui.onNodeWithText("Friday lecture").assertIsDisplayed()
             ui.onNodeWithText("Canonical").assertIsDisplayed()

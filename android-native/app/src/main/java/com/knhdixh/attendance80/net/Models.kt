@@ -137,6 +137,50 @@ data class HomeworkDto(
     val effort_minutes: Int? = null,
     val planned_at: Long? = null,
     val planned_minutes: Int? = null,
+    // Tasks (Phase 10). `due_date`, `due_time` and `due_at` are null for a task without a date.
+    val project_id: Long? = null,
+    val section_id: Long? = null,
+    val parent_id: Long? = null,
+    val priority: Int = 1,
+    val position: Int = 0,
+    val recurrence: String? = null,
+    val deadline_date: String? = null,
+    val completed_at: Long? = null,
+    val client_id: String? = null,
+    val labels: List<Long> = emptyList(),
+    val comment_count: Int = 0,
+    val reminders: List<TaskReminderDto> = emptyList(),
+)
+
+@Serializable
+data class TaskReminderDto(val id: Long, val at: Long? = null, val before_minutes: Int? = null)
+
+@Serializable
+data class CommentDto(val id: Long, val homework_id: Long, val body: String, val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0)
+
+@Serializable
+data class ProjectDto(
+    val id: Long, val parent_id: Long? = null, val name: String, val color: String? = null, val view: String = "list", val position: Int = 0,
+    @Serializable(with = IntBooleanSerializer::class) val favorite: Boolean = false,
+    @Serializable(with = IntBooleanSerializer::class) val archived: Boolean = false,
+    val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0,
+)
+
+@Serializable
+data class SectionDto(val id: Long, val project_id: Long, val name: String, val position: Int = 0, val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0)
+
+@Serializable
+data class LabelDto(
+    val id: Long, val name: String, val color: String? = null, val position: Int = 0,
+    @Serializable(with = IntBooleanSerializer::class) val favorite: Boolean = false,
+    val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0,
+)
+
+@Serializable
+data class FilterDto(
+    val id: Long, val name: String, val query: String, val color: String? = null, val position: Int = 0,
+    @Serializable(with = IntBooleanSerializer::class) val favorite: Boolean = false,
+    val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0,
 )
 
 @Serializable
@@ -268,6 +312,10 @@ data class AppData(
     val courses: List<CourseDto> = emptyList(),
     val events: List<EventDto> = emptyList(),
     val homework: List<HomeworkDto> = emptyList(),
+    val projects: List<ProjectDto> = emptyList(),
+    val sections: List<SectionDto> = emptyList(),
+    val labels: List<LabelDto> = emptyList(),
+    val filters: List<FilterDto> = emptyList(),
     val breaks: List<BreakDto> = emptyList(),
     val integrations: IntegrationsDto,
     val habits: HabitsDto = HabitsDto(),

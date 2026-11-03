@@ -94,7 +94,7 @@ class PaletteDispatchTest {
             repeat(100) { Thread.sleep(10); runCurrent(); if (server.requestCount >= 4) return@repeat }
             assertEquals("POST", bulk.method); assertEquals("/api/attendance/bulk", bulk.path)
             assertTrue(bulk.body.readUtf8().contains("\"present\""))
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
         } finally { storeScope.cancel(); server.shutdown(); directory.deleteRecursively(); Dispatchers.resetMain() }
     }
 }
