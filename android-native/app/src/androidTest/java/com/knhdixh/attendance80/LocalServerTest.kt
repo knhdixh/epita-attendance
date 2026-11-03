@@ -33,6 +33,13 @@ class LocalServerTest {
         }
     }
     @get:Rule val ui = createEmptyComposeRule()
+
+    /** Settings asks for the notification permission the first time it opens; the system dialog would cover the app, so it is granted up front. */
+    @org.junit.Before fun grantNotifications() {
+        if (android.os.Build.VERSION.SDK_INT >= 33)
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+                ApplicationProvider.getApplicationContext<android.content.Context>().packageName, android.Manifest.permission.POST_NOTIFICATIONS)
+    }
     private val app: App get() = ApplicationProvider.getApplicationContext()
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private fun waitText(text: String) {

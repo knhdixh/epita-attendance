@@ -107,6 +107,13 @@ fun Shell(
     focusTimer: FocusTimerState? = null,
     timerActions: com.knhdixh.attendance80.ui.focus.TimerActions? = null,
     timerNow: (() -> Long)? = null,
+    onAskNotifications: () -> Unit = {},
+    notificationsBlocked: Boolean = false,
+    onFixNotifications: () -> Unit = {},
+    sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null,
+    onSharedFileHandled: () -> Unit = {},
+    sharedText: String? = null,
+    onSharedTextHandled: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -128,6 +135,11 @@ fun Shell(
     LaunchedEffect(pendingRoute, state.session, entry != null) {
         if (pendingRoute != null && entry != null) {
             if (route != pendingRoute) navController.navigate(pendingRoute) { launchSingleTop = true }
+            // Text shared into the app fills the add-homework form the way the palette's "Add homework" does.
+            if (pendingRoute == "homework/new" && sharedText != null) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("paletteAction", ApiClient.json.encodeToString<PaletteAction>(PaletteAction.OpenForm("homework", input = sharedText)))
+                onSharedTextHandled()
+            }
             if (state.session != null) onValidatePending(pendingRoute)
         }
     }
@@ -261,7 +273,10 @@ fun Shell(
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
                                     onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) },
                                     request = (action as? PaletteAction.OpenForm)?.takeIf { it.form == "calendar" || it.form == "calendar-upload" },
-                                    onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null })
+                                    onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null },
+                                    onAskNotifications = onAskNotifications,
+                                    notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications,
+                                    sharedFile = sharedFile, onSharedFileHandled = onSharedFileHandled)
                             }
                             else if (route == "countdowns" || route.startsWith("countdowns/")) key(accountKey) {
                                 val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrDefault(com.knhdixh.attendance80.ui.countdowns.CountdownsUi())

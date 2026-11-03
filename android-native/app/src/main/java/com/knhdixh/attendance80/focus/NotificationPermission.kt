@@ -15,3 +15,10 @@ suspend fun askNotificationsOnce(context: Context, store: FocusStore, ask: () ->
     store.markNotificationsAsked()
     ask()
 }
+
+/**
+ * Whether the system will still show the permission dialog. It will before the first ask, and again after one denial
+ * (the system wants a reason); after two denials it never does, and only the system settings can turn it on.
+ */
+fun canAskNotifications(missing: Boolean, askedBefore: Boolean, shouldShowRationale: Boolean): Boolean =
+    missing && (!askedBefore || shouldShowRationale)

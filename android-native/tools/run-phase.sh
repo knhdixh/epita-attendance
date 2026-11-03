@@ -7,6 +7,7 @@
 #   MODEL=opus BUDGET=20 android-native/tools/run-phase.sh 7
 #   android-native/tools/run-phase.sh 5 --resume   # carry on the last Phase 5 session if it stopped early
 #   android-native/tools/run-phase.sh 5 --fix 4,5  # fix docs/native-android-review-4.md and -5.md on native/phase-5
+#   android-native/tools/run-phase.sh 5 --resume fix  # carry on the last fix session
 #
 # Output: android-native/build/phase-runs/phase-<n>.json (cost, session id) and .log (the run, streamed).
 set -euo pipefail
@@ -41,7 +42,9 @@ deny=(
 
 prompt="Implement Phase $phase of docs/native-android-plan.md on the branch $branch (already checked out).
 Read AGENTS.md first, then the plan's sections A, B, 0, 8 and 9 and the whole of Phase $phase, then the end of
-docs/native-android-progress.md (the last few entries only; it is long). Build from the existing code in
+docs/native-android-progress.md (the last few entries only; it is long). Earlier reviews defer items to later
+phases: grep docs/native-android-review-*.md for 'Phase $phase' and do every item deferred to this phase too (list them
+in the log and say which you did). Build from the existing code in
 android-native/; match its patterns (ShellViewModel actions, DataRepository.mutate, Roborazzi screenshot tests).
 Work in small steps and commit after each numbered task (subject 'Android: …', no server and Android changes in one
 commit). Keep Gradle in the foreground and only print its tail; read test XML for failures.
@@ -59,6 +62,7 @@ BUILD SUCCESSFUL with 0 test failures, npm test passed, and a Phase $phase entry
 committed (git log shows it). Or: the agent wrote in the log that it is blocked and why."
 
 log="phase-$phase"
+[[ "$mode" == "--resume" && "${3:-}" == "fix" ]] && log="phase-$phase-fix"
 if [[ "$mode" == "--fix" ]]; then
   log="phase-$phase-fix"
   files=""; for r in ${reviews//,/ }; do files+=" docs/native-android-review-$r.md"; done

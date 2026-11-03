@@ -967,3 +967,85 @@ Deferred items in the review are unchanged (updatePeriodMillis, overrun countdow
 
 - Finding 3's test: `WidgetPlanWriterTest.coldStartWithSavedTokenNeverWritesSignedOut` now starts `onSnapshot(null)` with `CoroutineStart.UNDISPATCHED` and asserts it is still waiting and nothing is written before `tokens.load()` (`2c76cea`, by Claude). Checked by hand: with `currentToken()` in place of `awaitToken()` in `WidgetPlanWriter`, the test fails ("waits for the token store"); restored, 3/3 pass.
 - Final full run: `CourseRepositoryUiTest.trackedControlRollsBackAndPersists` (Phase 4) failed once with "Add link" only in the unmerged tree, mid-settle after a save and refresh. The test now waits until the button is a single clickable node before clicking; assertions unchanged (`10cb072`, by Claude). It passed 3 runs alone.
+
+## Phase 7: native extras (2026-11-03)
+
+Branch `native/phase-7`. Server untouched (no server commit; the device switches are stored on the device).
+
+### What I did
+
+All code is in `notify/` and `share/`. One planner (`planReminders`, pure: data + switches + time + zone → list of `Reminder`), one engine (`ReminderEngine`), one receiver, one sender.
+
+- **Shared plumbing, in the first commit.**
+  - `Reminders.kt`: `Reminder`, `NotifyChoices`, `planReminders`. Today's and tomorrow's only (the horizon is the start of the day after tomorrow in the device zone). A reminder that is late goes for up to 3 h (5 min for classes, as `LATE` in `src/notify.js`).
+  - `ReminderEngine`: on every run it posts what is due and not yet posted, then sets **one inexact alarm** (`setAndAllowWhileIdle`) for the next reminder, or the next midnight so the plan looks a day further. Run when the snapshot or a switch changes (`AppContainer.startData`), when the alarm fires, after boot, update, time or time-zone change, and after the notification permission is granted. Posted reminders are remembered by `<account>|<key>` for 3 days, so running twice never posts twice. While the notification permission is missing, nothing is posted and nothing is marked posted. Sign-out cancels the alarm and the app's reminders in the shade.
+  - `NotifyStore` (DataStore `notify`, excluded from backup like `auth_prefs`): the three device switches, the posted-keys log, and the **action queue**.
+  - Notification buttons go to `NotifyReceiver` (not exported), which writes a `PendingAction` to the queue and asks WorkManager (`reminder-actions`, network required, exponential backoff) to run `ActionSender`. It sends in order, for the signed-in account only, drops an item on a 4xx, keeps it on a 5xx or no network, drops another account's items, refreshes the snapshot after a send.
+- **1. Check-in after class (`c03b835`).** "Were you at <course>?" at `end_at` for a tracked course that counts attendance and is unmarked, with Present / Absent / Excused → `PATCH /api/attendance/{id}`. Absent also posts "Marked absent: <course>" with **Add catch-up** → `POST /api/catchups` (not offered if a catch-up exists). Switch in Settings → Notifications (device, on by default).
+- **2. Homework reminders (`1ac44e3`).** `reminderMinutes` ported; `reminderAt` gives the time. Buttons Done (`PATCH /api/homework/{id}` `{done:true}` through the queue) and **Focus on this** (`FocusController.focusOn`, not a server change). Default off while Google Calendar sync is connected (`NotifyChoices.homework == null` means "undecided", on only without gcal); turning it on or off is remembered.
+- **3 and 4. `.ics` and share (`87d1027`, one commit: they share `readIncoming`, the view-model state and `MainActivity.handleIntent`).**
+  - Manifest: VIEW for `text/calendar` and for names ending `.ics` (content and file schemes), SEND for `text/calendar` and `text/plain`.
+  - `.ics` → Settings → Calendars with the add box open and "<name> is ready to add." with **Add this file** / **Not this one**. Nothing is uploaded until asked. Uses the existing `uploadFile`, so the same-name replace rule and the 5 MB limit apply; an unreadable or oversize file shows the error as a snackbar.
+  - Shared text → Add homework: first line is the title (200 chars; overflow goes to the notes), the rest the notes (4000), through the palette's `OpenForm` mechanism. A one-line palette query still becomes the title only.
+  - If not signed in, the share waits in the view model (text survives process death; the file is kept in memory only).
+- **5. Exam and mandatory warning (`980d31f`).** 08:00 local on a day with an `exam` or `mandatory` session (session tag, else course tag) of a tracked, attendance-counting course, not excused. One notification a day listing them in time order.
+- **6. Class reminders (`d9c73bd`).** The server's `collectDue` rule with the account's `classes` and `classLead` (tracked courses, status unmarked or present). "in N min" is counted from when it is posted.
+- **7. Habit reminders (`8706507`).** At `remind_at`, today and tomorrow, only if `habitStats` says due and not done that day (the account's `habits` switch). **Done** → `PUT /api/habits/{id}/log` with the day and `target` through the queue.
+- **Settings and tests (`5dc651b`, `3f4c820`).** Notifications panel has three new device switches (after class, homework, exam) and a hint saying which are the account's (shared with the website) and which are this device's. The Settings screenshots (22 PNGs) were re-recorded because that panel is longer: no test code changed in that commit, and `git status` showed only Settings images.
+- `5dc651b` was committed while one of its new tests failed (it opened two DataStores on one file; my test bug). I noticed from the Gradle output right after, fixed the test and amended the commit before moving on. Nothing was pushed.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass, 0 fail.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: **BUILD SUCCESSFUL**. 984 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Phase 6 ended at 904, so Phase 7 added 80. Roborazzi verified, `git status` clean afterwards.
+- First full run (before re-recording): 22 failures, all `*SettingsScreenshotTest` and `*ShellScreenshotTest.*_settings`, from the longer Notifications panel (see above). Nothing else failed.
+- `ANDROID_HOME=… tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
+- Tests added: planner and engine (`CheckInTest`), homework (`HomeworkReminderTest`, including all-day items across both Paris clock changes), `ExamWarningTest`, `ClassReminderTest`, `HabitReminderTest`, `ActionSenderHabitTest` (MockWebServer), `NotifyStoreTest`, `AndroidReminderNotifierTest` (Robolectric, posted notification, buttons and their extras), `IncomingTest`, `ShareIntentFiltersTest` (manifest resolution), `SharedHomeworkUiTest`, `SharedIntoShellTest` (real `Shell`), and two Settings UI tests.
+
+### Deviations
+
+- **Tasks 3 and 4 are one commit** (shared plumbing; see above).
+- **Device switches are stored on the device, not in `notify_settings`.** The plan says Settings → Notifications edits `notify_settings` (8.5), which only has `classes`, `classLead`, `habits`, `focus`, `tz`. Adding fields would be a server change in Phase 7, and the three extras are device things (a second phone may not want them), so only the web's four switches use the server. Class and habit reminders (6, 7) follow the account's switches, as 8.4 says.
+- **All-day homework reminders use 18:00 on the calendar, not 1080 real minutes before midnight.** Same result except in the week the clocks change, where counting minutes would give 17:00 or 19:00. Timed items count real minutes before the due time, as the web and Google do. `reminderMinutes` is ported as well and tested against the web's values.
+- **The action queue is its own small queue (`NotifyStore`), not the Phase 11 outbox.** 8.4 says habit Done goes "through the outbox"; the focus `Outbox` is focus-only until Phase 11, so I made the same pattern (queue on the device, WorkManager, drop on 4xx) for notification buttons. Phase 11 should fold it in.
+- The notification buttons do not update the in-app snapshot until the worker has sent them and refreshed (a few seconds with a network).
+- Check-in is also asked for sessions tagged optional (it only skips untracked and no-attendance courses).
+- The class-reminder switch hint was reworded: it said "this app will post them itself in a coming update".
+
+### Unverified (needs a real device)
+
+- The notifications actually appearing: the channel, the inexact alarm firing near the time (Doze timing is up to the system), the buttons working from a locked screen or a cold process, and the permission prompt appearing when a switch is turned on.
+- Reminders after a reboot, an update and a time-zone change (the receiver is registered; only the logic is tested).
+- Opening a real `.ics` from a file manager, Gmail, Drive or Zeus, and sharing text from Chrome or Keep (the manifest resolution and the parsing are tested, not the third-party apps' intents, e.g. content URIs without a display name or with a generic MIME type).
+- "Focus on this" starting the timer from a notification, with the app closed.
+- The Add catch-up follow-up notification replacing the check-in one.
+
+### Open questions
+
+- Should the three device switches move into `notify_settings` (a server change, a migration-free JSON field) so a second device agrees? I left them local.
+- Optional sessions: skip the check-in for them?
+
+## Review 7 fixes (2026-11-03)
+
+Branch `native/phase-7`. No server, migration, secret or `android/` change.
+
+1. **Cold-process buttons (`497ad58`).** `ReminderActions` now takes a suspending snapshot provider. The container's one waits for the token, returns null if signed out, calls `dataRepository.start()` (publishes the cache), then reads the snapshot. So both Absent → catch-up and Focus on this see the data in a fresh process. "Focus on this" looks the homework up in that snapshot, keeps the owner check, and the container applies the loaded focus settings and account (`updateSettings`, `setAccount`) before `focusOn`. The owner check in `offerCatchup` stays. Tests: `focusOnThisWaitsForTheSnapshotAndStartsWithTheAccountsLength` (50 min from a snapshot that loads late; the snapshot is null until a deferred completes), `absentWaitsForTheSnapshotThenOffersTheCatchup`, `focusOnThisIgnoresAnotherAccountsHomework`. Reading `snapshot.value` instead would make the two waiting tests fail, since the provider is the only thing that waits. I did not run that swap by hand.
+2. **Notification permission (`95c7543`).** Settings → Notifications shows a row (`notify-blocked`) with an **Allow** button when the system blocks the app's notifications and any reminder switch is on. The button (`MainActivity.fixNotifications`) asks if the system still will (`canAskNotifications`: before the first ask, or after one denial), otherwise opens `ACTION_APP_NOTIFICATION_SETTINGS`; it is not limited to once. `onResume` and the permission callback recompute the blocked state and re-run the engine (only with a loaded snapshot, so a not-yet-loaded `null` can't cancel the alarm). Turning Classes or Habits on asks, like the device switches. **First in-context ask, chosen:** the first time the Notifications panel is shown while blocked (once, via `askNotificationsOnce`). Tests: three Settings UI tests (blocked row and tap, no row when allowed, Classes on asks / Habits off doesn't) and `CanAskNotificationsTest`.
+3. **Class reminders (`42a924f`).** The alarm is now `setExactAndAllowWhileIdle` (wakeup). Why exact: the app already holds `USE_EXACT_ALARM` for the focus timer, reminders for calendar events are what it is for, and `setWindow` is not exempt from Doze, so it can't bound the delay while idle (the review's suggestion assumed it was). If exact alarms are revoked (Android 12), it falls back to a 10 min `setWindow`. The midnight re-plan is kept. A class reminder is now accepted until the session starts (at least 5 min after its time, so lead 0 keeps "starts now"): new `Reminder.until`. `ClassReminderTest` changed to the new rule (08:56 → "in 4 min"; 09:01 dropped) plus a lead-0 grace test. New `AndroidReminderAlarmTest` (Robolectric): wakeup at the planned time, exact; the fallback has a 10 min window; replace and cancel. The shadow doesn't record "while idle" for the exact call, so that part is **Unverified** by test.
+4. **`.ics` off the main thread (`17fa31a`).** `readsAProvider(intent)` decides from action and URIs without a provider call. For those intents `MainActivity.handleIntent` reads in `lifecycleScope` on `Dispatchers.IO`, then delivers to `PendingRouteViewModel` on the main thread; nothing new shows meanwhile. Plain shared text stays synchronous. 5 MB limit and messages unchanged; `IncomingTest` still tests `readIncoming`, plus a test for `readsAProvider`.
+- **Test setup (`62ec20e`).** `LocalServerTest` grants `POST_NOTIFICATIONS` up front: the new first ask opens a system dialog when Settings opens, which covered the app (first e2e run: both tests failed with "No compose hierarchies"). No assertion changed.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass.
+- `ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL, 998 unit tests, 0 failures, 0 errors, 0 skipped (result XML); Roborazzi verified with no PNG changed (`git status` clean). It ran before `62ec20e`, which only touches the androidTest source (rebuilt by the e2e run).
+- `tools/e2e.sh`: first run failed 0/2 (dialog above); after `62ec20e`: BUILD SUCCESSFUL, 2/2. One earlier e2e attempt hit the tool's time limit and was killed, then re-run.
+- An `OfflineShellTest` failure appeared once in a partial run under load and passed alone and in the full run.
+
+### Unverified (device, Phase 9 checklist additions from the review)
+
+- Focus on this and Absent → Add catch-up after the process was killed.
+- A fresh install on Android 13+ (the prompt, the Allow row, the system-settings path after two denials).
+- A class reminder after a night in Doze (exact alarm).
+- Opening an `.ics` Drive has not downloaded.
+- Deferred, still open: TWA `app = 1` push subscriptions (Phase 9, server), engine `run(null)` and `NonCancellable`, stale-cache check-ins, the `file` scheme, outbox folding (Phase 11).
