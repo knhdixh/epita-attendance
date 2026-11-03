@@ -107,7 +107,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        val data = intent?.data ?: return
+        if (intent == null) return
+        // A calendar file or shared text from another app: Settings → Calendars, or Add homework.
+        when (val incoming = com.knhdixh.attendance80.share.readIncoming(intent, contentResolver)) {
+            is com.knhdixh.attendance80.share.Incoming.CalendarFile -> { pendingRouteViewModel.shareFile(incoming); return }
+            is com.knhdixh.attendance80.share.Incoming.SharedText -> { pendingRouteViewModel.shareText(incoming.text); return }
+            null -> Unit
+        }
+        val data = intent.data ?: return
         if (data.scheme == "a80") pendingRouteViewModel.accept(data.toString())
         if (data.scheme == "com.knhdixh.attendance80") {
             if (data.path == "/gcal") {
@@ -133,6 +140,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
         key(token) {
             val state by shellViewModel.state.collectAsStateWithLifecycle()
             val pendingRoute by pendingRouteViewModel.pending.collectAsStateWithLifecycle()
+            val sharedFile by pendingRouteViewModel.sharedFile.collectAsStateWithLifecycle()
+            val sharedText by pendingRouteViewModel.sharedText.collectAsStateWithLifecycle()
             val recents by shellViewModel.recents.collectAsStateWithLifecycle()
             val pendingDelete by shellViewModel.pendingHomeworkDelete.collectAsStateWithLifecycle()
             val now by produceState(initialValue = shellViewModel.clock.now()) {
@@ -169,6 +178,8 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 focusTimer = focusTimer,
                 timerNow = { shellViewModel.clock.now() },
                 onAskNotifications = onAskNotifications,
+                sharedFile = sharedFile, onSharedFileHandled = pendingRouteViewModel::fileHandled,
+                sharedText = sharedText, onSharedTextHandled = pendingRouteViewModel::textHandled,
                 timerActions = androidx.compose.runtime.remember(token, onAskNotifications) { shellViewModel.timerActions?.let { com.knhdixh.attendance80.focus.AskingActions(it, onAskNotifications) } })
         }
     }

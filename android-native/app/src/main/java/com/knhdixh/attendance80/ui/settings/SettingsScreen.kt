@@ -94,7 +94,8 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
                    actions: SettingsActions, onSignOut: () -> Unit, onNavigate: (String) -> Unit,
                    baseUrl: String = BuildConfig.BASE_URL,
                    request: com.knhdixh.attendance80.ui.search.PaletteAction.OpenForm? = null, onRequestConsumed: () -> Unit = {},
-                   onAskNotifications: () -> Unit = {}) {
+                   onAskNotifications: () -> Unit = {},
+                   sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null, onSharedFileHandled: () -> Unit = {}) {
     if (data == null) { Box(Modifier.fillMaxSize().padding(16.dp)) { CircularProgressIndicator() }; return }
     val context = LocalContext.current
     val coroutines = rememberCoroutineScope()
@@ -145,6 +146,13 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
             }
         }
     }
+    // A calendar another app opened or shared: the add box opens with the file already chosen, and nothing is uploaded until "Add this file".
+    LaunchedEffect(sharedFile) {
+        if (sharedFile == null) return@LaunchedEffect
+        if (sharedFile.text == null) { actions.message(sharedFile.error ?: "Could not read that file."); onSharedFileHandled(); return@LaunchedEffect }
+        adding = true
+        listState.scrollToItem(4 + data.calendars.size)
+    }
     LazyColumn(Modifier.fillMaxSize().imePadding().testTag("settings-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item("account") { AccountPanel(data.user, onSignOut) }
         item("rules") { RulesPanel(data.user, busy) { t, u -> run { actions.saveRules(t, u) } } }
@@ -160,7 +168,10 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
             onSync = { run { actions.syncCalendar(it) } }, onReplace = { pickFile(it) },
             onRemove = { c, text -> confirm = Confirm(text, "Remove") { actions.removeCalendar(c.id) } },
             onAddLink = { url, name, from -> run { if (actions.addLink(url, name, from)) adding = false } },
-            onPick = { pickFile() }, onOpen = { open(baseUrl + it) }, focusLink = focusLink)
+            onPick = { pickFile() }, onOpen = { open(baseUrl + it) }, focusLink = focusLink,
+            sharedFile = sharedFile?.takeIf { it.text != null },
+            onAddShared = { f -> run { if (actions.uploadFile(f.text.orEmpty(), f.name, null)) { adding = false; onSharedFileHandled() } } },
+            onDropShared = onSharedFileHandled)
         item("signin") {
             SignInPanel(data.account, data.user, now, zone, busy,
                 onAdd = { context.activity()?.let { a -> run { actions.addPasskey(a) } } },
@@ -314,6 +325,7 @@ private fun LazyListScope.calendarsPanel(
     onEdit: (Long?) -> Unit, onAdding: (Boolean) -> Unit, onSave: (Long, String, Boolean, String?) -> Unit,
     onSync: (Long) -> Unit, onReplace: (Long) -> Unit, onRemove: (CalendarDto, String) -> Unit,
     onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit, focusLink: Int = 0,
+    sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null, onAddShared: (com.knhdixh.attendance80.share.Incoming.CalendarFile) -> Unit = {}, onDropShared: () -> Unit = {},
 ) {
     val list = data.calendars
     item("calendars-heading") {
@@ -336,7 +348,8 @@ private fun LazyListScope.calendarsPanel(
     }
     item("calendar-add") {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (adding || list.isEmpty()) AddBox(busy, cancel = list.isNotEmpty(), onCancel = { onAdding(false) }, onAddLink = onAddLink, onPick = onPick, onOpen = onOpen, focusRequest = focusLink)
+            if (adding || list.isEmpty()) AddBox(busy, cancel = list.isNotEmpty(), onCancel = { onAdding(false) }, onAddLink = onAddLink, onPick = onPick, onOpen = onOpen, focusRequest = focusLink,
+                sharedFile = sharedFile, onAddShared = onAddShared, onDropShared = onDropShared)
             else TextButton(onClick = { onAdding(true) }, modifier = Modifier.testTag("calendar-add-open")) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(6.dp)); Text("Add calendar") }
             Hint("A session in several calendars (like a lecture for every group) is stored and counted once, and labelled with each calendar's name. Use Count at the top to count only some of them.")
             SyncLog(data.calendarSyncs, list, zone)
@@ -399,7 +412,8 @@ private fun CalendarEdit(c: CalendarDto, busy: Boolean, onCancel: () -> Unit, on
 }
 
 @Composable
-private fun AddBox(busy: Boolean, cancel: Boolean, onCancel: () -> Unit, onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit, focusRequest: Int = 0) {
+private fun AddBox(busy: Boolean, cancel: Boolean, onCancel: () -> Unit, onAddLink: (String, String, String?) -> Unit, onPick: () -> Unit, onOpen: (String) -> Unit, focusRequest: Int = 0,
+                   sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null, onAddShared: (com.knhdixh.attendance80.share.Incoming.CalendarFile) -> Unit = {}, onDropShared: () -> Unit = {}) {
     val linkFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     LaunchedEffect(focusRequest) { if (focusRequest > 0) runCatching { linkFocus.requestFocus() } }
     var url by rememberSaveable { mutableStateOf("") }
@@ -418,7 +432,14 @@ private fun AddBox(busy: Boolean, cancel: Boolean, onCancel: () -> Unit, onAddLi
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Upload, null); Spacer(Modifier.width(6.dp)); Text("From a file", fontWeight = FontWeight.Bold); Spacer(Modifier.width(6.dp)); Hint(".ics") }
-        OutlinedButton(enabled = !busy, onClick = onPick, modifier = Modifier.testTag("calendar-file-pick")) { Text("Choose a file") }
+        if (sharedFile != null) {
+            Text("${sharedFile.name} is ready to add.", modifier = Modifier.testTag("calendar-shared-name"))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(enabled = !busy, onClick = { onAddShared(sharedFile) }, modifier = Modifier.testTag("calendar-shared-add")) { Text(if (busy) "Adding…" else "Add this file") }
+                OutlinedButton(enabled = !busy, onClick = onDropShared, modifier = Modifier.testTag("calendar-shared-drop")) { Text("Not this one") }
+            }
+        }
+        OutlinedButton(enabled = !busy, onClick = onPick, modifier = Modifier.testTag("calendar-file-pick")) { Text(if (sharedFile != null) "Choose a different file" else "Choose a file") }
         Hint("Upload it again when the school publishes changes: your marks are kept.")
         TextButton(onClick = { onOpen("/ics-guide") }) { Text("Export it from Zeus") }
         if (cancel) TextButton(onClick = onCancel) { Text("Cancel") }

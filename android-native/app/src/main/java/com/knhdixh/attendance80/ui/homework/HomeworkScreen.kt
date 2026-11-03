@@ -177,12 +177,14 @@ fun HomeworkForm(data: AppData?, id: Long?, now: Long, zone: ZoneId, initialInpu
     val original = id?.let { wanted -> data.homework.find { it.id == wanted } }
     if (id != null && original == null) { Column(Modifier.padding(16.dp)) { Text("Homework not found."); TextButton(onClick = onBack) { Text("Back") } }; return }
     val draft = remember(id) { storedDraft?.let { runCatching { ApiClient.json.decodeFromString<HomeworkDraft>(it) }.getOrNull() } }
-    var title by remember(id) { mutableStateOf(draft?.title ?: original?.title ?: initialInput) }
+    // Shared text is its first line (the title) and the rest (the notes); typed text from the palette is one line, so it stays the title.
+    val (initialTitle, initialNotes) = remember(initialInput) { com.knhdixh.attendance80.share.splitSharedText(initialInput) }
+    var title by remember(id) { mutableStateOf(draft?.title ?: original?.title ?: initialTitle) }
     var draftTouched by remember(id) { mutableStateOf(draft?.touched ?: (original != null || initialInput.isNotEmpty())) }
+    var notes by remember(id) { mutableStateOf(draft?.notes ?: original?.notes ?: initialNotes) }
     LaunchedEffect(initialInput) {
-        if (id == null && !draftTouched && title.isEmpty() && initialInput.isNotEmpty()) { title = initialInput; draftTouched = true }
+        if (id == null && !draftTouched && title.isEmpty() && initialInput.isNotEmpty()) { title = initialTitle; notes = initialNotes; draftTouched = true }
     }
-    var notes by remember(id) { mutableStateOf(draft?.notes ?: original?.notes.orEmpty()) }
     var course by remember(id) { mutableStateOf(if (draft != null) draft.course else original?.course_id ?: lastCourse.takeIf { id == null }) }
     var date by remember(id) { mutableStateOf(draft?.date ?: original?.due_date ?: Instant.ofEpochMilli(now + 86_400_000).atZone(zone).toLocalDate().toString()) }
     var time by remember(id) { mutableStateOf(draft?.time ?: original?.due_time.orEmpty()) }

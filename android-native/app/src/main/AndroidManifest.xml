@@ -41,6 +41,41 @@
                 <data android:scheme="a80" android:host="course" />
             </intent-filter>
 
+            <!-- A calendar file opened from a file manager, a mail attachment or a download: Settings → Calendars with the file ready to add. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/calendar" />
+            </intent-filter>
+            <!-- The same by file name, for apps that send an .ics with a generic type. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ics" />
+                <data android:pathPattern=".*\\..*\\.ics" />
+                <data android:pathPattern=".*\\..*\\..*\\.ics" />
+            </intent-filter>
+            <!-- Share a calendar file to the app. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/calendar" />
+            </intent-filter>
+            <!-- Share text to the app: it opens Add homework, the first line as the title and the rest as notes. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
             <!-- Auth callback: com.knhdixh.attendance80:/auth -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
