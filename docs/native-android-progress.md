@@ -1298,3 +1298,51 @@ list (reviews 4, 5 and 7 defer only to Phases 11 and 13, plus Phase 8). **Done: 
 ### Still deferred
 
 Everything in the Phase 9 "Still deferred" list, and the Phase 11/13 items from reviews 4, 5 and 7.
+
+## Review 10 fixes (branch `native/phase-10`)
+
+Commit subjects start with `Android:` as the task asked, though findings 2 to 4 and 6 touch only server or `public/` code.
+
+1. **e2e `a_signInAndLiveShell` after about 22:00** (`48f138d`). Cause found, reproduced at 22:14 to 22:33 and fixed. It was
+   not the app's clock and not a time-zone mix-up (the zone is Europe/Paris on both sides). `tools/seed-local.mjs` seeds
+   "GR1 - E2E Algorithms" two hours after *now*; after 22:00 that lands in **tomorrow's** column (00:27 to 01:27 in my run).
+   The test taps tomorrow's column at 8% of its height, about 01:55, which in the 3-day view opened that session's sheet
+   instead of planning the to-do, so `planned_at` never changed and the wait timed out. (I read this from the semantics tree
+   printed 3 s after the tap: the "Tap a time to plan" banner was still up and `calendar-sheet` showed the GR1 session.)
+   Fix: tap at 20% of the column height (about 05:00; the seeded sessions can reach 03:00 at most). The assertions are
+   unchanged. No app bug found, so no unit test at 23:30. **Unverified:** why a tap 28 minutes below the session block counted
+   as a hit on it (the block's bounds ended at y=1280, the tap was at about y=1336); I did not dig into it.
+   Passing run: `tools/e2e.sh` at 22:40 (see below).
+2. **Quick add and multi-word names** (`9d82f3a`). `parseQuickAdd(text, { today, projects, sections, labels })`, with the
+   arrays being existing names. After `#`, `/` or `@` the longest existing name that matches ignoring case and ends at a word
+   boundary wins, the value is the existing name (its own casing), the whole name is in `ranges`, and with no match it falls
+   back to one word as before. 2 new table tests (18 cases): multi-word project, section and label, the `#School` vs
+   `#School admin` clash (and `#School administration` taking the shorter one), unknown name, quoted names, nothing in the title.
+3. **`PATCH done` = `/complete`** (`cd94db1`). In `updateHomework`, a `done` that changes (or `done: false` on a repeating task,
+   which is an Undo) saves the other fields first, then calls `completeTask` or `uncompleteTask`. Test: a parent with two
+   subtasks completed by `PATCH` completes all three with `completed_at`; undo; `title` plus `done` together; a repeating task
+   moves on by `PATCH done: true` and `done: false` puts the date back (a second one changes nothing).
+4. **Undated task and time zone** (`ab5c27f`). Choice: giving an undated task a date uses the body's `tz`, else the `tz` it was
+   created with (kept as before), else the user's saved `notify_settings.tz`, else 400 "Send your time zone (tz) when you give an
+   undated task a date." Since `'UTC'` is also what an undated task without `tz` is stored with, a stored `'UTC'` counts as "none".
+   So a user who really is UTC and sent no `tz` gets the 400 once. Test: undated with `Europe/Paris`, PATCH a date and time
+   without `tz`, `due_at` is 09:00 Paris; body `tz` wins; no `tz` anywhere gives the 400; the saved Helsinki zone is used.
+5. **Plan section 4** (`56166a9`). Endpoints, bodies, `client_id` rule, `/api/data?tasks=1` (and the new lists), the `NO_DATE`
+   contract, placement semantics for `PATCH` and `move`, complete and uncomplete, token scope. Edit to the plan's section 4 only.
+6. **`until` and `starting` with month and year** (`5eae014`). Done: `dec 2026` is the last day of that month for `until`, the
+   first for `starting` (leap February tested). Formatted back as `until 31 dec 2026`. Works through quick add too.
+
+### Commands and results
+
+- `npm test` (before the checks below, on the last code commit): tests 469, pass 469, fail 0 (459 after finding 4, 455 before this review).
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`:
+  BUILD SUCCESSFUL (most tasks up to date, since only an androidTest file changed). To get real numbers I ran
+  `./gradlew testProdDebugUnitTest --rerun verifyRoborazziProdDebug --rerun --no-daemon`: BUILD SUCCESSFUL, 1071 tests, 0 failures,
+  0 errors, 0 skipped; Roborazzi verify passed, no PNG changed.
+- `tools/e2e.sh` (full, at 22:40 local, the hour it used to fail): BUILD SUCCESSFUL, 5 tests, 0 failures; "Both local-server
+  instrumented tests passed." Before the fix it failed at 22:14 (and the same two tests failed at 22:20 with my diagnostics added).
+
+### Unverified
+
+- The reason a tap below the seeded session still opened it (finding 1, above).
+- The website in a browser; Migration `0020` on the real D1 (unchanged from the Phase 10 entry).
