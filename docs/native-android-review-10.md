@@ -74,3 +74,23 @@ stable and sensible. Four things need fixing before Phase 11 builds on this.
 
 After this merges, `0020_tasks.sql` must be applied to prod before or with the deploy (`npm run deploy` does both).
 It's additive, so the website keeps working with the new columns and ignores them.
+
+---
+
+# Re-review round 1 (2026-11-03): PASS
+
+Checked `14bc632..c429a36`: `npm test` 469/469 (re-run by me), multi-word quick add probed
+(`#School admin /Week 1 @deep work` with known names → all three matched, the title is clean), and the diffs for 3 and 4 were read.
+
+1. Fixed. The cause is plausible and logged: the seeded session lands in tomorrow's column after 22:00, and the tap moved to 20%.
+   The open question of why a tap 28 minutes below a block hit it is probably the 48 dp minimum touch target. It goes to Phase 12
+   (Calendar drag and drop) and isn't blocking.
+2. Fixed. 3. Fixed. 4. Fixed (the fallback order is logged). 5. Fixed. 6. Fixed.
+
+**Deferred to Phase 11 (blocking there):** completing a repeating task isn't idempotent. A repeating task is never `done`, so a
+retried `PATCH {done: true}` or `POST /complete` (outbox retry, a notification's Done button pressed twice, a lost response)
+moves it on **twice**. Phase 11's outbox will retry. Fix it on the server in Phase 11, in its own `Server:` commit:
+- `/complete` and `PATCH done: true` take an optional `occurrence` (the `due_date` the client saw). When it's given and no longer
+  equals the stored `due_date`, do nothing and return the row.
+- Send it from the outbox and from `ActionSender`'s "homework-done".
+- Test: the same request twice moves the task on once.
