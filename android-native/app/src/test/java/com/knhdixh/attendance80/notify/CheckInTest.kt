@@ -5,6 +5,7 @@ import com.knhdixh.attendance80.net.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -127,6 +128,18 @@ class CheckInTest {
         actions().handle("catchup", 10, null, null, "me@example.com", offer.key)
         assertEquals(listOf("attendance", "catchup"), store.pendingActions().map { it.type })
         assertEquals("Europe/Paris", store.pendingActions().last().tz)
+    }
+
+    /** The first tap in a cold process: the snapshot is null until the cache has loaded. */
+    @Test fun absentWaitsForTheSnapshotThenOffersTheCatchup() = runBlocking {
+        val loading = kotlinx.coroutines.CompletableDeferred<com.knhdixh.attendance80.net.AppData>()
+        val a = ReminderActions(testClock(at("2026-11-02T10:05:00")), store, notifier, { flushes += Unit }, { loading.await() })
+        val tap = launch(kotlinx.coroutines.Dispatchers.Default) { a.handle("checkin", 10, "absent", null, "me@example.com", "k10") }
+        kotlinx.coroutines.delay(100)
+        assertTrue(notifier.posted.isEmpty())
+        loading.complete(data)
+        tap.join()
+        assertEquals("Marked absent: Mathématiques", notifier.posted.single().first.title)
     }
 
     @Test fun noCatchupIsOfferedWhenOneExists() = runBlocking {

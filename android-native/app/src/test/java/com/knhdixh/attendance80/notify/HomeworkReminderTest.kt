@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*
@@ -121,12 +122,18 @@ class HomeworkReminderTest {
     private val scope = CoroutineScope(Dispatchers.IO)
     @After fun tearDown() { scope.cancel(); dir.deleteRecursively() }
 
+    private fun focusData(): com.knhdixh.attendance80.net.AppData {
+        val d = data(homework(1, "Essay", "2026-11-03", "10:00", remind = 60))
+        return d.copy(focus = d.focus.copy(settings = d.focus.settings.copy(focus = 50)))
+    }
+
     @Test fun doneIsQueuedAndFocusOnThisStartsTheTimer() = runBlocking {
         val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
         val notifier = FakeNotifier()
         val focused = mutableListOf<Long>()
         var flushed = 0
-        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, notifier, { flushed++ }, { null }, { focused += it })
+        val loaded = focusData()
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, notifier, { flushed++ }, { loaded }, { t, _ -> focused += t.homework_id!! })
         actions.handle("homework-done", 1, null, null, "me@example.com", "k1")
         assertEquals(listOf("homework-done"), store.pendingActions().map { it.type })
         assertEquals(1, flushed)
@@ -134,5 +141,27 @@ class HomeworkReminderTest {
         assertEquals(listOf(1L), focused)
         assertEquals(1, store.pendingActions().size) // focus is not a server change
         assertEquals(listOf("k1", "k1"), notifier.cancelled)
+    }
+
+    /** A tap can start a cold process: the snapshot is null until the cache has loaded, and the button must wait for it. */
+    @Test fun focusOnThisWaitsForTheSnapshotAndStartsWithTheAccountsLength() = runBlocking {
+        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
+        val loading = kotlinx.coroutines.CompletableDeferred<com.knhdixh.attendance80.net.AppData>()
+        val started = mutableListOf<Pair<com.knhdixh.attendance80.logic.FocusTarget, Int>>()
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, FakeNotifier(), {}, { loading.await() }, { t, d -> started += t to d.focus.settings.focus })
+        val tap = scope.launch { actions.handle("homework-focus", 1, null, null, "me@example.com", "k1") }
+        kotlinx.coroutines.delay(100)
+        assertTrue(started.isEmpty()) // still waiting, not dropped
+        loading.complete(focusData())
+        tap.join()
+        assertEquals(listOf(com.knhdixh.attendance80.logic.FocusTarget(homework_id = 1, course_id = null, label = "Essay") to 50), started)
+    }
+
+    @Test fun focusOnThisIgnoresAnotherAccountsHomework() = runBlocking {
+        val store = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
+        val started = mutableListOf<Long>()
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), store, FakeNotifier(), {}, { focusData() }, { t, _ -> started += t.homework_id!! })
+        actions.handle("homework-focus", 1, null, null, "someone@else.com", "k1")
+        assertTrue(started.isEmpty())
     }
 }
