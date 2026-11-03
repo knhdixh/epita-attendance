@@ -492,7 +492,7 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | PATCH | `/api/homework/{id}` | partial input → task row. A change of `done` goes through complete / uncomplete (below) |
 | DELETE | `/api/homework/{id}` | → `{ ok }` (subtasks, labels, comments, reminders and completions go with it) |
 | POST | `/api/homework/move` | `{ ids, project_id?, section_id?, parent_id?, position? }` → `{ homework: [task rows] }` |
-| POST | `/api/homework/{id}/complete` | → task row |
+| POST | `/api/homework/{id}/complete` | optional `{ occurrence }` (the `due_date` the client saw) → task row. For a repeating task whose date has since moved, nothing happens and the row comes back (so a retry moves it on once). `PATCH { done: true, occurrence }` is guarded the same way |
 | POST | `/api/homework/{id}/uncomplete` | → task row |
 | GET | `/api/homework/{id}/comments` | → `{ comments }` |
 | POST | `/api/homework/{id}/comments` | `{ body, client_id? }` → comment `{ id, homework_id, body, client_id, created_at, updated_at }` |

@@ -149,9 +149,9 @@ export async function updateHomework(env, user, id, body, appUrl) {
   // (subtasks follow, repeats move on, completions are kept). The other fields in the body are saved first.
   // done: false on a repeating task that isn't done is an Undo of the last "done" too.
   if (body.done !== undefined && (Boolean(body.done) !== Boolean(current.done) || (!body.done && current.recurrence))) {
-    const { done, ...rest } = body;
+    const { done, occurrence, ...rest } = body;
     if (Object.keys(rest).length) await updateHomework(env, user, id, rest, appUrl);
-    return done ? completeTask(env, user, id, appUrl) : uncompleteTask(env, user, id, appUrl);
+    return done ? completeTask(env, user, id, appUrl, Date.now(), occurrence) : uncompleteTask(env, user, id, appUrl);
   }
   // An undated task has no time zone of its own unless it was sent one ('UTC' is only the stored placeholder). Giving it a
   // date needs one: the body's `tz`, else the one it was created with, else the user's saved notification time zone.
@@ -202,10 +202,13 @@ const marks = (ids) => ids.map(() => '?').join(', ');
 
 // Completing a task completes the open tasks below it too. A repeating task moves to its next date instead (and
 // its subtasks open again), leaving a row in `completions`; when its series has ended it is completed for good.
-export async function completeTask(env, user, id, appUrl, now = Date.now()) {
+// `occurrence` is the due date the client saw. A repeating task is never `done`, so a retried request (an outbox
+// retry, a notification button pressed twice) would move it on twice: when the date has moved since, nothing happens.
+export async function completeTask(env, user, id, appUrl, now = Date.now(), occurrence = undefined) {
   const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
   if (current.done) return current;
+  if (current.recurrence && typeof occurrence === 'string' && occurrence !== current.due_date) return current;
   const ids = await withDescendants(env, user, [id]);
   if (current.recurrence && current.due_date !== NO_DATE) {
     const parsed = parseRecurrence(current.recurrence, { today: keyInZone(now, current.tz), due: current.due_date });

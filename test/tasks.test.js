@@ -446,6 +446,21 @@ test('completing a repeating task moves it on, keeps a completions row, reopens 
   assert.deepEqual([p.due_date, p.done], ['2030-03-31', 0]);
 });
 
+test('a repeated complete of a repeating task (same occurrence) moves it on once', async () => {
+  const { me, db } = setup();
+  const t = ok(await hw(me, { title: 'Water', due_date: '2030-03-30', tz: 'Europe/Paris', recurrence: 'every day' }));
+  const a = ok(await me('POST', `/api/homework/${t.id}/complete`, { occurrence: '2030-03-30' }));
+  const b = ok(await me('POST', `/api/homework/${t.id}/complete`, { occurrence: '2030-03-30' }));
+  assert.deepEqual([a.due_date, b.due_date], ['2030-03-31', '2030-03-31']);
+  const c = ok(await me('PATCH', `/api/homework/${t.id}`, { done: true, occurrence: '2030-03-30' }));
+  assert.equal(c.due_date, '2030-03-31', 'PATCH done is guarded the same way');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM completions').get().n, 1);
+  const d = ok(await me('POST', `/api/homework/${t.id}/complete`, { occurrence: '2030-03-31' }));
+  assert.equal(d.due_date, '2030-04-01', 'the current occurrence still completes');
+  const e = ok(await me('POST', `/api/homework/${t.id}/complete`));
+  assert.equal(e.due_date, '2030-04-02', 'without occurrence it behaves as before');
+});
+
 test('completing the last occurrence of a series completes the task, and undo opens it again', async () => {
   const { me, db } = setup();
   const t = ok(await hw(me, { due_date: '2030-01-04', recurrence: 'every day until 2030-01-04' }));
