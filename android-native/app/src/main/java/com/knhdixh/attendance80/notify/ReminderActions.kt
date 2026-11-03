@@ -10,6 +10,8 @@ import com.knhdixh.attendance80.net.AppData
 class ReminderActions(
     private val clock: Clock, private val store: NotifyStore, private val notifier: ReminderNotifier,
     private val flush: () -> Unit, private val snapshot: () -> AppData?,
+    /** "Focus on this": starts the timer on that homework (the controller lives in the app container). */
+    private val focusOn: suspend (homeworkId: Long) -> Unit = {},
 ) {
     suspend fun handle(type: String, ref: Long, value: String?, number: Int?, owner: String, key: String) {
         notifier.cancel(key)
@@ -21,6 +23,8 @@ class ReminderActions(
                 if (status == "absent") offerCatchup(ref, owner)
             }
             "catchup" -> store.addAction(PendingAction(owner, "catchup", ref, tz = clock.zone().id, at = now))
+            "homework-done" -> store.addAction(PendingAction(owner, "homework-done", ref, at = now))
+            "homework-focus" -> { focusOn(ref); return }
             else -> return
         }
         flush()

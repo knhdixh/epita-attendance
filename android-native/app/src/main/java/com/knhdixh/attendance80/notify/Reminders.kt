@@ -56,6 +56,7 @@ internal fun hhmm(ms: Long, zone: ZoneId): String = DateTimeFormatter.ofPattern(
 fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId): List<Reminder> {
     val all = buildList {
         if (choices.checkin) addAll(checkIns(data, zone))
+        if (choices.homeworkOn(data.integrations.gcal != null)) addAll(homeworkReminders(data, zone))
     }
     val horizon = planHorizon(now, zone)
     return all.filter { it.at <= horizon && it.at >= now - lateWindow(it.kind) }.sortedWith(compareBy({ it.at }, { it.key }))
@@ -80,6 +81,53 @@ fun checkIns(data: AppData, zone: ZoneId): List<Reminder> {
                 ReminderAction("Present", "checkin", "present"), ReminderAction("Absent", "checkin", "absent"),
                 ReminderAction("Excused", "checkin", "excused"),
             ),
+        )
+    }
+}
+
+/**
+ * `reminderMinutes()` in `src/homework.js`: minutes before the due time. A timed item uses `remind_minutes` as it is;
+ * an all-day item counts back from the start of its day, so "1 day before" would be midnight, and is moved to 18:00.
+ */
+fun reminderMinutes(remindMinutes: Int?, timed: Boolean): Int? = when {
+    remindMinutes == null -> null
+    timed -> remindMinutes
+    remindMinutes == 0 -> 0
+    else -> Math.ceil(remindMinutes / 1440.0).toInt() * 1440 - 18 * 60
+}
+
+/**
+ * When an item's reminder goes, or null. Timed: that many minutes before the due time. All-day: 18:00 on the day
+ * [reminderMinutes] says, worked out on the calendar in the item's own time zone, so it stays 18:00 across a clock change
+ * (counting 1080 real minutes back would land on 17:00 or 19:00 the week the clocks move).
+ */
+fun reminderAt(hw: com.knhdixh.attendance80.net.HomeworkDto, device: ZoneId): Long? {
+    val minutes = reminderMinutes(hw.remind_minutes, hw.due_time != null) ?: return null
+    val zone = hw.tz?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: device
+    val date = hw.due_date?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() } ?: return null
+    if (hw.due_time != null) {
+        val time = runCatching { java.time.LocalTime.parse(hw.due_time) }.getOrNull() ?: return null
+        return date.atTime(time).atZone(zone).toInstant().toEpochMilli() - minutes * MIN
+    }
+    if (minutes == 0) return date.atStartOfDay(zone).toInstant().toEpochMilli()
+    val daysBefore = (minutes + 18 * 60) / 1440 // the whole days the "N days before" counts
+    return date.minusDays(daysBefore.toLong()).atTime(18, 0).atZone(zone).toInstant().toEpochMilli()
+}
+
+/** Reminders for undone homework with a reminder set (the web's `remind_minutes`), on the device. Done and Focus on this are on the notification. */
+fun homeworkReminders(data: AppData, device: ZoneId, locale: java.util.Locale = java.util.Locale.getDefault()): List<Reminder> {
+    val courses = data.courses.associateBy { it.id }
+    return data.homework.mapNotNull { hw ->
+        if (hw.done) return@mapNotNull null
+        val at = reminderAt(hw, device) ?: return@mapNotNull null
+        val zone = hw.tz?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: device
+        val day = DateTimeFormatter.ofPattern("EEE d MMM", locale).format(java.time.LocalDate.parse(hw.due_date))
+        val due = if (hw.due_time != null) "Due $day at ${hw.due_time}" else "Due $day"
+        Reminder(
+            key = "homework:${hw.id}:$at", kind = Kinds.HOMEWORK, at = at, title = hw.title,
+            body = listOfNotNull(due, hw.course_id?.let { courses[it]?.name }).joinToString(" · "),
+            route = "a80://homework/${hw.id}", ref = hw.id,
+            actions = listOf(ReminderAction("Done", "homework-done"), ReminderAction("Focus on this", "homework-focus")),
         )
     }
 }

@@ -98,7 +98,12 @@ class DefaultAppContainer(
     override val reminderActions: com.knhdixh.attendance80.notify.ReminderActions by lazy {
         com.knhdixh.attendance80.notify.ReminderActions(clock, notifyStore, reminderNotifier,
             flush = { com.knhdixh.attendance80.notify.WorkActionScheduler(context).requestFlush() },
-            snapshot = { dataRepository.snapshot.value })
+            snapshot = { dataRepository.snapshot.value },
+            focusOn = { id ->
+                dataRepository.snapshot.value?.homework?.find { it.id == id }?.let {
+                    focusController.focusOn(com.knhdixh.attendance80.logic.FocusTarget(homework_id = it.id, course_id = it.course_id, label = it.title))
+                }
+            })
     }
 
     override val focusOutbox: Outbox by lazy {

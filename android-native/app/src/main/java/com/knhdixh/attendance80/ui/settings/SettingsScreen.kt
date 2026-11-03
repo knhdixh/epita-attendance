@@ -152,7 +152,7 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
             val device by actions.deviceNotify.collectAsState(com.knhdixh.attendance80.notify.NotifyChoices())
             NotifyPanel(data.notifications.settings, device, data.integrations.gcal != null, busy,
                 onSave = { body -> run { actions.saveNotify(body) } },
-                onSaveDevice = { choices -> if (choices.checkin || choices.homework == true || choices.exam) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
+                onSaveDevice = { choices -> if (choices.checkin || choices.homeworkOn(data.integrations.gcal != null) || choices.exam) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
         }
         calendarsPanel(data, allEvents ?: data.events, now, zone, busy, editing, adding,
             onEdit = { editing = it }, onAdding = { adding = it },
@@ -302,6 +302,9 @@ private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.n
         toggle("Focus timer: when a focus or break ends", s.focus, "notify-focus") { save(focus = it) }
         toggle("After class: ask if you were there", device.checkin, "notify-checkin") { onSaveDevice(device.copy(checkin = it)) }
         Hint("A notification when a tracked session ends and is still unmarked, with Present, Absent and Excused buttons.")
+        toggle("Homework reminders on this device", device.homeworkOn(googleConnected), "notify-homework") { onSaveDevice(device.copy(homework = it)) }
+        Hint(if (googleConnected) "Off until you turn it on, because Google Calendar already sends each reminder. Reminders use the time set on each homework item, with Done and Focus on this buttons."
+            else "Uses the reminder set on each homework item, with Done and Focus on this buttons. All-day items remind you at 18:00.")
         Hint("The switches above are shared with the website. The app posts them itself, and never registers for web push, so nothing arrives twice. The ones below are for this device only.")
     }
 }
