@@ -34,6 +34,8 @@ data class ShellState(
     val error: String? = null,
     val session: String? = null,
     val lastSynced: Long? = null,
+    /** Changes made here that the server hasn't got yet (the outbox): "Not synced yet". */
+    val pending: Int = 0,
 )
 
 /** What the Focus screen shows of the timer. */
@@ -141,8 +143,8 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         return success
     }
     val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
-        container.dataRepository.loading, container.dataRepository.error) { owned, selected, loading, error ->
-        ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third)
+        container.dataRepository.loading, container.dataRepository.error, container.dataRepository.pending) { owned, selected, loading, error, pending ->
+        ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third, pending = if (owned.second == null) 0 else pending)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     val uiPrefs get() = container.uiPrefs
