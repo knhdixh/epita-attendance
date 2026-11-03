@@ -28,7 +28,13 @@ class NotifyReceiver : BroadcastReceiver() {
                         value = intent.getStringExtra(EXTRA_VALUE), number = intent.getIntExtra(EXTRA_NUMBER, -1).takeIf { it >= 0 },
                         owner = intent.getStringExtra(EXTRA_OWNER).orEmpty(), key = intent.getStringExtra(EXTRA_KEY).orEmpty(),
                     )
-                    else -> replan(container)
+                    else -> {
+                        if (action == Intent.ACTION_TIMEZONE_CHANGED || action == Intent.ACTION_TIME_CHANGED) {
+                            container.dataRepository.start()
+                            container.rebuildWidgetPlan()
+                        }
+                        replan(container)
+                    }
                 }
             } finally { pending.finish() }
         }

@@ -66,4 +66,14 @@ class FocusNotificationsTest {
         assertNull(nm.getNotificationChannel(FocusNotifications.CH_DONE_QUIET).sound)
         assertEquals(listOf("Start focus"), quiet.actions.map { it.title.toString() })
     }
+
+    @Test fun phaseDoneIsClearedWhenTheNextPhaseStartsFromAnywhere() {
+        val breakStarted = FocusTimer(phase = "short", next = "short", run = "b", startedAt = now, endsAt = now + 5 * 60_000L)
+        val n = FocusNotifications(context)
+        n.phaseDone("focus", "Essay", breakStarted, FocusSettings(sound = true))
+        assertNotNull(shadowOf(nm).getNotification(FocusNotifications.ID_DONE))
+        n.showTimer(breakStarted, FocusSettings(), now) // started from the app, the tile or the widget
+        assertNull(shadowOf(nm).getNotification(FocusNotifications.ID_DONE))
+        assertNotNull(shadowOf(nm).getNotification(FocusNotifications.ID_TIMER))
+    }
 }

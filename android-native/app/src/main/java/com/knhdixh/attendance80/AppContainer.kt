@@ -39,6 +39,8 @@ interface AppContainer {
     val reminders: com.knhdixh.attendance80.notify.ReminderEngine? get() = null
     val reminderActions: com.knhdixh.attendance80.notify.ReminderActions? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
+    /** Rebuilds the widget's plan part (zone or clock changed). Nothing in tests that don't have a widget. */
+    suspend fun rebuildWidgetPlan() {}
 }
 
 class DefaultAppContainer(
@@ -120,6 +122,11 @@ class DefaultAppContainer(
         DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock) { tokenStore.currentToken() }
     }
 
+    private val widgetPlanWriter by lazy { com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) } }
+
+    /** The widget's "Do next" list is built with the zone of the moment: rebuild it when the time zone or the clock changes. */
+    override suspend fun rebuildWidgetPlan() = widgetPlanWriter.onSnapshot(dataRepository.snapshot.value)
+
     fun startData() {
         scope.launch {
             dataRepository.snapshot.collect { data ->
@@ -132,8 +139,7 @@ class DefaultAppContainer(
         }
         scope.launch {
             // The widget's plan part follows the snapshot, whoever changed it (screen, refresh, cache on start, sign-out).
-            val writer = com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) }
-            dataRepository.snapshot.collectLatest { data -> writer.onSnapshot(data) }
+            dataRepository.snapshot.collectLatest { data -> widgetPlanWriter.onSnapshot(data) }
         }
         scope.launch {
             // Reminders follow the snapshot and the three device switches, whoever changed them.
