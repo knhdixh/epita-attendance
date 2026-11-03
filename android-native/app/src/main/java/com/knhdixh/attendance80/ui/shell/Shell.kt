@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -311,36 +312,61 @@ fun Shell(
                             }
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
                             else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
-                            else if (route == "homework") key(accountKey) { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, { navigate(it) }, onAction, ::deleteHomework, ::pending) }
-                            else if (route.startsWith("homework/")) key(accountKey) {
-                                val id = route.substringAfter('/').takeUnless { it == "new" }?.toLongOrNull()
-                                val draftKey = id?.toString() ?: "new"
-                                var input by remember { mutableStateOf("") }
-                                LaunchedEffect(encoded) {
-                                    val form = action as? PaletteAction.OpenForm
-                                    if (form != null && ((route == "homework/new" && form.form == "homework") || (id != null && form.form == "homework-edit" && form.entityId == id))) {
-                                        input = form.input
-                                        backStackEntry.savedStateHandle["paletteAction"] = null
+                            else if (route == "homework" || route.startsWith("homework/")) key(accountKey) {
+                                // Wide: the list stays and the edit form opens beside it (selection kept here, so the list keeps its place). "New" is a full page.
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("homework/", "").toLongOrNull()) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("homework/") && dest != "homework/new") sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val form: @Composable (Long?) -> Unit = { id ->
+                                    val draftKey = id?.toString() ?: "new"
+                                    var input by remember { mutableStateOf("") }
+                                    LaunchedEffect(encoded) {
+                                        val pendingForm = action as? PaletteAction.OpenForm
+                                        if (pendingForm != null && ((route == "homework/new" && pendingForm.form == "homework") || (id != null && pendingForm.form == "homework-edit" && pendingForm.entityId == id))) {
+                                            input = pendingForm.input
+                                            backStackEntry.savedStateHandle["paletteAction"] = null
+                                        }
                                     }
-                                }
-                                com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
+                                    com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
                                         onBack = {
                                             homeworkDrafts = HashMap(homeworkDrafts).apply { remove(draftKey) }
-                                            if (pendingRoute != null) onPendingConsumed()
-                                            if (!navController.popBackStack()) navigate("homework")
+                                            if (wide && id != null) sel = null
+                                            else {
+                                                if (pendingRoute != null) onPendingConsumed()
+                                                if (!navController.popBackStack()) navigate("homework")
+                                            }
                                         }, onSave = onSaveHomework,
                                         lastCourse = lastHomeworkCourse, onLastCourse = { lastHomeworkCourse = it },
                                         storedDraft = homeworkDrafts[draftKey], onDraft = { draft ->
                                             if (homeworkDrafts[draftKey] != draft) homeworkDrafts = HashMap(homeworkDrafts).apply { put(draftKey, draft) }
                                         })
+                                }
+                                val list: @Composable () -> Unit = { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, open, onAction, ::deleteHomework, ::pending) }
+                                if (route == "homework/new") form(null)
+                                else if (wide) TwoPane(list) { sel?.let { id -> key(id) { form(id) } } ?: PanePlaceholder("Select homework to edit it.") }
+                                else if (route == "homework") list() else form(route.substringAfter('/').toLongOrNull())
                             }
-                            else if (route == "sessions") key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
-                                com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
-                                { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
-                                (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route.startsWith("session/")) key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), route.substringAfter('/').toLongOrNull(), now, zone, onBack = { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") }, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route == "courses") key(state.session) { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route.startsWith("course/")) key(state.session) { com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, route.substringAfter('/').toLongOrNull(), now, zone, onNavigate = { navigate(it) }, onBack = { if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
+                            else if (route == "sessions" || route.startsWith("session/")) key(state.session) {
+                                // Wide: the list stays and the session opens beside it (selection kept here, so the list keeps its place).
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("session/", "").toLongOrNull()) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("session/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val sessions: @Composable () -> Unit = { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
+                                    com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
+                                    { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
+                                    (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = open, onAction = onAction) }
+                                val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), id, now, zone,
+                                    onBack = { if (wide) sel = null else { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") } }, onNavigate = open, onAction = onAction) }
+                                if (wide) TwoPane(sessions) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a session.") }
+                                else if (route == "sessions") sessions() else detail(route.substringAfter('/').toLongOrNull())
+                            }
+                            else if (route == "courses" || route.startsWith("course/")) key(state.session) {
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("course/", "").toLongOrNull()) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("course/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val courses: @Composable () -> Unit = { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = open, onAction = onAction) }
+                                val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, id, now, zone, onNavigate = open,
+                                    onBack = { if (wide) sel = null else if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
+                                if (wide) TwoPane(courses) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a course.") }
+                                else if (route == "courses") courses() else detail(route.substringAfter('/').toLongOrNull())
+                            }
                             else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
                         }
                     }
@@ -428,5 +454,22 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
                 }
             }
         }
+    }
+}
+
+/** Tablet and foldable layout (width >= 600dp): the list on the left, the opened item on the right. */
+@Composable
+internal fun TwoPane(list: @Composable () -> Unit, detail: @Composable () -> Unit) {
+    Row(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(0.42f).fillMaxHeight().testTag("pane-list")) { list() }
+        VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Box(Modifier.weight(0.58f).fillMaxHeight().testTag("pane-detail")) { detail() }
+    }
+}
+
+@Composable
+internal fun PanePlaceholder(text: String) {
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("pane-placeholder"))
     }
 }
