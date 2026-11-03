@@ -37,6 +37,8 @@ interface AppContainer {
     /** Reminders posted by the app itself (Phase 7). Null in tests that don't need them. */
     val notifyStore: com.knhdixh.attendance80.notify.NotifyStore? get() = null
     val reminders: com.knhdixh.attendance80.notify.ReminderEngine? get() = null
+    /** Calendar view and layers, dismissed exam suggestions. Null in tests that don't need them. */
+    val uiPrefs: com.knhdixh.attendance80.data.UiPrefs? get() = null
     val reminderActions: com.knhdixh.attendance80.notify.ReminderActions? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
     /** Rebuilds the widget's plan part (zone or clock changed). Nothing in tests that don't have a widget. */
@@ -115,6 +117,8 @@ class DefaultAppContainer(
     override val focusOutbox: Outbox by lazy {
         Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
     }
+
+    override val uiPrefs: com.knhdixh.attendance80.data.UiPrefs by lazy { com.knhdixh.attendance80.data.UiPrefs(context) }
 
     override val dataRepository: DataRepository by lazy {
         // Own directory, so backup rules can exclude it (they take no wildcards). Older builds wrote data-*.json to filesDir itself.

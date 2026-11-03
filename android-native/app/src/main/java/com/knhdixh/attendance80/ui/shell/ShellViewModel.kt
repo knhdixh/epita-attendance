@@ -148,6 +148,7 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
+    val uiPrefs get() = container.uiPrefs
     private val recentsStore = com.knhdixh.attendance80.data.PaletteRecents(container.context)
     val recents = recentsStore.ids.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun recordRecent(id: String) { viewModelScope.launch { recentsStore.record(id) } }

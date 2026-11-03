@@ -22,6 +22,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -115,6 +116,7 @@ fun Shell(
     onSharedFileHandled: () -> Unit = {},
     sharedText: String? = null,
     onSharedTextHandled: () -> Unit = {},
+    uiPrefs: com.knhdixh.attendance80.data.UiPrefs? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -154,6 +156,27 @@ fun Shell(
     var habitsUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.habits.HabitsUi())) }
     var calendarUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.calendar.CalendarUi())) }
     var breakPick by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.breaks.BreakPick())) }
+    // The Calendar's view and layers and the dismissed exam suggestions outlive the session, per account (the website keeps them in the browser).
+    val prefsOwner = state.data?.user?.email?.takeIf { it.isNotBlank() }
+    var prefsLoaded by remember(prefsOwner) { mutableStateOf(false) }
+    LaunchedEffect(prefsOwner, uiPrefs) {
+        if (prefsOwner == null || uiPrefs == null) return@LaunchedEffect
+        val stored = uiPrefs.calendar(prefsOwner).first()
+        val dismissed = uiPrefs.dismissed(prefsOwner).first()
+        val calendar = ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.calendar.CalendarUi>(calendarUi)
+        if (stored != null && calendar.view.isEmpty()) calendarUi = ApiClient.json.encodeToString(calendar.copy(view = stored.view, layers = calendar.layers + stored.layers))
+        val countdowns = ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi)
+        if (dismissed.isNotEmpty() && countdowns.dismissed.isEmpty()) countdownsUi = ApiClient.json.encodeToString(countdowns.copy(dismissed = dismissed))
+        prefsLoaded = true
+    }
+    val calendarChoice = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.calendar.CalendarUi>(calendarUi) }.getOrNull()?.let { it.view to it.layers }
+    val dismissedChoice = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrNull()?.dismissed
+    LaunchedEffect(prefsLoaded, calendarChoice) {
+        if (prefsLoaded && prefsOwner != null && uiPrefs != null && calendarChoice != null) uiPrefs.saveCalendar(prefsOwner, com.knhdixh.attendance80.data.UiPrefs.Calendar(calendarChoice.first, calendarChoice.second))
+    }
+    LaunchedEffect(prefsLoaded, dismissedChoice) {
+        if (prefsLoaded && prefsOwner != null && uiPrefs != null && dismissedChoice != null) uiPrefs.saveDismissed(prefsOwner, dismissedChoice)
+    }
     var lastHomeworkCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var homeworkDrafts by rememberSaveable(accountKey) { mutableStateOf(hashMapOf<String, String>()) }
     val focusOwnerKey = remember(accountKey) { accountKey?.let { token -> java.security.MessageDigest.getInstance("SHA-256").digest(token.toByteArray()).joinToString("") { "%02x".format(it) } } }

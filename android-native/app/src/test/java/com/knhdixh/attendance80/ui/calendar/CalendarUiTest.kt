@@ -10,6 +10,8 @@ import com.knhdixh.attendance80.ui.shell.Shell
 import com.knhdixh.attendance80.ui.shell.ShellState
 import com.knhdixh.attendance80.ui.theme.Attendance80Theme
 import kotlinx.serialization.json.*
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -186,6 +188,22 @@ class CalendarUiTest {
         compose.onNodeWithTag("calendar-plan").performClick()
         compose.runOnIdle { assertEquals(listOf("Every open to-do already has a time."), actions.messages) }
         compose.onNodeWithTag("calendar-list").performScrollToNode(hasText("Every open to-do has a time. Tap an empty slot to add one."))
+    }
+
+    @Test fun theViewAndLayersOutliveTheSession() {
+        val dir = java.nio.file.Files.createTempDirectory("uiprefs").toFile()
+        val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
+        try {
+            val prefs = com.knhdixh.attendance80.data.UiPrefs(androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("ui.preferences_pb") })
+            var first by androidx.compose.runtime.mutableStateOf(true)
+            compose.setContent { Attendance80Theme { androidx.compose.runtime.key(first) {
+                Shell(ShellState(data = calData(), session = "a"), {}, {}, {}, initialRoute = "calendar", now = calNow, zone = calZone, uiPrefs = prefs)
+            } } }
+            compose.onNodeWithTag("calendar-view-week").performClick()
+            idle { kotlinx.coroutines.runBlocking { prefs.calendar(calData().user.email!!).first() }?.view == "week" }
+            first = false // a new session: nothing is remembered in the screen itself
+            idle { runCatching { compose.onNodeWithTag("calendar-view-week").assertIsSelected() }.isSuccess }
+        } finally { scope.cancel(); dir.deleteRecursively() }
     }
 
     @Test fun shellOpensTheCalendar() {

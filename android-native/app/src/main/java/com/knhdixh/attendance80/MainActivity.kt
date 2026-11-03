@@ -229,6 +229,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 focusTimer = focusTimer,
                 timerNow = { shellViewModel.clock.now() },
                 onAskNotifications = onAskNotifications,
+                uiPrefs = shellViewModel.uiPrefs,
                 notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications,
                 sharedFile = sharedFile, onSharedFileHandled = pendingRouteViewModel::fileHandled,
                 sharedText = sharedText, onSharedTextHandled = pendingRouteViewModel::textHandled,
