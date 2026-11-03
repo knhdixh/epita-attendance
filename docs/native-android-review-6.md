@@ -1,6 +1,6 @@
 # Phase 6 review
 
-Verdict: **FIX**. Reviewed `native/phase-6` at `95c79b3` (`677eaf2`, `d3367d3` and the progress log; `378311c` is tooling and was not reviewed). There are six blocking findings. Findings 1 and 3 together mean that a placed widget often shows the wrong timer state, or "Open the app to sign in", for up to 30 minutes. Finding 2 means that every existing TWA user loses their placed widget on the update.
+Verdict: **FIX after round 1**. Re-reviewed the fix round `1fa7161`…`42ffcb5` on `native/phase-6`. Findings 1, 2, 4, 5 and 6 are resolved. One item is left: the cold-start test for finding 3 doesn't exercise the late token load, so it would pass without the fix (see "Re-review — round 1" at the end). The initial findings are kept below.
 
 ## Findings
 
@@ -91,3 +91,65 @@ Verdict: **FIX**. Reviewed `native/phase-6` at `95c79b3` (`677eaf2`, `d3367d3` a
   - Glance 1.1.1 bytecode (`GlanceAppWidget` update path, `AppWidgetSession`, `TimeoutOptions`).
 - **Not run by the reviewer:** Gradle and npm, at the owner's request. The owner's run: `npm test` 104/104. Gradle had 891 tests with 2 failures under load average ~15 (`ShellUiTest.today` and the known `OfflineShellTest` one); both pass alone. The worker saw the same.
 - No server, website, migration, secret or `android/` changes in the diff.
+
+
+## Re-review — round 1 (`1fa7161`, `0202cd9`, `24f5fc0`, `1739bb1`, `1f60e62`, `036655c`, `8c32af0`, `42ffcb5`)
+
+**Finding 1 (live Glance session): resolved in the product code; the test covers only the store → content path.**
+- `provideGlance` reads nothing now. Its content is `WidgetHost(store)`, which collects `WidgetStore.revision` (a `StateFlow` bumped on every write and on `touch()`). `WidgetFromStore` reads the store and the clock in `remember(revision)`, and the redraw alarm is set in a `SideEffect` from what was drawn. `WidgetStores` is a per-process singleton, so the writers, `touch()` and the session all share one `revision`.
+- **Checked against Glance 1.1.1 bytecode.** `SessionWorkerKt.runSession` builds a `Recomposer` and a `Composition`, starts the global snapshot monitor, and collects `Recomposer.currentState`. When the recomposer is idle and `changeCount` has moved, it calls `Session.processEmittableTree`, which pushes new RemoteViews. A state change read inside `provideContent` therefore redraws a live session without `provideGlance` running again. That is the mechanism the fix relies on.
+- `redrawWidget` is `suspend` (touch, then `updateAll`), and `FocusReceiver` awaits it after every action, before `pending.finish()`. The controller's surfaces use the non-suspending `requestWidgetRedraw`; its `touch()` is synchronous, so a live session redraws even if the `updateAll` launch is late.
+- **Test limits (accepted).** `hostDrawsWhatTheStoreHoldsNowNotWhatItHeldWhenTheSessionStarted` composes `WidgetFromStore` afresh for each state, because `GlanceRemoteViews.compose` hangs when the composition collects a flow (logged deviation). It proves that the content reads the store and that the alarm comes from what is drawn. It does not prove that a live composition recomposes on a revision change. Reverting `provideGlance` to read outside `provideContent` would not fail it. The Glance internals above and the device check in the progress log cover that gap. This is acceptable here because the read moved into composition structurally, and the old capture path is gone.
+- **Non-blocking (Phase 8).**
+  - `TimerCommandCallback` relies on the controller's fire-and-forget `requestWidgetRedraw`. When no session is alive, the widget's own tap could also `redrawWidget(context)` before returning, like `FocusReceiver` does.
+  - If `androidx.glance:glance-appwidget-testing` (`runGlanceAppWidgetUnitTest`) can recompose after a state change, a start → pause test through `WidgetHost` would close the test gap.
+
+**Finding 2 (TWA provider name): resolved.**
+- The TWA declares `<receiver android:name=".FocusWidget">` (`android/app/src/main/AndroidManifest.xml:212`). Its class is `public class FocusWidget extends AppWidgetProvider` in package `com.knhdixh.attendance80`, and its namespace and `applicationId` are both `com.knhdixh.attendance80` (`android/app/build.gradle:58–60`). The native app has the same namespace and `applicationId`, with no suffix on prod.
+- The native receiver is now `com.knhdixh.attendance80.FocusWidget` (a `GlanceAppWidgetReceiver`), declared as `.FocusWidget` with `APPWIDGET_UPDATE` and `@xml/focus_widget_info`. The old `FocusWidgetReceiver` is gone, and nothing references it any more. `exported` changed from `false` to `true`, which is harmless for an app widget provider.
+- `WidgetProviderNameTest` resolves exactly that `ComponentName` with `android.appwidget.provider` metadata. With the old name, `getReceiverInfo` throws, so the test fails without the fix.
+
+**Finding 3 (null snapshot at cold start): the product code is right, but its key test doesn't test it. This is the one item left.**
+- `WidgetPlanWriter.onSnapshot` calls `tokenStore.awaitToken()`, which joins `EncryptedTokenStore.initJob`, before it acts on a null snapshot.
+  - Null with no token writes the signed-out plan.
+  - Null with a token keeps the stored plan only if its `owner` (a SHA-256 of the token, never the token) matches. Otherwise it writes an empty signed-in plan, so A's items never stay under B.
+- `signOutClearsAtOnce` and `switchingFromAToBNeverLeavesAItemsInTheFile` are real: the old collector's early `return` on "null with a token" would fail the A→B test.
+- **The gap.** In `coldStartWithSavedTokenNeverWritesSignedOut`, `async { writer.onSnapshot(null) }` runs inside `runBlocking`. Its body is only queued on the event loop, and it starts when the test suspends at `early.await()`. That is after `tokens.load()` has already run. So `onSnapshot(null)` always sees a loaded token, and a writer that read `tokenStore.currentToken()` instead of `awaitToken()`, which is exactly the original bug, passes this test. The comment "before the token store has loaded" isn't true at run time.
+- **A fix must cover:**
+  - Start the early call before the load, for example `async(start = CoroutineStart.UNDISPATCHED) { writer.onSnapshot(null) }`, so that it suspends in `awaitToken()`.
+  - Before `tokens.load()`, assert that it is still pending and that nothing was written (`!early.isCompleted`, no redraw, and the widget file absent or not signed out).
+  - Keep the rest of the test as it is. Check once by hand that swapping `awaitToken()` for `currentToken()` makes the test fail.
+
+**Finding 4 (class window): resolved.** `buildWidgetPlan` keeps classes that end after now and start within 8 days, up to 24 (`MAX_CLASSES = 24`, `WINDOW_MS`), as the TWA's `sendPlan` does. The new test has 60 sessions, 6 a day. It expects 24 classes reaching past the third day, so it would fail with 8. Its sparse case puts a session on day 8 + 1 h and expects it to be left out, so it would fail without the window filter.
+
+**Finding 5 (intent commands): resolved.**
+- `FocusController.startIfIdle`, `pauseIfRunning` and `resumeIfPaused` call the shared `finishDue()` first, as `toggle()` does, then act only in the right state. `start()` already returns when running, and the pure `pause`/`resume` are idempotent, so the check-then-act outside the mutex is harmless.
+- `TimerActions` has `start`, `pause` and `resume`. `ControllerActions`, `AskingActions` and the quick-focus sheet implement them, and the last two ask for notifications on start. The palette calls them.
+- The widget passes `TimerCommand` in `ActionParameters`. Its value comes from `timerCommand(drawn timer)`, which matches the button label's rule (`Start`/`Resume`/`Pause`).
+- The controller tests drive each command against a controller in the opposite state, including a stale second Pause and a due phase that is finished first.
+- `FocusScreenTimerUiTest` now expects `start`/`pause`/`resume` calls. Its old "start does nothing while running" check moved to the controller, where the decision now lives. That moves the check; it doesn't weaken it.
+- Logged behaviour: after a due focus is finished, the command applies to the auto-started break, as `toggle()` did. Fine.
+
+**Finding 6 (flaky shell tests): resolved.**
+- `ShellUiTest.today` retries `performScrollToNode(hasText("Mathématiques"))` until it succeeds, inside a 10 s `waitUntil`, and then asserts `assertExists()` as before. A missing node still fails the test, at the timeout. The worker's reason for not waiting on the empty text (the populated data has no to-dos at that `now`, so the text stays) is plausible.
+- `OfflineShellTest` holds the second request on a `Dispatcher` latch. It asserts the cached shell, and that the refresh is still pending, while the request is held, then releases it; the `finally` also releases it. This is review 5's latch fix, and the time limits no longer depend on machine load.
+
+**Lint (`8c32af0`)** only reads `revision.value` outside the composable lambda in the test, and the test's meaning is unchanged.
+
+### Evidence
+
+- **Read by the reviewer:**
+  - `git show` of all eight commits (main sources, manifest, every test change) and the "Review 6 fixes" log entry;
+  - `EncryptedTokenStore.awaitToken`, `FocusController.start`, and the pure `pause`/`resume`;
+  - the TWA's manifest, `FocusWidget.java` and `android/app/build.gradle`;
+  - Glance 1.1.1 `SessionWorkerKt.runSession` and `$runSession$4$1` bytecode (from the Gradle cache).
+- No PNG, `android/`, server, migration or secret changes in the round.
+- **Not run by the reviewer:** Gradle and npm, at the owner's request. The worker reports:
+  - `npm test` 104/104;
+  - the combined Gradle command BUILD SUCCESSFUL with 904 unit tests and 0 failures, Roborazzi verified with no PNG changes;
+  - `tools/e2e.sh` 2/2.
+- **Still needs a device (Phase 9 checklist):**
+  - a live session redrawing on Start then Pause within 10 s, and on a timer started in the app within 45 s of a widget redraw;
+  - an update over a TWA with its widget placed;
+  - the rest of the Phase 6 Unverified list.
+- The deferred items above are unchanged.
