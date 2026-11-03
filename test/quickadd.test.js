@@ -179,3 +179,42 @@ test('it keeps its promises on odd input', () => {
   assert.equal(q(null).title, '');
   assert.equal(q('x'.repeat(5000)).title.length, 5000);
 });
+
+// Existing names: the longest one that fits, at a word boundary. [input, options, the fields that must be as given, the ranges' text].
+const NAMES = { projects: ['School', 'School admin', 'Thesis work', 'Home'], sections: ['Week 1', 'Week', 'Chores'], labels: ['deep work', 'deep', 'bills'] };
+const NAMED = [
+  ['Read chapter 3 tom at 9am #School /Week 1', { title: 'Read chapter 3', due_date: '2026-11-04', due_time: '09:00', project: 'School', section: 'Week 1' }, ['tom', 'at 9am', '#School', '/Week 1']],
+  ['Read chapter 3 #School /Week 1 tom at 9am', { title: 'Read chapter 3', project: 'School', section: 'Week 1', due_date: '2026-11-04', due_time: '09:00' }, ['#School', '/Week 1', 'tom', 'at 9am']],
+  ['Write #Thesis work p2', { title: 'Write', project: 'Thesis work', priority: 3 }, ['#Thesis work', 'p2']],
+  ['Write #thesis WORK', { title: 'Write', project: 'Thesis work' }, ['#thesis WORK']],
+  ['Pay #School admin fees', { title: 'Pay fees', project: 'School admin' }, ['#School admin']],
+  ['Pay #School', { title: 'Pay', project: 'School' }, ['#School']],
+  ['Pay #School administration', { title: 'Pay administration', project: 'School' }, ['#School']],   // not a word boundary: the shorter name
+  ['Pay #School, then relax', { title: 'Pay , then relax', project: 'School' }, ['#School']],
+  ['Pay #Unknown thing', { title: 'Pay thing', project: 'Unknown' }, ['#Unknown']],                  // no such name: one word
+  ['Pay #"Big one" thing', { title: 'Pay thing', project: 'Big one' }, ['#"Big one"']],
+  ['Do /Week 2 stuff', { title: 'Do 2 stuff', section: 'Week' }, ['/Week']],
+  ['Do /Week 1 stuff', { title: 'Do stuff', section: 'Week 1' }, ['/Week 1']],
+  ['Do /Nothing at all', { title: 'Do at all', section: 'Nothing' }, ['/Nothing']],
+  ['Study @deep work @bills', { title: 'Study', labels: ['deep work', 'bills'] }, ['@deep work', '@bills']],
+  ['Study @deep thoughts', { title: 'Study thoughts', labels: ['deep'] }, ['@deep']],
+  ['Study @deep work @deep', { title: 'Study', labels: ['deep work', 'deep'] }, ['@deep work', '@deep']],
+  ['Study @new label', { title: 'Study label', labels: ['new'] }, ['@new']],
+  ['Study @Deep Work', { title: 'Study', labels: ['deep work'] }, ['@Deep Work']],
+];
+
+test('multi-word project, section and label names that exist', () => {
+  for (const [text, want, rangeTexts] of NAMED) {
+    const r = parseQuickAdd(text, { today: TODAY, ...NAMES });
+    for (const [k, v] of Object.entries({ ...NONE, ...want })) assert.deepEqual(r[k], v, `${text}: ${k}`);
+    assert.deepEqual(r.ranges.map((x) => x.text), rangeTexts, `${text}: ranges`);
+  }
+});
+
+test('names that exist never leak into the title, and the old behaviour stays without them', () => {
+  const r = parseQuickAdd('Read chapter 3 tom at 9am #School /Week 1 @deep work p1', { today: TODAY, ...NAMES });
+  assert.equal(r.title, 'Read chapter 3');
+  for (const x of r.ranges) assert.ok(!r.title.includes(x.text), x.text);
+  assert.equal(parseQuickAdd('Read chapter 3 tom at 9am #School /Week 1', { today: TODAY }).section, 'Week');
+  assert.deepEqual(q('Pay #School admin'), parseQuickAdd('Pay #School admin', { today: TODAY, projects: [], sections: [], labels: [] }));
+});

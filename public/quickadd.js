@@ -118,7 +118,9 @@ const REMINDER = new RegExp(`${START}!(\\d+(?:[.,]\\d+)?\\s*(?:${UNIT_RE}(?:\\s*
 
 // ---------------------------------------------------------------- the parser
 
-export function parseQuickAdd(input, { today = localKey() } = {}) {
+// `projects`, `sections` and `labels` are the names that exist. After #, / or @ the longest of them that fits is taken (so
+// "#School admin" and "/Week 1" work); with none, or none that fits, it's one word as before. The value is the existing name.
+export function parseQuickAdd(input, { today = localKey(), projects = [], sections = [], labels = [] } = {}) {
   const text = String(input ?? '');
   let w = text;                  // what's left to read; matched text is blanked so indices stay those of `text`
   const ranges = [];
@@ -136,6 +138,19 @@ export function parseQuickAdd(input, { today = localKey() } = {}) {
     return null;
   };
   const name = (s) => s.replace(/^"|"$/g, '').replace(/[,.;:!?]+$/, '');
+  // Like `take`, for a name after a sigil: the longest known name at a word boundary, else what `re` reads.
+  const takeNamed = (kind, sigil, known, re) => {
+    const names = [...new Set((known ?? []).map(String).filter(Boolean))].sort((a, b) => b.length - a.length);
+    const fallback = (m) => name(m[1]) || null;
+    if (!names.length) return take(kind, re, fallback);
+    const g = new RegExp(`${START}${sigil.replace(/[/\\]/g, '\\$&')}`, 'gu');
+    for (let m = g.exec(w); m; m = g.exec(w)) {
+      const from = m.index + m[0].length;
+      const hit = names.find((n) => lower(w.slice(from, from + n.length)) === lower(n) && new RegExp(`^${END}`).test(w.slice(from + n.length)));
+      if (hit) { claim(kind, m.index, from + hit.length, hit); return hit; }
+    }
+    return take(kind, re, fallback);
+  };
 
   const out = {
     title: '', due_date: null, due_time: null, recurrence: null, project: null, section: null, labels: [], priority: 1,
@@ -163,9 +178,9 @@ export function parseQuickAdd(input, { today = localKey() } = {}) {
     }
   }
 
-  out.project = take('project', /(?<!\S)#("[^"]+"|[^\s#]+)/u, (m) => name(m[1]) || null);
-  out.section = take('section', /(?<!\S)\/("[^"]+"|\p{L}[^\s/]*)/u, (m) => name(m[1]) || null);
-  for (let label = take('label', /(?<!\S)@([^\s@#]+)/, (m) => name(m[1]) || null); label; label = take('label', /(?<!\S)@([^\s@#]+)/, (m) => name(m[1]) || null)) {
+  out.project = takeNamed('project', '#', projects, /(?<!\S)#("[^"]+"|[^\s#]+)/u);
+  out.section = takeNamed('section', '/', sections, /(?<!\S)\/("[^"]+"|\p{L}[^\s/]*)/u);
+  for (let label = takeNamed('label', '@', labels, /(?<!\S)@([^\s@#]+)/); label; label = takeNamed('label', '@', labels, /(?<!\S)@([^\s@#]+)/)) {
     if (!out.labels.some((l) => lower(l) === lower(label))) out.labels.push(label);
   }
   const p = take('priority', new RegExp(`${START}p([1-4])${END}`, 'i'), (m) => Number(m[1]));
