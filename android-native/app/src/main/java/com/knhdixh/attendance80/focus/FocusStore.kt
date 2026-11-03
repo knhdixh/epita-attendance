@@ -79,6 +79,24 @@ class FocusStore(private val store: DataStore<Preferences>) {
         }
     }
 
+    /**
+     * The timer and the session it just finished, in ONE edit: if the process dies in between, either both are saved or
+     * neither, and a repeated finish adds the log once (by `client_id`).
+     */
+    suspend fun saveTimerAndLog(t: FocusTimer, log: FocusLogEntry, owner: String?) {
+        store.edit { p ->
+            p[timerKey] = json.encodeToString(FocusTimer.serializer(), t)
+            val now = loadItems(p)
+            if (now.none { it.entry.client_id == log.client_id }) saveItems(p, (now + OutboxItem(owner?.lowercase(), log)).takeLast(MAX_OUTBOX))
+        }
+    }
+
+    /** The signed-in account's finished sessions that the server hasn't recorded yet, for the stats (the web shows them too). */
+    val queuedLogsFlow: Flow<List<FocusLogEntry>> get() = store.data.map { p ->
+        val who = p[accountKey]
+        if (who == null) emptyList() else loadItems(p).filter { it.owner == who }.map { it.entry }
+    }
+
     suspend fun removeLogs(ids: Set<String>) {
         if (ids.isEmpty()) return
         store.edit { p -> saveItems(p, loadItems(p).filterNot { it.entry.client_id in ids }) }

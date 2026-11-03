@@ -26,6 +26,16 @@ import com.knhdixh.attendance80.data.QueuedMutation
 /** A delete waiting out its Undo window. It is already in the outbox (so closing the app can't lose it), held for [ShellViewModel.UNDO_MS]. */
 data class PendingHomeworkDelete(val owner: String, val item: HomeworkDto, val sequence: Long, val rows: List<HomeworkDto> = listOf(item), val clientId: String = "")
 
+/** Sessions finished offline count in the stats at once, as on the web, and show "saving…" (no id) until the server has them. */
+fun withQueuedSessions(data: com.knhdixh.attendance80.net.AppData, logs: List<com.knhdixh.attendance80.logic.FocusLogEntry>): com.knhdixh.attendance80.net.AppData {
+    if (logs.isEmpty()) return data
+    val known = data.focus.sessions.mapTo(HashSet()) { it.client_id }
+    val extra = logs.filter { known.add(it.client_id) }.map {
+        com.knhdixh.attendance80.net.FocusSessionDto(null, it.client_id, it.homework_id, it.course_id, it.label, it.started_at, it.ended_at, it.planned_seconds, it.focus_seconds, it.completed, it.tags)
+    }
+    return if (extra.isEmpty()) data else data.copy(focus = data.focus.copy(sessions = (data.focus.sessions + extra).sortedBy { it.started_at }))
+}
+
 data class ShellState(
     val data: com.knhdixh.attendance80.net.AppData? = null,
     val selected: List<Long> = emptyList(),
@@ -142,9 +152,12 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         if (success) repo.reportMessage(owner, "Break removed, ${plural(restored, "session")} restored.")
         return success
     }
-    val state = combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
+    private val queuedLogs = container.focusStore?.queuedLogsFlow ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    val state = combine(combine(container.dataRepository.sessionSnapshot, container.calendarScope.selected,
         container.dataRepository.loading, container.dataRepository.error, container.dataRepository.pending) { owned, selected, loading, error, pending ->
         ShellState(data = owned.second?.let { container.calendarScope.apply(it, selected) }, selected = selected, allEvents = owned.second?.events, loading = loading, error = error, session = owned.first, lastSynced = owned.third, pending = if (owned.second == null) 0 else pending)
+    }, queuedLogs) { s, logs ->
+        s.data?.let { d -> s.copy(data = withQueuedSessions(d, logs)) } ?: s
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     val uiPrefs get() = container.uiPrefs

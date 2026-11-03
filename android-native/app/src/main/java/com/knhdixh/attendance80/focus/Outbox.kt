@@ -37,6 +37,8 @@ class Outbox(
     private val api: Api,
     private val recorded: suspend (FocusSessionDto) -> Unit = {},
     private val dropped: (FocusLogEntry, String) -> Unit = { e, why -> Log.w("FocusOutbox", "Dropped ${e.client_id}: $why") },
+    /** The email of the account the signed-in session (the snapshot) belongs to. When given, nothing is sent unless it is the queue's account. */
+    private val sessionEmail: (() -> String?)? = null,
 ) {
     private val mutex = Mutex()
 
@@ -48,6 +50,8 @@ class Outbox(
     suspend fun flush(): Boolean = mutex.withLock {
         while (true) {
             val account = store.account() ?: return@withLock true
+            // The collector that follows the snapshot may be a step behind a sign-out and a new sign-in: send only for the account that is signed in now.
+            if (sessionEmail != null && sessionEmail.invoke()?.lowercase() != account) return@withLock false
             val next = store.outbox(account).firstOrNull() ?: break
             try {
                 recorded(api.logFocus(next.toRequest()))

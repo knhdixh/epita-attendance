@@ -118,7 +118,7 @@ class DefaultAppContainer(
     }
 
     override val focusOutbox: Outbox by lazy {
-        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
+        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) }, sessionEmail = { dataRepository.snapshot.value?.user?.email })
     }
 
     override val uiPrefs: com.knhdixh.attendance80.data.UiPrefs by lazy { com.knhdixh.attendance80.data.UiPrefs(context) }
