@@ -1,0 +1,3256 @@
+{
+  "queries": [
+    {
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "query": "yesterday",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "over due",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "today | overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "query": "no due date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "query": "date: 2026-11-05",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4
+          ]
+        ],
+        "tasks": [
+          4
+        ]
+      }
+    },
+    {
+      "query": "date: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4
+          ]
+        ],
+        "tasks": [
+          4
+        ]
+      }
+    },
+    {
+      "query": "date: today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "date: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "due before: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "query": "before: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "query": "due after: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7,
+            11,
+            10
+          ]
+        ],
+        "tasks": [
+          7,
+          11,
+          10
+        ]
+      }
+    },
+    {
+      "query": "due after:5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7,
+            11,
+            10
+          ]
+        ],
+        "tasks": [
+          7,
+          11,
+          10
+        ]
+      }
+    },
+    {
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            3,
+            4,
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          3,
+          4,
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            3
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "query": "next 0 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4
+          ]
+        ],
+        "tasks": [
+          4
+        ]
+      }
+    },
+    {
+      "query": "jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            7
+          ]
+        ],
+        "tasks": [
+          1,
+          7
+        ]
+      }
+    },
+    {
+      "query": "p2",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "P3",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4
+          ]
+        ],
+        "tasks": [
+          4
+        ]
+      }
+    },
+    {
+      "query": "p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6,
+            3,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          6,
+          3,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "no priority",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6,
+            3,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          6,
+          3,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "#Work",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            11
+          ]
+        ],
+        "tasks": [
+          2,
+          11
+        ]
+      }
+    },
+    {
+      "query": "##Work",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            11
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          11
+        ]
+      }
+    },
+    {
+      "query": "#work",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            11
+          ]
+        ],
+        "tasks": [
+          2,
+          11
+        ]
+      }
+    },
+    {
+      "query": "#Reports",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "##Reports",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "#\"Reports\"",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "#Inbox",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4,
+            7,
+            5
+          ]
+        ],
+        "tasks": [
+          4,
+          7,
+          5
+        ]
+      }
+    },
+    {
+      "query": "#Nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "#Archived",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "/Now",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "/backlog",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            11
+          ]
+        ],
+        "tasks": [
+          11
+        ]
+      }
+    },
+    {
+      "query": "/Chores",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "query": "/nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "@urgent",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            7
+          ]
+        ],
+        "tasks": [
+          1,
+          7
+        ]
+      }
+    },
+    {
+      "query": "@Waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            7
+          ]
+        ],
+        "tasks": [
+          2,
+          7
+        ]
+      }
+    },
+    {
+      "query": "@urgent & @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7
+          ]
+        ],
+        "tasks": [
+          7
+        ]
+      }
+    },
+    {
+      "query": "@urgent | @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            7
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          7
+        ]
+      }
+    },
+    {
+      "query": "@nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "no labels",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6,
+            3,
+            4,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          6,
+          3,
+          4,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "subtask",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6
+          ]
+        ],
+        "tasks": [
+          6
+        ]
+      }
+    },
+    {
+      "query": "!subtask & today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "recurring",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "query": "!recurring & tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "search: report",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "search: REPORT",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "search: chapter",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7
+          ]
+        ],
+        "tasks": [
+          7
+        ]
+      }
+    },
+    {
+      "query": "search: buy milk",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "query": "search: boss & overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "search: \"buy milk\"",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "query": "course: algo",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4
+          ]
+        ],
+        "tasks": [
+          4
+        ]
+      }
+    },
+    {
+      "query": "course: Databases",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7
+          ]
+        ],
+        "tasks": [
+          7
+        ]
+      }
+    },
+    {
+      "query": "school",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4,
+            7
+          ]
+        ],
+        "tasks": [
+          4,
+          7
+        ]
+      }
+    },
+    {
+      "query": "!school & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "overdue & !@waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "(today | tomorrow) & p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6,
+            3
+          ]
+        ],
+        "tasks": [
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "query": "today | tomorrow & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "(today | tomorrow) & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "!today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            3,
+            4,
+            7,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          2,
+          3,
+          4,
+          7,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "!(today | overdue)",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3,
+            4,
+            7,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          3,
+          4,
+          7,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "!!today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "all",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4,
+            7,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4,
+          7,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "view all",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4,
+            7,
+            11,
+            10,
+            5
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4,
+          7,
+          11,
+          10,
+          5
+        ]
+      }
+    },
+    {
+      "query": "today, overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ],
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "query": "#Big project",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "query": "  today  &  p1  ",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1
+          ]
+        ],
+        "tasks": [
+          1
+        ]
+      }
+    },
+    {
+      "query": "today,",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "query": "##Work & !/Now",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            11
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          11
+        ]
+      }
+    },
+    {
+      "query": "#Work & @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "query": "school & next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            4,
+            7
+          ]
+        ],
+        "tasks": [
+          4,
+          7
+        ]
+      }
+    },
+    {
+      "query": "today, overdue, p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ],
+          [
+            2
+          ],
+          [
+            1,
+            7
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          2,
+          7
+        ]
+      }
+    },
+    {
+      "query": "today,overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ],
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "query": "##Reports & p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            6
+          ]
+        ],
+        "tasks": [
+          6
+        ]
+      }
+    },
+    {
+      "query": "search: \"\"",
+      "out": {
+        "ok": false,
+        "error": "\"search:\" needs some words, for example \"search: buy milk\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "#Work | #Home | @urgent",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            3,
+            7,
+            11,
+            10
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          3,
+          7,
+          11,
+          10
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "query": "",
+      "out": {
+        "ok": false,
+        "error": "Type a filter. Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "   ",
+      "out": {
+        "ok": false,
+        "error": "Type a filter. Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "(",
+      "out": {
+        "ok": false,
+        "error": "The filter ends too soon. Something is missing after the last & | ! or (.",
+        "at": 1
+      }
+    },
+    {
+      "query": "today &",
+      "out": {
+        "ok": false,
+        "error": "The filter ends too soon. Something is missing after the last & | ! or (.",
+        "at": 7
+      }
+    },
+    {
+      "query": "& today",
+      "out": {
+        "ok": false,
+        "error": "I didn't expect \"&\" here.",
+        "at": 0
+      }
+    },
+    {
+      "query": "today )",
+      "out": {
+        "ok": false,
+        "error": "Too many \")\".",
+        "at": 6
+      }
+    },
+    {
+      "query": "today | | p1",
+      "out": {
+        "ok": false,
+        "error": "I didn't expect \"|\" here.",
+        "at": 8
+      }
+    },
+    {
+      "query": "banana",
+      "out": {
+        "ok": false,
+        "error": "I don't know \"banana\". Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "p5",
+      "out": {
+        "ok": false,
+        "error": "I don't know \"p5\". Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "date:",
+      "out": {
+        "ok": false,
+        "error": "\"date:\" needs a date, for example \"date: fri\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "date: banana",
+      "out": {
+        "ok": false,
+        "error": "I couldn't read the date \"banana\" in \"date:\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "next days",
+      "out": {
+        "ok": false,
+        "error": "I don't know \"next days\". Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "due before:",
+      "out": {
+        "ok": false,
+        "error": "\"due before:\" needs a date, for example \"due before: fri\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "@two words",
+      "out": {
+        "ok": false,
+        "error": "A label name has no spaces. Join labels with & or |.",
+        "at": 0
+      }
+    },
+    {
+      "query": "!",
+      "out": {
+        "ok": false,
+        "error": "The filter ends too soon. Something is missing after the last & | ! or (.",
+        "at": 1
+      }
+    },
+    {
+      "query": "((today)",
+      "out": {
+        "ok": false,
+        "error": "Missing \")\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "today (p1)",
+      "out": {
+        "ok": false,
+        "error": "I didn't expect \"(\" here.",
+        "at": 6
+      }
+    },
+    {
+      "query": "search:",
+      "out": {
+        "ok": false,
+        "error": "\"search:\" needs some words, for example \"search: buy milk\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "course:",
+      "out": {
+        "ok": false,
+        "error": "\"course:\" needs a course name, for example \"course: algorithms\".",
+        "at": 0
+      }
+    },
+    {
+      "query": ",",
+      "out": {
+        "ok": false,
+        "error": "Type a filter. Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "#",
+      "out": {
+        "ok": false,
+        "error": "I don't know \"#\". Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "/",
+      "out": {
+        "ok": false,
+        "error": "I don't know \"/\". Try \"today\", \"overdue\", \"p1\", \"#project\", \"@label\" or \"search: words\".",
+        "at": 0
+      }
+    }
+  ],
+  "today": [
+    {
+      "today": "2026-11-03",
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ]
+        ],
+        "tasks": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            3
+          ]
+        ],
+        "tasks": [
+          3
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          2
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            3,
+            4,
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          3,
+          4,
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            3
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          3
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "due before: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "today": "2026-11-03",
+      "query": "date: jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4,
+            7,
+            11,
+            10
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4,
+          7,
+          11,
+          10
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "due before: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4,
+            7,
+            11,
+            10
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4,
+          7,
+          11,
+          10
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "query": "date: jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "due before: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "query": "date: jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "due before: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "today": "2026-02-28",
+      "query": "date: jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "due before: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            2,
+            1,
+            6,
+            3,
+            4,
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          2,
+          1,
+          6,
+          3,
+          4,
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            5
+          ]
+        ],
+        "tasks": [
+          5
+        ]
+      }
+    },
+    {
+      "today": "2026-11-10",
+      "query": "date: jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          []
+        ],
+        "tasks": []
+      }
+    }
+  ],
+  "parsed": [
+    {
+      "query": "today",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "query": "yesterday",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-02"
+          }
+        ]
+      }
+    },
+    {
+      "query": "overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "over due",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "today | overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "or",
+            "of": [
+              {
+                "t": "date",
+                "is": "2026-11-03"
+              },
+              {
+                "t": "before",
+                "day": "2026-11-03"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "no date",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "nodate"
+          }
+        ]
+      }
+    },
+    {
+      "query": "no due date",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "nodate"
+          }
+        ]
+      }
+    },
+    {
+      "query": "date: 2026-11-05",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "date: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "date: today",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "date: fri",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "query": "due before: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "before",
+            "day": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "before: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "before",
+            "day": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "due after: 5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "after",
+            "day": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "due after:5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "after",
+            "day": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "range",
+            "from": "2026-11-03",
+            "to": "2026-11-10"
+          }
+        ]
+      }
+    },
+    {
+      "query": "next 1 day",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "range",
+            "from": "2026-11-03",
+            "to": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "query": "next 0 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "range",
+            "from": "2026-11-03",
+            "to": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "5 nov",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "query": "jan 27",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "query": "p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "priority",
+            "n": 4
+          }
+        ]
+      }
+    },
+    {
+      "query": "p2",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "priority",
+            "n": 3
+          }
+        ]
+      }
+    },
+    {
+      "query": "P3",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "priority",
+            "n": 2
+          }
+        ]
+      }
+    },
+    {
+      "query": "p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "priority",
+            "n": 1
+          }
+        ]
+      }
+    },
+    {
+      "query": "no priority",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "priority",
+            "n": 1
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Work",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "work",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "##Work",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "work",
+            "sub": true
+          }
+        ]
+      }
+    },
+    {
+      "query": "#work",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "work",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Reports",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "reports",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "##Reports",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "reports",
+            "sub": true
+          }
+        ]
+      }
+    },
+    {
+      "query": "#\"Reports\"",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "reports",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Inbox",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "inbox",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "nope",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Archived",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "archived",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "/Now",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "section",
+            "name": "now"
+          }
+        ]
+      }
+    },
+    {
+      "query": "/backlog",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "section",
+            "name": "backlog"
+          }
+        ]
+      }
+    },
+    {
+      "query": "/Chores",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "section",
+            "name": "chores"
+          }
+        ]
+      }
+    },
+    {
+      "query": "/nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "section",
+            "name": "nope"
+          }
+        ]
+      }
+    },
+    {
+      "query": "@urgent",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "label",
+            "name": "urgent"
+          }
+        ]
+      }
+    },
+    {
+      "query": "@Waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "label",
+            "name": "waiting"
+          }
+        ]
+      }
+    },
+    {
+      "query": "@urgent & @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "label",
+                "name": "urgent"
+              },
+              {
+                "t": "label",
+                "name": "waiting"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "@urgent | @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "or",
+            "of": [
+              {
+                "t": "label",
+                "name": "urgent"
+              },
+              {
+                "t": "label",
+                "name": "waiting"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "@nope",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "label",
+            "name": "nope"
+          }
+        ]
+      }
+    },
+    {
+      "query": "no labels",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "nolabels"
+          }
+        ]
+      }
+    },
+    {
+      "query": "subtask",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "subtask"
+          }
+        ]
+      }
+    },
+    {
+      "query": "!subtask & today",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "not",
+                "of": {
+                  "t": "subtask"
+                }
+              },
+              {
+                "t": "date",
+                "is": "2026-11-03"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "recurring",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "recurring"
+          }
+        ]
+      }
+    },
+    {
+      "query": "!recurring & tomorrow",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "not",
+                "of": {
+                  "t": "recurring"
+                }
+              },
+              {
+                "t": "date",
+                "is": "2026-11-04"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: report",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "search",
+            "text": "report"
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: REPORT",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "search",
+            "text": "report"
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: chapter",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "search",
+            "text": "chapter"
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: buy milk",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "search",
+            "text": "buy milk"
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: boss & overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "search",
+                "text": "boss"
+              },
+              {
+                "t": "before",
+                "day": "2026-11-03"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: \"buy milk\"",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "search",
+            "text": "buy milk"
+          }
+        ]
+      }
+    },
+    {
+      "query": "course: algo",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "course",
+            "text": "algo"
+          }
+        ]
+      }
+    },
+    {
+      "query": "course: Databases",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "course",
+            "text": "databases"
+          }
+        ]
+      }
+    },
+    {
+      "query": "school",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "school"
+          }
+        ]
+      }
+    },
+    {
+      "query": "!school & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "not",
+                "of": {
+                  "t": "school"
+                }
+              },
+              {
+                "t": "priority",
+                "n": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "overdue & !@waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "before",
+                "day": "2026-11-03"
+              },
+              {
+                "t": "not",
+                "of": {
+                  "t": "label",
+                  "name": "waiting"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "(today | tomorrow) & p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "or",
+                "of": [
+                  {
+                    "t": "date",
+                    "is": "2026-11-03"
+                  },
+                  {
+                    "t": "date",
+                    "is": "2026-11-04"
+                  }
+                ]
+              },
+              {
+                "t": "priority",
+                "n": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "today | tomorrow & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "or",
+            "of": [
+              {
+                "t": "date",
+                "is": "2026-11-03"
+              },
+              {
+                "t": "and",
+                "of": [
+                  {
+                    "t": "date",
+                    "is": "2026-11-04"
+                  },
+                  {
+                    "t": "priority",
+                    "n": 4
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "(today | tomorrow) & p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "or",
+                "of": [
+                  {
+                    "t": "date",
+                    "is": "2026-11-03"
+                  },
+                  {
+                    "t": "date",
+                    "is": "2026-11-04"
+                  }
+                ]
+              },
+              {
+                "t": "priority",
+                "n": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "!today",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "not",
+            "of": {
+              "t": "date",
+              "is": "2026-11-03"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "query": "!(today | overdue)",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "not",
+            "of": {
+              "t": "or",
+              "of": [
+                {
+                  "t": "date",
+                  "is": "2026-11-03"
+                },
+                {
+                  "t": "before",
+                  "day": "2026-11-03"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "query": "!!today",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "not",
+            "of": {
+              "t": "not",
+              "of": {
+                "t": "date",
+                "is": "2026-11-03"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "query": "all",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "all"
+          }
+        ]
+      }
+    },
+    {
+      "query": "view all",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "all"
+          }
+        ]
+      }
+    },
+    {
+      "query": "today, overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          },
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Big project",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "project",
+            "name": "big project",
+            "sub": false
+          }
+        ]
+      }
+    },
+    {
+      "query": "  today  &  p1  ",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "date",
+                "is": "2026-11-03"
+              },
+              {
+                "t": "priority",
+                "n": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "today,",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "##Work & !/Now",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "project",
+                "name": "work",
+                "sub": true
+              },
+              {
+                "t": "not",
+                "of": {
+                  "t": "section",
+                  "name": "now"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "#Work & @waiting",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "project",
+                "name": "work",
+                "sub": false
+              },
+              {
+                "t": "label",
+                "name": "waiting"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "school & next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "school"
+              },
+              {
+                "t": "range",
+                "from": "2026-11-03",
+                "to": "2026-11-10"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "today, overdue, p1",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          },
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          },
+          {
+            "t": "priority",
+            "n": 4
+          }
+        ]
+      }
+    },
+    {
+      "query": "today,overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          },
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "##Reports & p4",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "and",
+            "of": [
+              {
+                "t": "project",
+                "name": "reports",
+                "sub": true
+              },
+              {
+                "t": "priority",
+                "n": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "search: \"\"",
+      "out": {
+        "ok": false,
+        "error": "\"search:\" needs some words, for example \"search: buy milk\".",
+        "at": 0
+      }
+    },
+    {
+      "query": "#Work | #Home | @urgent",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "or",
+            "of": [
+              {
+                "t": "project",
+                "name": "work",
+                "sub": false
+              },
+              {
+                "t": "project",
+                "name": "home",
+                "sub": false
+              },
+              {
+                "t": "label",
+                "name": "urgent"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

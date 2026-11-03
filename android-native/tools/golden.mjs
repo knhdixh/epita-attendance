@@ -614,3 +614,41 @@ const calGolden = {
 };
 fs.writeFileSync(path.join(GOLDEN_DIR, 'calendar_golden.json'), JSON.stringify(calGolden, null, 2) + '\n');
 process.env.TZ = 'Europe/Paris';
+
+// Task language (Phase 11): recurrence, quick add and filters. Inputs are in fixtures/tasklang.json (made by
+// extract-tasklang-fixtures.mjs from the server's own test tables). Dates are day keys, so the zone doesn't matter.
+const recurrence = await import('../../public/recurrence.js');
+const quickadd = await import('../../public/quickadd.js');
+const filters = await import('../../public/filters.js');
+const tl = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'tasklang.json'), 'utf8'));
+const TODAY = tl.today;
+const recRead = (text, opts) => { const r = recurrence.parseRecurrence(text, opts); return r.ok ? { ok: true, rule: r.rule, text: recurrence.formatRecurrence(r.rule) } : r; };
+const rg = {
+  steps: tl.recurrence.steps.map(([text, due, done]) => { const r = recurrence.parseRecurrence(text, { today: TODAY, due }); return { text, due, done, read: recRead(text, { today: TODAY, due }), next: r.ok ? (recurrence.nextOccurrence(r.rule, { due, done }) ?? null) : null }; }),
+  formats: tl.recurrence.formats.map((text) => recRead(text, { today: TODAY })),
+  errors: tl.recurrence.errors.map((text) => recRead(text, { today: TODAY })),
+  days: tl.recurrence.days.map((text) => ({ text, day: recurrence.parseDay(text, TODAY) })),
+  drift: tl.recurrence.drift.map(([text, due]) => recRead(text, { today: TODAY, due })),
+  clean: ['Every  Mon,Wed', 'banana', 'every week until dec 2026', ''].map((t) => { const r = recurrence.cleanRecurrence(t, { today: TODAY }); return r.ok ? { ok: true, text: r.text, rule: r.rule } : r; }),
+  series: tl.recurrence.series.map((text) => { let due = '2026-01-31'; const r = recurrence.parseRecurrence(text, { today: TODAY, due }); const dates = []; for (let n = 0; n < 400; n++) { due = recurrence.nextOccurrence(r.rule, { due, done: due }); dates.push(due); } return { text, dates }; }),
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'recurrence_golden.json'), JSON.stringify(rg, null, 2) + '\n');
+
+const qg = {
+  inputs: tl.quickadd.inputs.map((text) => ({ text, out: quickadd.parseQuickAdd(text, { today: TODAY }) })),
+  today: tl.quickadd.todays.flatMap((today) => tl.quickadd.todayInputs.map((text) => ({ today, text, out: quickadd.parseQuickAdd(text, { today }) }))),
+  named: tl.quickadd.named.map((text) => ({ text, out: quickadd.parseQuickAdd(text, { today: TODAY, ...tl.quickadd.names }) })),
+  phrases: tl.quickadd.phraseToday.flatMap((today) => tl.quickadd.phrases.map((text) => ({ today, text, day: quickadd.dayFromPhrase(text, today) }))),
+  minutes: tl.quickadd.minutes.map((text) => ({ text, minutes: quickadd.minutesFrom(text) })),
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'quickadd_golden.json'), JSON.stringify(qg, null, 2) + '\n');
+
+const fctx = tl.filters.ctx;
+const ids = (r) => (r.ok ? { ok: true, lists: r.lists.map((l) => l.map((t) => t.id)), tasks: r.tasks.map((t) => t.id) } : r);
+const fg = {
+  queries: tl.filters.queries.map((query) => ({ query, out: ids(filters.runFilter(query, fctx)) })),
+  errors: tl.filters.errors.map((query) => ({ query, out: filters.parseFilter(query, { today: TODAY }) })),
+  today: tl.filters.todays.flatMap((today) => tl.filters.todayQueries.map((query) => ({ today, query, out: ids(filters.runFilter(query, { ...fctx, today })) }))),
+  parsed: tl.filters.queries.map((query) => ({ query, out: filters.parseFilter(query, { today: TODAY }) })),
+};
+fs.writeFileSync(path.join(GOLDEN_DIR, 'filters_golden.json'), JSON.stringify(fg, null, 2) + '\n');
