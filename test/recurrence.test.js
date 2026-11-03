@@ -63,6 +63,13 @@ const STEPS = [
   ['every day until 5 nov 2026', '2026-11-05', '2026-11-05', null],
   ['every week until 2026-11-09', '2026-11-03', '2026-11-03', null],
   ['every week starting 7 dec 2026', '2026-11-03', '2026-11-03', '2026-12-07'],
+  ['every 2nd mon until dec 2026', '2026-11-03', '2026-11-09', '2026-12-14'],
+  ['every 2nd mon until dec 2026', '2026-12-14', '2026-12-14', null],
+  ['every day until february 2028', '2028-02-28', '2028-02-28', '2028-02-29'],
+  ['every day until feb 2028', '2028-02-29', '2028-02-29', null],
+  ['every day until nov 2026', '2026-11-30', '2026-11-30', null],
+  ['every week starting jan 2027', '2026-11-03', '2026-11-03', '2027-01-01'],
+  ['every month starting dec 2026 until mar 2027', '2026-11-03', '2026-11-03', '2026-12-01'],
   ['every! 3 days', '2026-11-03', '2026-11-10', '2026-11-13'],
   ['every! day', '2026-11-10', '2026-11-03', '2026-11-04'],          // done early: counted from today
   ['every! week', '2026-11-03', '2026-11-10', '2026-11-17'],
@@ -86,7 +93,7 @@ const FORMATS = [
   ['every month on the 15th', 'every month on the 15th'], ['every month on the 1st', 'every month on the 1st'], ['every month', 'every month'],
   ['monthly', 'every month'], ['every 3 months', 'every 3 months'], ['every year', 'every year'], ['yearly', 'every year'],
   ['every 1 jan', 'every 1 jan'], ['every jan 15', 'every 15 jan'], ['every 3 months starting 1 jan', 'every 3 months starting 1 jan 2027'],
-  ['every week until 1 jun', 'every week until 1 jun 2027'], ['every day until 2027-01-01', 'every day until 1 jan 2027'],
+  ['every week until 1 jun', 'every week until 1 jun 2027'], ['every week until dec 2026', 'every week until 31 dec 2026'], ['every week starting feb 2028', 'every week starting 1 feb 2028'], ['every day until 2027-01-01', 'every day until 1 jan 2027'],
   ['every! 3 days', 'every! 3 days'], ['every! week', 'every! week'], ['every.', 'x'],
 ];
 for (const [text, want] of FORMATS.slice(0, -1)) {

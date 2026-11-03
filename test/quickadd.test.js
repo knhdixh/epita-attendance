@@ -218,3 +218,8 @@ test('names that exist never leak into the title, and the old behaviour stays wi
   assert.equal(parseQuickAdd('Read chapter 3 tom at 9am #School /Week 1', { today: TODAY }).section, 'Week');
   assert.deepEqual(q('Pay #School admin'), parseQuickAdd('Pay #School admin', { today: TODAY, projects: [], sections: [], labels: [] }));
 });
+
+test('a repeat can end or start in a month: "until dec 2026"', () => {
+  const r = q('Pay every 2nd mon until dec 2026');
+  assert.deepEqual([r.title, r.recurrence, r.due_date], ['Pay', 'every 2nd mon until 31 dec 2026', '2026-11-09']);
+});

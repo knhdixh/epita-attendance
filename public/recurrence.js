@@ -46,6 +46,7 @@ export function parseDay(text, today = localKey()) {
   return null;
 }
 
+const monthEdge = (y, m, last) => (last ? key(y, m, new Date(Date.UTC(y, m, 0)).getUTCDate()) : key(y, m, 1));
 const dateText = (k) => { const [y, m, d] = parts(k); return `${d} ${MONTHS[m - 1]} ${y}`; };
 
 // ---------------------------------------------------------------- reading a repeat
@@ -82,7 +83,9 @@ export function parseRecurrence(input, { today = localKey(), due = null } = {}) 
 
   for (let i = 0; i < clauses.length; i += 2) {
     const until = /^(until|till|ending|through)$/.test(clauses[i]);
-    const k = parseDay(clauses[i + 1] ?? '', today);
+    // "dec 2026": the last day of that month for "until", the first for "starting".
+    const my = (clauses[i + 1] ?? '').match(new RegExp(`^${MONTH_RE}\\.?,?\\s+(\\d{4})$`));
+    const k = my ? monthEdge(+my[2], MONTHS.indexOf(my[1].slice(0, 3)) + 1, until) : parseDay(clauses[i + 1] ?? '', today);
     if (!k) return { ok: false, error: `I couldn't read the date "${clauses[i + 1] ?? ''}".` };
     if (until) rule.until = k; else rule.start = k;
   }
