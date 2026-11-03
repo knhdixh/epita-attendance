@@ -72,7 +72,7 @@ fun CoursesScreen(data: AppData?, allEvents: List<EventDto>?, now: Long, zone: Z
     val derived by model.state.collectAsState()
     // The last result stays on screen while the next one is worked out; the spinner is only for the first.
     val listState = rememberLazyListState()
-    val state = derived
+    val state = derived?.takeIf { it.data.user.email == data?.user?.email } // the kept result is only ever the owning account's
     if (data == null) { Text("Loading…", Modifier.padding(16.dp)); return }
     if (state == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val grouped = state.families.flatMap { it.courses }.map { it.id }.toSet()

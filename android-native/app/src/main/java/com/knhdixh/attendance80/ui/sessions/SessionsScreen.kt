@@ -38,7 +38,7 @@ import kotlin.math.floor
 
 data class SessionFilter(val course: Long? = null, val whenFilter: String = "upcoming", val query: String = "", val showHidden: Boolean = false)
 data class SessionsState(val data: AppData, val now: Long, val zone: ZoneId, val filter: SessionFilter, val events: List<EventDto>, val summary: AttendanceStats?)
-class SessionsViewModel : ViewModel() {
+class SessionsViewModel(private val worker: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default) : ViewModel() {
     private val mutable = MutableStateFlow<SessionsState?>(null)
     val state = mutable.asStateFlow()
     private var generation = 0
@@ -48,7 +48,7 @@ class SessionsViewModel : ViewModel() {
         val version = ++generation
         if (data == null) { mutable.value = null; return }
         viewModelScope.launch {
-            val result = withContext(Dispatchers.Default) { derive(data, minute, zone, filter) }
+            val result = withContext(worker) { derive(data, minute, zone, filter) }
             if (generation == version) mutable.value = result
         }
     }
@@ -137,7 +137,9 @@ fun SessionsScreen(data: AppData?, now: Long, zone: ZoneId, filter: SessionFilte
     LaunchedEffect(data, now / 60000, zone, filter) { model.update(data, now, zone, filter) }
     val state by model.state.collectAsState()
     val listState = rememberLazyListState()
-    val s = state
+    val s = state?.takeIf { it.data.user.email == data?.user?.email } // the kept result is only ever the owning account's
+    // The previous filter's list stays on screen while the new one is worked out: bulk "shown" actions wait for it.
+    val pending = s != null && s.filter != filter
     LaunchedEffect(s?.events) { s?.let { selected = selected.intersect(it.events.map { event -> event.id }.toSet()) } }
     if (data == null || s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val allFamilies = groupFamilies(data.courses)
@@ -151,8 +153,8 @@ fun SessionsScreen(data: AppData?, now: Long, zone: ZoneId, filter: SessionFilte
             OutlinedTextField(query, { onFilter(filter.copy(query = it)) }, label = { Text("Search") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Row { Checkbox(hidden, { onFilter(filter.copy(showHidden = it)) }, Modifier.testTag("show-untracked").semantics { contentDescription = "Show untracked" }); Text("Show untracked", Modifier.padding(top = 12.dp)) }
             s.summary?.let { stats -> Text("${data.courses.find { it.id == course }?.name}: ${number(stats.projectedRate * 100)}% projected · ${if (stats.remaining < -1e-9) "over the absence limit" else "${unitLabel(stats.remainingDisplay, data.user.unit)} left to skip"} · ${number(stats.absent)} of max ${number(floor(stats.allowedAbsence * 10 + 1e-9) / 10)} absences used", color = when (stats.level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }) }
-            if (whenFilter == "unmarked" && s.events.isNotEmpty()) TextButton(onClick = { onAction(PaletteAction.BulkAttendance(s.events.map { it.id })) }) { Text("Mark these ${s.events.size} as attended") }
-            if (selected.isNotEmpty()) FlowRow { listOf("present" to "Present", "absent" to "Absent", "excused" to "Excused", null to "Clear").forEach { (status, label) -> TextButton(onClick = { onAction(PaletteAction.BulkAttendance(selected.toList(), status)); selected = emptySet() }) { Text(label) } } }
+            if (whenFilter == "unmarked" && s.events.isNotEmpty()) TextButton(enabled = !pending, onClick = { onAction(PaletteAction.BulkAttendance(s.events.map { it.id })) }, modifier = Modifier.testTag("sessions-mark-shown")) { Text("Mark these ${s.events.size} as attended") }
+            if (selected.isNotEmpty()) FlowRow { listOf("present" to "Present", "absent" to "Absent", "excused" to "Excused", null to "Clear").forEach { (status, label) -> TextButton(enabled = !pending, onClick = { onAction(PaletteAction.BulkAttendance(selected.toList(), status)); selected = emptySet() }) { Text(label) } } }
         } }
         if (s.events.isEmpty()) item("empty") { Text("No sessions match.") }
         val days = s.events.groupBy { Instant.ofEpochMilli(it.start_at).atZone(zone).toLocalDate() }

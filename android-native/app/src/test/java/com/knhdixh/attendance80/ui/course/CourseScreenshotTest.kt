@@ -37,6 +37,8 @@ abstract class CourseScreenshotTest {
     @Test fun dark_link() = capture(true, 1f, "link")
     @Test fun light_missing() = capture(false, 1f, "missing")
     @Test fun dark_missing() = capture(true, 1f, "missing")
+    /** On wide screens the Courses list sits beside the course, and has similar buttons: look in the course only. */
+    private fun inDetail(text: String) = ui.onNode(hasText(text) and hasAnyAncestor(hasTestTag("course-detail")))
     private fun capture(dark: Boolean, scale: Float, kind: String) {
         val base = screenshotData()
         val first = base.courses.first()
@@ -54,13 +56,13 @@ abstract class CourseScreenshotTest {
         if (kind == "form") {
             val label = if (data.courses.first().recording_url == null) "Add link" else "Edit link"
             ui.onNodeWithTag("course-detail").performScrollToNode(hasText(label))
-            ui.onNodeWithText(label).performClick()
+            inDetail(label).performClick()
             ui.mainClock.autoAdvance = false
             ui.mainClock.advanceTimeBy(500)
             ui.onNode(isDialog()).captureRoboImage("src/test/screenshots/${device}_${if (dark) "dark" else "light"}_course_${kind}_${scale.toInt()}.png")
         } else {
-            if (kind == "group") { ui.onNodeWithTag("course-detail").performScrollToNode(hasText("Several groups")); ui.onNodeWithText("Several groups").performClick() }
-            if (kind == "tag") ui.onNodeWithText("Default tag: Normal").performClick()
+            if (kind == "group") { ui.onNodeWithTag("course-detail").performScrollToNode(hasText("Several groups")); inDetail("Several groups").performClick() }
+            if (kind == "tag") inDetail("Default tag: Normal").performClick()
             if (kind == "empty") ui.onNodeWithTag("course-detail").performScrollToNode(hasText("No sessions match."))
             if (kind == "link") ui.onNodeWithTag("course-detail").performScrollToNode(hasText("Open recordings ↗"))
             val target = if (kind == "group" || kind == "tag") ui.onNode(isDialog()) else ui.onRoot()

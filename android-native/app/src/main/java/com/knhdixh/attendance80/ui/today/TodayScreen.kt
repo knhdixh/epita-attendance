@@ -31,7 +31,7 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val s = state
+    val s = state?.takeIf { it.data.user.email == data?.user?.email } // the kept result is only ever the owning account's
     if (data == null || s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val plan = s.plan
     val events = s.data.events.associateBy { it.id }
