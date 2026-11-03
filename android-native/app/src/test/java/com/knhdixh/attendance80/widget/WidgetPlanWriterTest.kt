@@ -5,6 +5,7 @@ import com.knhdixh.attendance80.focus.FakeClock
 import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.net.AppData
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,10 @@ class WidgetPlanWriterTest {
         val tokens = LateTokens("token-a")
         val widget = store()
         val writer = WidgetPlanWriter(tokens, widget, clock) {}
-        val early = async { writer.onSnapshot(null) } // before the token store has loaded
+        // UNDISPATCHED runs onSnapshot up to its first suspension now, before the token store has loaded.
+        val early = async(start = CoroutineStart.UNDISPATCHED) { writer.onSnapshot(null) }
+        assertFalse("waits for the token store", early.isCompleted)
+        assertTrue("nothing written yet", folder.root.listFiles().none { it.length() > 0 })
         tokens.load()
         early.await()
         assertTrue("never signed out", widget.read().signedIn) // an empty signed-in plan, not "Open the app to sign in"
