@@ -67,12 +67,12 @@ class WidgetRenderTest {
         val store = WidgetStore(File(Files.createTempDirectory("widget-host").toFile(), "widget.json"))
         val alarms = mutableListOf<Long>()
         val size = DpSize(110.dp, 110.dp)
-        val host = @androidx.compose.runtime.Composable { WidgetFromStore(store, store.revision.value, clock = { now }, schedule = { _, at -> alarms += at }) }
+        fun host(): @androidx.compose.runtime.Composable () -> Unit { val revision = store.revision.value; return { WidgetFromStore(store, revision, clock = { now }, schedule = { _, at -> alarms += at }) } }
         store.updatePlan(snapshot)
         store.updateTimer(snapshot.timer) // start
-        assertTrue("Pause" in texts(size, host))
+        assertTrue("Pause" in texts(size, host()))
         store.updateTimer(WidgetTimer(phase = "focus", running = true, paused = true, leftMs = 300_000, endsAt = 0L)) // pause, seconds later
-        val t = texts(size, host)
+        val t = texts(size, host())
         assertTrue(t.toString(), "Resume" in t && "Pause" !in t)
         assertTrue("the alarm is set from what is drawn", alarms.isNotEmpty() && alarms.all { it > now })
     }
