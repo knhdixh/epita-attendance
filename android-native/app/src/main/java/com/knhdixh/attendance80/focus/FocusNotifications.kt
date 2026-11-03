@@ -90,7 +90,6 @@ class FocusNotifications(private val context: Context) : FocusNotifier {
         val percent = (progress(t, now) * 100).toInt().coerceIn(0, 100)
         val toggle = if (t.paused()) "Resume" else "Pause"
         val skip = if (t.phase == "focus") "Take a break" else "Skip break"
-        manager.cancel(ID_DONE) // "phase done" is old news once the next phase runs, however it was started
         val promoted = if (canPromote()) runCatching {
             LiveUpdate.build(context, CH_TIMER, title, text, t, percent, openApp(10),
                 listOf(toggle to action(FocusReceiver.ACTION_TOGGLE, 20), skip to action(FocusReceiver.ACTION_SKIP, 21), "Stop" to action(FocusReceiver.ACTION_STOP, 22)))
@@ -117,6 +116,8 @@ class FocusNotifications(private val context: Context) : FocusNotifier {
             }.build()
         manager.notify(ID_TIMER, notification)
     }
+
+    override fun clearDone() = manager.cancel(ID_DONE)
 
     @Suppress("MissingPermission")
     override fun phaseDone(ended: String, label: String?, next: FocusTimer, settings: FocusSettings) {
