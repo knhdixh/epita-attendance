@@ -88,10 +88,10 @@ object Filters {
         return out
     }
 
-    private fun unquote(s: String) = s.trim().replace(Regex("^\"(.*)\"$"), "$1").trim()
+    private fun unquote(s: String) = s.trim().replace(jsRegex("^\"(.*)\"$"), "$1").trim()
 
     private fun term(raw: String, today: String): Any { // FilterNode, or an error String
-        val t = raw.lowercase().replace(Regex("\\s+"), " ").trim()
+        val t = raw.lowercase().replace(jsRegex("\\s+"), " ").trim()
         when (t) {
             "today" -> return FilterNode.Date(today)
             "tomorrow" -> return FilterNode.Date(addDays(today, 1))
@@ -105,8 +105,8 @@ object Filters {
             "no priority" -> return FilterNode.Priority(1)
             "school" -> return FilterNode.School
         }
-        Regex("^p([1-4])$").find(t)?.let { return FilterNode.Priority(5 - it.groupValues[1].toInt()) }
-        Regex("^next (\\d{1,3}) days?$").find(t)?.let { return FilterNode.Range(today, addDays(today, it.groupValues[1].toInt())) }
+        jsRegex("^p([1-4])$").find(t)?.let { return FilterNode.Priority(5 - it.groupValues[1].toInt()) }
+        jsRegex("^next (\\d{1,3}) days?$").find(t)?.let { return FilterNode.Range(today, addDays(today, it.groupValues[1].toInt())) }
 
         fun dateArg(label: String, arg: String, make: (String) -> FilterNode): Any {
             val day = QuickAddParser.dayFromPhrase(arg, today)
@@ -114,21 +114,21 @@ object Filters {
             return make(day)
         }
         val ci = RegexOption.IGNORE_CASE
-        Regex("^\\s*date\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("date:", it.groupValues[1]) { d -> FilterNode.Date(d) } }
-        Regex("^\\s*(?:due\\s+)?before\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("due before:", it.groupValues[1]) { d -> FilterNode.Before(d) } }
-        Regex("^\\s*(?:due\\s+)?after\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("due after:", it.groupValues[1]) { d -> FilterNode.After(d) } }
-        Regex("^\\s*search\\s*:\\s*(.*)$", ci).find(raw)?.let {
+        jsRegex("^\\s*date\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("date:", it.groupValues[1]) { d -> FilterNode.Date(d) } }
+        jsRegex("^\\s*(?:due\\s+)?before\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("due before:", it.groupValues[1]) { d -> FilterNode.Before(d) } }
+        jsRegex("^\\s*(?:due\\s+)?after\\s*:\\s*(.*)$", ci).find(raw)?.let { return dateArg("due after:", it.groupValues[1]) { d -> FilterNode.After(d) } }
+        jsRegex("^\\s*search\\s*:\\s*(.*)$", ci).find(raw)?.let {
             val text = unquote(it.groupValues[1])
             return if (text.isNotEmpty()) FilterNode.Search(text.lowercase()) else "\"search:\" needs some words, for example \"search: buy milk\"."
         }
-        Regex("^\\s*course\\s*:\\s*(.*)$", ci).find(raw)?.let {
+        jsRegex("^\\s*course\\s*:\\s*(.*)$", ci).find(raw)?.let {
             val text = unquote(it.groupValues[1])
             return if (text.isNotEmpty()) FilterNode.Course(text.lowercase()) else "\"course:\" needs a course name, for example \"course: algorithms\"."
         }
-        Regex("^\\s*##\\s*(.+)$").find(raw)?.let { return FilterNode.Project(unquote(it.groupValues[1]).lowercase(), true) }
-        Regex("^\\s*#\\s*(.+)$").find(raw)?.let { return FilterNode.Project(unquote(it.groupValues[1]).lowercase(), false) }
-        Regex("^\\s*/\\s*(.+)$").find(raw)?.let { return FilterNode.Section(unquote(it.groupValues[1]).lowercase()) }
-        Regex("^\\s*@\\s*(\\S+)$").find(raw)?.let { return FilterNode.Label(it.groupValues[1].lowercase()) }
+        jsRegex("^\\s*##\\s*(.+)$").find(raw)?.let { return FilterNode.Project(unquote(it.groupValues[1]).lowercase(), true) }
+        jsRegex("^\\s*#\\s*(.+)$").find(raw)?.let { return FilterNode.Project(unquote(it.groupValues[1]).lowercase(), false) }
+        jsRegex("^\\s*/\\s*(.+)$").find(raw)?.let { return FilterNode.Section(unquote(it.groupValues[1]).lowercase()) }
+        jsRegex("^\\s*@\\s*(\\S+)$").find(raw)?.let { return FilterNode.Label(it.groupValues[1].lowercase()) }
         if (raw.trim().startsWith("@")) return "A label name has no spaces. Join labels with & or |."
         QuickAddParser.dayFromPhrase(raw.trim(), today)?.let { return FilterNode.Date(it) }
         return "I don't know \"${raw.trim()}\". $HELP"

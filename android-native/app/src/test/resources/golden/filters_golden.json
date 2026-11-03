@@ -1280,6 +1280,50 @@
           10
         ]
       }
+    },
+    {
+      "query": "today, overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6
+          ],
+          [
+            2
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          2
+        ]
+      }
+    },
+    {
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          [
+            1,
+            6,
+            3,
+            4,
+            7,
+            11
+          ]
+        ],
+        "tasks": [
+          1,
+          6,
+          3,
+          4,
+          7,
+          11
+        ]
+      }
     }
   ],
   "errors": [
@@ -3248,6 +3292,35 @@
                 "name": "urgent"
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "query": "today, overdue",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "date",
+            "is": "2026-11-03"
+          },
+          {
+            "t": "before",
+            "day": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "query": "next 7 days",
+      "out": {
+        "ok": true,
+        "lists": [
+          {
+            "t": "range",
+            "from": "2026-11-03",
+            "to": "2026-11-10"
           }
         ]
       }

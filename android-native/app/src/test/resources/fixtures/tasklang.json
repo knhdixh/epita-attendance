@@ -612,7 +612,9 @@
    "Éveil #Écoles /Étape 1 @café p2",
    "Gym every day until dec 2026",
    "Task 9.30 pm",
-   "Task at 7"
+   "Task at 7",
+   "Buy milk tomorrow at 5pm p1",
+   "Pay rent every month on the 31st"
   ],
   "todays": [
    "2026-01-31",
@@ -1016,7 +1018,9 @@
    "today,overdue",
    "##Reports & p4",
    "search: \"\"",
-   "#Work | #Home | @urgent"
+   "#Work | #Home | @urgent",
+   "today, overdue",
+   "next 7 days"
   ],
   "errors": [
    "",

@@ -26,8 +26,23 @@ data class RepeatRead(val ok: Boolean, val rule: RepeatRule? = null, val error: 
 internal const val MONTH_RE = "(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
 internal const val WD_RE = "(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)"
 internal val MONTHS = listOf("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
-internal fun re(p: String) = Regex(p, setOf(RegexOption.IGNORE_CASE))
-/** JavaScript's `\s`: Java's covers ASCII only. */
+internal fun re(p: String) = jsRegex(p, setOf(RegexOption.IGNORE_CASE))
+/** What JavaScript's `\s` matches (no-break space, U+2000 to U+200A, line separators, BOM, ...); Java's `\s` is ASCII only. */
+private const val JS_SPACE = "\\t\\n\\u000B\\f\\r \\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF"
+/** A regex whose `\s` and `\S` mean what they mean in the JavaScript the logic is ported from. `\d` and `\w` stay ASCII, as in JS. */
+internal fun jsRegex(p: String, options: Set<RegexOption> = emptySet()): Regex {
+    val out = StringBuilder()
+    var i = 0
+    while (i < p.length) {
+        val c = p[i]
+        if (c == '\\' && i + 1 < p.length) {
+            when (p[i + 1]) { 's' -> out.append("[$JS_SPACE]"); 'S' -> out.append("[^$JS_SPACE]"); else -> out.append(c).append(p[i + 1]) }
+            i += 2
+        } else { out.append(c); i++ }
+    }
+    return Regex(out.toString(), options)
+}
+internal fun jsRegex(p: String, option: RegexOption) = jsRegex(p, setOf(option))
 internal const val WS = "\\s"
 
 object Recurrence {
@@ -49,7 +64,7 @@ object Recurrence {
 
     /** 'today', 'tomorrow', '2026-06-01', '1 jun', 'jun 1', '1 jun 2026', '1/6', '1/6/2026'. A date without a year is its next occurrence. */
     fun parseDay(text: String, today: String = Habits.localKey()): String? {
-        val t = text.trim().lowercase().replace(Regex("\\.$"), "")
+        val t = text.trim().lowercase().replace(jsRegex("\\.$"), "")
         fun withYear(y: Int, m: Int, d: Int, explicit: Boolean): String? {
             if (m < 1 || m > 12 || d < 1 || d > 31) return null
             if (explicit) { val k = key(y, m, d); return k.takeIf { isKey(it) } }
@@ -60,14 +75,14 @@ object Recurrence {
         fun mon(w: String) = MONTHS.indexOf(w.take(3)) + 1
         if (t == "today") return today
         if (t == "tomorrow" || t == "tom") return addDays(today, 1)
-        Regex("^(\\d{4})-(\\d{2})-(\\d{2})$").find(t)?.let { m -> return withYear(m.groupValues[1].toInt(), m.groupValues[2].toInt(), m.groupValues[3].toInt(), true) }
+        jsRegex("^(\\d{4})-(\\d{2})-(\\d{2})$").find(t)?.let { m -> return withYear(m.groupValues[1].toInt(), m.groupValues[2].toInt(), m.groupValues[3].toInt(), true) }
         re("^(\\d{1,2})(?:st|nd|rd|th)?$WS+(?:of$WS+)?$MONTH_RE(?:,?$WS+(\\d{4}))?$").find(t)?.let { m ->
             return withYear(m.groupValues[3].ifEmpty { null }?.toInt() ?: year, mon(m.groupValues[2]), m.groupValues[1].toInt(), m.groupValues[3].isNotEmpty())
         }
         re("^$MONTH_RE$WS+(\\d{1,2})(?:st|nd|rd|th)?(?:,?$WS+(\\d{4}))?$").find(t)?.let { m ->
             return withYear(m.groupValues[3].ifEmpty { null }?.toInt() ?: year, mon(m.groupValues[1]), m.groupValues[2].toInt(), m.groupValues[3].isNotEmpty())
         }
-        Regex("^(\\d{1,2})[/.](\\d{1,2})(?:[/.](\\d{4}))?$").find(t)?.let { m ->
+        jsRegex("^(\\d{1,2})[/.](\\d{1,2})(?:[/.](\\d{4}))?$").find(t)?.let { m ->
             return withYear(m.groupValues[3].ifEmpty { null }?.toInt() ?: year, m.groupValues[2].toInt(), m.groupValues[1].toInt(), m.groupValues[3].isNotEmpty())
         }
         return null
@@ -87,7 +102,7 @@ object Recurrence {
     private val CLAUSE = re("$WS+(until|till|ending|through|starting|beginning|from)$WS+")
 
     private fun daysOf(text: String): List<Int>? {
-        val t = text.replace(Regex("\\bon$WS+"), "").trim()
+        val t = text.replace(jsRegex("\\bon$WS+"), "").trim()
         if (!DAYS_LIST.matches(t)) return null
         val days = sortedSetOf<Int>()
         val range = re("^$WD_RE$WS*-$WS*$WD_RE$").find(t)
@@ -100,7 +115,7 @@ object Recurrence {
 
     /** Reads a repeat. `due` is the task's due date: "every month" from the 29th to 31st keeps that day. */
     fun parseRecurrence(input: String?, today: String = Habits.localKey(), due: String? = null): RepeatRead {
-        val text = (input ?: "").trim().lowercase().replace(Regex("[.]+$"), "").replace(Regex("$WS+"), " ")
+        val text = (input ?: "").trim().lowercase().replace(jsRegex("[.]+$"), "").replace(jsRegex("$WS+"), " ")
         if (text.isEmpty()) return RepeatRead(false, error = HELP)
         // JavaScript's split with a capturing group: head, keyword, rest, keyword, rest ...
         val pieces = mutableListOf<String>()
@@ -113,7 +128,7 @@ object Recurrence {
 
         var i = 0
         while (i < clauses.size) {
-            val until = Regex("^(until|till|ending|through)$").matches(clauses[i])
+            val until = jsRegex("^(until|till|ending|through)$").matches(clauses[i])
             val arg = clauses.getOrNull(i + 1) ?: ""
             val my = re("^$MONTH_RE\\.?,?$WS+(\\d{4})$").find(arg)
             val k = if (my != null) monthEdge(my.groupValues[2].toInt(), MONTHS.indexOf(my.groupValues[1].take(3)) + 1, until) else parseDay(arg, today)
@@ -125,7 +140,7 @@ object Recurrence {
 
         val m0 = re("^(?:every(!?)|each)$WS*(.*)$").find(head) ?: return RepeatRead(false, error = HELP)
         rule.fromCompletion = m0.groupValues[1] == "!"
-        val body = m0.groupValues[2].replace(Regex("\\bthe$WS+"), "").replace(Regex("$WS*,$WS*"), ", ").trim()
+        val body = m0.groupValues[2].replace(jsRegex("\\bthe$WS+"), "").replace(jsRegex("$WS*,$WS*"), ", ").trim()
         val bad = RepeatRead(false, error = HELP)
 
         fun interval(w: String): Int? {
@@ -135,7 +150,7 @@ object Recurrence {
             return n.takeIf { it in 1..MAX_INTERVAL }
         }
 
-        val m = Regex("^(?:(other|\\d+)$WS+)?(day|week|month|year)s?(?:$WS+(?:on$WS+)?(.+))?$").find(body)
+        val m = jsRegex("^(?:(other|\\d+)$WS+)?(day|week|month|year)s?(?:$WS+(?:on$WS+)?(.+))?$").find(body)
         if (m != null) {
             val n = interval(m.groupValues[1]) ?: return RepeatRead(false, error = "Repeat every 1 to $MAX_INTERVAL.")
             rule.unit = m.groupValues[2]; rule.interval = n
@@ -145,15 +160,15 @@ object Recurrence {
                     "week" -> { rule.days = daysOf(rest); if (rule.days == null) return bad }
                     "month" -> if (!monthSpec(rule, rest)) return bad
                     "year" -> {
-                        val k = if (Regex("\\d{4}").containsMatchIn(rest)) null else parseDay(rest, "2000-01-01")
+                        val k = if (jsRegex("\\d{4}").containsMatchIn(rest)) null else parseDay(rest, "2000-01-01")
                         if (k == null) return bad
                         val p = parts(k); rule.month = p.second; rule.monthDay = p.third
                     }
                     else -> return bad
                 }
             }
-        } else if (Regex("^(weekday|workday)s?$").matches(body)) { rule.unit = "week"; rule.days = listOf(1, 2, 3, 4, 5) }
-        else if (Regex("^weekends?$").matches(body)) { rule.unit = "week"; rule.days = listOf(6, 7) }
+        } else if (jsRegex("^(weekday|workday)s?$").matches(body)) { rule.unit = "week"; rule.days = listOf(1, 2, 3, 4, 5) }
+        else if (jsRegex("^weekends?$").matches(body)) { rule.unit = "week"; rule.days = listOf(6, 7) }
         else if (daysOf(body).also { rule.days = it } != null) rule.unit = "week"
         else if (monthSpec(rule, body)) rule.unit = "month"
         else if (re("^(?:\\d{1,2}(?:st|nd|rd|th)?$WS+$MONTH_RE|$MONTH_RE$WS+\\d{1,2}(?:st|nd|rd|th)?)$").matches(body) && parseDay(body, "2000-01-01") != null) {
@@ -172,14 +187,14 @@ object Recurrence {
     }
 
     private fun monthSpec(rule: RepeatRule, text: String): Boolean {
-        val t = text.replace(Regex("$WS+of$WS+(?:every$WS+)?month$"), "").trim()
+        val t = text.replace(jsRegex("$WS+of$WS+(?:every$WS+)?month$"), "").trim()
         if (t == "last day") { rule.monthDay = -1; return true }
         re("^(\\d+(?:st|nd|rd|th)|first|second|third|fourth|last)$WS+$WD_RE$").find(t)?.let { m ->
-            val n = ORD_WORDS[m.groupValues[1]] ?: Regex("^\\d+").find(m.groupValues[1])!!.value.toInt()
+            val n = ORD_WORDS[m.groupValues[1]] ?: jsRegex("^\\d+").find(m.groupValues[1])!!.value.toInt()
             if (!(n == -1 || n in 1..4)) return false
             rule.nth = RepeatNth(n, dayIndex(m.groupValues[2])); return true
         }
-        Regex("^(\\d{1,2})(?:st|nd|rd|th)$").find(t)?.let { m -> val d = m.groupValues[1].toInt(); if (d in 1..31) { rule.monthDay = d; return true } }
+        jsRegex("^(\\d{1,2})(?:st|nd|rd|th)$").find(t)?.let { m -> val d = m.groupValues[1].toInt(); if (d in 1..31) { rule.monthDay = d; return true } }
         return false
     }
 

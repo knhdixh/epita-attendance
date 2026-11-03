@@ -33,6 +33,8 @@ const out = {
       '!!! ??? ...', '#', '@', '/', 'every', 'x'.repeat(60), 'Buy milk in a month', 'x next month', 'x in 1 year', 'x tomorrow', 'x in 2 days', 'x in 1 week',
       'x mon', 'x tue', 'x wed', 'x thu', 'x fri', 'x sat', 'x sun', 'Tom', 'tom', 'Call Tom tom', 'Pay rent every month on the 31st',
       'Éveil #Écoles /Étape 1 @café p2', 'Gym every day until dec 2026', 'Task 9.30 pm', 'Task at 7',
+      // U+00A0 (a no-break space, from some keyboards and pasted text): JavaScript's \s matches it, Java's does not
+      'Buy\u00a0milk\u00a0tomorrow\u00a0at\u00a05pm\u00a0p1', 'Pay\u00a0rent\u00a0every\u00a0month\u00a0on\u00a0the\u00a031st',
     ]),
     todays: ['2026-01-31', '2028-01-31', '2026-12-15', '2028-02-29', '2026-12-31', '2026-03-28', '2026-10-25', '2026-11-02', '2026-11-08'],
     todayInputs: ['x in a month', 'x in 1 month', 'x next month', 'x in 1 year', 'x tomorrow', 'x in 2 days', 'x in 1 week', 'x mon', 'x fri', 'x sun', 'x next week', 'x weekend', 'x every day', 'x every month'],
@@ -44,7 +46,7 @@ const out = {
   },
   filters: {
     ctx: filterCtx,
-    queries: grab(fl, 'CASES').map(([q]) => q).concat(['today, overdue, p1', 'today,overdue', '##Reports & p4', 'search: ""', '#Work | #Home | @urgent']),
+    queries: grab(fl, 'CASES').map(([q]) => q).concat(['today, overdue, p1', 'today,overdue', '##Reports & p4', 'search: ""', '#Work | #Home | @urgent', 'today,\u00a0overdue', 'next\u00a07\u00a0days']),
     errors: new Function(`return ${fl.slice(fl.indexOf('const ERRORS = ') + 15, fl.indexOf('];', fl.indexOf('const ERRORS = ')) + 1)}`)(),
     todays: ['2026-11-03', '2026-12-31', '2026-03-28', '2026-02-28', '2026-11-10'],
     todayQueries: ['today', 'tomorrow', 'overdue', 'next 7 days', 'next 1 day', 'due before: fri', 'no date', 'date: jan 27'],

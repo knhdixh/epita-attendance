@@ -58,7 +58,7 @@ object QuickAddParser {
         DatePattern("(today|tonight|tomorrow|tmr|tom|yesterday)") { m, today ->
             val w = g(m, 1)!!
             if (w.equals("tom", true) && w != "tom") null   // "Tom" is a name, "tom" is tomorrow
-            else addDays(today, if (Regex("^(tomorrow|tmr|tom)$", RegexOption.IGNORE_CASE).matches(w)) 1 else if (w.equals("yesterday", true)) -1 else 0)
+            else addDays(today, if (jsRegex("^(tomorrow|tmr|tom)$", RegexOption.IGNORE_CASE).matches(w)) 1 else if (w.equals("yesterday", true)) -1 else 0)
         },
         DatePattern("(?:this\\s+)?weekend") { _, today -> addDays(today, (6 - dow(today) + 7) % 7) },
         DatePattern("(?:(?:next|this)\\s+)?$WD_RE") { m, today ->
@@ -107,8 +107,8 @@ object QuickAddParser {
         TimePattern("at\\s+(\\d{1,2})") { m -> clock(g(m, 1)!!, "0", null) },
     )
 
-    private val MINUTES_OK = Regex("^\\d+(?:[.,]\\d+)?\\s*(?:h(?:ours?|rs?)?|m(?:in(?:ute)?s?)?|d(?:ays?)?)(?:\\s*\\d+\\s*m(?:in(?:ute)?s?)?)?$")
-    private val MINUTES_PART = Regex("(\\d+(?:[.,]\\d+)?)\\s*(h|m|d)")
+    private val MINUTES_OK = jsRegex("^\\d+(?:[.,]\\d+)?\\s*(?:h(?:ours?|rs?)?|m(?:in(?:ute)?s?)?|d(?:ays?)?)(?:\\s*\\d+\\s*m(?:in(?:ute)?s?)?)?$")
+    private val MINUTES_PART = jsRegex("(\\d+(?:[.,]\\d+)?)\\s*(h|m|d)")
 
     /** "45m", "2h", "1h30m", "1.5h", "90 min", "1 hour 30 min" in minutes, or null. */
     fun minutesFrom(text: String): Int? {
@@ -147,18 +147,18 @@ object QuickAddParser {
             }
             return null
         }
-        fun name(s: String) = s.replace(Regex("^\"|\"$"), "").replace(Regex("[,.;:!?]+$"), "")
+        fun name(s: String) = s.replace(jsRegex("^\"|\"$"), "").replace(jsRegex("[,.;:!?]+$"), "")
         fun takeNamed(kind: String, sigil: String, known: List<String>, rx: Regex): String? {
             val sorted = known.filter { it.isNotEmpty() }.distinct().sortedByDescending { it.length }
             val fallback = { m: MatchResult -> name(g(m, 1)!!).takeIf { it.isNotEmpty() }?.let(::JsonPrimitive) }
             if (sorted.isEmpty()) return (take(kind, rx, fallback) as JsonPrimitive?)?.content
-            val sg = Regex("$START${Regex.escape(sigil)}")
+            val sg = jsRegex("$START${Regex.escape(sigil)}")
             var m = sg.find(w)
             while (m != null) {
                 val from = m.range.last + 1
                 val hit = sorted.firstOrNull { n ->
                     w.substring(minOf(from, w.length), minOf(w.length, from + n.length)).lowercase() == n.lowercase() &&
-                        Regex("^$END").containsMatchIn(w.substring(minOf(w.length, from + n.length)))
+                        jsRegex("^$END").containsMatchIn(w.substring(minOf(w.length, from + n.length)))
                 }
                 if (hit != null) { claim(kind, m.range.first, from + hit.length, JsonPrimitive(hit)); return hit }
                 m = m.next()
@@ -171,17 +171,17 @@ object QuickAddParser {
         var priority = 1; var deadline: String? = null; var reminder: Int? = null; var duration: Int? = null
 
         // {deadline}
-        deadline = (take("deadline", Regex("\\{([^{}]+)\\}")) { m -> dayFromPhrase(g(m, 1)!!, today)?.let(::JsonPrimitive) } as JsonPrimitive?)?.content
+        deadline = (take("deadline", jsRegex("\\{([^{}]+)\\}")) { m -> dayFromPhrase(g(m, 1)!!, today)?.let(::JsonPrimitive) } as JsonPrimitive?)?.content
 
         // every ...: the longest run of words after "every" that reads as a repeat.
         var repeatText: String? = null
         run {
-            var m = Regex("(?<!\\S)every!?(?=\\s)", RegexOption.IGNORE_CASE).find(w)
+            var m = jsRegex("(?<!\\S)every!?(?=\\s)", RegexOption.IGNORE_CASE).find(w)
             while (m != null && repeatText == null) {
-                val words = Regex("\\S+").findAll(w.substring(m.range.first)).toList()
+                val words = jsRegex("\\S+").findAll(w.substring(m.range.first)).toList()
                 for (n in minOf(words.size, 16) downTo 2) {
                     val end = m.range.first + words[n - 1].range.first + words[n - 1].value.length
-                    val phrase = w.substring(m.range.first, end).replace(Regex("[,;.]+$"), "")
+                    val phrase = w.substring(m.range.first, end).replace(jsRegex("[,;.]+$"), "")
                     if (Recurrence.parseRecurrence(phrase, today).ok) {
                         repeatText = phrase
                         claim("recurrence", m.range.first, m.range.first + phrase.length, JsonNull)
@@ -192,10 +192,10 @@ object QuickAddParser {
             }
         }
 
-        project = takeNamed("project", "#", names.projects, Regex("(?<!\\S)#(\"[^\"]+\"|[^\\s#]+)"))
-        section = takeNamed("section", "/", names.sections, Regex("(?<!\\S)/(\"[^\"]+\"|\\p{L}[^\\s/]*)"))
+        project = takeNamed("project", "#", names.projects, jsRegex("(?<!\\S)#(\"[^\"]+\"|[^\\s#]+)"))
+        section = takeNamed("section", "/", names.sections, jsRegex("(?<!\\S)/(\"[^\"]+\"|\\p{L}[^\\s/]*)"))
         while (true) {
-            val label = takeNamed("label", "@", names.labels, Regex("(?<!\\S)@([^\\s@#]+)")) ?: break
+            val label = takeNamed("label", "@", names.labels, jsRegex("(?<!\\S)@([^\\s@#]+)")) ?: break
             if (labels.none { it.lowercase() == label.lowercase() }) labels.add(label)
         }
         (take("priority", re("${START}p([1-4])$END")) { m -> JsonPrimitive(g(m, 1)!!.toInt()) } as JsonPrimitive?)?.let { priority = 5 - it.content.toInt() }
@@ -227,8 +227,8 @@ object QuickAddParser {
         }
         if (dueTime != null && dueDate == null) dueDate = today
 
-        val title = w.replace(re("\\s+(?:on|at|by|due|for)\\s*$"), " ").replace(Regex("\\s+"), " ")
-            .replace(Regex("^[\\s,–—:-]+|[\\s,–—:-]+$"), "").trim()
+        val title = w.replace(re("\\s+(?:on|at|by|due|for)\\s*$"), " ").replace(jsRegex("\\s+"), " ")
+            .replace(jsRegex("^[\\s,–—:-]+|[\\s,–—:-]+$"), "").trim()
         return QuickAdd(title, dueDate, dueTime, recurrence, project, section, labels, priority, deadline, reminder, duration, ranges.sortedBy { it.start })
     }
 }
