@@ -7,6 +7,7 @@
 #   MODEL=opus BUDGET=20 android-native/tools/run-phase.sh 7
 #   android-native/tools/run-phase.sh 5 --resume   # carry on the last Phase 5 session if it stopped early
 #   android-native/tools/run-phase.sh 5 --fix 4,5  # fix docs/native-android-review-4.md and -5.md on native/phase-5
+#   android-native/tools/run-phase.sh 5 --resume fix  # carry on the last fix session
 #
 # Output: android-native/build/phase-runs/phase-<n>.json (cost, session id) and .log (the run, streamed).
 set -euo pipefail
@@ -59,6 +60,7 @@ BUILD SUCCESSFUL with 0 test failures, npm test passed, and a Phase $phase entry
 committed (git log shows it). Or: the agent wrote in the log that it is blocked and why."
 
 log="phase-$phase"
+[[ "$mode" == "--resume" && "${3:-}" == "fix" ]] && log="phase-$phase-fix"
 if [[ "$mode" == "--fix" ]]; then
   log="phase-$phase-fix"
   files=""; for r in ${reviews//,/ }; do files+=" docs/native-android-review-$r.md"; done
