@@ -3,7 +3,11 @@ package com.knhdixh.attendance80.data
 import com.knhdixh.attendance80.Clock
 import com.knhdixh.attendance80.net.Api
 import com.knhdixh.attendance80.net.ApiClient
+import com.knhdixh.attendance80.net.ApiError
 import com.knhdixh.attendance80.net.AppData
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.longOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,8 +22,12 @@ data class FocusHistoryStatus(val owner: String? = null, val since: Long? = null
 /** Serialises reads and writes so a refresh cannot overwrite an in-flight mutation. */
 class DataRepository(private val api: Api, private val directory: File, private val clock: Clock,
                      private val rename: (File, File) -> Boolean = { from, to -> from.renameTo(to) },
+                     private val queue: MutationQueue = MutationQueue(File(directory, "outbox")),
+                     /** Called after a change is queued: the app tries to send it at once and asks WorkManager to retry. */
+                     private val onQueued: () -> Unit = {},
                      private val token: () -> String?) {
     private val mutex = Mutex()
+    private val flushMutex = Mutex()
     private val generation = AtomicLong()
     private val _focusHistory = MutableStateFlow(FocusHistoryStatus())
     val focusHistory = _focusHistory.asStateFlow()
@@ -48,8 +56,35 @@ class DataRepository(private val api: Api, private val directory: File, private 
     fun reportMessage(owner: String, message: String) {
         if (session == owner && token() == owner) reportError(message, preserve = true)
     }
+    private val _pending = MutableStateFlow(0)
+    /** How many changes made on this device haven't reached the server yet ("Not synced yet"). */
+    val pending = _pending.asStateFlow()
+    private fun accountOf(data: AppData?) = data?.user?.email?.lowercase() ?: "unknown"
+    private fun syncPending() { _pending.value = _snapshot.value?.let { queue.items(accountOf(it)).size } ?: 0 }
+
     private val _lastSynced = MutableStateFlow<Long?>(null)
     val lastSynced = _lastSynced.asStateFlow()
+
+    /** The id the server already gave a create that was sent but not settled (its answer was lost, or a refresh got there first). */
+    private fun settledId(data: AppData, m: QueuedMutation): Long? = when (m.kind) {
+        "task.create" -> data.homework.find { it.client_id == m.clientId }?.id
+        "project.create" -> data.projects.find { it.client_id == m.clientId }?.id
+        "section.create" -> data.sections.find { it.client_id == m.clientId }?.id
+        "label.create" -> data.labels.find { it.client_id == m.clientId }?.id
+        "filter.create" -> data.filters.find { it.client_id == m.clientId }?.id
+        else -> null
+    }
+
+    /** What the server sent, with the changes it hasn't seen yet applied on top. */
+    private fun withPending(data: AppData): AppData {
+        val account = accountOf(data)
+        queue.purgeExcept(account)
+        for (m in queue.items(account)) {
+            val real = if (m.creates) settledId(data, m) else null
+            if (real != null) { queue.remap(account, m.temp!!, real); queue.remove(account, m.clientId) }
+        }
+        return queue.items(account).fold(data) { d, m -> LocalEffects.apply(d, m, clock.zone()) }
+    }
 
     private fun cacheFile(session: String): File {
         val hash = MessageDigest.getInstance("SHA-256").digest(session.toByteArray())
@@ -89,7 +124,8 @@ class DataRepository(private val api: Api, private val directory: File, private 
                         ApiClient.json.decodeFromString<AppData>(cacheFile(current).readText())
                     }.getOrNull()
                     if (token() == current) {
-                        publish(current, cached)
+                        publish(current, cached?.let(::withPending))
+                        syncPending()
                     }
                 }
             }
@@ -166,7 +202,8 @@ class DataRepository(private val api: Api, private val directory: File, private 
             if (token() != active) { target.delete(); return false }
             val synced = clock.now()
             _focusHistory.value = FocusHistoryStatus(refreshVersion = _focusHistory.value.refreshVersion + 1)
-            publish(active, data, synced)
+            publish(active, withPending(data), synced)
+            syncPending()
             _lastSynced.value = synced
             true
         } catch (e: CancellationException) { throw e
@@ -174,6 +211,96 @@ class DataRepository(private val api: Api, private val directory: File, private 
             if (token() == active) reportError(e.message ?: "Request failed")
             false
         } finally { _loading.value = false }
+    }
+
+    /**
+     * Queues a change: applied to the snapshot now, sent later in order. Works without a network. A create gets a negative
+     * temporary id until the server answers (returned in [Queued.temp]). Null when there is no snapshot of that session.
+     */
+    suspend fun enqueue(m: QueuedMutation, expectedOwner: String? = null): Queued? = mutex.withLock {
+        val active = session ?: return@withLock null
+        if (expectedOwner != null && expectedOwner != active) return@withLock null
+        if (token() != active) return@withLock null
+        val data = _snapshot.value ?: return@withLock null
+        clearErrors()
+        val (queued, temp) = queue.add(accountOf(data), m.copy(at = clock.now()))
+        publish(active, LocalEffects.apply(data, queued, clock.zone()))
+        syncPending()
+        onQueued()
+        Queued(temp)
+    }
+
+    data class Queued(val temp: Long?)
+
+    /** Sign-out: the changes that never got sent are dropped with the rest of the account's data. */
+    fun signedOut() { queue.purgeAll(); _pending.value = 0 }
+
+    /**
+     * Sends the queue, oldest first. A change leaves it after a 2xx; after a 4xx it is dropped (it would never succeed: the
+     * server's message is shown, with what depends on it) and the data is reloaded; no network, 401 or 5xx stop here for the
+     * next try. @return true when nothing is left to send.
+     */
+    suspend fun flushQueue(): Boolean = flushMutex.withLock {
+        var reload = false
+        val notes = mutableListOf<String>()   // shown after a reload, which clears errors
+        while (true) {
+            val step = mutex.withLock {
+                val active = session ?: return@withLock null
+                if (token() != active) return@withLock null
+                val account = accountOf(_snapshot.value ?: return@withLock null)
+                queue.items(account).firstOrNull()?.let { Triple(active, account, it) }
+            } ?: break
+            val (active, account, head) = step
+            val outcome: Any = try { sendQueued(head) } catch (e: CancellationException) { throw e
+            } catch (e: ApiError) { if (e.status in 400..499 && e.status !in setOf(401, 408, 429)) e else return@withLock false
+            } catch (e: Exception) { return@withLock false }
+            mutex.withLock {
+                if (session != active || token() != active) return@withLock
+                if (outcome is ApiError) {
+                    queue.remove(account, head.clientId)
+                    if (head.creates) queue.dropMentioning(account, head.temp!!).forEach { queue.remove(account, it.clientId) }
+                    notes += outcome.message
+                    reload = true
+                } else if (queue.items(account).any { it.clientId == head.clientId }) {
+                    settle(active, account, head, outcome as String)?.let { notes += it }
+                    if (head.reload) reload = true
+                }
+                syncPending()
+            }
+        }
+        if (reload) refresh()
+        notes.forEach { reportError(it, preserve = true) }
+        mutex.withLock { syncPending() }
+        _snapshot.value?.let { queue.isEmpty(accountOf(it)) } ?: true
+    }
+
+    private suspend fun sendQueued(m: QueuedMutation): String {
+        val body = if (m.creates) JsonObject(m.body + ("client_id" to JsonPrimitive(m.clientId))) else m.body
+        val response = when (m.method) {
+            "POST" -> api.sendPost(m.path, body)
+            "PATCH" -> api.sendPatch(m.path, body)
+            "PUT" -> api.sendPut(m.path, body)
+            else -> api.sendDelete(m.path)
+        }
+        return response.use { it.string() }
+    }
+
+    /** The server accepted [m]: temporary ids become real, and the server's row replaces ours unless a later change still touches it. */
+    private fun settle(active: String, account: String, m: QueuedMutation, text: String): String? {
+        var data = _snapshot.value ?: return null
+        val answer = runCatching { ApiClient.json.parseToJsonElement(text) }.getOrNull()
+        queue.remove(account, m.clientId)
+        val obj = answer as? JsonObject
+        if (m.creates && m.temp != null) {
+            val real = (obj?.get("id") as? JsonPrimitive)?.longOrNull
+            if (real != null) { queue.remap(account, m.temp, real); data = LocalEffects.remap(data, m.temp, real) }
+        }
+        val pendingIds = queue.items(account)
+        fun settled(id: Long) = pendingIds.none { it.mentions(id) || it.kind.startsWith("task.") && it.path.endsWith("/$id") }
+        data = runCatching { LocalEffects.reconcile(data, m, obj, ::settled) }.getOrDefault(data)
+        publish(active, data)
+        return data.homework.find { it.client_id == m.clientId || (it.id == (obj?.get("id") as? JsonPrimitive)?.longOrNull) }?.sync_error
+            ?.takeIf { m.kind.startsWith("task.") }?.let { "Saved, but Google Calendar sync failed: $it" }
     }
 
     suspend fun <T> mutate(optimistic: (AppData) -> AppData, request: suspend () -> T,

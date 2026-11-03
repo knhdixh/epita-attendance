@@ -54,7 +54,7 @@ interface Api {
     @POST suspend fun sendPost(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
     @PATCH suspend fun sendPatch(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
     @PUT suspend fun sendPut(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
-    @HTTP(method = "DELETE", hasBody = true) suspend fun sendDelete(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
+    @HTTP(method = "DELETE") suspend fun sendDelete(@retrofit2.http.Url path: String): ResponseBody
 
     @GET("api/focus")
     suspend fun listFocus(@Query("since") since: Long): FocusListResponse
