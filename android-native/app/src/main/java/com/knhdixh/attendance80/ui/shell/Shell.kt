@@ -108,6 +108,8 @@ fun Shell(
     timerActions: com.knhdixh.attendance80.ui.focus.TimerActions? = null,
     timerNow: (() -> Long)? = null,
     onAskNotifications: () -> Unit = {},
+    notificationsBlocked: Boolean = false,
+    onFixNotifications: () -> Unit = {},
     sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null,
     onSharedFileHandled: () -> Unit = {},
     sharedText: String? = null,
@@ -273,6 +275,7 @@ fun Shell(
                                     request = (action as? PaletteAction.OpenForm)?.takeIf { it.form == "calendar" || it.form == "calendar-upload" },
                                     onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null },
                                     onAskNotifications = onAskNotifications,
+                                    notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications,
                                     sharedFile = sharedFile, onSharedFileHandled = onSharedFileHandled)
                             }
                             else if (route == "countdowns" || route.startsWith("countdowns/")) key(accountKey) {

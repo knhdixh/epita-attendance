@@ -49,6 +49,38 @@ class SettingsUiTest {
         assertEquals("device NotifyChoices(checkin=false, homework=true, exam=true)", actions.calls.last())
     }
 
+    private fun showNotifyAsking(actions: SettingsActions, blocked: Boolean, ask: () -> Unit = {}, fix: () -> Unit = {}) {
+        val data = settingsData()
+        ui.setContent { Attendance80Theme { SettingsScreen(data, data.events, emptyList(), settingsNow, settingsZone, actions, {}, {}, baseUrl = "https://app.test",
+            onAskNotifications = ask, notificationsBlocked = blocked, onFixNotifications = fix) } }
+    }
+
+    @Test fun blockedNotificationsShowARowThatAsksAgain() {
+        var asked = 0; var fixed = 0
+        showNotifyAsking(FakeSettingsActions(), blocked = true, ask = { asked++ }, fix = { fixed++ })
+        scrollTo("notify-blocked"); ui.onNodeWithTag("notify-blocked").assertIsDisplayed()
+        assertEquals(1, asked) // the first in-context ask: Notifications is shown
+        ui.onNodeWithTag("notify-allow").performClick()
+        assertEquals(1, fixed)
+    }
+
+    @Test fun noRowWhenNotificationsAreAllowed() {
+        var asked = 0
+        showNotifyAsking(FakeSettingsActions(), blocked = false, ask = { asked++ })
+        scrollTo("notify-checkin")
+        ui.onNodeWithTag("notify-blocked").assertDoesNotExist()
+        assertEquals(0, asked)
+    }
+
+    @Test fun turningClassesOrHabitsOnAsksButTurningOffDoesNot() {
+        var asked = 0
+        showNotifyAsking(FakeSettingsActions(), blocked = false, ask = { asked++ })
+        scrollTo("notify-habits"); ui.onNodeWithTag("notify-habits").performClick() // on in the fixture: turning off
+        assertEquals(0, asked)
+        scrollTo("notify-classes"); ui.onNodeWithTag("notify-classes").performClick() // off in the fixture: turning on
+        assertEquals(1, asked)
+    }
+
     @Test fun homeworkRemindersAreOnByDefaultWithoutGoogleCalendar() {
         val actions = FakeSettingsActions()
         show(actions, settingsBase())

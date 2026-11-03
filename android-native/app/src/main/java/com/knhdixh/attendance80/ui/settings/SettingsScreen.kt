@@ -41,7 +41,9 @@ import com.knhdixh.attendance80.net.*
 import com.knhdixh.attendance80.ui.theme.LocalExtraColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import java.time.Instant
 import java.time.LocalDate
@@ -95,6 +97,8 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
                    baseUrl: String = BuildConfig.BASE_URL,
                    request: com.knhdixh.attendance80.ui.search.PaletteAction.OpenForm? = null, onRequestConsumed: () -> Unit = {},
                    onAskNotifications: () -> Unit = {},
+                   /** Notifications are blocked for the app; [onFixNotifications] asks, or opens the system settings. */
+                   notificationsBlocked: Boolean = false, onFixNotifications: () -> Unit = {},
                    sharedFile: com.knhdixh.attendance80.share.Incoming.CalendarFile? = null, onSharedFileHandled: () -> Unit = {}) {
     if (data == null) { Box(Modifier.fillMaxSize().padding(16.dp)) { CircularProgressIndicator() }; return }
     val context = LocalContext.current
@@ -158,8 +162,11 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
         item("rules") { RulesPanel(data.user, busy) { t, u -> run { actions.saveRules(t, u) } } }
         item("notify") {
             val device by actions.deviceNotify.collectAsState(com.knhdixh.attendance80.notify.NotifyChoices())
-            NotifyPanel(data.notifications.settings, device, data.integrations.gcal != null, busy,
-                onSave = { body -> run { actions.saveNotify(body) } },
+            NotifyPanel(data.notifications.settings, device, data.integrations.gcal != null, busy, notificationsBlocked, onFixNotifications, onAskNotifications,
+                // Turning an account switch on asks too, as the device switches do.
+                onSave = { body -> if (body["classes"]?.jsonPrimitive?.booleanOrNull == true && !data.notifications.settings.classes ||
+                    body["habits"]?.jsonPrimitive?.booleanOrNull == true && !data.notifications.settings.habits) onAskNotifications()
+                    run { actions.saveNotify(body) } },
                 onSaveDevice = { choices -> if (choices.checkin || choices.homeworkOn(data.integrations.gcal != null) || choices.exam) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
         }
         calendarsPanel(data, allEvents ?: data.events, now, zone, busy, editing, adding,
@@ -289,10 +296,19 @@ private fun RulesPanel(user: UserDto, busy: Boolean, onSave: (Double, String) ->
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.notify.NotifyChoices, googleConnected: Boolean, busy: Boolean,
+                        blocked: Boolean, onFix: () -> Unit, onAsk: () -> Unit,
                         onSave: (kotlinx.serialization.json.JsonObject) -> Unit, onSaveDevice: (com.knhdixh.attendance80.notify.NotifyChoices) -> Unit) {
     fun save(classes: Boolean = s.classes, lead: Int = s.classLead, habits: Boolean = s.habits, focus: Boolean = s.focus) =
         onSave(buildJsonObject { put("classes", classes); put("classLead", lead); put("habits", habits); put("focus", focus) })
+    // The first in-context ask: the first time Notifications is shown (asked at most once; the row below asks again).
+    LaunchedEffect(blocked) { if (blocked) onAsk() }
     Panel("Notifications") {
+        if (blocked && (s.classes || s.habits || s.focus || device.checkin || device.homeworkOn(googleConnected) || device.exam)) {
+            Row(Modifier.fillMaxWidth().testTag("notify-blocked"), verticalAlignment = Alignment.CenterVertically) {
+                Text("Notifications are blocked for this app, so no reminder will appear.", Modifier.weight(1f))
+                TextButton(onFix, Modifier.testTag("notify-allow")) { Text("Allow") }
+            }
+        }
         @Composable fun toggle(label: String, value: Boolean, tag: String, change: (Boolean) -> Unit) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(label, Modifier.weight(1f))

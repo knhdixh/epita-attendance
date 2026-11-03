@@ -20,6 +20,7 @@ import com.knhdixh.attendance80.ui.shell.Shell
 import com.knhdixh.attendance80.ui.shell.ShellViewModel
 import com.knhdixh.attendance80.navigation.PendingRouteViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.SavedStateHandle
@@ -61,13 +62,46 @@ class MainActivity : ComponentActivity() {
         viewModelFactory { initializer { PendingRouteViewModel(createSavedStateHandle()) } }
     }
 
+    /** True while the system blocks this app's notifications (permission denied, or switched off in the settings). */
+    private var notificationsBlocked by androidx.compose.runtime.mutableStateOf(false)
+
     private val notifications = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        afterNotificationChange()
+    }
+
+    /** After the permission dialog, and on return from the system settings (onResume). */
+    private fun afterNotificationChange() {
+        notificationsBlocked = !androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()
         // Draw the timer notification now that it may be shown.
         lifecycleScope.launch {
             val container = (application as App).container
             container.focusController?.restore()
-            // Reminders that were due while the permission was missing go out now.
-            container.reminders?.run(container.dataRepository.snapshot.value)
+            // Reminders that were due while the permission was missing go out now. (A snapshot that has not loaded yet is no sign-out.)
+            container.dataRepository.snapshot.value?.let { container.reminders?.run(it) }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        afterNotificationChange()
+    }
+
+    /** The "Allow" button in Settings: asks if the system still will, otherwise opens the app's notification settings. Not limited to once. */
+    private fun fixNotifications() {
+        val store = (application as App).container.focusStore
+        lifecycleScope.launch {
+            val ask = com.knhdixh.attendance80.focus.canAskNotifications(
+                missing = com.knhdixh.attendance80.focus.notificationsMissing(this@MainActivity),
+                askedBefore = store?.notificationsAsked() ?: true,
+                shouldShowRationale = android.os.Build.VERSION.SDK_INT >= 33 && shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS),
+            )
+            if (ask) {
+                store?.markNotificationsAsked()
+                notifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
         }
     }
 
@@ -98,6 +132,8 @@ class MainActivity : ComponentActivity() {
                             shellViewModel = shellViewModel,
                             pendingRouteViewModel = pendingRouteViewModel,
                             onAskNotifications = ::askNotifications,
+                            notificationsBlocked = notificationsBlocked,
+                            onFixNotifications = ::fixNotifications,
                         )
                     }
                 }
@@ -138,7 +174,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel, onAskNotifications: () -> Unit = {}) {
+fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: ShellViewModel, pendingRouteViewModel: PendingRouteViewModel, onAskNotifications: () -> Unit = {},
+           notificationsBlocked: Boolean = false, onFixNotifications: () -> Unit = {}) {
     if (token.isNullOrBlank()) {
         SignInScreen(viewModel = signInViewModel)
     } else {
@@ -183,6 +220,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 focusTimer = focusTimer,
                 timerNow = { shellViewModel.clock.now() },
                 onAskNotifications = onAskNotifications,
+                notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications,
                 sharedFile = sharedFile, onSharedFileHandled = pendingRouteViewModel::fileHandled,
                 sharedText = sharedText, onSharedTextHandled = pendingRouteViewModel::textHandled,
                 timerActions = androidx.compose.runtime.remember(token, onAskNotifications) { shellViewModel.timerActions?.let { com.knhdixh.attendance80.focus.AskingActions(it, onAskNotifications) } })
