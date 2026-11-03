@@ -41,6 +41,8 @@ data class WidgetSnapshot(
     val todo: List<WidgetTodo> = emptyList(),
     val timer: WidgetTimer = WidgetTimer(),
     val builtAt: Long = 0L,
+    /** A hash of the session token the plan part was built for (never the token), so a signed-in cold start can tell "mine, still loading" from "another account's". */
+    val owner: String? = null,
 ) {
     /** The class you are in, else the next one, at [now]. The list holds several so the widget moves on by itself. */
     fun currentClass(now: Long): WidgetClass? = classes.firstOrNull { it.end > now }

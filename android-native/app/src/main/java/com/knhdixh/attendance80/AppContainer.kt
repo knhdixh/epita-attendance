@@ -14,7 +14,6 @@ import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.focus.*
 import com.knhdixh.attendance80.logic.FocusSettings
 import com.knhdixh.attendance80.widget.WidgetStore
-import com.knhdixh.attendance80.widget.buildWidgetPlan
 import com.knhdixh.attendance80.widget.redrawWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,15 +101,8 @@ class DefaultAppContainer(
         }
         scope.launch {
             // The widget's plan part follows the snapshot, whoever changed it (screen, refresh, cache on start, sign-out).
-            dataRepository.snapshot.collectLatest { data ->
-                // Before the cache is read there is no snapshot yet; that is not a sign-out.
-                if (data == null && tokenStore.currentToken() != null) return@collectLatest
-                val plan = buildWidgetPlan(data, clock.now(), java.time.ZoneId.systemDefault())
-                if (widgetStore.read().let { it.classes != plan.classes || it.todo != plan.todo || it.signedIn != plan.signedIn }) {
-                    widgetStore.updatePlan(plan)
-                    redrawWidget(context)
-                }
-            }
+            val writer = com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) }
+            dataRepository.snapshot.collectLatest { data -> writer.onSnapshot(data) }
         }
         scope.launch {
             focusController.restore() // loads (and so migrates), then finishes what is due or re-arms

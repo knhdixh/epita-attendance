@@ -23,7 +23,7 @@ class WidgetStore(private val file: File) {
         runCatching { ApiClient.json.decodeFromString<WidgetSnapshot>(file.readText()) }.getOrDefault(WidgetSnapshot())
 
     @Synchronized fun updatePlan(plan: WidgetSnapshot) = write(read().copy(
-        signedIn = plan.signedIn, classes = plan.classes, todo = plan.todo, builtAt = plan.builtAt))
+        signedIn = plan.signedIn, classes = plan.classes, todo = plan.todo, builtAt = plan.builtAt, owner = plan.owner))
 
     @Synchronized fun updateTimer(timer: WidgetTimer) = write(read().copy(timer = timer))
 
