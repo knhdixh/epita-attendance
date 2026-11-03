@@ -100,11 +100,14 @@ class DefaultAppContainer(
     private val reminderNotifier by lazy { com.knhdixh.attendance80.notify.AndroidReminderNotifier(context) }
 
     override val reminderActions: com.knhdixh.attendance80.notify.ReminderActions by lazy {
-        com.knhdixh.attendance80.notify.ReminderActions(clock, notifyStore, reminderNotifier,
-            flush = { com.knhdixh.attendance80.notify.WorkActionScheduler(context).requestFlush() },
+        com.knhdixh.attendance80.notify.ReminderActions(clock, reminderNotifier,
             snapshot = {
                 // A tap can start a cold process: wait for the token and publish the cached snapshot first.
                 if (tokenStore.awaitToken() == null) null else { dataRepository.start(); dataRepository.snapshot.value }
+            },
+            // The change joins the outbox (and WorkManager sends it); nothing for another account than the signed-in one.
+            enqueue = { m, account ->
+                if (tokenStore.awaitToken() == null) false else { dataRepository.start(); dataRepository.enqueue(m, expectedAccount = account) != null }
             },
             focusOn = { target, data ->
                 // Don't wait for the snapshot collector: the timer needs this account's lengths now.
@@ -115,7 +118,7 @@ class DefaultAppContainer(
     }
 
     override val focusOutbox: Outbox by lazy {
-        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
+        Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) }, sessionEmail = { dataRepository.snapshot.value?.user?.email })
     }
 
     override val uiPrefs: com.knhdixh.attendance80.data.UiPrefs by lazy { com.knhdixh.attendance80.data.UiPrefs(context) }
@@ -123,7 +126,7 @@ class DefaultAppContainer(
     override val dataRepository: DataRepository by lazy {
         // Own directory, so backup rules can exclude it (they take no wildcards). Older builds wrote data-*.json to filesDir itself.
         context.filesDir.listFiles()?.forEach { if (it.name.startsWith("data-") && it.name.endsWith(".json")) it.delete() }
-        DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock) { tokenStore.currentToken() }
+        DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock, onQueued = { WorkOutboxScheduler(context).requestFlush() }) { tokenStore.currentToken() }
     }
 
     private val widgetPlanWriter by lazy { com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) } }
@@ -160,7 +163,7 @@ class DefaultAppContainer(
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
                 // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
-                if (token == null) { focusController.signedOut(); reminders.signedOut() }
+                if (token == null) { focusController.signedOut(); reminders.signedOut(); dataRepository.signedOut(); notifyStore.signedOut() }
                 dataRepository.start()
                 if (token != null) dataRepository.refresh()
             }

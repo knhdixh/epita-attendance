@@ -71,18 +71,26 @@ class HomeworkRepositoryUiTest {
             ui.onNodeWithText("Notes").performScrollTo().performTextInput("First notes")
             ui.onNodeWithText("Notes").assertIsFocused()
             val expected = buildJsonObject { put("title", "First task"); put("notes", "First notes"); put("course_id", 5); put("due_date", "2026-10-29"); put("due_time", JsonNull); put("tz", "Europe/Paris"); put("remind_minutes", 1440); put("effort_minutes", JsonNull) }
+            // The create is queued at once (the form is free for the next one); the server refuses it later: dropped, reloaded, message shown.
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Create refused\"}"))
+            server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), base)))
             ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.error.value == "Create refused" }
             val failed = server.takeRequest(5, TimeUnit.SECONDS)!!
-            assertEquals("POST", failed.method); assertEquals("/api/homework", failed.path); assertEquals(expected, Json.parseToJsonElement(failed.body.readUtf8()))
-            ui.onNodeWithText("First task").assertExists(); ui.onNodeWithText("First notes").assertExists()
+            assertEquals("POST", failed.method); assertEquals("/api/homework", failed.path)
+            val failedBody = Json.parseToJsonElement(failed.body.readUtf8()).jsonObject
+            assertTrue("a client_id travels with every create, so a retry is safe", failedBody["client_id"]!!.jsonPrimitive.content.length in 8..64)
+            assertEquals(expected, JsonObject(failedBody - "client_id"))
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertTrue("nothing of the refused task is left", repo.snapshot.value!!.homework.isEmpty())
+            ui.onNodeWithText("What's due").performTextInput("First task")
+            ui.onNodeWithText("Notes").performScrollTo().performTextInput("First notes")
             val saved = HomeworkDto(88, course_id = 5, title = "First task", notes = "First notes", due_date = "2026-10-29", remind_minutes = 1440)
             server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(HomeworkDto.serializer(), saved)))
             ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.any { it.id == 88L } == true }
             val first = server.takeRequest(5, TimeUnit.SECONDS)!!
-            assertEquals("POST", first.method); assertEquals("/api/homework", first.path); assertEquals(expected, Json.parseToJsonElement(first.body.readUtf8()))
+            assertEquals("POST", first.method); assertEquals("/api/homework", first.path); assertEquals(expected, JsonObject(Json.parseToJsonElement(first.body.readUtf8()).jsonObject - "client_id"))
             ui.onNodeWithText("What's due").assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString(""))).assertIsDisplayed().assertIsFocused()
             ui.onNodeWithText("What's due").performTextInput("Second task")
             ui.onNodeWithText("Course: Session course").performScrollTo().assertExists()
@@ -91,7 +99,7 @@ class HomeworkRepositoryUiTest {
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.any { it.id == 89L } == true }
             val second = server.takeRequest(5, TimeUnit.SECONDS)!!
             assertEquals("POST", second.method); assertEquals("/api/homework", second.path)
-            assertEquals(buildJsonObject { put("title", "Second task"); put("notes", ""); put("course_id", 5); put("due_date", "2026-10-29"); put("due_time", JsonNull); put("tz", "Europe/Paris"); put("remind_minutes", 1440); put("effort_minutes", JsonNull) }, Json.parseToJsonElement(second.body.readUtf8()))
+            assertEquals(buildJsonObject { put("title", "Second task"); put("notes", ""); put("course_id", 5); put("due_date", "2026-10-29"); put("due_time", JsonNull); put("tz", "Europe/Paris"); put("remind_minutes", 1440); put("effort_minutes", JsonNull) }, JsonObject(Json.parseToJsonElement(second.body.readUtf8()).jsonObject - "client_id"))
             assertEquals(setOf(88L, 89L), repo.snapshot.value!!.homework.map { it.id }.toSet())
             Unit
         } finally { storeScope.cancel(); server.shutdown(); dir.deleteRecursively() }
@@ -145,6 +153,7 @@ class HomeworkRepositoryUiTest {
             assertEquals("Europe/Paris", body.getValue("tz").jsonPrimitive.content)
             assertEquals("Some notes", body.getValue("notes").jsonPrimitive.content)
             for (field in listOf("course_id", "due_time", "remind_minutes", "effort_minutes")) assertEquals(JsonNull, body[field])
+            ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.error.value != null }
             assertEquals("Saved, but Google Calendar sync failed: quota", repo.error.value)
             ui.onNodeWithText("What's due").assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
             ui.onNodeWithText("What's due").performTextInput("Due at session")
@@ -172,12 +181,18 @@ class HomeworkRepositoryUiTest {
             ui.waitUntil(10000) { ui.onAllNodesWithText("Canonical task").fetchSemanticsNodes().isNotEmpty() }
             ui.onNodeWithText("Canonical task").performClick()
             ui.onNodeWithText("Notes").performTextReplacement("Edited draft")
+            // The edit is queued at once; the server refuses it: dropped, the data reloaded (the server still has the old notes), message shown.
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Edit refused\"}"))
+            server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), base.copy(homework = listOf(saved.copy(sync_error = null))))))
             ui.onNodeWithText("Save").performScrollTo().performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.error.value == "Edit refused" }
             val failedEdit = server.takeRequest(5, TimeUnit.SECONDS)!!
             assertEquals("PATCH", failedEdit.method); assertEquals("/api/homework/88", failedEdit.path)
-            ui.onNodeWithText("Edited draft").assertExists()
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("Some notes", repo.snapshot.value!!.homework.single().notes)
+            ui.waitUntil(10000) { ui.onAllNodesWithText("Canonical task").fetchSemanticsNodes().isNotEmpty() }
+            ui.onNodeWithText("Canonical task").performClick()
+            ui.onNodeWithText("Notes").performTextReplacement("Edited draft")
             server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(HomeworkDto.serializer(), saved.copy(notes = "Edited draft", sync_error = null))))
             ui.onNodeWithText("Save").performScrollTo().performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.singleOrNull()?.notes == "Edited draft" }
@@ -190,14 +205,14 @@ class HomeworkRepositoryUiTest {
             ui.onNodeWithContentDescription("Done: Canonical task").performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.singleOrNull()?.done == true }
             val doneRequest = server.takeRequest(5, TimeUnit.SECONDS)!!
-            assertEquals("/api/homework/88", doneRequest.path)
-            assertEquals(buildJsonObject { put("done", true) }, Json.parseToJsonElement(doneRequest.body.readUtf8()))
+            assertEquals("a tick is a complete, not a PATCH of done", "/api/homework/88/complete", doneRequest.path)
+            assertEquals(buildJsonObject { }, Json.parseToJsonElement(doneRequest.body.readUtf8()))
             ui.waitUntil(10000) { ui.onAllNodesWithText("Done 1 ▾").fetchSemanticsNodes().isNotEmpty() }
             ui.onNodeWithText("Done 1 ▾").performClick()
             server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(HomeworkDto.serializer(), saved.copy(notes = "Edited draft", sync_error = null))))
             ui.onNodeWithContentDescription("Done: Canonical task").performClick()
             ui.waitUntil(10000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.homework?.singleOrNull()?.done == false }
-            assertEquals(buildJsonObject { put("done", false) }, Json.parseToJsonElement(server.takeRequest(5, TimeUnit.SECONDS)!!.body.readUtf8()))
+            assertEquals("/api/homework/88/uncomplete", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             ui.waitUntil(10000) { ui.onAllNodesWithText("Delete").fetchSemanticsNodes().isNotEmpty() }
             ui.onNodeWithText("Delete").performScrollTo().performClick()
             ui.onNodeWithText("Cancel").performClick()
@@ -210,13 +225,18 @@ class HomeworkRepositoryUiTest {
             ui.onNodeWithTag("nav-homework").performClick()
             ui.waitUntil(5000) { ui.onAllNodesWithText("Canonical task").fetchSemanticsNodes().isNotEmpty() }
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot delete\"}"))
+            server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), base.copy(homework = listOf(saved.copy(notes = "Edited draft", sync_error = null))))))
             ui.onNodeWithText("Delete").performClick(); ui.onAllNodesWithText("Delete").onLast().performClick()
             ui.waitUntil(5000) { vm.pendingHomeworkDelete.value != null }
             ui.runOnIdle { vm.finishHomeworkDelete(false) }
             ui.waitUntil(5000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.error.value == "Cannot delete" }
             assertEquals("DELETE", server.takeRequest(5, TimeUnit.SECONDS)!!.method)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             assertEquals(88L, repo.snapshot.value!!.homework.single().id)
             server.enqueue(MockResponse().setBody("{\"ok\":true}"))
+            // The task went when it was deleted and came back with the reload: the open form is gone, open it again.
+            ui.waitUntil(5000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); ui.onAllNodesWithText("Canonical task").fetchSemanticsNodes().isNotEmpty() }
+            if (ui.onAllNodesWithText("Delete").fetchSemanticsNodes().isEmpty()) ui.onNodeWithText("Canonical task").performClick()
             ui.waitUntil(5000) { ui.onAllNodesWithText("Delete").fetchSemanticsNodes().isNotEmpty() }
             ui.onNodeWithText("Delete").performClick(); ui.onAllNodesWithText("Delete").onLast().performClick()
             ui.waitUntil(5000) { vm.pendingHomeworkDelete.value != null }

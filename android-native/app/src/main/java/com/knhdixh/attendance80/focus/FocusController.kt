@@ -241,14 +241,13 @@ class FocusController(
     private suspend fun change(next: FocusTimer, log: FocusLogEntry?, now: Long) {
         val t = if (next == _timer.value) next else next.copy(updatedAt = now)
         _timer.value = t
-        store.saveTimer(t)
         // A session belongs to the signed-in account. With none (signed out) there is nobody to record it for.
         // The adopted TWA run is the exception: it was started before any sign-in, so it is stored unowned like the TWA's
         // other items, and the first account to sign in claims it.
-        if (log != null) {
-            val owner = store.account()
-            if (owner != null || log.client_id == store.legacyRun()) { store.addLogs(listOf(log), owner); outbox.requestFlush() }
-        }
+        // The next timer and the finished session are saved in one edit: dying between two would lose the session.
+        val owner = if (log != null) store.account() else null
+        if (log != null && (owner != null || log.client_id == store.legacyRun())) { store.saveTimerAndLog(t, log, owner); outbox.requestFlush() }
+        else store.saveTimer(t)
         render(t)
     }
 

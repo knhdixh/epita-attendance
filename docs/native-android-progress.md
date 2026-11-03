@@ -1346,3 +1346,97 @@ Commit subjects start with `Android:` as the task asked, though findings 2 to 4 
 
 - The reason a tap below the seeded session still opened it (finding 1, above).
 - The website in a browser; Migration `0020` on the real D1 (unchanged from the Phase 10 entry).
+
+## Phase 11: the app works fully offline for tasks (branch `native/phase-11`)
+
+Reviewer: stop here for review. Commits are `c6ae372..HEAD`.
+
+### Deferred items from earlier reviews (grep of `docs/native-android-review-*.md` for "Phase 11"): what I did
+
+| Review | Item | Done? | Commit |
+|---|---|---|---|
+| 10 (re-review) | Completing a repeating task isn't idempotent: `occurrence` on `/complete` and `PATCH done`, sent by the outbox and by the notification's Done button | Done | `de5eb4b` (server, own commit), outbox in `ebf267f`, Done button in `570a070` |
+| 5 | Finish saves the next timer and the log in two DataStore edits | Done: `FocusStore.saveTimerAndLog`, one edit, idempotent by `client_id` | `f7face2` |
+| 5 | `ExistingWorkPolicy.KEEP` loses a log added late in a worker run | Done: `APPEND_OR_REPLACE` in `WorkOutboxScheduler` | `570a070` |
+| 5 | Queued sessions not shown in the Focus stats / Today | Done: `withQueuedSessions` merges the account's unsent logs into the state (no id, so the screen says "saving…") | `f7face2` |
+| 5 | `flush()` should compare the snapshot email with the account | Done: `Outbox(sessionEmail = …)`; no snapshot or another account: nothing is sent, retry later | `f7face2` |
+| 4 | Homework delete is lost if the app closes inside the 5 s Undo window | Done: the delete is queued at once and *held* for 5 s in the outbox; Undo takes it back out and puts the rows back | `570a070` |
+| 7 | Fold `NotifyStore`'s action queue into the outbox | Done: `ActionSender`, `PendingAction`, `ReminderActionWorker` and `WorkActionScheduler` are gone; buttons queue `Mutations.*` | `570a070` |
+| 7 | Drop a signed-out account's queued actions and sent keys at sign-out | Done: `DataRepository.signedOut()` (outbox files) and `NotifyStore.signedOut()` (sent keys, and the old actions key) | `570a070` |
+| 10 (review 1) | e2e `a_signInAndLiveShell` fails late in the evening (it was noted for the next phase touching the Calendar) | Cause found and fixed again, see "e2e" below | `3de34d9` |
+
+Nothing from the deferred lists was skipped. The Phase 8 items in review 7 that are not marked for Phase 11 (engine `null` handling, stale check-ins, the `file` scheme) are untouched.
+
+### What I did, per task
+
+1. **Task 1: ports** (`ca02921`). `Recurrence.kt`, `QuickAdd.kt`, `Filters.kt` in `logic/`, line by line from `public/recurrence.js`, `quickadd.js`, `filters.js`, including the multi-word `#project /section @label` names (`QuickAddNames`). Golden tests in the Phase 2 style: `android-native/tools/extract-tasklang-fixtures.mjs` copies the *inputs* of the server's own test tables (`STEPS`, `FORMATS`, errors, quick-add `CASES` and `NAMED`, filter `CASES` and `ERRORS`) into `tools/fixtures/tasklang.json`; `golden.mjs` writes `recurrence_golden.json`, `quickadd_golden.json`, `filters_golden.json` (rules, ranges, parse trees, result ids, error text and position); `RecurrenceGoldenTest`, `QuickAddGoldenTest`, `FiltersGoldenTest` (4 tests each) compare every field. Sizes: 64 repeat steps and a 400-step series for 9 repeats, 41 formats, 14 errors, 16 dates; 113 quick-add inputs, 9 "today" values × 14 inputs, 18 named; 80 filter queries, 22 errors, 5 "today" values × 8 queries. I changed one expected value in `quickadd_golden.json` by hand: `QuickAddGoldenTest` failed; reverted. Existing golden files are byte-identical after regenerating.
+2. **Task 2: outbox** (`f380226`, `ebf267f`, `570a070`, `cca11f4`):
+   - **DTOs** (`f380226`): homework gets `project_id, section_id, parent_id, priority, position, recurrence, deadline_date, completed_at, client_id, labels, comment_count, reminders`; new `ProjectDto, SectionDto, LabelDto, FilterDto, TaskReminderDto, CommentDto`; `AppData` has `projects, sections, labels, filters`. `rawData` sends `tasks=1` (plan section 4). Eight existing tests asserted the exact path `/api/data` and now say `/api/data?tasks=1`: that is the new contract, not a weakened check.
+   - **`MutationQueue`** (`data/MutationQueue.kt`): per account, one file `snapshots/outbox/outbox-<hash>.json`, written atomically. `QueuedMutation` = `clientId`, `kind`, `method`, `path`, `body`, `temp`, `about`, `reload`, `at`, `holdMs`. A create gets the next negative temporary id; `remapped`/`remap` rewrite later paths and the id fields of bodies (`project_id, section_id, parent_id, homework_id, ids, label_ids`) when the real id is known; `dropMentioning` drops what depends on a refused create; `purgeExcept` drops another account's changes; `purgeAll` at sign-out.
+   - **`LocalEffects`** (`data/LocalEffects.kt`): what each queued change does to the snapshot, with the server's rules: create/update/delete/complete/uncomplete/move of tasks (subtasks inherit project and section, the due time is read in the task's zone, a repeating task moves on with `nextOccurrence` and reopens its subtasks, an occurrence that has moved changes nothing, move renumbers siblings), projects (delete cascades to subprojects, sections, tasks), sections, labels, filters, reorder, comments (count), reminders, habits (create/update/delete/log/order), attendance. `reconcile` folds the server's answer in: the server row replaces ours unless a later queued change still touches it.
+   - **`Mutations`** and **`DataRepository`**: one function per server call; `enqueue(m)` applies the effect to the snapshot at once and queues it (works offline); `flushQueue()` sends oldest first through generic `Api.sendPost/Patch/Put/Delete(@Url …)`, with `client_id` on creates; after a 2xx it settles (temporary id to real, in the snapshot and in the queue); on a 4xx (not 401, 408, 429) it drops the change and what depends on it, reloads, and shows the server's message after the reload; network, 401 and 5xx stop the loop and keep order. A held change (`holdMs`) is not sent before its time. A refresh replays the queue over the fresh data (`withPending`), skipping a create whose `client_id` the server already has and remapping its temporary id, so a lost answer never doubles a row. "Full reload after many-row mutations": `reload` is set for project/section/label deletes, `move`, an uncomplete, a complete of a repeating task or of a task with subtasks, and catch-ups; one reload happens after the queue is sent.
+   - **Wiring**: homework save/tick/delete and habit actions in `ShellViewModel` (and the palette's `ToggleHomework`, `CheckHabit`, `AddHabit`) queue instead of calling the API; `OutboxWorker` and `RefreshWorker` flush the queue; `DataRepository.onQueued` asks WorkManager and the view model also tries at once; sign-out purges. `ReminderActions` now takes `enqueue` and queues `attendance.set`, `catchup.add`, `habit.log`, `task.complete`; the homework reminder's Done button carries the due date as `occurrence`.
+   - **Server, in its own commits**: `de5eb4b` (occurrence; `test/tasks.test.js` "a repeated complete…": the same request twice moves the task on once, also through `PATCH`); `081850a` and `a4e8e1a` (migration `0021_habit_client_id.sql`: a repeated `client_id` on `POST /api/habits` returns the habit already made; habit rows carry `client_id`; assertions in `test/habits.test.js`). Not in the plan: habits had no `client_id`, so a retried "add habit" after a lost answer would have made two. `0021` is additive; no existing migration was touched.
+3. **Task 3: indicator** (`2e1ca77`): "Not synced yet" under the top bar while `DataRepository.pending > 0` (contentDescription "Not synced yet: N changes waiting"), gone when the queue is empty; `NotSyncedIndicatorTest`.
+
+### Tests added or changed
+
+- `MutationOutboxTest` (12, MockWebServer with a small stand-in for the Worker that hands out ids and honours `client_id`): create offline a label, a task naming it and a subtask naming that task, then 3 pending with temporary ids on screen, then a *new `DataRepository` on the same files* (the restart) shows all three, then online: `POST labels, POST homework, POST homework`, the bodies carry the real label id and the real parent id, each once, no temporary ids left, 0 pending, and a second flush sends nothing. A lost response is retried with the same `client_id` and makes one row; a refused create is dropped with its dependants, the unrelated one is sent, the message is shown and `GET /api/data?tasks=1` follows; a 503 stops the queue and keeps order; a refresh keeps unsent changes; completing a repeating task sends `occurrence`; sign-out drops the queue; a held delete survives a restart and is sent only after its window; Undo puts the rows back; another account's changes are dropped and never sent; nothing is sent while signed out; a habit the server already made is not added again by a refresh.
+- `LocalEffectsTest` (9), `NotSyncedIndicatorTest` (1), 3 new tests in `OutboxTest` (session email, one-edit finish, queued sessions), 3 golden classes (12 tests).
+- Rewritten for the new behaviour (a refused change used to roll back at once and keep the form; now it is accepted at once, then dropped with a reload and the message): `HabitActionsTest`, `PaletteDispatchTest`, `HomeworkRepositoryUiTest` (2 tests), the button tests in `CheckInTest`, `HabitReminderTest`, `HomeworkReminderTest`, `NotifyStoreTest`. `ActionSenderHabitTest` and the sender tests in `CheckInTest` are gone; their cases moved to `MutationOutboxTest` (order kept on 5xx, 4xx dropped, another account never sent, nothing while signed out).
+
+### e2e (review 10, finding 1, round 2)
+
+`tools/e2e.sh` failed again at 23:40 and 23:44 at `LocalServerTest.kt:250`, **also on a clean checkout of the Phase 10 merge `c6ae372`** (temporary worktree, removed), so it is not caused by this phase. With logging at 23:51 the semantics tree showed the "Tap a time to plan" banner still up and `calendar-sheet` open for `calendar-ev-16`: the tap at 20% of the column landed on a session that spills past midnight. The Phase 10 guess about a 48 dp touch target was not the cause. The test now taps at 85% of the part of the column that is on screen (`boundsInRoot` and `positionInRoot`), where tomorrow never has a seeded session. The assertions are unchanged. No app bug, so no unit test at 23:30.
+
+### Commands and results
+
+- `npm test`: tests 470, pass 470, fail 0 (469 before this phase: +1 occurrence test; the habit idempotency assertions are inside the existing habits API test).
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon --rerun-tasks` (all 83 tasks executed): BUILD SUCCESSFUL; result XML: **1104 tests, 0 failures, 0 errors, 0 skipped** (1071 before); Roborazzi verify passed, no PNG changed; lint passed.
+- `tools/e2e.sh` (full, 23:56 local): BUILD SUCCESSFUL, 5 tests, 0 failures. It ran after the last code change; only this log came after.
+- `AppNavAccountTest.switchingAccountsDiscardsSavedNavigationAndAction` failed once in a full run under load (`result-nav:homework` not found) and passed on its own and in every later full run: a flaky Compose test, not touched.
+
+### Deviations from the plan
+
+- **Where the pending changes live.** The plan says each change is applied to the snapshot *and the cache file* at once. The cache file still holds the server's last answer; the queue file holds the pending changes and they are replayed over the cache at start and over every refresh. Same result after a kill and restart (tested), and a refresh can't lose or double a change.
+- **Scope of "every mutation".** Tasks, projects, sections, labels, filters, comments, reminders, habits and the notification buttons (attendance, catch-up) are queued. Course tracking, bulk attendance, breaks, calendars, countdowns, settings and the calendar's plan blocks (`setPlan`, "Plan my week") still use `DataRepository.mutate` (online, rolled back on failure). The existing screens have no UI for projects, sections, labels, filters, comments or reminders yet (Phase 12), so those paths are tested at the repository level only.
+- **`occurrence`** is only honoured by the server for *repeating* tasks (a non-repeating task whose date was edited must still be completable).
+- **Habit `client_id`** (server migration `0021`) is an addition, see above.
+- **A signed-out account's unsent changes are dropped**, as review 7 asked; this includes a 401 that clears the token.
+
+### Unverified (needs a real device or a deploy)
+
+- The outbox on a real phone in a tunnel or in airplane mode: the WorkManager retry and the in-process attempt were exercised only through MockWebServer and the emulator's e2e (which is online).
+- Migration `0021` on the real D1 (`wrangler d1 migrations apply --remote` not run, by rule); it ran against the `node:sqlite` shim and the local wrangler D1 in `tools/e2e.sh`. `0020` and `0021` both need applying to prod before or with the deploy.
+- Google Calendar sync of a task whose completion or move was queued (no Google link in tests); the "Saved, but Google Calendar sync failed" message path is tested through the answer's `sync_error` only.
+- Closing the app inside the 5 s Undo window on a device (tested as a restart of the repository over the same files).
+- Unicode edges of the Kotlin regex ports beyond the golden inputs (Java's `\s` is ASCII-only, JavaScript's is not; no golden input has a non-ASCII space).
+
+### Open questions
+
+- Should a refused change's draft come back? The old forms kept the draft on a refusal; the offline-first flow accepts the change at once, so after a 4xx the form is already free and only the message remains. If you want the draft back, the dropped mutation would have to be kept and offered for editing.
+
+## Review 11 fixes
+
+Branch `native/phase-11`. Findings 1 and 2 were blocking, finding 3 minor; all three are done, one commit each.
+
+1. **A retried DELETE reported a false error** (`b0aa1ee`). `DataRepository.flushQueue`: a 404 on a queued `DELETE` is now treated as done (settled like a 2xx, no message); a 404 on any other method is still a refusal. New test `MutationOutboxTest.aRetriedDeleteThatFindsTheRowGoneIsSettledQuietly`: the first DELETE reaches the server but its answer is lost, the retry gets 404, `error` stays null, 0 pending, the row stays gone.
+2. **Undo of a repeating task wasn't idempotent.**
+   - Server (`68a5b18`, `Server:` commit): `POST /api/homework/:id/uncomplete` and `PATCH {done: false}` take an optional `occurrence`, the due date the client saw after completing. A repeating task is only rewound when that still equals the stored `due_date`; without `occurrence` it behaves as before. No migration. New test in `test/tasks.test.js` ("a repeated undo of a repeating task (same occurrence) rewinds it once"): a daily task completed twice, the same uncomplete sent twice rewinds once (one `completions` row left), `PATCH done: false` is guarded the same way, and the date it moved on to still rewinds.
+   - App (`37f57b9`): `Mutations.uncompleteTask(id, occurrence, reload)` sends `occurrence`; `ShellViewModel.toggleHomework` passes the task's current `due_date` for a repeating task (what the screen shows after completing). New test `MutationOutboxTest.undoOfARepeatingTaskSendsTheOccurrenceItMovedOnTo` (body carries `occurrence`).
+3. **Unicode whitespace** (`f56b60d`). `jsRegex` in `Recurrence.kt` (used by `QuickAdd.kt`, `Filters.kt`, `Recurrence.kt` instead of `Regex(...)`) rewrites `\s` and `\S` to JavaScript's whitespace set (U+00A0, U+1680, U+2000 to U+200A, U+2028/9, U+202F, U+205F, U+3000, U+FEFF and the ASCII ones); `\d`, `\w` and `\b` stay ASCII as in JS. I did not use `UNICODE_CHARACTER_CLASS`, which would also make `\d` match non-ASCII digits and so differ from JS. Golden inputs with U+00A0 added in `extract-tasklang-fixtures.mjs`: two quick-add inputs and two filter queries; `tasklang.json` and the quick-add and filter golden files regenerated from the JS (existing entries unchanged, only additions). With the old Kotlin the new inputs fail `QuickAddGoldenTest.inputs`, `FiltersGoldenTest.queries` and `treesAndErrors`; with the fix they pass.
+
+### Commands and results
+
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL; result XML: 1106 tests, 0 failures, 0 errors, 0 skipped; lint passed; Roborazzi verify passed, no PNG changed.
+- `tools/e2e.sh`: first run FAILED, second run BUILD SUCCESSFUL, 5 tests, 0 failures. The first failure was `LocalServerTest.a_signInAndLiveShell` at `LocalServerTest.kt:258`: `JSONException: Value null at planned_at`, plus `b_cachedOfflineProcessRestart` failing as a consequence ("First test must finish before offline restart"). Cause, read from the test and not reproduced: the test waits for the app's snapshot to show `planned_at` (the optimistic value, since the calendar's plan goes through the online `mutate`) and then reads the server at once, so it can read before the PATCH has landed. That path and test are untouched by this review (I changed none of the calendar code); it passed on the rerun. Not fixed here; a robust version would wait until `dataFromServer()` has the value.
+
+### Not changed
+
+- The note about `AppNavAccountTest.switchingAccountsDiscardsSavedNavigationAndAction`: it did not fail in this session, so it is left alone.
+- Deploy: `0020` and `0021` still need applying to prod (owner's call). The server change in `68a5b18` needs a deploy for Undo's `occurrence` to take effect; an older server ignores the field and behaves as before.
+
+### Unverified
+
+- The 404-on-DELETE and Undo paths against a real tunnel on a device (MockWebServer and the server's own tests only).

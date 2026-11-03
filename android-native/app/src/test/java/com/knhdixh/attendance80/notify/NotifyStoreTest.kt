@@ -35,13 +35,10 @@ class NotifyStoreTest {
         assertEquals(setOf("me|b"), s.sent(1_000 + 3 * 24 * 3600_000L + 1))
     }
 
-    @Test fun theActionQueueKeepsOrderAndIsCapped() = runBlocking {
+    @Test fun signOutForgetsThePostedKeys() = runBlocking {
         val s = store()
-        repeat(NotifyStore.MAX_ACTIONS + 5) { s.addAction(PendingAction("me", "attendance", it.toLong(), "present")) }
-        val all = s.pendingActions()
-        assertEquals(NotifyStore.MAX_ACTIONS, all.size)
-        assertEquals(5L, all.first().ref)
-        s.removeActions(all.take(10))
-        assertEquals(NotifyStore.MAX_ACTIONS - 10, s.pendingActions().size)
+        s.markSent(listOf("me|a"), 1_000)
+        s.signedOut()
+        assertEquals(emptySet<String>(), s.sent(1_001))
     }
 }

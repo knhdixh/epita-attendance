@@ -145,7 +145,7 @@ class SessionMutationTest {
             assertEquals("/api/attendance/bulk", bulk.path)
             val bulkBody = org.json.JSONObject(bulk.body.readUtf8())
             assertEquals("excused", bulkBody.getString("status")); assertEquals(7, bulkBody.getJSONArray("ids").getInt(0)); assertEquals(1, bulkBody.getJSONArray("ids").length())
-            assertEquals("/api/data", withContext(Dispatchers.IO) { server.takeRequest(5, TimeUnit.SECONDS) }!!.path)
+            assertEquals("/api/data?tasks=1", withContext(Dispatchers.IO) { server.takeRequest(5, TimeUnit.SECONDS) }!!.path)
             withTimeout(10000) { while (repo.snapshot.value?.events?.single()?.status != "excused") delay(20) }
             server.enqueue(MockResponse().setBody("{\"ok\":true}"))
             model.dispatch(PaletteAction.SessionStatus(7, null))

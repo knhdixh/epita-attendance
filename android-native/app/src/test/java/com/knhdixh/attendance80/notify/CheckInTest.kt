@@ -108,15 +108,16 @@ class CheckInTest {
 
     // ------------------------------------------------ the buttons
 
-    private val flushes = mutableListOf<Unit>()
-    private fun actions(d: com.knhdixh.attendance80.net.AppData? = data) = ReminderActions(testClock(at("2026-11-02T10:05:00")), store, notifier, { flushes += Unit }, { d })
+    private val queued = mutableListOf<Pair<com.knhdixh.attendance80.data.QueuedMutation, String>>()
+    private fun actions(d: com.knhdixh.attendance80.net.AppData? = data, wait: suspend () -> com.knhdixh.attendance80.net.AppData? = { d }) =
+        ReminderActions(testClock(at("2026-11-02T10:05:00")), notifier, wait, { m, account -> queued += m to account; true })
 
     @Test fun presentIsQueuedAndTheNotificationGoes() = runBlocking {
         actions().handle("checkin", 10, "present", null, "me@example.com", "k10")
-        val queued = store.pendingActions().single()
-        assertEquals(listOf("attendance", "10", "present"), listOf(queued.type, queued.ref.toString(), queued.value))
+        val (m, account) = queued.single()
+        assertEquals(listOf("attendance.set", "PATCH", "api/attendance/10", "present"), listOf(m.kind, m.method, m.path, m.body["status"]!!.jsonPrimitive.content))
+        assertEquals("me@example.com", account)
         assertEquals(listOf("k10"), notifier.cancelled)
-        assertEquals(1, flushes.size)
         assertTrue(notifier.posted.isEmpty())
     }
 
@@ -126,14 +127,15 @@ class CheckInTest {
         assertEquals("Marked absent: Mathématiques", offer.title)
         assertEquals(listOf("Add catch-up"), offer.actions.map { it.label })
         actions().handle("catchup", 10, null, null, "me@example.com", offer.key)
-        assertEquals(listOf("attendance", "catchup"), store.pendingActions().map { it.type })
-        assertEquals("Europe/Paris", store.pendingActions().last().tz)
+        assertEquals(listOf("attendance.set", "catchup.add"), queued.map { it.first.kind })
+        assertEquals("Europe/Paris", queued.last().first.body["tz"]!!.jsonPrimitive.content)
+        assertEquals("POST api/catchups", queued.last().first.let { "${it.method} ${it.path}" })
     }
 
     /** The first tap in a cold process: the snapshot is null until the cache has loaded. */
     @Test fun absentWaitsForTheSnapshotThenOffersTheCatchup() = runBlocking {
         val loading = kotlinx.coroutines.CompletableDeferred<com.knhdixh.attendance80.net.AppData>()
-        val a = ReminderActions(testClock(at("2026-11-02T10:05:00")), store, notifier, { flushes += Unit }, { loading.await() })
+        val a = actions(wait = { loading.await() })
         val tap = launch(kotlinx.coroutines.Dispatchers.Default) { a.handle("checkin", 10, "absent", null, "me@example.com", "k10") }
         kotlinx.coroutines.delay(100)
         assertTrue(notifier.posted.isEmpty())
@@ -150,62 +152,6 @@ class CheckInTest {
 
     @Test fun aStatusThatIsNotOneOfThreeIsIgnored() = runBlocking {
         actions().handle("checkin", 10, "bogus", null, "me@example.com", "k10")
-        assertTrue(store.pendingActions().isEmpty())
-    }
-
-    // ------------------------------------------------ the sender
-
-    private val server = MockWebServer()
-    private fun sender(): ActionSender {
-        server.start()
-        return ActionSender(store, ApiClient.createApi(server.url("/").toString(), { "token" }, {}))
-    }
-
-    @Test fun senderPatchesAttendanceAndPostsTheCatchupInOrderThenEmptiesTheQueue() = runBlocking {
-        store.addAction(PendingAction("me@example.com", "attendance", 10, "absent"))
-        store.addAction(PendingAction("me@example.com", "catchup", 10, tz = "Europe/Paris"))
-        val s = sender()
-        server.enqueue(MockResponse().setBody("""{"ok":true}"""))
-        server.enqueue(MockResponse().setBody("""{"id":9,"title":"Catch up","notes":"","created_at":1,"updated_at":1}"""))
-        assertTrue(s.flush("me@example.com"))
-        val patch = server.takeRequest()
-        assertEquals("PATCH /api/attendance/10", "${patch.method} ${patch.path}")
-        assertEquals("absent", Json.parseToJsonElement(patch.body.readUtf8()).jsonObject["status"]!!.jsonPrimitive.content)
-        val catchup = server.takeRequest()
-        assertEquals("POST /api/catchups", "${catchup.method} ${catchup.path}")
-        assertTrue(store.pendingActions().isEmpty())
-        server.shutdown()
-    }
-
-    @Test fun senderKeepsWhatFailedOnA500AndDropsA4xx() = runBlocking {
-        store.addAction(PendingAction("me@example.com", "attendance", 10, "present"))
-        store.addAction(PendingAction("me@example.com", "attendance", 11, "present"))
-        val s = sender()
-        server.enqueue(MockResponse().setResponseCode(500).setBody("""{"error":"boom"}"""))
-        assertFalse(s.flush("me@example.com"))
-        assertEquals(2, store.pendingActions().size) // order kept: the second waits for the first
-        server.enqueue(MockResponse().setResponseCode(404).setBody("""{"error":"Session not found."}"""))
-        server.enqueue(MockResponse().setBody("""{"ok":true}"""))
-        assertTrue(s.flush("me@example.com"))
-        assertTrue(store.pendingActions().isEmpty())
-        server.shutdown()
-    }
-
-    @Test fun anotherAccountsItemsAreNeverSentFromThisOne() = runBlocking {
-        store.addAction(PendingAction("other@example.com", "attendance", 10, "present"))
-        val s = sender()
-        assertTrue(s.flush("me@example.com"))
-        assertEquals(0, server.requestCount)
-        assertTrue(store.pendingActions().isEmpty())
-        server.shutdown()
-    }
-
-    @Test fun nothingIsSentWhileSignedOut() = runBlocking {
-        store.addAction(PendingAction("me@example.com", "attendance", 10, "present"))
-        val s = sender()
-        assertTrue(s.flush(null))
-        assertEquals(0, server.requestCount)
-        assertEquals(1, store.pendingActions().size)
-        server.shutdown()
+        assertTrue(queued.isEmpty())
     }
 }

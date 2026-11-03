@@ -46,8 +46,15 @@ interface Api {
     @GET("api/data")
     suspend fun data(): AppData
 
+    /** `tasks=1`: tasks without a date too (plan section 4). */
     @GET("api/data")
-    suspend fun rawData(): ResponseBody
+    suspend fun rawData(@Query("tasks") tasks: Int = 1): ResponseBody
+
+    // The outbox sends what it queued: any method and path, with the body the change was made with.
+    @POST suspend fun sendPost(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
+    @PATCH suspend fun sendPatch(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
+    @PUT suspend fun sendPut(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
+    @HTTP(method = "DELETE") suspend fun sendDelete(@retrofit2.http.Url path: String): ResponseBody
 
     @GET("api/focus")
     suspend fun listFocus(@Query("since") since: Long): FocusListResponse

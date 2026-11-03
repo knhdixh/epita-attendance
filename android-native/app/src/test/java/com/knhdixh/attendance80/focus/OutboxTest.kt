@@ -7,6 +7,7 @@ import com.knhdixh.attendance80.net.FocusSessionDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -115,5 +116,41 @@ class OutboxTest {
     @Test fun anEmptyOutboxMakesNoRequest() = runBlocking {
         assertTrue(outbox.flush())
         assertEquals(0, server.requestCount)
+    }
+
+    // ---- review 5: the account the session belongs to, one edit for a finish, queued sessions in the stats
+
+    @Test fun nothingIsSentUnlessTheSignedInSessionIsTheQueuesAccount() = runBlocking {
+        queue(entry("aaaaaaaa-1"))
+        val api = ApiClient.createApi(server.url("/").toString(), { "token" }, {})
+        var sessionEmail: String? = "someone.else@example.com"
+        val guarded = Outbox(store, api, { recorded += it }, sessionEmail = { sessionEmail })
+        assertFalse("another account is signed in: wait", guarded.flush())
+        sessionEmail = null
+        assertFalse("no snapshot yet: wait", guarded.flush())
+        assertEquals(0, server.requestCount)
+        sessionEmail = ME.uppercase()
+        server.enqueue(MockResponse().setBody(row("aaaaaaaa-1")))
+        assertTrue(guarded.flush())
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun theNextTimerAndTheFinishedSessionAreOneEditAndARepeatedFinishAddsItOnce() = runBlocking {
+        val timer = com.knhdixh.attendance80.logic.FocusTimer()
+        store.saveTimerAndLog(timer, entry("aaaaaaaa-1"), ME)
+        store.saveTimerAndLog(timer, entry("aaaaaaaa-1"), ME)
+        assertEquals(listOf("aaaaaaaa-1"), store.outbox(ME).map { it.client_id })
+        assertEquals(timer, store.timer())
+        assertEquals(listOf("aaaaaaaa-1"), store.queuedLogsFlow.first().map { it.client_id })
+    }
+
+    @Test fun queuedSessionsCountInTheStatsUntilTheServerHasThem() {
+        val data = ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(javaClass.getResource("/api/data.json")!!.readText())
+        val have = data.focus.sessions.size
+        val out = com.knhdixh.attendance80.ui.shell.withQueuedSessions(data, listOf(entry("aaaaaaaa-1", 9_000_000_000_000), entry("aaaaaaaa-1", 9_000_000_000_000)))
+        assertEquals("once, whatever the queue holds", have + 1, out.focus.sessions.size)
+        assertNull("no id yet: the screen says saving", out.focus.sessions.last().id)
+        assertEquals("a session the server already has isn't doubled", out.focus.sessions.size, com.knhdixh.attendance80.ui.shell.withQueuedSessions(out, listOf(entry("aaaaaaaa-1"))).focus.sessions.size)
+        assertSame(data, com.knhdixh.attendance80.ui.shell.withQueuedSessions(data, emptyList()))
     }
 }

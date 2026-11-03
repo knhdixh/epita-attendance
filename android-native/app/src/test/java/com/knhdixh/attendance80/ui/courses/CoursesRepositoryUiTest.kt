@@ -84,7 +84,7 @@ class CoursesRepositoryUiTest {
             ui.onNode(inRow(hasTestTag("course-tracked"))).performClick()
             ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value!!.courses.first().tracked && server.requestCount >= 4 }
             assertEquals("/api/courses/${course.id}", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             val trackedData = data.copy(courses = data.courses.map { if (it.id == course.id) it.copy(tracked = true) else it })
             val tagged = trackedData.copy(courses = trackedData.courses.map { if (it.id == course.id) it.copy(tag = "exam") else it })
             server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), tagged)))
@@ -94,7 +94,7 @@ class CoursesRepositoryUiTest {
             assertEquals("/api/courses/${course.id}", tagRequest.path)
             assertEquals("{\"tag\":\"exam\"}", org.json.JSONObject(tagRequest.body.readUtf8()).toString())
             ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); server.requestCount >= 6 }
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             ui.waitUntil(10_000) { repo.snapshot.value?.courses?.first()?.tag == "exam" }
             val grouped = tagged.copy(courses = tagged.courses.map { if (it.id == course.id) it.copy(tracked = false) else if (it.id == sibling.id) it.copy(tracked = true) else it })
             server.enqueue(MockResponse().setBody("{\"ok\":true}")); server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), grouped)))
@@ -107,7 +107,7 @@ class CoursesRepositoryUiTest {
             assertEquals(setOf(course.id, sibling.id), (0 until groupBody.length()).map { groupBody.getJSONObject(it).getLong("id") }.toSet())
             assertFalse(groupBody.getJSONObject(0).getBoolean("tracked")); assertTrue(groupBody.getJSONObject(1).getBoolean("tracked"))
             ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); server.requestCount >= 8 }
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             ui.waitUntil(10_000) { repo.snapshot.value?.courses?.find { it.id == sibling.id }?.tracked == true }
             assertEquals(tagged.courses.filter { it.id != course.id && it.id != sibling.id }, repo.snapshot.value!!.courses.filter { it.id != course.id && it.id != sibling.id })
             val none = grouped.copy(courses = grouped.courses.map { if (it.id == sibling.id) it.copy(tracked = false) else it })
@@ -119,7 +119,7 @@ class CoursesRepositoryUiTest {
             val noneUpdates = org.json.JSONObject(noneRequest.body.readUtf8()).getJSONArray("updates")
             assertEquals(2, noneUpdates.length()); assertFalse(noneUpdates.getJSONObject(0).getBoolean("tracked")); assertFalse(noneUpdates.getJSONObject(1).getBoolean("tracked"))
             ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); server.requestCount >= 10 }
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             ui.waitUntil(10_000) { repo.snapshot.value?.courses?.find { it.id == sibling.id }?.tracked == false && !repo.loading.value }
             var current = none
             listOf("https://example.org", "https://example.org/second", "").forEachIndexed { index, value ->
@@ -137,7 +137,7 @@ class CoursesRepositoryUiTest {
                 assertEquals(1, recordingBody.length())
                 assertEquals(value, recordingBody.getString("recording_url"))
                 ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); server.requestCount >= 12 + index * 2 }
-                assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+                assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
                 ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value?.courses?.first()?.recording_url == canonical }
             }
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Paste the address of the recordings page (https://…).\"}"))

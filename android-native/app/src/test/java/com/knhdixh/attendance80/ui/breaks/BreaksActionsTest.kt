@@ -60,7 +60,7 @@ class BreaksActionsTest {
             assertEquals("POST /api/breaks", "${post.method} ${post.path}")
             assertEquals(buildJsonObject { put("from", "2026-11-04"); put("to", "2026-11-05"); put("label", "Dentist"); put("tz", "Europe/Paris") },
                 Json.parseToJsonElement(post.body.readUtf8()))
-            assertEquals("GET /api/data", server.takeRequest().let { "${it.method} ${it.path}" })
+            assertEquals("GET /api/data?tasks=1", server.takeRequest().let { "${it.method} ${it.path}" })
             assertEquals("Break saved: 2 sessions marked as planned absences.", repo.error.value)
             repo.consumeError(repo.error.value!!)
 
@@ -68,7 +68,7 @@ class BreaksActionsTest {
             server.enqueue(MockResponse().setBody(fixture))
             assertTrue(shell.removeBreak("a", 1))
             assertEquals("DELETE /api/breaks/1", server.takeRequest().let { "${it.method} ${it.path}" })
-            assertEquals("GET /api/data", server.takeRequest().let { "${it.method} ${it.path}" })
+            assertEquals("GET /api/data?tasks=1", server.takeRequest().let { "${it.method} ${it.path}" })
             assertEquals("Break removed, 1 session restored.", repo.error.value)
             repo.consumeError(repo.error.value!!)
 

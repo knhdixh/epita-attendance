@@ -149,9 +149,9 @@ export async function updateHomework(env, user, id, body, appUrl) {
   // (subtasks follow, repeats move on, completions are kept). The other fields in the body are saved first.
   // done: false on a repeating task that isn't done is an Undo of the last "done" too.
   if (body.done !== undefined && (Boolean(body.done) !== Boolean(current.done) || (!body.done && current.recurrence))) {
-    const { done, ...rest } = body;
+    const { done, occurrence, ...rest } = body;
     if (Object.keys(rest).length) await updateHomework(env, user, id, rest, appUrl);
-    return done ? completeTask(env, user, id, appUrl) : uncompleteTask(env, user, id, appUrl);
+    return done ? completeTask(env, user, id, appUrl, Date.now(), occurrence) : uncompleteTask(env, user, id, appUrl, occurrence);
   }
   // An undated task has no time zone of its own unless it was sent one ('UTC' is only the stored placeholder). Giving it a
   // date needs one: the body's `tz`, else the one it was created with, else the user's saved notification time zone.
@@ -202,10 +202,13 @@ const marks = (ids) => ids.map(() => '?').join(', ');
 
 // Completing a task completes the open tasks below it too. A repeating task moves to its next date instead (and
 // its subtasks open again), leaving a row in `completions`; when its series has ended it is completed for good.
-export async function completeTask(env, user, id, appUrl, now = Date.now()) {
+// `occurrence` is the due date the client saw. A repeating task is never `done`, so a retried request (an outbox
+// retry, a notification button pressed twice) would move it on twice: when the date has moved since, nothing happens.
+export async function completeTask(env, user, id, appUrl, now = Date.now(), occurrence = undefined) {
   const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
   if (current.done) return current;
+  if (current.recurrence && typeof occurrence === 'string' && occurrence !== current.due_date) return current;
   const ids = await withDescendants(env, user, [id]);
   if (current.recurrence && current.due_date !== NO_DATE) {
     const parsed = parseRecurrence(current.recurrence, { today: keyInZone(now, current.tz), due: current.due_date });
@@ -238,7 +241,9 @@ export async function completeTask(env, user, id, appUrl, now = Date.now()) {
 
 // Undo. A repeating task that moved on goes back to the date it was completed on; one that was completed for good
 // opens again. Either way the completion row goes.
-export async function uncompleteTask(env, user, id, appUrl) {
+// `occurrence` is the due date the client saw after completing (the date it moved on to). A rewound repeating task has a
+// different date, so a retried Undo (completed twice today, Undo sent twice) rewinds once: when the date differs, nothing happens.
+export async function uncompleteTask(env, user, id, appUrl, occurrence = undefined) {
   const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
   const last = await env.DB.prepare('SELECT id, completed_at, due_date FROM completions WHERE homework_id = ? AND user_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1')
@@ -250,6 +255,7 @@ export async function uncompleteTask(env, user, id, appUrl) {
     return syncTask(env, user, (await env.DB.batch(stmts))[0].results[0], appUrl);
   }
   if (!current.recurrence || !last?.due_date || last.completed_at < now - 86400000) return current;   // Undo, not rewind
+  if (typeof occurrence === 'string' && occurrence !== current.due_date) return current;
   const hw = (await env.DB.batch([
     env.DB.prepare(`UPDATE homework SET due_date = ?, due_at = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
       .bind(last.due_date, dueInstant(last.due_date, current.due_time, current.tz), now, id, user.id),

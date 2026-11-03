@@ -91,7 +91,7 @@ class SettingsActionsTest {
         reply("""{"calendar":5,"total":12,"added":12,"updated":0,"removed":0}"""); reply(fixture)
         assertTrue(actions.addLink(" https://zeus.test/ics ", " SE1 ", "2026-09-01"))
         take().let { assertEquals("POST /api/calendars", it.line()); assertEquals(buildJsonObject { put("kind", "link"); put("url", "https://zeus.test/ics"); put("name", "SE1"); put("from", "2026-09-01") }, it.json()) }
-        assertEquals("GET /api/data", take().line())
+        assertEquals("GET /api/data?tasks=1", take().line())
         assertEquals("Added calendar: 12 sessions (12 new, 0 updated).", message())
 
         // Not a calendar: refused before anything is sent.
@@ -121,14 +121,14 @@ class SettingsActionsTest {
         server.enqueue(MockResponse().setResponseCode(502).setBody("""{"error":"Zeus did not answer."}""")); reply(fixture)
         assertFalse(actions.syncCalendar(1))
         assertEquals("POST /api/calendars/1/sync", take().line())
-        assertEquals("GET /api/data", take().line())
+        assertEquals("GET /api/data?tasks=1", take().line())
         assertEquals("Zeus did not answer.", message())
     }
 
     @Test fun integrationsTokensAndAccount() = runBlocking {
         reply("""{"synced":50,"failed":0,"remaining":10}"""); reply("""{"synced":10,"failed":1,"remaining":0}"""); reply(fixture)
         assertTrue(actions.gcalResync())
-        assertEquals(listOf("POST /api/gcal/resync", "POST /api/gcal/resync", "GET /api/data"), List(3) { take().line() })
+        assertEquals(listOf("POST /api/gcal/resync", "POST /api/gcal/resync", "GET /api/data?tasks=1"), List(3) { take().line() })
         assertEquals("1 homework item(s) could not be synced. Check Settings.", message())
 
         reply("""{"url":"/auth/app/web?code=abc"}""")

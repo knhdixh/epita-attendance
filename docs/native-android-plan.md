@@ -492,7 +492,7 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | PATCH | `/api/homework/{id}` | partial input → task row. A change of `done` goes through complete / uncomplete (below) |
 | DELETE | `/api/homework/{id}` | → `{ ok }` (subtasks, labels, comments, reminders and completions go with it) |
 | POST | `/api/homework/move` | `{ ids, project_id?, section_id?, parent_id?, position? }` → `{ homework: [task rows] }` |
-| POST | `/api/homework/{id}/complete` | → task row |
+| POST | `/api/homework/{id}/complete` | optional `{ occurrence }` (the `due_date` the client saw) → task row. For a repeating task whose date has since moved, nothing happens and the row comes back (so a retry moves it on once). `PATCH { done: true, occurrence }` is guarded the same way |
 | POST | `/api/homework/{id}/uncomplete` | → task row |
 | GET | `/api/homework/{id}/comments` | → `{ comments }` |
 | POST | `/api/homework/{id}/comments` | `{ body, client_id? }` → comment `{ id, homework_id, body, client_id, created_at, updated_at }` |
@@ -538,7 +538,7 @@ is p1**, default 1), `position`, `recurrence` (canonical text such as `every mon
 `reminders: [{ id, at, before_minutes }]`. Create and update bodies take `label_ids: [ids]` (replaces the set; leave it out to keep it).
 
 - **`client_id`** (8–64 chars of `A-Za-z0-9_-`) is accepted on every create above (tasks, projects, sections, labels, filters,
-  comments, reminders). Sending a `client_id` the user already used returns the existing row with 200, so a retry is safe.
+  comments, reminders) and on `POST /api/habits` (migration 0021). Sending a `client_id` the user already used returns the existing row with 200, so a retry is safe.
 - **No date.** Send `due_date: null` (a *missing* `due_date` is still "Invalid due date"). The row comes back with `due_date`,
   `due_time` and `due_at` all `null`; it is stored as `9999-12-31` (`NO_DATE`), which only matters if you read the database.
   `/api/data` leaves undated tasks out unless the request has `?tasks=1`; `/api/plan`, the `.ics` feed and Google Calendar

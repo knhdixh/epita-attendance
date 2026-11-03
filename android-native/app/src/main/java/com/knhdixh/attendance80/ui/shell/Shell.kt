@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import com.knhdixh.attendance80.logic.sanitizeScope
 import androidx.compose.ui.unit.dp
@@ -236,6 +237,12 @@ fun Shell(
                 TopAppBar(title = { Text(title, modifier = Modifier.testTag("shell-title")) }, actions = {
                     IconButton(onClick = { showSearch = true }) { Icon(Icons.Outlined.Search, contentDescription = "Search") }
                 })
+                if (state.pending > 0) {
+                    // Changes made here wait in the outbox until there is a network; they are sent in order.
+                    Text("Not synced yet", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp).testTag("not-synced")
+                            .semantics { contentDescription = "Not synced yet: ${state.pending} change${if (state.pending == 1) "" else "s"} waiting" })
+                }
                 if ((state.data?.calendars?.size ?: 0) >= 2) {
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {

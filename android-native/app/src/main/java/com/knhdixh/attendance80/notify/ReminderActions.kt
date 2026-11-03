@@ -2,36 +2,43 @@ package com.knhdixh.attendance80.notify
 
 import com.knhdixh.attendance80.Clock
 import com.knhdixh.attendance80.logic.FocusTarget
+import com.knhdixh.attendance80.data.Mutations
+import com.knhdixh.attendance80.data.QueuedMutation
 import com.knhdixh.attendance80.net.AppData
 
 /**
- * What a notification button does. The change is written to the device first ([NotifyStore.addAction]) and sent by
- * [ReminderActionWorker] when there is a network, so a tap in a tunnel is not lost.
+ * What a notification button does. The change goes into the outbox (the same one as every other change: it is applied to the
+ * snapshot, kept over a restart and sent in order when there is a network), so a tap in a tunnel is not lost.
  */
 class ReminderActions(
-    private val clock: Clock, private val store: NotifyStore, private val notifier: ReminderNotifier,
-    private val flush: () -> Unit,
+    private val clock: Clock, private val notifier: ReminderNotifier,
     /** The loaded snapshot: waits for the token and the cache, so a tap in a cold process sees the data. Null when signed out. */
     private val snapshot: suspend () -> AppData?,
+    /** Queues a change for the account [String] (an email); false when that account isn't the signed-in one. */
+    private val enqueue: suspend (QueuedMutation, String) -> Boolean,
     /** "Focus on this": starts the timer on that homework, with the loaded snapshot's focus settings and account. */
     private val focusOn: suspend (target: FocusTarget, data: AppData) -> Unit = { _, _ -> },
 ) {
     suspend fun handle(type: String, ref: Long, value: String?, number: Int?, owner: String, key: String) {
         notifier.cancel(key)
-        val now = clock.now()
         when (type) {
             "checkin" -> {
                 val status = value?.takeIf { it in setOf("present", "absent", "excused") } ?: return
-                store.addAction(PendingAction(owner, "attendance", ref, status, at = now))
+                enqueue(Mutations.setAttendance(ref, status), owner)
                 if (status == "absent") offerCatchup(ref, owner)
             }
-            "catchup" -> store.addAction(PendingAction(owner, "catchup", ref, tz = clock.zone().id, at = now))
-            "habit-done" -> store.addAction(PendingAction(owner, "habit-done", ref, value, number, at = now))
-            "homework-done" -> store.addAction(PendingAction(owner, "homework-done", ref, at = now))
+            "catchup" -> enqueue(Mutations.addCatchup(ref, clock.zone().id), owner)
+            "habit-done" -> enqueue(Mutations.logHabit(ref, value.orEmpty(), number ?: 1), owner)
+            "homework-done" -> {
+                // `value` is the due date the notification was posted for: a repeating task whose date has moved on since is left alone.
+                val rows = snapshot()?.homework.orEmpty()
+                val row = rows.find { it.id == ref }
+                val moves = row?.recurrence != null || rows.any { it.parent_id == ref }
+                enqueue(Mutations.completeTask(ref, value?.takeIf { it.isNotEmpty() }, reload = moves), owner)
+            }
             "homework-focus" -> { focus(ref, owner); return }
             else -> return
         }
-        flush()
     }
 
     private suspend fun focus(homeworkId: Long, owner: String) {

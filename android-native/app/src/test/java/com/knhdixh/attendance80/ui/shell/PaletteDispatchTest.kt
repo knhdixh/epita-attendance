@@ -74,27 +74,32 @@ class PaletteDispatchTest {
             }
             assertEquals(2, repo.snapshot.value!!.habits.logs.single { it.habit_id == 1L && it.day == "2026-11-02" }.count)
             val before = repo.snapshot.value!!
-            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot check habit\"}"))
+            val server400Habits = ApiClient.json.decodeFromString<com.knhdixh.attendance80.net.AppData>(fixture)
+            // A refused change is dropped, its message shown, and the data reloaded (so the screen is the server's again).
+            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot check habit\"}")); server.enqueue(MockResponse().setBody(fixture))
             vm.dispatch(PaletteAction.CheckHabit(1, "2026-11-02", 0)); advanceUntilIdle()
             var failedHabitRequest: okhttp3.mockwebserver.RecordedRequest? = null
             repeat(500) { if (failedHabitRequest == null) { runCurrent(); failedHabitRequest = server.takeRequest(10, TimeUnit.MILLISECONDS) } }
             assertEquals("/api/habits/1/log", failedHabitRequest!!.path)
             repeat(100) { if (repo.error.value == null) { Thread.sleep(10); runCurrent() } }
             assertEquals("Cannot check habit", repo.error.value)
-            assertEquals(before.habits, repo.snapshot.value!!.habits)
-            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot complete homework\"}"))
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals(server400Habits.habits, repo.snapshot.value!!.habits)
+            assertNotEquals(before.habits, repo.snapshot.value!!.habits)
+            server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot complete homework\"}")); server.enqueue(MockResponse().setBody(fixture))
             vm.dispatch(PaletteAction.ToggleHomework(1, true)); advanceUntilIdle()
-            assertEquals("/api/homework/1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/homework/1/complete", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
             repeat(100) { if (repo.error.value != "Cannot complete homework") { Thread.sleep(10); runCurrent() } }
             assertEquals("Cannot complete homework", repo.error.value)
-            assertEquals(before.homework, repo.snapshot.value!!.homework)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals(server400Habits.homework, repo.snapshot.value!!.homework)
             server.enqueue(MockResponse().setBody("{\"updated\":1}")); server.enqueue(MockResponse().setBody(fixture))
             vm.dispatch(PaletteAction.BulkAttendance(listOf(1))); advanceUntilIdle()
             val bulk = server.takeRequest(5, TimeUnit.SECONDS)!!
-            repeat(100) { Thread.sleep(10); runCurrent(); if (server.requestCount >= 4) return@repeat }
+            repeat(100) { Thread.sleep(10); runCurrent(); if (server.requestCount >= 6) return@repeat }
             assertEquals("POST", bulk.method); assertEquals("/api/attendance/bulk", bulk.path)
             assertTrue(bulk.body.readUtf8().contains("\"present\""))
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
         } finally { storeScope.cancel(); server.shutdown(); directory.deleteRecursively(); Dispatchers.resetMain() }
     }
 }

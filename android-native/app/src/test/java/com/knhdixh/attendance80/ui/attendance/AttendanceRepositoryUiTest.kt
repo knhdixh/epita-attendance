@@ -70,7 +70,7 @@ class AttendanceRepositoryUiTest {
             ui.onNodeWithText("Mark 1 as attended").performClick()
             try { ui.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); repo.snapshot.value!!.events.first().status == "present" && server.requestCount >= 4 } } catch (e: Throwable) { throw AssertionError("requests=${server.requestCount}, status=${repo.snapshot.value!!.events.first().status}, error=${repo.error.value}", e) }
             assertEquals("/api/attendance/bulk", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
-            assertEquals("/api/data", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
+            assertEquals("/api/data?tasks=1", server.takeRequest(5, TimeUnit.SECONDS)!!.path)
         } finally { storeScope.cancel(); server.shutdown(); dir.deleteRecursively() }
     }
 }

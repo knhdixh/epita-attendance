@@ -139,7 +139,7 @@ fun homeworkReminders(data: AppData, device: ZoneId, locale: java.util.Locale = 
             key = "homework:${hw.id}:$at", kind = Kinds.HOMEWORK, at = at, title = hw.title,
             body = listOfNotNull(due, hw.course_id?.let { courses[it]?.name }).joinToString(" · "),
             route = "a80://homework/${hw.id}", ref = hw.id,
-            actions = listOf(ReminderAction("Done", "homework-done"), ReminderAction("Focus on this", "homework-focus")),
+            actions = listOf(ReminderAction("Done", "homework-done", value = hw.due_date), ReminderAction("Focus on this", "homework-focus")),
         )
     }
 }

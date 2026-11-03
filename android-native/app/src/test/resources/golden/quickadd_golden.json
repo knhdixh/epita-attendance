@@ -1,0 +1,7007 @@
+{
+  "inputs": [
+    {
+      "text": "Buy milk",
+      "out": {
+        "title": "Buy milk",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "",
+      "out": {
+        "title": "",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "   ",
+      "out": {
+        "title": "",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Buy milk today",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 14,
+            "text": "today",
+            "value": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Buy milk tomorrow",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 17,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Buy milk tmr",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 12,
+            "text": "tmr",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "buy milk tom",
+      "out": {
+        "title": "buy milk",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 12,
+            "text": "tom",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call Tom",
+      "out": {
+        "title": "Call Tom",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Buy milk yesterday",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-11-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 18,
+            "text": "yesterday",
+            "value": "2026-11-02"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call mom fri",
+      "out": {
+        "title": "Call mom",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 12,
+            "text": "fri",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call mom on friday",
+      "out": {
+        "title": "Call mom",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 18,
+            "text": "on friday",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Submit by friday",
+      "out": {
+        "title": "Submit",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 7,
+            "end": 16,
+            "text": "by friday",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Party on friday",
+      "out": {
+        "title": "Party",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 15,
+            "text": "on friday",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Standup tue",
+      "out": {
+        "title": "Standup",
+        "due_date": "2026-11-10",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 8,
+            "end": 11,
+            "text": "tue",
+            "value": "2026-11-10"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Gym wed",
+      "out": {
+        "title": "Gym",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 4,
+            "end": 7,
+            "text": "wed",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Gym next mon",
+      "out": {
+        "title": "Gym",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 4,
+            "end": 12,
+            "text": "next mon",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Plan next week",
+      "out": {
+        "title": "Plan",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 14,
+            "text": "next week",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Plan next month",
+      "out": {
+        "title": "Plan",
+        "due_date": "2026-12-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 15,
+            "text": "next month",
+            "value": "2026-12-01"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Hike weekend",
+      "out": {
+        "title": "Hike",
+        "due_date": "2026-11-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 12,
+            "text": "weekend",
+            "value": "2026-11-07"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call in 3 days",
+      "out": {
+        "title": "Call",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 14,
+            "text": "in 3 days",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call in 2 weeks",
+      "out": {
+        "title": "Call",
+        "due_date": "2026-11-17",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 15,
+            "text": "in 2 weeks",
+            "value": "2026-11-17"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call in a month",
+      "out": {
+        "title": "Call",
+        "due_date": "2026-12-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 15,
+            "text": "in a month",
+            "value": "2026-12-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call in 1 year",
+      "out": {
+        "title": "Call",
+        "due_date": "2027-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 14,
+            "text": "in 1 year",
+            "value": "2027-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew jan 27",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 12,
+            "text": "jan 27",
+            "value": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 27 jan",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 12,
+            "text": "27 jan",
+            "value": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 27/1",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 10,
+            "text": "27/1",
+            "value": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 27/1/2028",
+      "out": {
+        "title": "Renew",
+        "due_date": "2028-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 15,
+            "text": "27/1/2028",
+            "value": "2028-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 27.1.28",
+      "out": {
+        "title": "Renew",
+        "due_date": "2028-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 13,
+            "text": "27.1.28",
+            "value": "2028-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 3 nov",
+      "out": {
+        "title": "Renew",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 11,
+            "text": "3 nov",
+            "value": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 2 nov",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-11-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 11,
+            "text": "2 nov",
+            "value": "2027-11-02"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 2027-01-27",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-01-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 16,
+            "text": "2027-01-27",
+            "value": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew March 1st",
+      "out": {
+        "title": "Renew",
+        "due_date": "2027-03-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 15,
+            "text": "March 1st",
+            "value": "2027-03-01"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 29 feb",
+      "out": {
+        "title": "Renew",
+        "due_date": "2028-02-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 12,
+            "text": "29 feb",
+            "value": "2028-02-29"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Renew 30 feb",
+      "out": {
+        "title": "Renew 30 feb",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Meet at 9am",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "09:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 11,
+            "text": "at 9am",
+            "value": "09:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 9:30",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "09:30",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 9,
+            "text": "9:30",
+            "value": "09:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 9.30pm",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "21:30",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 11,
+            "text": "9.30pm",
+            "value": "21:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet at 18",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "18:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 10,
+            "text": "at 18",
+            "value": "18:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 18h30",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "18:30",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 10,
+            "text": "18h30",
+            "value": "18:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 12am",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "00:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 9,
+            "text": "12am",
+            "value": "00:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 12pm",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-03",
+        "due_time": "12:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 9,
+            "text": "12pm",
+            "value": "12:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet 25:00",
+      "out": {
+        "title": "Meet 25:00",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Meet 13pm",
+      "out": {
+        "title": "Meet 13pm",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Meet at 9am tomorrow",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-04",
+        "due_time": "09:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 11,
+            "text": "at 9am",
+            "value": "09:00"
+          },
+          {
+            "kind": "date",
+            "start": 12,
+            "end": 20,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Lunch tomorrow at 12:30",
+      "out": {
+        "title": "Lunch",
+        "due_date": "2026-11-04",
+        "due_time": "12:30",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 6,
+            "end": 14,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          },
+          {
+            "kind": "time",
+            "start": 15,
+            "end": 23,
+            "text": "at 12:30",
+            "value": "12:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task #Home",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Home",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 5,
+            "end": 10,
+            "text": "#Home",
+            "value": "Home"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task #\"Big project\"",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Big project",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 5,
+            "end": 19,
+            "text": "#\"Big project\"",
+            "value": "Big project"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task #Home /Chores",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Home",
+        "section": "Chores",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 5,
+            "end": 10,
+            "text": "#Home",
+            "value": "Home"
+          },
+          {
+            "kind": "section",
+            "start": 11,
+            "end": 18,
+            "text": "/Chores",
+            "value": "Chores"
+          }
+        ]
+      }
+    },
+    {
+      "text": "#today",
+      "out": {
+        "title": "",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "today",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 0,
+            "end": 6,
+            "text": "#today",
+            "value": "today"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task @a @b @A",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "a",
+          "b"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 5,
+            "end": 7,
+            "text": "@a",
+            "value": "a"
+          },
+          {
+            "kind": "label",
+            "start": 8,
+            "end": 10,
+            "text": "@b",
+            "value": "b"
+          },
+          {
+            "kind": "label",
+            "start": 11,
+            "end": 13,
+            "text": "@A",
+            "value": "A"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Mail me@x.com",
+      "out": {
+        "title": "Mail me@x.com",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Learn C# today",
+      "out": {
+        "title": "Learn C#",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 14,
+            "text": "today",
+            "value": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task p1",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 4,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "priority",
+            "start": 5,
+            "end": 7,
+            "text": "p1",
+            "value": 1
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task p2",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 3,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "priority",
+            "start": 5,
+            "end": 7,
+            "text": "p2",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task P3",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 2,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "priority",
+            "start": 5,
+            "end": 7,
+            "text": "P3",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task p4",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "priority",
+            "start": 5,
+            "end": 7,
+            "text": "p4",
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task p5",
+      "out": {
+        "title": "Task p5",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Task !30m",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": 30,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "reminder",
+            "start": 5,
+            "end": 9,
+            "text": "!30m",
+            "value": 30
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task !2h",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": 120,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "reminder",
+            "start": 5,
+            "end": 8,
+            "text": "!2h",
+            "value": 120
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task !1d",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": 1440,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "reminder",
+            "start": 5,
+            "end": 8,
+            "text": "!1d",
+            "value": 1440
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task !1h30m",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": 90,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "reminder",
+            "start": 5,
+            "end": 11,
+            "text": "!1h30m",
+            "value": 90
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task !99d",
+      "out": {
+        "title": "Task !99d",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Task for 45m",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 45,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 5,
+            "end": 12,
+            "text": "for 45m",
+            "value": 45
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task for 2h",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 120,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 5,
+            "end": 11,
+            "text": "for 2h",
+            "value": 120
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task for 1h30m",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 90,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 5,
+            "end": 14,
+            "text": "for 1h30m",
+            "value": 90
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task for 1.5h",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 90,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 5,
+            "end": 13,
+            "text": "for 1.5h",
+            "value": 90
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task for 90 min",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 90,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 5,
+            "end": 15,
+            "text": "for 90 min",
+            "value": 90
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meeting for 45 minutes",
+      "out": {
+        "title": "Meeting",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": 45,
+        "ranges": [
+          {
+            "kind": "duration",
+            "start": 8,
+            "end": 22,
+            "text": "for 45 minutes",
+            "value": 45
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task for 25h",
+      "out": {
+        "title": "Task for 25h",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Thanks for you",
+      "out": {
+        "title": "Thanks for you",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Task {fri}",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": "2026-11-06",
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "deadline",
+            "start": 5,
+            "end": 10,
+            "text": "{fri}",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task {27 jan}",
+      "out": {
+        "title": "Task",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": "2027-01-27",
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "deadline",
+            "start": 5,
+            "end": 13,
+            "text": "{27 jan}",
+            "value": "2027-01-27"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task {nonsense}",
+      "out": {
+        "title": "Task {nonsense}",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Task fri {mon}",
+      "out": {
+        "title": "Task",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": "2026-11-09",
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 5,
+            "end": 8,
+            "text": "fri",
+            "value": "2026-11-06"
+          },
+          {
+            "kind": "deadline",
+            "start": 9,
+            "end": 14,
+            "text": "{mon}",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Water plants every day",
+      "out": {
+        "title": "Water plants",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 13,
+            "end": 22,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Gym every mon, wed",
+      "out": {
+        "title": "Gym",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": "every mon, wed",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 4,
+            "end": 18,
+            "text": "every mon, wed",
+            "value": "every mon, wed"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Standup every weekday at 9:30",
+      "out": {
+        "title": "Standup",
+        "due_date": "2026-11-03",
+        "due_time": "09:30",
+        "recurrence": "every weekday",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 8,
+            "end": 21,
+            "text": "every weekday",
+            "value": "every weekday"
+          },
+          {
+            "kind": "time",
+            "start": 22,
+            "end": 29,
+            "text": "at 9:30",
+            "value": "09:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Meet every 3rd friday",
+      "out": {
+        "title": "Meet",
+        "due_date": "2026-11-20",
+        "due_time": null,
+        "recurrence": "every 3rd fri",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 5,
+            "end": 21,
+            "text": "every 3rd friday",
+            "value": "every 3rd fri"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay every month on the 15th",
+      "out": {
+        "title": "Pay",
+        "due_date": "2026-11-15",
+        "due_time": null,
+        "recurrence": "every month on the 15th",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 4,
+            "end": 27,
+            "text": "every month on the 15th",
+            "value": "every month on the 15th"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay every other week",
+      "out": {
+        "title": "Pay",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": "every other week",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 4,
+            "end": 20,
+            "text": "every other week",
+            "value": "every other week"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Stretch every! 3 days",
+      "out": {
+        "title": "Stretch",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": "every! 3 days",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 8,
+            "end": 21,
+            "text": "every! 3 days",
+            "value": "every! 3 days"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Rent every month on the 1st until 1 jun",
+      "out": {
+        "title": "Rent",
+        "due_date": "2026-12-01",
+        "due_time": null,
+        "recurrence": "every month on the 1st until 1 jun 2027",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 5,
+            "end": 39,
+            "text": "every month on the 1st until 1 jun",
+            "value": "every month on the 1st until 1 jun 2027"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Gym every mon starting 7 dec",
+      "out": {
+        "title": "Gym",
+        "due_date": "2026-12-07",
+        "due_time": null,
+        "recurrence": "every mon starting 7 dec 2026",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 4,
+            "end": 28,
+            "text": "every mon starting 7 dec",
+            "value": "every mon starting 7 dec 2026"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Walk every day tomorrow",
+      "out": {
+        "title": "Walk",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 5,
+            "end": 14,
+            "text": "every day",
+            "value": "every day"
+          },
+          {
+            "kind": "date",
+            "start": 15,
+            "end": 23,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Clean every window",
+      "out": {
+        "title": "Clean every window",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Submit report fri at 5pm p2 #School @urgent !1h for 2h {mon}",
+      "out": {
+        "title": "Submit report",
+        "due_date": "2026-11-06",
+        "due_time": "17:00",
+        "recurrence": null,
+        "project": "School",
+        "section": null,
+        "labels": [
+          "urgent"
+        ],
+        "priority": 3,
+        "deadline": "2026-11-09",
+        "reminder": 60,
+        "duration": 120,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 14,
+            "end": 17,
+            "text": "fri",
+            "value": "2026-11-06"
+          },
+          {
+            "kind": "time",
+            "start": 18,
+            "end": 24,
+            "text": "at 5pm",
+            "value": "17:00"
+          },
+          {
+            "kind": "priority",
+            "start": 25,
+            "end": 27,
+            "text": "p2",
+            "value": 2
+          },
+          {
+            "kind": "project",
+            "start": 28,
+            "end": 35,
+            "text": "#School",
+            "value": "School"
+          },
+          {
+            "kind": "label",
+            "start": 36,
+            "end": 43,
+            "text": "@urgent",
+            "value": "urgent"
+          },
+          {
+            "kind": "reminder",
+            "start": 44,
+            "end": 47,
+            "text": "!1h",
+            "value": 60
+          },
+          {
+            "kind": "duration",
+            "start": 48,
+            "end": 54,
+            "text": "for 2h",
+            "value": 120
+          },
+          {
+            "kind": "deadline",
+            "start": 55,
+            "end": 60,
+            "text": "{mon}",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "text": "!!! ??? ...",
+      "out": {
+        "title": "!!! ??? ...",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "#",
+      "out": {
+        "title": "#",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "@",
+      "out": {
+        "title": "@",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "/",
+      "out": {
+        "title": "/",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "every",
+      "out": {
+        "title": "every",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "out": {
+        "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "Buy milk in a month",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-12-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 19,
+            "text": "in a month",
+            "value": "2026-12-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-12-01"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-05",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-10",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-11-10"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x tue",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-10",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "tue",
+            "value": "2026-11-10"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x wed",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "wed",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x thu",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-05",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "thu",
+            "value": "2026-11-05"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x sat",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sat",
+            "value": "2026-11-07"
+          }
+        ]
+      }
+    },
+    {
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-08",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-11-08"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Tom",
+      "out": {
+        "title": "Tom",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": []
+      }
+    },
+    {
+      "text": "tom",
+      "out": {
+        "title": "",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 0,
+            "end": 3,
+            "text": "tom",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Call Tom tom",
+      "out": {
+        "title": "Call Tom",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 12,
+            "text": "tom",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay rent every month on the 31st",
+      "out": {
+        "title": "Pay rent",
+        "due_date": "2026-11-30",
+        "due_time": null,
+        "recurrence": "every month on the 31st",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 9,
+            "end": 32,
+            "text": "every month on the 31st",
+            "value": "every month on the 31st"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Éveil #Écoles /Étape 1 @café p2",
+      "out": {
+        "title": "Éveil 1",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Écoles",
+        "section": "Étape",
+        "labels": [
+          "café"
+        ],
+        "priority": 3,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 6,
+            "end": 13,
+            "text": "#Écoles",
+            "value": "Écoles"
+          },
+          {
+            "kind": "section",
+            "start": 14,
+            "end": 20,
+            "text": "/Étape",
+            "value": "Étape"
+          },
+          {
+            "kind": "label",
+            "start": 23,
+            "end": 28,
+            "text": "@café",
+            "value": "café"
+          },
+          {
+            "kind": "priority",
+            "start": 29,
+            "end": 31,
+            "text": "p2",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "text": "Gym every day until dec 2026",
+      "out": {
+        "title": "Gym",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": "every day until 31 dec 2026",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 4,
+            "end": 28,
+            "text": "every day until dec 2026",
+            "value": "every day until 31 dec 2026"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task 9.30 pm",
+      "out": {
+        "title": "Task",
+        "due_date": "2026-11-03",
+        "due_time": "21:30",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 12,
+            "text": "9.30 pm",
+            "value": "21:30"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Task at 7",
+      "out": {
+        "title": "Task",
+        "due_date": "2026-11-03",
+        "due_time": "07:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "time",
+            "start": 5,
+            "end": 9,
+            "text": "at 7",
+            "value": "07:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Buy milk tomorrow at 5pm p1",
+      "out": {
+        "title": "Buy milk",
+        "due_date": "2026-11-04",
+        "due_time": "17:00",
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 4,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 9,
+            "end": 17,
+            "text": "tomorrow",
+            "value": "2026-11-04"
+          },
+          {
+            "kind": "time",
+            "start": 18,
+            "end": 24,
+            "text": "at 5pm",
+            "value": "17:00"
+          },
+          {
+            "kind": "priority",
+            "start": 25,
+            "end": 27,
+            "text": "p1",
+            "value": 1
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay rent every month on the 31st",
+      "out": {
+        "title": "Pay rent",
+        "due_date": "2026-11-30",
+        "due_time": null,
+        "recurrence": "every month on the 31st",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 9,
+            "end": 32,
+            "text": "every month on the 31st",
+            "value": "every month on the 31st"
+          }
+        ]
+      }
+    }
+  ],
+  "today": [
+    {
+      "today": "2026-01-31",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2026-02-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2026-02-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-02-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-01-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-02-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-02-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-02-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-02-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-02-06"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-02-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-02-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-02-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-01-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-01-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-01-31",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-01-31",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-01-31",
+        "due_time": null,
+        "recurrence": "every month on the 31st",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month on the 31st"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2028-02-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2028-02-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2028-02-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2029-01-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2029-01-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2028-02-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2028-02-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2028-02-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2028-02-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2028-02-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2028-02-06"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2028-02-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-05",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2028-02-05"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2028-01-31",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-01-31",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-01-31",
+        "due_time": null,
+        "recurrence": "every month on the 31st",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month on the 31st"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-15",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2027-01-15"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-15",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2027-01-15"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2027-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-12-15",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-12-15"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-16",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-12-16"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-17",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-12-17"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-22",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-12-22"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-21",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-12-21"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-18",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-12-18"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-20",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-12-20"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-21",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-12-21"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-19",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-12-19"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-15",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-15",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-15",
+        "due_time": null,
+        "recurrence": "every month",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2028-03-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2028-03-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2028-03-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2029-02-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2029-02-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2028-03-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2028-03-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2028-03-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2028-03-06"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2028-03-03"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-05",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2028-03-05"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2028-03-06"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2028-03-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2028-03-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-29",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2028-02-29",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2028-02-29",
+        "due_time": null,
+        "recurrence": "every month on the 29th",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month on the 29th"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2027-01-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2027-01-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2027-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-12-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-12-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2027-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2027-01-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2027-01-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2027-01-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2027-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2027-01-03"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2027-01-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2027-01-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2027-01-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-31",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-12-31",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-31",
+        "due_time": null,
+        "recurrence": "every month on the 31st",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month on the 31st"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-04-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2026-04-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-04-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2026-04-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-04-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-04-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-03-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-03-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-03-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-30",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-03-30"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-04-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-04-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-30",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-03-30"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-04-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-04-03"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-29",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-03-29"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-30",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-03-30"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-28",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-03-28"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-28",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-03-28",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-03-28",
+        "due_time": null,
+        "recurrence": "every month",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-25",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2026-11-25"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-25",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2026-11-25"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-11-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-10-25",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-10-25"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-26",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-10-26"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-27",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-10-27"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-11-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-26",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-10-26"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-30",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-10-30"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-11-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-26",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-10-26"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-31",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-10-31"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-25",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-10-25",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-10-25",
+        "due_time": null,
+        "recurrence": "every month",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2026-12-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2026-12-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-12-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-11-02",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-11-02"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-03",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-11-03"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-04",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-11-04"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-06",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-11-06"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-08",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-11-08"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-07",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-11-07"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-02",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-02",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-02",
+        "due_time": null,
+        "recurrence": "every month",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x in a month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-08",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in a month",
+            "value": "2026-12-08"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x in 1 month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-08",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "in 1 month",
+            "value": "2026-12-08"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x next month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-12-01",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 12,
+            "text": "next month",
+            "value": "2026-12-01"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x in 1 year",
+      "out": {
+        "title": "x",
+        "due_date": "2027-11-08",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 year",
+            "value": "2027-11-08"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x tomorrow",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 10,
+            "text": "tomorrow",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x in 2 days",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-10",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 2 days",
+            "value": "2026-11-10"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x in 1 week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-15",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "in 1 week",
+            "value": "2026-11-15"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x mon",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "mon",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x fri",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-13",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "fri",
+            "value": "2026-11-13"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x sun",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-15",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 5,
+            "text": "sun",
+            "value": "2026-11-15"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x next week",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-09",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 11,
+            "text": "next week",
+            "value": "2026-11-09"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x weekend",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-14",
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 2,
+            "end": 9,
+            "text": "weekend",
+            "value": "2026-11-14"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x every day",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-08",
+        "due_time": null,
+        "recurrence": "every day",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 11,
+            "text": "every day",
+            "value": "every day"
+          }
+        ]
+      }
+    },
+    {
+      "today": "2026-11-08",
+      "text": "x every month",
+      "out": {
+        "title": "x",
+        "due_date": "2026-11-08",
+        "due_time": null,
+        "recurrence": "every month",
+        "project": null,
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "recurrence",
+            "start": 2,
+            "end": 13,
+            "text": "every month",
+            "value": "every month"
+          }
+        ]
+      }
+    }
+  ],
+  "named": [
+    {
+      "text": "Read chapter 3 tom at 9am #School /Week 1",
+      "out": {
+        "title": "Read chapter 3",
+        "due_date": "2026-11-04",
+        "due_time": "09:00",
+        "recurrence": null,
+        "project": "School",
+        "section": "Week 1",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "date",
+            "start": 15,
+            "end": 18,
+            "text": "tom",
+            "value": "2026-11-04"
+          },
+          {
+            "kind": "time",
+            "start": 19,
+            "end": 25,
+            "text": "at 9am",
+            "value": "09:00"
+          },
+          {
+            "kind": "project",
+            "start": 26,
+            "end": 33,
+            "text": "#School",
+            "value": "School"
+          },
+          {
+            "kind": "section",
+            "start": 34,
+            "end": 41,
+            "text": "/Week 1",
+            "value": "Week 1"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Read chapter 3 #School /Week 1 tom at 9am",
+      "out": {
+        "title": "Read chapter 3",
+        "due_date": "2026-11-04",
+        "due_time": "09:00",
+        "recurrence": null,
+        "project": "School",
+        "section": "Week 1",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 15,
+            "end": 22,
+            "text": "#School",
+            "value": "School"
+          },
+          {
+            "kind": "section",
+            "start": 23,
+            "end": 30,
+            "text": "/Week 1",
+            "value": "Week 1"
+          },
+          {
+            "kind": "date",
+            "start": 31,
+            "end": 34,
+            "text": "tom",
+            "value": "2026-11-04"
+          },
+          {
+            "kind": "time",
+            "start": 35,
+            "end": 41,
+            "text": "at 9am",
+            "value": "09:00"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Write #Thesis work p2",
+      "out": {
+        "title": "Write",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Thesis work",
+        "section": null,
+        "labels": [],
+        "priority": 3,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 6,
+            "end": 18,
+            "text": "#Thesis work",
+            "value": "Thesis work"
+          },
+          {
+            "kind": "priority",
+            "start": 19,
+            "end": 21,
+            "text": "p2",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "text": "Write #thesis WORK",
+      "out": {
+        "title": "Write",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Thesis work",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 6,
+            "end": 18,
+            "text": "#thesis WORK",
+            "value": "Thesis work"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #School admin fees",
+      "out": {
+        "title": "Pay fees",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "School admin",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 17,
+            "text": "#School admin",
+            "value": "School admin"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #School",
+      "out": {
+        "title": "Pay",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "School",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 11,
+            "text": "#School",
+            "value": "School"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #School administration",
+      "out": {
+        "title": "Pay administration",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "School",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 11,
+            "text": "#School",
+            "value": "School"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #School, then relax",
+      "out": {
+        "title": "Pay , then relax",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "School",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 11,
+            "text": "#School",
+            "value": "School"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #Unknown thing",
+      "out": {
+        "title": "Pay thing",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Unknown",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 12,
+            "text": "#Unknown",
+            "value": "Unknown"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Pay #\"Big one\" thing",
+      "out": {
+        "title": "Pay thing",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": "Big one",
+        "section": null,
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "project",
+            "start": 4,
+            "end": 14,
+            "text": "#\"Big one\"",
+            "value": "Big one"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Do /Week 2 stuff",
+      "out": {
+        "title": "Do 2 stuff",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": "Week",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "section",
+            "start": 3,
+            "end": 8,
+            "text": "/Week",
+            "value": "Week"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Do /Week 1 stuff",
+      "out": {
+        "title": "Do stuff",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": "Week 1",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "section",
+            "start": 3,
+            "end": 10,
+            "text": "/Week 1",
+            "value": "Week 1"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Do /Nothing at all",
+      "out": {
+        "title": "Do at all",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": "Nothing",
+        "labels": [],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "section",
+            "start": 3,
+            "end": 11,
+            "text": "/Nothing",
+            "value": "Nothing"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Study @deep work @bills",
+      "out": {
+        "title": "Study",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "deep work",
+          "bills"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 6,
+            "end": 16,
+            "text": "@deep work",
+            "value": "deep work"
+          },
+          {
+            "kind": "label",
+            "start": 17,
+            "end": 23,
+            "text": "@bills",
+            "value": "bills"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Study @deep thoughts",
+      "out": {
+        "title": "Study thoughts",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "deep"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 6,
+            "end": 11,
+            "text": "@deep",
+            "value": "deep"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Study @deep work @deep",
+      "out": {
+        "title": "Study",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "deep work",
+          "deep"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 6,
+            "end": 16,
+            "text": "@deep work",
+            "value": "deep work"
+          },
+          {
+            "kind": "label",
+            "start": 17,
+            "end": 22,
+            "text": "@deep",
+            "value": "deep"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Study @new label",
+      "out": {
+        "title": "Study label",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "new"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 6,
+            "end": 10,
+            "text": "@new",
+            "value": "new"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Study @Deep Work",
+      "out": {
+        "title": "Study",
+        "due_date": null,
+        "due_time": null,
+        "recurrence": null,
+        "project": null,
+        "section": null,
+        "labels": [
+          "deep work"
+        ],
+        "priority": 1,
+        "deadline": null,
+        "reminder": null,
+        "duration": null,
+        "ranges": [
+          {
+            "kind": "label",
+            "start": 6,
+            "end": 16,
+            "text": "@Deep Work",
+            "value": "deep work"
+          }
+        ]
+      }
+    }
+  ],
+  "phrases": [
+    {
+      "today": "2026-11-03",
+      "text": "fri",
+      "day": "2026-11-06"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "jan 27",
+      "day": "2027-01-27"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "on friday",
+      "day": "2026-11-06"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "27 jan",
+      "day": "2027-01-27"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "in 3 days",
+      "day": "2026-11-06"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "nonsense",
+      "day": null
+    },
+    {
+      "today": "2026-11-03",
+      "text": "next week",
+      "day": "2026-11-09"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "tom",
+      "day": "2026-11-04"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "Tom",
+      "day": null
+    },
+    {
+      "today": "2026-11-03",
+      "text": "2026-02-30",
+      "day": null
+    },
+    {
+      "today": "2026-11-03",
+      "text": "by 3 nov",
+      "day": "2026-11-03"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "due 2 nov",
+      "day": "2027-11-02"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "weekend",
+      "day": "2026-11-07"
+    },
+    {
+      "today": "2026-11-03",
+      "text": "tonight",
+      "day": "2026-11-03"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "fri",
+      "day": "2026-01-16"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "jan 27",
+      "day": "2026-01-27"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "on friday",
+      "day": "2026-01-16"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "27 jan",
+      "day": "2026-01-27"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "in 3 days",
+      "day": "2026-01-13"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "nonsense",
+      "day": null
+    },
+    {
+      "today": "2026-01-10",
+      "text": "next week",
+      "day": "2026-01-12"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "tom",
+      "day": "2026-01-11"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "Tom",
+      "day": null
+    },
+    {
+      "today": "2026-01-10",
+      "text": "2026-02-30",
+      "day": null
+    },
+    {
+      "today": "2026-01-10",
+      "text": "by 3 nov",
+      "day": "2026-11-03"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "due 2 nov",
+      "day": "2026-11-02"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "weekend",
+      "day": "2026-01-10"
+    },
+    {
+      "today": "2026-01-10",
+      "text": "tonight",
+      "day": "2026-01-10"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "fri",
+      "day": "2026-01-30"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "jan 27",
+      "day": "2026-01-27"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "on friday",
+      "day": "2026-01-30"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "27 jan",
+      "day": "2026-01-27"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "in 3 days",
+      "day": "2026-01-30"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "nonsense",
+      "day": null
+    },
+    {
+      "today": "2026-01-27",
+      "text": "next week",
+      "day": "2026-02-02"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "tom",
+      "day": "2026-01-28"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "Tom",
+      "day": null
+    },
+    {
+      "today": "2026-01-27",
+      "text": "2026-02-30",
+      "day": null
+    },
+    {
+      "today": "2026-01-27",
+      "text": "by 3 nov",
+      "day": "2026-11-03"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "due 2 nov",
+      "day": "2026-11-02"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "weekend",
+      "day": "2026-01-31"
+    },
+    {
+      "today": "2026-01-27",
+      "text": "tonight",
+      "day": "2026-01-27"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "fri",
+      "day": "2026-01-30"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "jan 27",
+      "day": "2027-01-27"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "on friday",
+      "day": "2026-01-30"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "27 jan",
+      "day": "2027-01-27"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "in 3 days",
+      "day": "2026-01-31"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "nonsense",
+      "day": null
+    },
+    {
+      "today": "2026-01-28",
+      "text": "next week",
+      "day": "2026-02-02"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "tom",
+      "day": "2026-01-29"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "Tom",
+      "day": null
+    },
+    {
+      "today": "2026-01-28",
+      "text": "2026-02-30",
+      "day": null
+    },
+    {
+      "today": "2026-01-28",
+      "text": "by 3 nov",
+      "day": "2026-11-03"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "due 2 nov",
+      "day": "2026-11-02"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "weekend",
+      "day": "2026-01-31"
+    },
+    {
+      "today": "2026-01-28",
+      "text": "tonight",
+      "day": "2026-01-28"
+    }
+  ],
+  "minutes": [
+    {
+      "text": "45m",
+      "minutes": 45
+    },
+    {
+      "text": "2h",
+      "minutes": 120
+    },
+    {
+      "text": "1h30m",
+      "minutes": 90
+    },
+    {
+      "text": "1.5h",
+      "minutes": 90
+    },
+    {
+      "text": "1,5h",
+      "minutes": 90
+    },
+    {
+      "text": "90 min",
+      "minutes": 90
+    },
+    {
+      "text": "1 hour 30 min",
+      "minutes": 90
+    },
+    {
+      "text": "2 hours",
+      "minutes": 120
+    },
+    {
+      "text": "1d",
+      "minutes": 1440
+    },
+    {
+      "text": "0m",
+      "minutes": null
+    },
+    {
+      "text": "abc",
+      "minutes": null
+    },
+    {
+      "text": "",
+      "minutes": null
+    },
+    {
+      "text": "5",
+      "minutes": null
+    },
+    {
+      "text": "1h 30",
+      "minutes": null
+    },
+    {
+      "text": "100000m",
+      "minutes": 100000
+    }
+  ]
+}

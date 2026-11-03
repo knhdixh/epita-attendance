@@ -186,6 +186,13 @@ test('habits and countdowns API: create, check in, edit, isolate users, and summ
   assert.deepEqual([gym.name, gym.schedule, gym.target, gym.position, gym.archived], ['Gym', { type: 'days', days: [1, 3, 5] }, 1, 0, false]);
   assert.equal((await createHabit(env, me, { name: 'Read' })).position, 1);
   await assert.rejects(createHabit(env, me, { name: 'x', schedule: { type: 'weekly', n: 9 } }), { status: 400 });
+  // A retry with the same client_id returns the habit that was made; another user's id is their own; a bad one is refused.
+  const once = await createHabit(env, me, { name: 'Walk', client_id: 'retry-0001' });
+  assert.equal((await createHabit(env, me, { name: 'Walk', client_id: 'retry-0001' })).id, once.id);
+  assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM habits WHERE name = 'Walk'").get().n, 1);
+  assert.notEqual((await createHabit(env, other, { name: 'Walk', client_id: 'retry-0001' })).id, once.id);
+  await assert.rejects(createHabit(env, me, { name: 'x', client_id: 'no' }), { status: 400, message: 'Invalid client_id.' });
+  env.DB.raw.prepare("DELETE FROM habits WHERE name = 'Walk'").run();
 
   const today = new Date().toISOString().slice(0, 10);
   await logHabit(env, me, gym.id, { day: today, count: 1 });
