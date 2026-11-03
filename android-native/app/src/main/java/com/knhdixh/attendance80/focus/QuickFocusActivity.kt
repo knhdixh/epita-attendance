@@ -34,9 +34,10 @@ import kotlinx.coroutines.launch
  * come up behind it.
  */
 class QuickFocusActivity : ComponentActivity() {
+    private val gate = FinishGate { finish() }
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        // Draw the timer notification now that it may be shown.
-        lifecycleScope.launch { (application as App).container.focusController?.restore() }
+        // Draw the timer notification now that it may be shown, then close the sheet if it was waiting for this answer.
+        lifecycleScope.launch { (application as App).container.focusController?.restore(); gate.answered() }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,15 +49,16 @@ class QuickFocusActivity : ComponentActivity() {
         val store = container.focusStore
         if (controller == null || store == null) { finish(); return }
         val actions = object : TimerActions {
-            private val inner = ControllerActions(controller, store, lifecycleScope, WorkOutboxScheduler(this@QuickFocusActivity)) { finish() }
-            override fun toggle() {
-                lifecycleScope.launch { askNotificationsOnce(this@QuickFocusActivity, store) { notifications.launch(Manifest.permission.POST_NOTIFICATIONS) } }
-                inner.toggle()
+            private val inner = ControllerActions(controller, store, lifecycleScope, WorkOutboxScheduler(this@QuickFocusActivity)) { gate.commandDone() }
+            // Ask first (so the gate knows to wait for the answer), then run the command.
+            private fun askThen(command: () -> Unit) {
+                lifecycleScope.launch {
+                    if (askNotificationsOnce(this@QuickFocusActivity, store) { notifications.launch(Manifest.permission.POST_NOTIFICATIONS) }) gate.asked()
+                    command()
+                }
             }
-            override fun start() {
-                lifecycleScope.launch { askNotificationsOnce(this@QuickFocusActivity, store) { notifications.launch(Manifest.permission.POST_NOTIFICATIONS) } }
-                inner.start()
-            }
+            override fun toggle() = askThen { inner.toggle() }
+            override fun start() = askThen { inner.start() }
             override fun pause() = inner.pause()
             override fun resume() = inner.resume()
             override fun skip() = inner.skip()

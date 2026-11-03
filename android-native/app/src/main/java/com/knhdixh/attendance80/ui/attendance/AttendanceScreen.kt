@@ -38,7 +38,7 @@ fun AttendanceScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (Strin
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val s = state
+    val s = state?.takeIf { it.data.user.email == data?.user?.email } // the kept result is only ever the owning account's
     if (s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     fun tone(level: String): Color = when (level) { "fail" -> if (dark) RedDark else RedLight; "risk" -> if (dark) OrangeDark else OrangeLight; else -> if (dark) GreenDark else GreenLight }

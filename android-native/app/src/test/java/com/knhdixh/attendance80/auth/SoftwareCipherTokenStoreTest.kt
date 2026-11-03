@@ -10,7 +10,8 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-class TokenCipherTest {
+/** Runs the token store against a software AES-GCM cipher (the JVM has no Android Keystore); the real one is tested on a device in AndroidKeystoreCipherTest. */
+class SoftwareCipherTokenStoreTest {
     // Software AES-GCM cipher matching the Keystore cipher's algorithm, IV handling and Base64 format
     class SoftwareAesGcmCipher(private val secretKey: SecretKey) : TokenCipher {
         override fun encrypt(plaintext: String): String {

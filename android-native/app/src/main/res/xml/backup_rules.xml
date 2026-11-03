@@ -2,5 +2,6 @@
 <full-backup-content>
     <exclude domain="file" path="datastore/auth_prefs.preferences_pb" />
     <exclude domain="file" path="datastore/notify.preferences_pb" />
+        <exclude domain="file" path="datastore/ui_prefs.preferences_pb" />
     <exclude domain="file" path="snapshots" />
 </full-backup-content>

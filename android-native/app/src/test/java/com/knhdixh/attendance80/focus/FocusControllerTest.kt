@@ -31,6 +31,8 @@ class FakeAlarm : PhaseAlarm {
 class FakeNotifier : FocusNotifier {
     val timers = mutableListOf<FocusTimer>()
     val done = mutableListOf<Triple<String, String?, FocusTimer>>()
+    var cleared = 0
+    override fun clearDone() { cleared++ }
     override fun showTimer(t: FocusTimer, settings: FocusSettings, now: Long) { timers += t }
     override fun phaseDone(ended: String, label: String?, next: FocusTimer, settings: FocusSettings) { done += Triple(ended, label, next) }
 }
@@ -123,6 +125,28 @@ class FocusControllerTest {
         assertEquals("focus", notifier.done.single().first)
         assertEquals("Lab", notifier.done.single().second)
         assertTrue(notifier.done.single().third.running())
+    }
+
+    @Test fun restoreAndSettingsChangesLeavePhaseDoneAlone() = runBlocking {
+        controller.start()
+        val base = notifier.cleared
+        clock.now += 25 * min
+        controller.phaseEnded() // the break starts by itself and "phase done" is posted
+        assertEquals(base, notifier.cleared)
+        val again = FocusController(store, clock, alarm, notifier, surfaces, outbox) { "cold" } // a cold process
+        again.restore()
+        again.updateSettings(FocusSettings(goal = 3))
+        assertEquals(base, notifier.cleared)
+    }
+
+    @Test fun commandsFromTheUserClearPhaseDone() = runBlocking {
+        controller.start(); assertEquals(1, notifier.cleared)
+        controller.pause(); assertEquals(2, notifier.cleared)
+        controller.resume(); assertEquals(3, notifier.cleared)
+        controller.skip(); assertEquals(4, notifier.cleared)
+        controller.stop(); assertEquals(5, notifier.cleared)
+        controller.toggle(); assertEquals(6, notifier.cleared)
+        controller.focusOn(FocusTarget(label = "x")); assertEquals(7, notifier.cleared)
     }
 
     @Test fun finishWithoutAutoBreaksGoesIdleAndCancelsTheAlarm() = runBlocking {

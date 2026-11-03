@@ -30,6 +30,8 @@ interface PhaseAlarm { fun schedule(endsAt: Long?) }
 interface FocusNotifier {
     fun showTimer(t: FocusTimer, settings: FocusSettings, now: Long)
     fun phaseDone(ended: String, label: String?, next: FocusTimer, settings: FocusSettings)
+    /** Removes "phase done": the user has acted on the timer. Redrawing it (restore, settings, resume of the app) does not. */
+    fun clearDone()
 }
 
 /** Redraws everything that shows the timer apart from the notification: the quick-settings tile and the widget. */
@@ -90,6 +92,7 @@ class FocusController(
         val now = clock.now()
         var t = _timer.value
         if (t.running()) return@withLock
+        notifier.clearDone()
         if (target != null) t = t.copy(target = target)
         if (minutes != null) t = setLength(t, _settings.value, minutes)
         change(start(t, _settings.value, now, newRun()), null, now)
@@ -99,6 +102,7 @@ class FocusController(
     suspend fun focusOn(target: FocusTarget) = mutex.withLock {
         ensureLoaded()
         val now = clock.now()
+        notifier.clearDone()
         var t = _timer.value
         val same = t.running() && t.phase == "focus" && t.target?.homework_id == target.homework_id && t.target?.label == target.label
         if (same) { if (t.paused()) change(resume(t, now), null, now); return@withLock }
@@ -109,12 +113,14 @@ class FocusController(
     suspend fun pause() = mutex.withLock {
         ensureLoaded()
         val now = clock.now()
+        notifier.clearDone()
         change(pause(_timer.value, now), null, now)
     }
 
     suspend fun resume() = mutex.withLock {
         ensureLoaded()
         val now = clock.now()
+        notifier.clearDone()
         change(resume(_timer.value, now), null, now)
     }
 
@@ -149,6 +155,7 @@ class FocusController(
         ensureLoaded()
         val now = clock.now()
         val t = _timer.value
+        notifier.clearDone()
         if (!t.running()) { change(skipIdle(t), null, now); return@withLock }
         val r = finish(t, _settings.value, now, newRun(), early = true)
         change(r.next, r.log, now)
@@ -158,6 +165,7 @@ class FocusController(
         ensureLoaded()
         val now = clock.now()
         val t = _timer.value
+        notifier.clearDone()
         if (!t.running()) return@withLock
         val r = stop(t, now)
         change(r.next, r.log, now)

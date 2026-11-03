@@ -21,6 +21,8 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -114,6 +116,7 @@ fun Shell(
     onSharedFileHandled: () -> Unit = {},
     sharedText: String? = null,
     onSharedTextHandled: () -> Unit = {},
+    uiPrefs: com.knhdixh.attendance80.data.UiPrefs? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -153,6 +156,27 @@ fun Shell(
     var habitsUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.habits.HabitsUi())) }
     var calendarUi by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.calendar.CalendarUi())) }
     var breakPick by rememberSaveable(accountKey) { mutableStateOf(ApiClient.json.encodeToString(com.knhdixh.attendance80.ui.breaks.BreakPick())) }
+    // The Calendar's view and layers and the dismissed exam suggestions outlive the session, per account (the website keeps them in the browser).
+    val prefsOwner = state.data?.user?.email?.takeIf { it.isNotBlank() }
+    var prefsLoaded by remember(prefsOwner) { mutableStateOf(false) }
+    LaunchedEffect(prefsOwner, uiPrefs) {
+        if (prefsOwner == null || uiPrefs == null) return@LaunchedEffect
+        val stored = uiPrefs.calendar(prefsOwner).first()
+        val dismissed = uiPrefs.dismissed(prefsOwner).first()
+        val calendar = ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.calendar.CalendarUi>(calendarUi)
+        if (stored != null && calendar.view.isEmpty()) calendarUi = ApiClient.json.encodeToString(calendar.copy(view = stored.view, layers = calendar.layers + stored.layers))
+        val countdowns = ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi)
+        if (dismissed.isNotEmpty() && countdowns.dismissed.isEmpty()) countdownsUi = ApiClient.json.encodeToString(countdowns.copy(dismissed = dismissed))
+        prefsLoaded = true
+    }
+    val calendarChoice = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.calendar.CalendarUi>(calendarUi) }.getOrNull()?.let { it.view to it.layers }
+    val dismissedChoice = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrNull()?.dismissed
+    LaunchedEffect(prefsLoaded, calendarChoice) {
+        if (prefsLoaded && prefsOwner != null && uiPrefs != null && calendarChoice != null) uiPrefs.saveCalendar(prefsOwner, com.knhdixh.attendance80.data.UiPrefs.Calendar(calendarChoice.first, calendarChoice.second))
+    }
+    LaunchedEffect(prefsLoaded, dismissedChoice) {
+        if (prefsLoaded && prefsOwner != null && uiPrefs != null && dismissedChoice != null) uiPrefs.saveDismissed(prefsOwner, dismissedChoice)
+    }
     var lastHomeworkCourse by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var homeworkDrafts by rememberSaveable(accountKey) { mutableStateOf(hashMapOf<String, String>()) }
     val focusOwnerKey = remember(accountKey) { accountKey?.let { token -> java.security.MessageDigest.getInstance("SHA-256").digest(token.toByteArray()).joinToString("") { "%02x".format(it) } } }
@@ -267,7 +291,7 @@ fun Shell(
                                 if (pendingRoute != null) onPendingConsumed()
                                 navController.popBackStack()
                             }
-                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
+                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending, notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications)
                             else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList, focusTimer, timerActions, { backStackEntry.savedStateHandle["paletteAction"] = null }, timerNow)
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
@@ -311,36 +335,64 @@ fun Shell(
                             }
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
                             else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
-                            else if (route == "homework") key(accountKey) { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, { navigate(it) }, onAction, ::deleteHomework, ::pending) }
-                            else if (route.startsWith("homework/")) key(accountKey) {
-                                val id = route.substringAfter('/').takeUnless { it == "new" }?.toLongOrNull()
-                                val draftKey = id?.toString() ?: "new"
-                                var input by remember { mutableStateOf("") }
-                                LaunchedEffect(encoded) {
-                                    val form = action as? PaletteAction.OpenForm
-                                    if (form != null && ((route == "homework/new" && form.form == "homework") || (id != null && form.form == "homework-edit" && form.entityId == id))) {
-                                        input = form.input
-                                        backStackEntry.savedStateHandle["paletteAction"] = null
+                            else if (route == "homework" || route.startsWith("homework/")) key(accountKey) {
+                                // Wide: the list stays and the edit form opens beside it (selection kept here, so the list keeps its place). "New" is a full page.
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("homework/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "homework", sel, { sel = it }, navController, "homework") { navigate(it) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("homework/") && dest != "homework/new") sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val form: @Composable (Long?) -> Unit = { id ->
+                                    val draftKey = id?.toString() ?: "new"
+                                    var input by remember { mutableStateOf("") }
+                                    LaunchedEffect(encoded) {
+                                        val pendingForm = action as? PaletteAction.OpenForm
+                                        if (pendingForm != null && ((route == "homework/new" && pendingForm.form == "homework") || (id != null && pendingForm.form == "homework-edit" && pendingForm.entityId == id))) {
+                                            input = pendingForm.input
+                                            backStackEntry.savedStateHandle["paletteAction"] = null
+                                        }
                                     }
-                                }
-                                com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
+                                    com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
                                         onBack = {
                                             homeworkDrafts = HashMap(homeworkDrafts).apply { remove(draftKey) }
-                                            if (pendingRoute != null) onPendingConsumed()
-                                            if (!navController.popBackStack()) navigate("homework")
+                                            if (wide && id != null) closePane()
+                                            else {
+                                                if (pendingRoute != null) onPendingConsumed()
+                                                if (!navController.popBackStack()) navigate("homework")
+                                            }
                                         }, onSave = onSaveHomework,
                                         lastCourse = lastHomeworkCourse, onLastCourse = { lastHomeworkCourse = it },
                                         storedDraft = homeworkDrafts[draftKey], onDraft = { draft ->
                                             if (homeworkDrafts[draftKey] != draft) homeworkDrafts = HashMap(homeworkDrafts).apply { put(draftKey, draft) }
                                         })
+                                }
+                                val list: @Composable () -> Unit = { com.knhdixh.attendance80.ui.homework.HomeworkScreen(visibleData, state.allEvents, now, zone, open, onAction, ::deleteHomework, ::pending) }
+                                if (route == "homework/new") form(null)
+                                else if (wide) TwoPane(list) { sel?.let { id -> key(id) { form(id) } } ?: PanePlaceholder("Select homework to edit it.") }
+                                else if (route == "homework") list() else form(route.substringAfter('/').toLongOrNull())
                             }
-                            else if (route == "sessions") key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
-                                com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
-                                { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
-                                (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route.startsWith("session/")) key(state.session) { com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), route.substringAfter('/').toLongOrNull(), now, zone, onBack = { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") }, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route == "courses") key(state.session) { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = { navigate(it) }, onAction = onAction) }
-                            else if (route.startsWith("course/")) key(state.session) { com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, route.substringAfter('/').toLongOrNull(), now, zone, onNavigate = { navigate(it) }, onBack = { if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
+                            else if (route == "sessions" || route.startsWith("session/")) key(state.session) {
+                                // Wide: the list stays and the session opens beside it (selection kept here, so the list keeps its place).
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("session/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "sessions", sel, { sel = it }, navController, "session") { navigate(it) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("session/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val sessions: @Composable () -> Unit = { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
+                                    com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
+                                    { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
+                                    (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = open, onAction = onAction) }
+                                val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), id, now, zone,
+                                    onBack = { if (wide) closePane() else { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") } }, onNavigate = open, onAction = onAction) }
+                                if (wide) TwoPane(sessions) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a session.") }
+                                else if (route == "sessions") sessions() else detail(route.substringAfter('/').toLongOrNull())
+                            }
+                            else if (route == "courses" || route.startsWith("course/")) key(state.session) {
+                                var sel by rememberSaveable { mutableStateOf(route.substringAfter("course/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "courses", sel, { sel = it }, navController, "course") { navigate(it) }
+                                val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("course/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
+                                val courses: @Composable () -> Unit = { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = open, onAction = onAction) }
+                                val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, id, now, zone, onNavigate = open,
+                                    onBack = { if (wide) closePane() else if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
+                                if (wide) TwoPane(courses) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a course.") }
+                                else if (route == "courses") courses() else detail(route.substringAfter('/').toLongOrNull())
+                            }
                             else ShellContent(route, state.data, now, zone, action = action, onNavigate = { navigate(it) }, onSignOut = ::signOut)
                         }
                     }
@@ -428,5 +480,44 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
                 }
             }
         }
+    }
+}
+
+/**
+ * Keeps the opened item of a list-detail screen (`sel`) and the route in agreement, and makes back close the item first.
+ * Returns the function that closes the pane: it clears `sel` and, when the route is the item's (`list/{id}`), replaces it
+ * with the list, so rotating back to a phone does not open what was cancelled. Going narrow with an item open opens its route.
+ * (A hand-made pane rather than `ListDetailPaneScaffold`: the plan lists no adaptive library, and this needs only two weights.)
+ */
+@Composable
+private fun paneSync(wide: Boolean, route: String, list: String, sel: Long?, setSel: (Long?) -> Unit, nav: NavHostController, itemRoute: String, onNarrowOpen: (String) -> Unit): () -> Unit {
+    val close = {
+        setSel(null)
+        if (route != list && route != "$list/new") {
+            val id = nav.currentBackStackEntry?.destination?.id
+            nav.navigate(list) { if (id != null) popUpTo(id) { inclusive = true }; launchSingleTop = true }
+        }
+    }
+    BackHandler(enabled = wide && sel != null) { close() }
+    LaunchedEffect(wide, sel, route) {
+        if (!wide && sel != null && route == list) { val id = sel; setSel(null); onNarrowOpen("$itemRoute/$id") }
+    }
+    return close
+}
+
+/** Tablet and foldable layout (width >= 600dp): the list on the left, the opened item on the right. */
+@Composable
+internal fun TwoPane(list: @Composable () -> Unit, detail: @Composable () -> Unit) {
+    Row(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(0.42f).fillMaxHeight().testTag("pane-list")) { list() }
+        VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Box(Modifier.weight(0.58f).fillMaxHeight().testTag("pane-detail")) { detail() }
+    }
+}
+
+@Composable
+internal fun PanePlaceholder(text: String) {
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("pane-placeholder"))
     }
 }

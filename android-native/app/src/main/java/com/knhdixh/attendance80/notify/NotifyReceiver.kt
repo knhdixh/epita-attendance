@@ -28,7 +28,13 @@ class NotifyReceiver : BroadcastReceiver() {
                         value = intent.getStringExtra(EXTRA_VALUE), number = intent.getIntExtra(EXTRA_NUMBER, -1).takeIf { it >= 0 },
                         owner = intent.getStringExtra(EXTRA_OWNER).orEmpty(), key = intent.getStringExtra(EXTRA_KEY).orEmpty(),
                     )
-                    else -> replan(container)
+                    else -> {
+                        if (action == Intent.ACTION_TIMEZONE_CHANGED || action == Intent.ACTION_TIME_CHANGED) {
+                            container.dataRepository.start()
+                            container.rebuildWidgetPlan()
+                        }
+                        replan(container)
+                    }
                 }
             } finally { pending.finish() }
         }
@@ -37,10 +43,18 @@ class NotifyReceiver : BroadcastReceiver() {
     private suspend fun replan(container: AppContainer) {
         if (container.tokenStore.awaitToken() == null) return
         container.dataRepository.start()
-        container.reminders?.run(container.dataRepository.snapshot.value)
+        // A session marked on the website since the last refresh would still get "Were you at …?": refresh first when the cache is old.
+        val repo = container.dataRepository
+        if (isStale(repo.lastSynced.value, container.clock.now())) kotlinx.coroutines.withTimeoutOrNull(REFRESH_BUDGET_MS) { repo.refresh() }
+        container.reminders?.run(repo.snapshot.value)
     }
 
     companion object {
+        /** A refresh before planning if the cache is older than this. */
+        const val STALE_AFTER_MS = 10 * 60_000L
+        /** The receiver has about ten seconds: leave the rest for planning and posting. */
+        const val REFRESH_BUDGET_MS = 5_000L
+        fun isStale(lastSynced: Long?, now: Long) = lastSynced == null || now - lastSynced > STALE_AFTER_MS
         const val ACTION_FIRE = "com.knhdixh.attendance80.REMINDER_FIRE"
         const val ACTION_DO = "com.knhdixh.attendance80.REMINDER_DO"
         const val EXTRA_TYPE = "type"

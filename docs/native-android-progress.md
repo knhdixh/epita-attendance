@@ -1049,3 +1049,65 @@ Branch `native/phase-7`. No server, migration, secret or `android/` change.
 - A class reminder after a night in Doze (exact alarm).
 - Opening an `.ics` Drive has not downloaded.
 - Deferred, still open: TWA `app = 1` push subscriptions (Phase 9, server), engine `run(null)` and `NonCancellable`, stale-cache check-ins, the `file` scheme, outbox folding (Phase 11).
+
+## Phase 8 (2026-11-03)
+
+Branch `native/phase-8`. No server, migration, secret or `android/` change.
+
+### What I did
+
+1. **Predictive back, labels (`42d384e`).** `android:enableOnBackInvokedCallback="true"` (the Shell already uses Compose `BackHandler`). The dismiss icon on exam suggestions got a button role and a label. Countdowns' "Added …" message and the suggestion's start time now use the shell's clock, not the wall clock (review 4). Dark theme, edge-to-edge and the 200% font layouts were already in place from earlier phases (screenshots at scale 2 exist).
+2. **Tablet list-detail (`b32c4e3`, images `281a92f`).** At width ≥ 600dp Sessions, Homework (edit form) and Courses show the list on the left and the opened item on the right (`TwoPane`). The selection lives in the pane, so tapping an item keeps the list's scroll position. "Add homework" stays a full page. Tests: `TwoPaneTest` (phone and tablet). `CourseScreenshotTest` now looks for buttons inside `course-detail` (the Courses list beside it has similarly named buttons). 76 tablet PNGs were re-recorded; no test code changed in that commit.
+3. **Reminders and sharing (`5e69f9f`).** Engine: a null snapshot cancels the alarm only once the token store says signed out (`onSnapshot`); posting and recording run in `NonCancellable`. A refresh (5 s budget) runs before planning from the alarm path if the cache is older than 10 min. `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` re-plans. Today shows a one-line "Notifications are blocked" notice with Allow (the second in-context moment for fresh installs). The `.ics`/share read now runs in `PendingRouteViewModel` (survives rotation). `file` scheme removed from the VIEW filters (the reader still accepts file URIs, as its tests use them).
+4. **Focus and widget (`5bac230`).** `POST_PROMOTED_NOTIFICATIONS` declared and `canPostPromotedNotifications()` checked before a Live Update. The quick-focus sheet stays open while the permission dialog is showing and re-draws on the answer (`FinishGate`). "Phase done" (id 42) is cleared when the next phase starts. The widget's plan is rebuilt on `TIMEZONE_CHANGED`/`TIME_SET`. The widget's Start/Pause button awaits a redraw.
+5. **Lists and owner (`3b72985`).** Sessions, Course, Courses, Attendance and Today show a kept result only if it belongs to the current account (Homework, Upcoming and Breaks already compared the whole snapshot). Sessions' "Mark these N" and the selection buttons are disabled while the filter's list is pending (`SessionsBulkPendingTest`, with an injectable worker dispatcher).
+6. **Remembered choices (`776bb55`).** Calendar view and layers, and dismissed exam suggestions, are stored per account on the device (`UiPrefs`, DataStore `ui_prefs`, excluded from backup). `UiPrefsTest` and a Shell test (a new session opens on the saved view).
+7. **Tests (`6f4265b`).** `AndroidKeystoreCipherTest` (instrumented: round trip, fresh IV, non-extractable key, tamper, other alias). The JVM `TokenCipherTest` was renamed `SoftwareCipherTokenStoreTest`. `TalkBackLabelsTest`: no unlabelled button on any of 12 top-level screens, phone and tablet.
+
+### Deferred items, which I did
+
+Review 1: Keystore instrumented test; test rename. Review 4: Countdowns wall clock; kept-list owner guard; Sessions bulk while pending; session-only Calendar view/layers and dismissed exams; tablet layouts (Sessions, Homework, Courses). Review 5: Live Update permission and `canPostPromotedNotifications`; quick-focus permission result; stale "phase done"; the `OfflineShellTest` latch (already latch-based since an earlier fix). Review 6: widget button redraw; zone of *Do next*. Review 7: engine `run(null)` and `NonCancellable`; stale-cache check-ins; `file` scheme; exact-alarm re-grant; share lost on recreation; the second ask for fresh installs; the container-wiring gap (covered by testing the `onSnapshot` decision, not a Robolectric receiver test).
+
+### Not done
+
+- **Dynamic colour.** Plan section 6 says the app does not use it (one accent), which conflicts with the Phase 8 bullet; I followed section 6. The widget keeps wallpaper colours.
+- **Baseline profile.** Only wanted if startup on a mid-range device is over 1 s; I can't measure that here.
+- **`updatePeriodMillis`** (review 6): left at 30 min; the review said to check on a device first.
+- **Overrun countdown** (review 6, cosmetic) and **a swiped-away ongoing timer notification** (review 5): not changed. Re-posting a notification the user just dismissed seemed wrong; needs a decision.
+- **Breaks and Settings on tablets**: still one column. **Settings delete-account dialog** (review 4, optional): unchanged.
+- **Phase 9/11 items** stay deferred: `app = 1` push subscriptions, `USE_EXACT_ALARM` declaration, folding the action queue into the outbox.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass.
+- `ANDROID_HOME=… ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 1062 unit tests, 0 failures, 0 errors, 0 skipped (result XML). `git status` clean afterwards. An earlier verify run (before re-recording) failed 76 tablet screenshots, all from the new layout.
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5/5 on the emulator (the 2 local-server tests and the 3 Keystore tests), "Both local-server instrumented tests passed".
+- I reverted `NonCancellable` once by hand: `ReminderEngineGuardsTest` failed, then restored it.
+- One `TalkBackLabelsTest` run hung (before I removed a `waitForIdle`); not reproduced since.
+
+### Unverified (needs a real device)
+
+- Tablet/foldable layout on real hardware, and predictive back animation (Android 14+).
+- Live Update promotion with the new permission (Android 16), and the sheet's permission flow.
+- Refresh-before-check-in timing within a receiver's ~10 s, exact-alarm revoke on Android 12.
+- TalkBack speech itself (only labels are tested), 200% font on real screens.
+
+## Review 8 fixes (2026-11-03)
+
+Branch `native/phase-8`. No server, migration, secret or `android/` change.
+
+1. **"Focus done" survives a redraw (`b9b9690`).** `showTimer` no longer cancels id 42. `FocusNotifier` has a new `clearDone()`, called by the user's commands in `FocusController`: `start`, `focusOn`, `pause`, `resume`, `skip`, `stop` (so also `toggle`, the tile, the widget, the notification buttons and the sheet). `restore()`, `updateSettings`, `phaseEnded` and `onResume` leave it alone; tapping it still removes it (`setAutoCancel`). Tests: `FocusNotificationsTest.phaseDoneStaysWhenTheRunningTimerIsRedrawnAndGoesOnClearDone` replaces the over-broad one; `FocusControllerTest.restoreAndSettingsChangesLeavePhaseDoneAlone` (cold controller after `phaseEnded` with an auto-break, `restore()` and a changed `updateSettings`) and `commandsFromTheUserClearPhaseDone`.
+2. **Keyboard (`26ca79a`).** `.imePadding()` on the Breaks `LazyColumn`. Rechecked every `TextField` outside dialogs: Sessions' list (search field) and Sign-in (name field) also lacked it, so both got it. The others (Settings, Countdowns, Habits, Focus, homework form, calendar sheet, quick-focus sheet) already had it; Course, Search and the Sessions/Course dialogs manage their own windows. The earlier "edge-to-edge already in place" was true for the bars, not the keyboard. No test (insets are not simulated in Robolectric): **Unverified** on a device.
+3. **Back and rotation on wide screens (`072c7bf`).** New `paneSync` in `Shell.kt`, used by Homework, Sessions and Courses: `BackHandler(enabled = wide && sel != null)` (composed after the shell's, so it wins) clears `sel` and, when the route is `…/{id}`, replaces it with the list route (`popUpTo` the current entry, inclusive). Going narrow with `sel` set on the list route clears `sel` and navigates to the item route. The homework form's Cancel and the Sessions/Course `onBack` use the same close. Tests (`TabletTwoPaneTest`): `backClosesTheOpenedCourseBeforeLeavingCourses` and `backOnAnItemRouteReplacesItWithTheList`; both fail without the change (checked by reverting `Shell.kt`). Rotation itself is not simulated: **Unverified** on a device.
+   - **Deviation, recorded as the review asked:** the plan names `ListDetailPaneScaffold`; Phase 8 used a hand-made `TwoPane` (two weighted boxes) because the plan lists no adaptive library (rule 7) and nothing more was needed. The first Phase 8 log did not say so.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass.
+- `ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL; 1068 unit tests, 0 failures, 0 errors, 0 skipped (result XML); `git status` clean afterwards (no PNG changed or re-recorded).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5/5 on `pixel6Api35`, "Both local-server instrumented tests passed".
+
+### Unverified (device checklist, from the review)
+
+- "Focus done" after a cold-process phase end; Breaks name with the keyboard open; back and rotation in landscape.
+- Deferred items in the review stay deferred (exact-alarm comment, startup measurement, Sessions detail pane, Today notice, 200% shots, TalkBack test depth, overrun countdown, `ContentResolver` leak).

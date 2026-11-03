@@ -127,6 +127,8 @@ class TimerCommandCallback : ActionCallback {
             "pause" -> controller.pauseIfRunning()
             "resume" -> controller.resumeIfPaused()
         }
+        // The controller's own redraw is fire-and-forget; with no live session, await one before returning.
+        redrawWidget(context)
     }
 }
 

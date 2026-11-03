@@ -26,11 +26,12 @@ import java.time.format.FormatStyle
 import kotlin.math.roundToInt
 
 @Composable
-fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
+fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> },
+    notificationsBlocked: Boolean = false, onFixNotifications: () -> Unit = {}) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val s = state
+    val s = state?.takeIf { it.data.user.email == data?.user?.email } // the kept result is only ever the owning account's
     if (data == null || s == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val plan = s.plan
     val events = s.data.events.associateBy { it.id }
@@ -64,6 +65,13 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
         else plan.todo.firstOrNull()?.takeIf { it.urgency == "overdue" }?.let { add("${it.title} is overdue.") }
     }.joinToString(" ")
     LazyColumn(Modifier.fillMaxSize().testTag("today-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Reminders can't reach a student who never opened Settings: say so here, with the way to fix it.
+        if (notificationsBlocked && (plan.todaySessions.isNotEmpty() || s.habits.isNotEmpty())) item("notify-blocked") {
+            Row(Modifier.fillMaxWidth().testTag("today-notify-blocked"), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("Notifications are blocked, so class and habit reminders won’t appear.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                TextButton(onFixNotifications, Modifier.testTag("today-notify-allow")) { Text("Allow") }
+            }
+        }
         item("headline") { Text(headline) }
         items(s.countdowns, key = { "countdown:${it.c.id}" }) { c ->
             TodayRow("${if (c.v.state == "today") "Today" else c.v.parts} ${c.c.title}", when(c.v.state) { "future" -> "to go"; "up" -> "since"; else -> "" }) { onNavigate("countdowns/${c.c.id}") }

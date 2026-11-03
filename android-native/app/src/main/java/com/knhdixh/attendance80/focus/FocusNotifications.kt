@@ -72,6 +72,10 @@ class FocusNotifications(private val context: Context) : FocusNotifier {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+    /** Android 16+, and the user has not switched promoted notifications off for this app. */
+    private fun canPromote(): Boolean = Build.VERSION.SDK_INT >= 36 &&
+        runCatching { context.getSystemService(NotificationManager::class.java).canPostPromotedNotifications() }.getOrDefault(false)
+
     private fun allowed() = manager.areNotificationsEnabled()
 
     @Suppress("MissingPermission") // checked by allowed()
@@ -86,7 +90,7 @@ class FocusNotifications(private val context: Context) : FocusNotifier {
         val percent = (progress(t, now) * 100).toInt().coerceIn(0, 100)
         val toggle = if (t.paused()) "Resume" else "Pause"
         val skip = if (t.phase == "focus") "Take a break" else "Skip break"
-        val promoted = if (Build.VERSION.SDK_INT >= 36) runCatching {
+        val promoted = if (canPromote()) runCatching {
             LiveUpdate.build(context, CH_TIMER, title, text, t, percent, openApp(10),
                 listOf(toggle to action(FocusReceiver.ACTION_TOGGLE, 20), skip to action(FocusReceiver.ACTION_SKIP, 21), "Stop" to action(FocusReceiver.ACTION_STOP, 22)))
         }.getOrNull() else null
@@ -112,6 +116,8 @@ class FocusNotifications(private val context: Context) : FocusNotifier {
             }.build()
         manager.notify(ID_TIMER, notification)
     }
+
+    override fun clearDone() = manager.cancel(ID_DONE)
 
     @Suppress("MissingPermission")
     override fun phaseDone(ended: String, label: String?, next: FocusTimer, settings: FocusSettings) {

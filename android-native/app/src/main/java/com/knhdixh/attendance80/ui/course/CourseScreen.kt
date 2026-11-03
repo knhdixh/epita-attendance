@@ -76,7 +76,7 @@ fun CourseScreen(data: AppData?, allEvents: List<EventDto>?, id: Long?, now: Lon
     LaunchedEffect(data, id, now / 60000, zone) { model.update(data, id, now, zone) }
     val derived by model.state.collectAsState()
     val listState = rememberLazyListState()
-    val state = derived?.takeIf { it.id == id } // the last result of this course stays while the next is worked out
+    val state = derived?.takeIf { it.id == id && it.data.user.email == data?.user?.email } // only the owning account's; the last result of this course stays while the next is worked out
     if (data == null) { Text("Loading…", Modifier.padding(16.dp)); return }
     if (state == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val course = state.course

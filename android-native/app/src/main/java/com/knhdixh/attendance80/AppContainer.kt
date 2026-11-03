@@ -37,8 +37,12 @@ interface AppContainer {
     /** Reminders posted by the app itself (Phase 7). Null in tests that don't need them. */
     val notifyStore: com.knhdixh.attendance80.notify.NotifyStore? get() = null
     val reminders: com.knhdixh.attendance80.notify.ReminderEngine? get() = null
+    /** Calendar view and layers, dismissed exam suggestions. Null in tests that don't need them. */
+    val uiPrefs: com.knhdixh.attendance80.data.UiPrefs? get() = null
     val reminderActions: com.knhdixh.attendance80.notify.ReminderActions? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
+    /** Rebuilds the widget's plan part (zone or clock changed). Nothing in tests that don't have a widget. */
+    suspend fun rebuildWidgetPlan() {}
 }
 
 class DefaultAppContainer(
@@ -114,11 +118,18 @@ class DefaultAppContainer(
         Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
     }
 
+    override val uiPrefs: com.knhdixh.attendance80.data.UiPrefs by lazy { com.knhdixh.attendance80.data.UiPrefs(context) }
+
     override val dataRepository: DataRepository by lazy {
         // Own directory, so backup rules can exclude it (they take no wildcards). Older builds wrote data-*.json to filesDir itself.
         context.filesDir.listFiles()?.forEach { if (it.name.startsWith("data-") && it.name.endsWith(".json")) it.delete() }
         DataRepository(api, java.io.File(context.filesDir, "snapshots"), clock) { tokenStore.currentToken() }
     }
+
+    private val widgetPlanWriter by lazy { com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) } }
+
+    /** The widget's "Do next" list is built with the zone of the moment: rebuild it when the time zone or the clock changes. */
+    override suspend fun rebuildWidgetPlan() = widgetPlanWriter.onSnapshot(dataRepository.snapshot.value)
 
     fun startData() {
         scope.launch {
@@ -132,12 +143,14 @@ class DefaultAppContainer(
         }
         scope.launch {
             // The widget's plan part follows the snapshot, whoever changed it (screen, refresh, cache on start, sign-out).
-            val writer = com.knhdixh.attendance80.widget.WidgetPlanWriter(tokenStore, widgetStore, clock) { redrawWidget(context) }
-            dataRepository.snapshot.collectLatest { data -> writer.onSnapshot(data) }
+            dataRepository.snapshot.collectLatest { data -> widgetPlanWriter.onSnapshot(data) }
         }
         scope.launch {
             // Reminders follow the snapshot and the three device switches, whoever changed them.
-            dataRepository.snapshot.combine(notifyStore.choices) { data, _ -> data }.collectLatest { data -> reminders.run(data) }
+            // A null snapshot is only "signed out" once the token store says so: on a cold start it is just the cache not loaded yet.
+            dataRepository.snapshot.combine(notifyStore.choices) { data, _ -> data }.collectLatest { data ->
+                reminders.onSnapshot(data) { tokenStore.awaitToken() == null }
+            }
         }
         scope.launch {
             focusController.restore() // loads (and so migrates), then finishes what is due or re-arms

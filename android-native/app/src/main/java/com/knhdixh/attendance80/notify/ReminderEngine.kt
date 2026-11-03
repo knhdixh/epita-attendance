@@ -2,7 +2,9 @@ package com.knhdixh.attendance80.notify
 
 import com.knhdixh.attendance80.Clock
 import com.knhdixh.attendance80.net.AppData
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -36,11 +38,22 @@ class ReminderEngine(
         val plan = planReminders(data, store.choices.first(), now, zone).filter { "$owner|${it.key}" !in sent }
         val due = plan.filter { it.at <= now }
         if (due.isNotEmpty() && notifier.canPost()) {
-            due.forEach { notifier.post(it, owner) }
-            store.markSent(due.map { "$owner|${it.key}" }, now)
+            // A newer snapshot can cancel this run (collectLatest): finish posting and recording together, or the next run would alert again.
+            withContext(NonCancellable) {
+                due.forEach { notifier.post(it, owner) }
+                store.markSent(due.map { "$owner|${it.key}" }, now)
+            }
         }
         val rollover = startOfNextDay(now, zone)
         alarm.schedule(minOf(plan.filter { it.at > now }.minOfOrNull { it.at } ?: rollover, rollover))
+    }
+
+    /**
+     * What the snapshot collector calls. A null snapshot is the cache not loaded yet on a cold start, not a sign-out:
+     * it only cancels the alarm once [isSignedOut] (the token store, after it has loaded) says so.
+     */
+    suspend fun onSnapshot(data: AppData?, isSignedOut: suspend () -> Boolean) {
+        if (data != null) run(data) else if (isSignedOut()) run(null)
     }
 
     /** Signed out, however it happened: no alarm, and nothing of the account's left in the shade. */
