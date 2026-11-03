@@ -268,7 +268,7 @@ fun Shell(
                                 if (pendingRoute != null) onPendingConsumed()
                                 navController.popBackStack()
                             }
-                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
+                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending, notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications)
                             else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList, focusTimer, timerActions, { backStackEntry.savedStateHandle["paletteAction"] = null }, timerNow)
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,

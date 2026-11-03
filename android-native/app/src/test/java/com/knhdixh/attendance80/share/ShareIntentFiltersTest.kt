@@ -20,12 +20,13 @@ class ShareIntentFiltersTest {
 
     @Test fun calendarFilesOpenTheApp() {
         assertTrue(resolves(view("content://downloads/public/1", "text/calendar")))
-        assertTrue(resolves(view("file:///sdcard/Download/timetable.ics", "text/calendar")))
         assertTrue(resolves(view("content://com.android.providers.downloads.documents/document/timetable.ics", "application/octet-stream")))
         assertTrue(resolves(view("content://com.example.mail/attachments/S3.final.ics", "application/octet-stream")))
     }
 
     @Test fun otherFilesDoNot() {
+        // Android 7+ senders cannot pass file://, and accepting it would let another app point us at our own private files.
+        assertFalse(resolves(view("file:///sdcard/Download/timetable.ics", "text/calendar")))
         assertFalse(resolves(view("content://downloads/public/2", "application/pdf")))
         assertFalse(resolves(view("content://com.example.mail/attachments/notes.txt", "application/octet-stream")))
     }

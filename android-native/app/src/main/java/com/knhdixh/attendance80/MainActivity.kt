@@ -157,12 +157,10 @@ class MainActivity : ComponentActivity() {
         if (intent == null) return
         // A calendar file or shared text from another app: Settings → Calendars, or Add homework.
         if (com.knhdixh.attendance80.share.readsAProvider(intent)) {
-            // The provider may be slow (a file Drive has not downloaded yet): read off the main thread, show nothing new meanwhile.
+            // The provider may be slow (a file Drive has not downloaded yet): read off the main thread, in the view model so a rotation keeps it.
             val shared = Intent(intent)
-            lifecycleScope.launch {
-                val incoming = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.knhdixh.attendance80.share.readIncoming(shared, contentResolver) }
-                deliver(incoming)
-            }
+            val resolver = contentResolver
+            pendingRouteViewModel.receive { com.knhdixh.attendance80.share.readIncoming(shared, resolver) }
             return
         }
         if (deliver(com.knhdixh.attendance80.share.readIncoming(intent, contentResolver))) return

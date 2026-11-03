@@ -57,4 +57,25 @@ class TodayUiTest {
         compose.onNodeWithContentDescription("Check Read daily").performClick()
         compose.runOnIdle { assertEquals(PaletteAction.CheckHabit(7, "2026-11-02", 1), action) }
     }
+
+    private val withHabit get() = run {
+        val now = 1793600000000L
+        now to ApiClient.json.decodeFromString<AppData>(javaClass.getResource("/api/data_empty.json")!!.readText()).copy(
+            habits = HabitsDto(list = listOf(HabitDto(7, "Read daily", color = "blue", schedule = HabitScheduleDto("daily"), target = 1, position = 0, archived = false, created_at = now - 86400000))))
+    }
+    @Test fun blockedNotificationsAreSaidOnTodayWithAWayToFixThem() {
+        val (now, data) = withHabit
+        var fixed = 0
+        compose.setContent { Attendance80Theme { TodayScreen(data, now, ZoneId.of("Europe/Paris"), {}, {}, notificationsBlocked = true, onFixNotifications = { fixed++ }) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("today-notify-blocked").assertIsDisplayed()
+        compose.onNodeWithTag("today-notify-allow").performClick()
+        assertEquals(1, fixed)
+    }
+    @Test fun noNoticeWhenNotificationsAreAllowedOrNothingWouldBeReminded() {
+        val (now, data) = withHabit
+        compose.setContent { Attendance80Theme { TodayScreen(data, now, ZoneId.of("Europe/Paris"), {}, {}, notificationsBlocked = false) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("today-notify-blocked").assertDoesNotExist()
+    }
 }

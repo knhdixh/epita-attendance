@@ -137,7 +137,10 @@ class DefaultAppContainer(
         }
         scope.launch {
             // Reminders follow the snapshot and the three device switches, whoever changed them.
-            dataRepository.snapshot.combine(notifyStore.choices) { data, _ -> data }.collectLatest { data -> reminders.run(data) }
+            // A null snapshot is only "signed out" once the token store says so: on a cold start it is just the cache not loaded yet.
+            dataRepository.snapshot.combine(notifyStore.choices) { data, _ -> data }.collectLatest { data ->
+                reminders.onSnapshot(data) { tokenStore.awaitToken() == null }
+            }
         }
         scope.launch {
             focusController.restore() // loads (and so migrates), then finishes what is due or re-arms
