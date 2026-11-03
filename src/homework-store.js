@@ -151,7 +151,7 @@ export async function updateHomework(env, user, id, body, appUrl) {
   if (body.done !== undefined && (Boolean(body.done) !== Boolean(current.done) || (!body.done && current.recurrence))) {
     const { done, occurrence, ...rest } = body;
     if (Object.keys(rest).length) await updateHomework(env, user, id, rest, appUrl);
-    return done ? completeTask(env, user, id, appUrl, Date.now(), occurrence) : uncompleteTask(env, user, id, appUrl);
+    return done ? completeTask(env, user, id, appUrl, Date.now(), occurrence) : uncompleteTask(env, user, id, appUrl, occurrence);
   }
   // An undated task has no time zone of its own unless it was sent one ('UTC' is only the stored placeholder). Giving it a
   // date needs one: the body's `tz`, else the one it was created with, else the user's saved notification time zone.
@@ -241,7 +241,9 @@ export async function completeTask(env, user, id, appUrl, now = Date.now(), occu
 
 // Undo. A repeating task that moved on goes back to the date it was completed on; one that was completed for good
 // opens again. Either way the completion row goes.
-export async function uncompleteTask(env, user, id, appUrl) {
+// `occurrence` is the due date the client saw after completing (the date it moved on to). A rewound repeating task has a
+// different date, so a retried Undo (completed twice today, Undo sent twice) rewinds once: when the date differs, nothing happens.
+export async function uncompleteTask(env, user, id, appUrl, occurrence = undefined) {
   const current = await ROW(env, user, id);
   if (!current) throw new HttpError(404, 'Task not found.');
   const last = await env.DB.prepare('SELECT id, completed_at, due_date FROM completions WHERE homework_id = ? AND user_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1')
@@ -253,6 +255,7 @@ export async function uncompleteTask(env, user, id, appUrl) {
     return syncTask(env, user, (await env.DB.batch(stmts))[0].results[0], appUrl);
   }
   if (!current.recurrence || !last?.due_date || last.completed_at < now - 86400000) return current;   // Undo, not rewind
+  if (typeof occurrence === 'string' && occurrence !== current.due_date) return current;
   const hw = (await env.DB.batch([
     env.DB.prepare(`UPDATE homework SET due_date = ?, due_at = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING ${HOMEWORK_COLUMNS}`)
       .bind(last.due_date, dueInstant(last.due_date, current.due_time, current.tz), now, id, user.id),

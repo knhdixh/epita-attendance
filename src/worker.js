@@ -591,7 +591,10 @@ async function handleApi(request, env, url, user) {
     const { occurrence } = await readJson(request);
     return json(await task(await completeTask(env, user, Number(m[1]), url.origin, Date.now(), occurrence)));
   }
-  if ((m = path.match(/^\/api\/homework\/(\d+)\/uncomplete$/)) && method === 'POST') return json(await task(await uncompleteTask(env, user, Number(m[1]), url.origin)));
+  if ((m = path.match(/^\/api\/homework\/(\d+)\/uncomplete$/)) && method === 'POST') {
+    const { occurrence } = await readJson(request);
+    return json(await task(await uncompleteTask(env, user, Number(m[1]), url.origin, occurrence)));
+  }
 
   if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'DELETE') return json(await deleteTask(env, user, Number(m[1])));
 
