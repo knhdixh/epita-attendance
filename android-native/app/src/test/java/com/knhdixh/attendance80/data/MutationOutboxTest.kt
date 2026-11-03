@@ -142,6 +142,23 @@ class MutationOutboxTest {
         } finally { e.close() }
     }
 
+    @Test fun aRetriedDeleteThatFindsTheRowGoneIsSettledQuietly() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            val victim = repo.snapshot.value!!.homework.first()
+            repo.enqueue(Mutations.deleteTask(victim.id))
+            e.loseResponseOnce += "api/homework/${victim.id}"
+            assertFalse("the server deleted it, the answer was lost", repo.flushQueue())
+            assertEquals(1, repo.pending.value)
+            e.fake.failures["DELETE /api/homework/${victim.id}"] = 404 to "Homework not found."
+            assertTrue(repo.flushQueue())
+            assertNull("a 404 on a DELETE means it is done", repo.error.value)
+            assertEquals(0, repo.pending.value)
+            assertTrue(repo.snapshot.value!!.homework.none { it.id == victim.id })
+        } finally { e.close() }
+    }
+
     @Test fun aRefusedChangeIsDroppedWithItsDependantsTheMessageIsShownAndTheDataReloaded() = runBlocking {
         val e = env()
         try {

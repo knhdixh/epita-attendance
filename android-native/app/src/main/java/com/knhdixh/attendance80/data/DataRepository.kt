@@ -273,7 +273,8 @@ class DataRepository(private val api: Api, private val directory: File, private 
             } ?: break
             val (active, account, head) = step
             val outcome: Any = try { sendQueued(head) } catch (e: CancellationException) { throw e
-            } catch (e: ApiError) { if (e.status in 400..499 && e.status !in setOf(401, 408, 429)) e else return@withLock false
+            } catch (e: ApiError) { if (e.status == 404 && head.method == "DELETE") "{\"ok\":true}"   // already gone: a retry after a lost answer
+                else if (e.status in 400..499 && e.status !in setOf(401, 408, 429)) e else return@withLock false
             } catch (e: Exception) { return@withLock false }
             mutex.withLock {
                 if (session != active || token() != active) return@withLock
