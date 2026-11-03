@@ -524,3 +524,38 @@ test('passkey verify with X-A80-App: 1 returns app token and no session cookie',
   assert.ok(!setCookie.includes('sid='));
   assert.ok(!setCookie.includes('a80s='));
 });
+
+test('native sign-in drops the user\'s TWA push subscriptions (app = 1) and nothing else', async () => {
+  const { env, db } = setup();
+  db.exec("INSERT INTO users (id, google_sub, email, name, created_at, threshold, unit) VALUES (2, 'google:456', 'other@epita.fr', 'Other', 0, 0.8, 'sessions')");
+  const sub = (user, endpoint, app) => db.prepare(
+    'INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, app, created_at) VALUES (?, ?, ?, ?, ?, 0)').run(user, endpoint, 'p', 'a', app);
+  sub(1, 'https://push.test/twa', 1);
+  sub(1, 'https://push.test/browser', 0);
+  sub(2, 'https://push.test/other-twa', 1);
+
+  const verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+  const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+  db.exec(`INSERT INTO app_codes (code, user_id, challenge, expires_at) VALUES ('code_push_cleanup', 1, '${challenge}', ${Date.now() + 120000})`);
+  const res = await worker.fetch(new Request('https://app.test/auth/app/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: 'code_push_cleanup', verifier }),
+  }), env);
+  assert.equal(res.status, 200);
+
+  const left = db.prepare('SELECT endpoint FROM push_subscriptions ORDER BY endpoint').all().map((r) => r.endpoint);
+  assert.deepEqual(left, ['https://push.test/browser', 'https://push.test/other-twa']);
+});
+
+test('a failed code exchange leaves push subscriptions alone', async () => {
+  const { env, db } = setup();
+  db.prepare('INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, app, created_at) VALUES (1, ?, ?, ?, 1, 0)').run('https://push.test/twa', 'p', 'a');
+  const res = await worker.fetch(new Request('https://app.test/auth/app/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: 'nope', verifier: 'x' }),
+  }), env);
+  assert.equal(res.status, 400);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM push_subscriptions').get().n, 1);
+});
