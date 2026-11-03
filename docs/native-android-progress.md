@@ -966,3 +966,4 @@ Deferred items in the review are unchanged (updatePeriodMillis, overrun countdow
 ### Review 6 fixes — round 2 (2026-11-03)
 
 - Finding 3's test: `WidgetPlanWriterTest.coldStartWithSavedTokenNeverWritesSignedOut` now starts `onSnapshot(null)` with `CoroutineStart.UNDISPATCHED` and asserts it is still waiting and nothing is written before `tokens.load()` (`2c76cea`, by Claude). Checked by hand: with `currentToken()` in place of `awaitToken()` in `WidgetPlanWriter`, the test fails ("waits for the token store"); restored, 3/3 pass.
+- Final full run: `CourseRepositoryUiTest.trackedControlRollsBackAndPersists` (Phase 4) failed once with "Add link" only in the unmerged tree, mid-settle after a save and refresh. The test now waits until the button is a single clickable node before clicking; assertions unchanged (`10cb072`, by Claude). It passed 3 runs alone.
