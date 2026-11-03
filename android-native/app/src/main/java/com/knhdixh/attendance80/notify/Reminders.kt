@@ -18,6 +18,8 @@ data class ReminderAction(val label: String, val type: String, val value: String
 data class Reminder(
     val key: String, val kind: String, val at: Long, val title: String, val body: String, val route: String,
     val ref: Long? = null, val actions: List<ReminderAction> = emptyList(),
+    /** Still worth posting until then; null means [lateWindow] after [at]. */
+    val until: Long? = null,
 )
 
 /** The device's switches (Settings → Notifications). [homework] null = not chosen yet: on, unless Google Calendar already reminds you. */
@@ -36,7 +38,11 @@ object Kinds {
 private const val MIN = 60_000L
 private const val HOUR = 60 * MIN
 
-/** How long after its time a reminder still goes (the phone was off, or an inexact alarm ran late). Same idea as `LATE` in `src/notify.js`. */
+/**
+ * How long after its time a reminder still goes (the phone was off, or the alarm ran late). Same idea as `LATE` in
+ * `src/notify.js`, but a class reminder instead lasts until the session starts ([Reminder.until]): the server's cron runs
+ * every minute, a phone alarm does not.
+ */
 fun lateWindow(kind: String): Long = when (kind) {
     Kinds.CLASS -> 5 * MIN
     else -> 3 * HOUR
@@ -65,7 +71,7 @@ fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId
         if (data.notifications.settings.habits) addAll(habitReminders(data, now, zone))
     }
     val horizon = planHorizon(now, zone)
-    return all.filter { it.at <= horizon && it.at >= now - lateWindow(it.kind) }.sortedWith(compareBy({ it.at }, { it.key }))
+    return all.filter { it.at <= horizon && now <= (it.until ?: (it.at + lateWindow(it.kind))) }.sortedWith(compareBy({ it.at }, { it.key }))
 }
 
 /**
@@ -188,6 +194,8 @@ fun classReminders(data: AppData, now: Long, zone: ZoneId): List<Reminder> {
             title = if (mins <= 0) "$name starts now" else "$name in $mins min",
             body = listOfNotNull("${hhmm(e.start_at, zone)}–${hhmm(e.end_at, zone)}", e.location.ifBlank { null }).joinToString(" · "),
             route = "a80://session/${e.id}", ref = e.id,
+            // Useful until the class starts, and for at least the usual grace ("starts now" for lead 0).
+            until = maxOf(e.start_at, at + lateWindow(Kinds.CLASS)),
         )
     }
 }

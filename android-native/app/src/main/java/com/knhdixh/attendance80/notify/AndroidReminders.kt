@@ -13,8 +13,15 @@ import androidx.core.app.NotificationManagerCompat
 import com.knhdixh.attendance80.MainActivity
 import com.knhdixh.attendance80.R
 
-/** Inexact on purpose (a reminder a few minutes late is fine): no exact-alarm permission, and kinder to the battery. */
+/**
+ * Exact while idle, so a class reminder is posted at its time and not hours late (an inexact alarm may slip by up to 75% of
+ * the time left, and a class reminder is dropped once the class starts). The app already holds USE_EXACT_ALARM for the
+ * focus timer, and reminders for calendar events are what that permission is for. It is one alarm at a time, for the next
+ * reminder. If the user has revoked exact alarms (Android 12), a 10 minute window still bounds the delay.
+ */
 class AndroidReminderAlarm(private val context: Context) : ReminderAlarm {
+    companion object { const val WINDOW = 10 * 60_000L }
+
     override fun schedule(at: Long?) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = PendingIntent.getBroadcast(
@@ -22,7 +29,10 @@ class AndroidReminderAlarm(private val context: Context) : ReminderAlarm {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         am.cancel(pi)
-        if (at != null) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        if (at == null) return
+        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+        if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
+        else am.setWindow(AlarmManager.RTC_WAKEUP, at, WINDOW, pi)
     }
 }
 

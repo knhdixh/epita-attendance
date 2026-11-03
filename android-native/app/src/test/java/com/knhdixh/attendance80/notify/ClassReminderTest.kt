@@ -40,11 +40,19 @@ class ClassReminderTest {
         assertEquals(listOf(1L, 2L), plan(d, "2026-11-03T07:00:00").map { it.ref })
     }
 
-    @Test fun aLateAlarmCountsTheMinutesLeftAndAStaleReminderIsDropped() {
+    @Test fun aLateAlarmCountsTheMinutesLeftAndAReminderIsDroppedOnceTheClassHasStarted() {
         val d = classes(event(1, 1, "2026-11-03T09:00:00", "2026-11-03T11:00:00"))
         assertEquals("Mathématiques in 7 min", plan(d, "2026-11-03T08:53:00").single().title)
-        assertEquals("Mathématiques in 6 min", plan(d, "2026-11-03T08:54:00").single().title) // 4 min after its time: still sent
-        assertTrue(plan(d, "2026-11-03T08:56:00").isEmpty()) // 6 min after its time: gone, as the server's 5 minute grace
+        assertEquals("Mathématiques in 6 min", plan(d, "2026-11-03T08:54:00").single().title)
+        assertEquals("Mathématiques in 4 min", plan(d, "2026-11-03T08:56:00").single().title) // 6 min after its time: still useful before the start
+        assertEquals("Mathématiques starts now", plan(d, "2026-11-03T09:00:00").single().title)
+        assertTrue(plan(d, "2026-11-03T09:01:00").isEmpty()) // after the start: gone
+    }
+
+    @Test fun aReminderWithNoLeadKeepsItsFiveMinuteGrace() {
+        val d = classes(event(1, 1, "2026-11-03T09:00:00", "2026-11-03T11:00:00"), lead = 0)
+        assertEquals("Mathématiques starts now", plan(d, "2026-11-03T09:05:00").single().title)
+        assertTrue(plan(d, "2026-11-03T09:06:00").isEmpty())
     }
 
     @Test fun theLeadStaysRightAcrossAClockChange() {
