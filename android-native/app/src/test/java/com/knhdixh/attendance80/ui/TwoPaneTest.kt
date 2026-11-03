@@ -1,7 +1,7 @@
 package com.knhdixh.attendance80.ui
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.knhdixh.attendance80.ui.shell.Shell
 import com.knhdixh.attendance80.ui.shell.ShellState
 import com.knhdixh.attendance80.ui.theme.Attendance80Theme
@@ -15,7 +15,7 @@ import org.robolectric.annotation.GraphicsMode
 /** Width >= 600dp: Sessions, Homework and Courses show the list and the opened item side by side. */
 abstract class TwoPaneTest {
     abstract val wide: Boolean
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<androidx.activity.ComponentActivity>()
     private fun show(route: String) = compose.setContent { Attendance80Theme { Shell(ShellState(data = screenshotData()), {}, {}, {}, initialRoute = route) } }
 
     private fun listAlone(route: String) {
@@ -52,6 +52,28 @@ abstract class TwoPaneTest {
         compose.onNodeWithTag("pane-placeholder").assertDoesNotExist()
         compose.onNodeWithTag("pane-list").assertExists()
         compose.onNodeWithTag("shell-title").assertTextEquals("Homework")
+    }
+
+    private fun back() { compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }; compose.waitForIdle() }
+
+    @Test fun backClosesTheOpenedCourseBeforeLeavingCourses() {
+        if (!wide) return
+        show("courses")
+        compose.onNodeWithTag("pane-placeholder").assertExists()
+        compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("courses-list"))).onFirst().performClick()
+        compose.onNodeWithTag("pane-placeholder").assertDoesNotExist()
+        back()
+        compose.onNodeWithTag("pane-placeholder").assertExists()
+        compose.onNodeWithTag("shell-title").assertTextEquals("Courses")
+    }
+
+    @Test fun backOnAnItemRouteReplacesItWithTheList() {
+        if (!wide) return
+        show("course/1")
+        compose.onNodeWithTag("pane-placeholder").assertDoesNotExist()
+        back()
+        compose.onNodeWithTag("pane-placeholder").assertExists()
+        compose.onNodeWithTag("shell-title").assertTextEquals("Courses")
     }
 }
 @RunWith(RobolectricTestRunner::class)

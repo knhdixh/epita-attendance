@@ -338,6 +338,7 @@ fun Shell(
                             else if (route == "homework" || route.startsWith("homework/")) key(accountKey) {
                                 // Wide: the list stays and the edit form opens beside it (selection kept here, so the list keeps its place). "New" is a full page.
                                 var sel by rememberSaveable { mutableStateOf(route.substringAfter("homework/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "homework", sel, { sel = it }, navController, "homework") { navigate(it) }
                                 val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("homework/") && dest != "homework/new") sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
                                 val form: @Composable (Long?) -> Unit = { id ->
                                     val draftKey = id?.toString() ?: "new"
@@ -352,7 +353,7 @@ fun Shell(
                                     com.knhdixh.attendance80.ui.homework.HomeworkForm(visibleData, id, now, zone, input,
                                         onBack = {
                                             homeworkDrafts = HashMap(homeworkDrafts).apply { remove(draftKey) }
-                                            if (wide && id != null) sel = null
+                                            if (wide && id != null) closePane()
                                             else {
                                                 if (pendingRoute != null) onPendingConsumed()
                                                 if (!navController.popBackStack()) navigate("homework")
@@ -371,22 +372,24 @@ fun Shell(
                             else if (route == "sessions" || route.startsWith("session/")) key(state.session) {
                                 // Wide: the list stays and the session opens beside it (selection kept here, so the list keeps its place).
                                 var sel by rememberSaveable { mutableStateOf(route.substringAfter("session/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "sessions", sel, { sel = it }, navController, "session") { navigate(it) }
                                 val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("session/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
                                 val sessions: @Composable () -> Unit = { com.knhdixh.attendance80.ui.sessions.SessionsScreen(state.data, now, zone,
                                     com.knhdixh.attendance80.ui.sessions.SessionFilter(sessionCourse, sessionWhen, sessionQuery, sessionHidden),
                                     { filter -> sessionCourse = filter.course; sessionWhen = filter.whenFilter; sessionQuery = filter.query; sessionHidden = filter.showHidden },
                                     (action as? PaletteAction.SessionSearch)?.query, { backStackEntry.savedStateHandle["paletteAction"] = null }, onNavigate = open, onAction = onAction) }
                                 val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.sessions.SessionDetail(state.data?.copy(events = state.allEvents ?: state.data.events), id, now, zone,
-                                    onBack = { if (wide) sel = null else { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") } }, onNavigate = open, onAction = onAction) }
+                                    onBack = { if (wide) closePane() else { if (pendingRoute != null) onPendingConsumed(); if (!navController.popBackStack()) navigate("sessions") } }, onNavigate = open, onAction = onAction) }
                                 if (wide) TwoPane(sessions) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a session.") }
                                 else if (route == "sessions") sessions() else detail(route.substringAfter('/').toLongOrNull())
                             }
                             else if (route == "courses" || route.startsWith("course/")) key(state.session) {
                                 var sel by rememberSaveable { mutableStateOf(route.substringAfter("course/", "").toLongOrNull()) }
+                                val closePane = paneSync(wide, route, "courses", sel, { sel = it }, navController, "course") { navigate(it) }
                                 val open: (String) -> Unit = { dest -> if (wide && dest.startsWith("course/")) sel = dest.substringAfter('/').toLongOrNull() else navigate(dest) }
                                 val courses: @Composable () -> Unit = { com.knhdixh.attendance80.ui.courses.CoursesScreen(state.data, state.allEvents, now, zone, onNavigate = open, onAction = onAction) }
                                 val detail: @Composable (Long?) -> Unit = { id -> com.knhdixh.attendance80.ui.course.CourseScreen(state.data, state.allEvents, id, now, zone, onNavigate = open,
-                                    onBack = { if (wide) sel = null else if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
+                                    onBack = { if (wide) closePane() else if (!navController.popBackStack()) navigate("courses") }, onAction = onAction) }
                                 if (wide) TwoPane(courses) { sel?.let { id -> key(id) { detail(id) } } ?: PanePlaceholder("Select a course.") }
                                 else if (route == "courses") courses() else detail(route.substringAfter('/').toLongOrNull())
                             }
@@ -478,6 +481,28 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
             }
         }
     }
+}
+
+/**
+ * Keeps the opened item of a list-detail screen (`sel`) and the route in agreement, and makes back close the item first.
+ * Returns the function that closes the pane: it clears `sel` and, when the route is the item's (`list/{id}`), replaces it
+ * with the list, so rotating back to a phone does not open what was cancelled. Going narrow with an item open opens its route.
+ * (A hand-made pane rather than `ListDetailPaneScaffold`: the plan lists no adaptive library, and this needs only two weights.)
+ */
+@Composable
+private fun paneSync(wide: Boolean, route: String, list: String, sel: Long?, setSel: (Long?) -> Unit, nav: NavHostController, itemRoute: String, onNarrowOpen: (String) -> Unit): () -> Unit {
+    val close = {
+        setSel(null)
+        if (route != list && route != "$list/new") {
+            val id = nav.currentBackStackEntry?.destination?.id
+            nav.navigate(list) { if (id != null) popUpTo(id) { inclusive = true }; launchSingleTop = true }
+        }
+    }
+    BackHandler(enabled = wide && sel != null) { close() }
+    LaunchedEffect(wide, sel, route) {
+        if (!wide && sel != null && route == list) { val id = sel; setSel(null); onNarrowOpen("$itemRoute/$id") }
+    }
+    return close
 }
 
 /** Tablet and foldable layout (width >= 600dp): the list on the left, the opened item on the right. */
