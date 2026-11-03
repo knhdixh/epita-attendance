@@ -1111,3 +1111,79 @@ Branch `native/phase-8`. No server, migration, secret or `android/` change.
 
 - "Focus done" after a cold-process phase end; Breaks name with the keyboard open; back and rotation in landscape.
 - Deferred items in the review stay deferred (exact-alarm comment, startup measurement, Sessions detail pane, Today notice, 200% shots, TalkBack test depth, overrun countdown, `ContentResolver` leak).
+
+## Phase 9 (local install) (2026-11-03)
+
+Branch `native/phase-9`. **The server change (task 2) only takes effect after the owner deploys it.** Until then the TWA's Web Push subscriptions stay and reminders arrive twice. No migration, no deploy, no push, no install. Not done (left for a real release): plan Phase 9 step 3's device run, step 4 (folder renames, READMEs, the "Install it" row) and everything in Play Console.
+
+### What I did
+
+1. **Version (`ae9dd0e`, Android).** `versionCode` 6 (the TWA's, in `android/app/build.gradle`, is 5), `versionName` stays `2.0.0`.
+2. **TWA Web Push cleanup (`9fe620a`, Server).** `startAppSession` in `src/worker.js` now also runs `DELETE FROM push_subscriptions WHERE user_id = ? AND app = 1` in the same batch that inserts the `a80s_` session. Both ways of getting an app token (the PKCE code exchange and the passkey sign-in) go through it. Browser subscriptions (`app = 0`) and other users' rows are untouched; a failed code exchange deletes nothing. **Accepted side effect:** it also stops Web Push on any other device still running the TWA for that account, until that device is updated. Tests in `test/app-auth.test.js`: app = 1 and app = 0 rows for the user plus an app = 1 row for another user, after the native sign-in only the user's app = 1 row is gone; and a failed exchange keeps all rows.
+3. **Review items deferred to Phase 9 (`d43e2d8`, Android).**
+   - Done: the exact-alarm comments (manifest and `AndroidReminders.kt`) now say `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` arrives when the permission is **granted**. `FocusReceiver` was registered for it but ignored it; its action `when` moved to `FocusReceiver.dispatch` and the broadcast now calls `controller.restore()`, which re-arms the alarm. `FocusReceiverDispatchTest` (3 tests): after the alarm is dropped, the broadcast re-arms it at `endsAt`; the clock/boot/update actions still do; a running timer is not restarted. I removed the new action from the `when` once and the first test failed, then restored it.
+   - Left for the device or the release: measuring cold start (baseline profile only if it is over 1 s on a mid-range phone); the `USE_EXACT_ALARM` Play Console declaration (alarm/calendar core function; the timer and class reminders both need it); the device checklist below; the legacy `settings` key of the TWA timer (review 5, minor, not read; a timer that ends during the update finishes with default settings).
+   - Review 6, TWA widget: the receiver already has the TWA's component name (`WidgetProviderNameTest`); "update over a TWA with the widget placed" is on the checklist.
+4. **Signed release check (no commit, nothing changed).** `./gradlew assembleProdRelease --no-daemon`: BUILD SUCCESSFUL; `minifyProdReleaseWithR8` ran with no R8 warnings or errors (the only warning in the log is the experimental managed-device option), so no keep-rule change. APK `app/build/outputs/apk/prod/release/app-prod-release.apk`.
+   - `apksigner verify --print-certs` (build-tools 36.1.0): signer SHA-256 `308b9e2efdd5a7793266b06076ef8fc373ea1222e6cdb93c1d10a182efa8957d`. `ANDROID_CERT_SHA256` in `wrangler.jsonc` is `30:8B:9E:2E:…:A8:95:7D`; the same bytes. **Equal.**
+   - `aapt2 dump badging`: `package: name='com.knhdixh.attendance80' versionCode='6' versionName='2.0.0'`.
+   - I did not read or print `android/keystore.properties` or the keystore. Nothing installed.
+
+### Checks
+
+- `npm test`: 106 tests, 106 pass, 0 fail (104 + 2 new).
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 1071 unit tests, 0 failures, 0 errors, 0 skipped (result XML; Phase 8 ended at 1068, +3). Roborazzi verify ran; no PNG changed.
+- `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed".
+- The first `assembleProdRelease` call hit the tool's 120 s limit and was stopped; I re-ran it in the foreground (the result above).
+
+### Deviations
+
+- Task 2's cleanup is in `startAppSession`, not in a single endpoint, so passkey sign-in is covered as well as the PKCE exchange. The plan said "when the server issues a native app session token"; this is that.
+- The 4 tasks are three commits, because task 4 changed nothing.
+
+### Unverified (needs a real device) and the device checklist for the first day
+
+**Update over the TWA**
+- Installs as an update (versionCode 6 over 5), keeps data and sign-in state; a running TWA timer, unsent sessions and tasks survive (Phase 5 migration).
+- The old TWA widget placed on the home screen is kept, not removed (Phase 6, review 6).
+- Passkey sign-in works with the real Credential Manager; Google sign-in in a real Custom Tab; the Google Calendar connect and its return link.
+- After the server is deployed: with notifications on in the TWA, each class and habit reminder arrives once (review 7).
+
+**Release build**
+- The minified build starts and every screen opens (R8 ran clean but nothing was run); sign-in, sync, widget and notifications under R8.
+- Cold start time on this phone (baseline profile only if over 1 s).
+
+**Focus timer**
+- Exact alarm firing in Doze, and after reboot, update, time or time-zone change; re-armed when exact alarms are granted again.
+- Lock-screen countdown ticking, notification buttons, chime and the silent channel; Live Update on Android 16 and its permission.
+- Tile (label, toggle, long-press sheet), the quick-focus sheet over the launcher and its permission flow.
+- "Focus done" after a phase ends with the process dead.
+- Outbox retry and WorkManager backoff after a real offline period.
+
+**Widget**
+- Place it; 2×2 and 4×2 layouts; wallpaper colours; the chronometer ticking; Start/Pause from a cold process.
+- A session redraws on Start then Pause within 10 s, and on a timer started in the app within 45 s.
+- Redraw at class boundaries, midnight, boot and time-zone change; taps open the session, to-do and Focus screens.
+
+**Reminders and notifications**
+- A fresh install on Android 13+: the permission prompt, the Allow row and Today notice, the system-settings path after two denials.
+- Class, check-in, homework, exam and habit reminders appear at the right time; a class reminder after a night in Doze; after reboot, update and time-zone change.
+- Buttons from a locked screen and a cold process: Present / Absent / Excused, Add catch-up, Done, Focus on this.
+- Revoking exact alarms on Android 12 falls back to the window.
+
+**Import and share**
+- Opening an `.ics` from a file manager, Gmail, Drive (also one Drive has not downloaded) and Zeus; sharing text from Chrome or Keep.
+
+**Layout and input**
+- Predictive back (Android 14+); back and rotation on wide screens in landscape; tablet/foldable two-pane.
+- Keyboard over the Breaks, Sessions and Sign-in fields; 200% font on real screens; TalkBack speech (labels are tested).
+- Dialog dimming; drag and swipe feel on Calendar and Sessions; the date picker.
+
+**Settings, data**
+- Backup exclusion of `snapshots/` and the DataStores on a real backup/restore.
+- Adding a passkey with a real provider; the system file picker; clipboard and share sheet.
+- Stale snapshot behaviour on a slow device (no spinner flash).
+
+### Still deferred (not Phase 9)
+
+Sessions detail pane on tablets, Breaks and Settings on tablets, the 200% screenshots, TalkBack test depth, overrun countdown, swiped-away ongoing notification, the `ContentResolver` leak, `updatePeriodMillis`, folding the action queue into the outbox (Phase 11), moving the three device switches into `notify_settings`, the Optional-session check-in question.
