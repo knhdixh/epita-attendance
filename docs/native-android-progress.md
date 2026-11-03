@@ -1280,6 +1280,8 @@ list (reviews 4, 5 and 7 defer only to Phases 11 and 13, plus Phase 8). **Done: 
 
 - The plan lists `comments` and `task_reminders` under "CRUD"; reminders and comments have no GET of their own except
   `GET /api/homework/{id}/comments` (reminders come with each task in `/api/data`).
+- Commit subjects for the five code commits start with `Server:` or `Tasks:` rather than `Android:`, as Phase 9's server
+  commit did (`9fe620a`), because they change no Android code. Only the log commit says `Android:`.
 - Section 4 of the plan (API reference) was **not** updated with the new endpoints; the list above is the record.
 - The website was not opened in a browser (headless session). "Add, complete and delete homework" is covered through the
   same endpoints by `test/tasks.test.js` ("the homework endpoints behave as before") and `test/plate.test.js`,
