@@ -1,6 +1,6 @@
 # Phase 7 review
 
-Verdict: **FIX**. Four findings, all blocking. Three affect notifications on a real phone. They are: buttons that do nothing in a cold process, reminders that never post on a fresh Android 13+ install, and class reminders lost to a late inexact alarm. The fourth is a main-thread read of shared files. The planner, the account boundaries, the action queue and the parity with `src/notify.js` are sound (see "Checked and correct").
+Verdict: **PASS after round 1**. Round 1 (`497ad58`, `95c7543`, `42a924f`, `17fa31a`, `62ec20e`, log `1e9ed4d`) resolves all four findings; see the round-1 section at the end, which also adds deferred items. The initial findings are kept below.
 
 ## Findings
 
@@ -135,3 +135,60 @@ Verdict: **FIX**. Four findings, all blocking. Three affect notifications on a r
   - a fresh install on Android 13+ (finding 2);
   - a class reminder after a night in Doze (finding 3);
   - opening an `.ics` that Drive has not downloaded (finding 4).
+
+
+## Re-review — round 1 (`497ad58`, `95c7543`, `42a924f`, `17fa31a`, `62ec20e`, log `1e9ed4d`)
+
+**Finding 1 (cold-process buttons): resolved. The test covers `ReminderActions`, not the container wiring (accepted).**
+- `ReminderActions` takes a suspending snapshot provider. The container's provider calls `awaitToken()`, returns null when signed out, then calls `dataRepository.start()`, which publishes the cache under its mutex, and reads the snapshot. This is the same sequence as `replan`.
+- `focus()` looks the homework up in that snapshot and checks the owner. The container applies `updateSettings` and `setAccount` from the same data before `focusOn`, so the timer gets the account's length. `offerCatchup` keeps its owner check.
+- The two new tests really wait: the provider is a `CompletableDeferred`, they assert that nothing happened after 100 ms, then complete it. The 50-minute focus length is asserted. Making `ReminderActions` read a non-suspending value would fail them.
+- **Test limit (accepted).** Reverting the container lambda to `{ dataRepository.snapshot.value }` would still pass every test, because nothing drives the real container through a cold `ACTION_DO`. This is acceptable for the same reason as review 6's round 1: the wait now lives in one obvious place, and the device checklist covers a killed process. A Robolectric receiver test with a cached snapshot file and a late-loading token store would close the gap (Phase 8, non-blocking).
+
+**Finding 2 (notification permission): resolved, with one residual case deferred.**
+- `MainActivity` recomputes `areNotificationsEnabled()` in `onResume` and in the permission callback.
+- Settings → Notifications shows "Notifications are blocked for this app…" with **Allow** while any switch is on. `fixNotifications` asks when the system still will (before the first ask, or after one denial with rationale) and otherwise opens `ACTION_APP_NOTIFICATION_SETTINGS`. It is not limited to once.
+- Turning Classes or Habits on asks. Turning a switch off doesn't.
+- Re-running the engine after a change now skips a `null` snapshot, which also avoids the cancel-on-null case for this path.
+- The tests are real. The row and its tap, no row when allowed, Classes on asks and Habits off doesn't, and `canAskNotifications`' three cases would each fail without the change.
+- **The first ask: "the first time Settings → Notifications is shown while blocked" is sensible.**
+  - A new user can only add a timetable in Settings. The palette's calendar forms and an opened `.ics` both land there too, and the Courses empty state points to it. So anyone setting the app up from scratch meets the prompt then, in a screen about notifications, not at launch.
+  - It goes through `askNotificationsOnce`, so it never nags, and the row stays as the way back.
+- **Residual gap (deferred, Phase 8).** An Android 13+ user who already set up the account on the website installs the app fresh, not over the TWA. They may never open Settings or start a timer, and then still get no reminders, silently.
+  - Phase 8 owns "asked in context". A second once-only moment would close this, for example the first time Today shows a class or an unmarked session while notifications are blocked. So would a one-line blocked notice on Today linking to the Allow row.
+  - TWA upgraders keep their granted permission, and anyone who opens Settings is covered.
+- `62ec20e` grants `POST_NOTIFICATIONS` in `LocalServerTest` because the new prompt covered the app. That is test setup, and no assertion changed.
+
+**Finding 3 (class reminders dropped): resolved.**
+- The worker's correction is right: `setWindow` is not allowed while idle, so it can't bound the delay in Doze. My suggestion was wrong there.
+- `setExactAndAllowWhileIdle(RTC_WAKEUP)` is the right call. Below API 31 it needs no permission.
+- **Exact-alarm permission: no missing handling that blocks.**
+  - On 33+ the app holds `USE_EXACT_ALARM`. It is granted at install and can't be revoked, so `canScheduleExactAlarms()` is true.
+  - On 31–32 the app holds `SCHEDULE_EXACT_ALARM` (`maxSdkVersion="32"`, both already in the manifest for the timer). It is granted by default but the user can revoke it. The `canScheduleExactAlarms()` check then falls back to a 10-minute `setWindow`, so there is no `SecurityException`.
+- `Reminder.until = max(start_at, at + 5 min)` keeps a class reminder until the class starts, and lead 0 keeps its 5-minute grace.
+- The changed `ClassReminderTest` asserts the new rule at both edges (08:56 gives "in 4 min", 09:01 gives nothing, lead 0 lasts until 09:05). That is a rule change, not a weakening.
+- `AndroidReminderAlarmTest` checks a wakeup alarm at the planned time with a zero window, a 10-minute window in the fallback, and replace and cancel. The old `setAndAllowWhileIdle` code would fail the window assertions.
+- Other reminder kinds still use their 3-hour window, which is now ample.
+- **Deferred.**
+  - **Phase 8.** On Android 12 only: after a user revokes exact alarms, the system drops the armed alarm. Nothing re-arms it until the next run (opening the app, or a changed snapshot). Registering `ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` in `NotifyReceiver` and re-planning on it is the full fix. Rare, so not blocking.
+  - **Phase 9.** `USE_EXACT_ALARM` needs a Play Console declaration (alarm or calendar core function). The timer already depended on it, and class reminders strengthen the case. Note it in the release task.
+
+**Finding 4 (main-thread read): resolved.**
+- `readsAProvider` decides from the action, the scheme and `EXTRA_STREAM` without touching a provider.
+- Provider-backed intents are read on `Dispatchers.IO` inside `lifecycleScope`. They are delivered on the main thread, and nothing changes on screen meanwhile.
+- Shared text stays synchronous, which is fine: it never touches a provider.
+- The new test covers the classification. `readIncoming`'s tests are unchanged.
+- **Deferred (Phase 8).** If the activity is recreated, for example by a rotation, during a slow read, the coroutine is cancelled. The intent isn't handled again, because `handleIntent` only runs when `savedInstanceState == null`, so the share is lost. Moving the read into `PendingRouteViewModel` (`viewModelScope`) would survive recreation.
+
+**PNGs.** `git diff c17a4ec..HEAD --stat -- '*.png'` is empty. The new row only appears when notifications are blocked, which the screenshot fixtures don't set.
+
+### Evidence
+
+- **Read by the reviewer:** `git show` of all five fix commits (main sources and tests) and the "Review 7 fixes" log entry. I also checked where a calendar can be added (Settings only, reached from the palette and the Courses empty state).
+- No PNG, server, website, migration, secret or `android/` changes in the round.
+- **Not run by the reviewer:** Gradle and npm, at the owner's request. The worker reports:
+  - `npm test` 104/104;
+  - 998 unit tests with 0 failures, and Roborazzi verified with no PNG changes;
+  - `tools/e2e.sh` 2/2 after `62ec20e`;
+  - one `OfflineShellTest` failure in a partial run under load, which passed alone and in the full run.
+- The deferred items from the first round are unchanged. This round adds: the container-wiring test (Phase 8), the first ask for fresh installs of website users (Phase 8), the exact-alarm permission re-grant (Phase 8), the Play declaration for `USE_EXACT_ALARM` (Phase 9) and a share lost on recreation (Phase 8).
