@@ -306,6 +306,29 @@ test('complete and uncomplete: subtasks follow, repeat calls are harmless, other
   assert.equal((await me('POST', '/api/homework/999/complete')).status, 404);
 });
 
+test('PATCH done is the same as /complete and /uncomplete', async () => {
+  const { me } = setup();
+  const parent = ok(await hw(me, { title: 'parent' }));
+  const a = ok(await hw(me, { title: 'a', parent_id: parent.id }));
+  const b = ok(await hw(me, { title: 'b', parent_id: parent.id }));
+  const patched = ok(await me('PATCH', `/api/homework/${parent.id}`, { done: true }));
+  assert.deepEqual([patched.done, patched.completed_at > 0], [1, true]);
+  const rows = (await me('GET', '/api/data')).homework;
+  assert.deepEqual([parent.id, a.id, b.id].map((id) => rows.find((h) => h.id === id).done), [1, 1, 1], 'the subtasks follow');
+  assert.ok(rows.every((h) => h.completed_at > 0));
+  const back = ok(await me('PATCH', `/api/homework/${parent.id}`, { done: false }));
+  assert.deepEqual([back.done, back.completed_at], [0, null]);
+  // Other fields in the same body are saved, then the completion applies.
+  const both = ok(await me('PATCH', `/api/homework/${parent.id}`, { title: 'renamed', done: true }));
+  assert.deepEqual([both.title, both.done], ['renamed', 1]);
+  // A repeating task moves on, adds a completion, and done: false is an Undo.
+  const r = ok(await hw(me, { title: 'weekly', due_date: '2099-01-05', recurrence: 'every week' }));
+  const moved = ok(await me('PATCH', `/api/homework/${r.id}`, { done: true }));
+  assert.deepEqual([moved.done, moved.due_date], [0, '2099-01-12']);
+  assert.equal(ok(await me('PATCH', `/api/homework/${r.id}`, { done: false })).due_date, '2099-01-05', 'Undo puts the date back');
+  assert.equal(ok(await me('PATCH', `/api/homework/${r.id}`, { done: false })).due_date, '2099-01-05', 'and a second one changes nothing');
+});
+
 test('users never see each other\'s projects, labels, filters or tasks', async () => {
   const { me, other } = setup();
   const p = ok(await me('POST', '/api/projects', { name: 'secret' }));

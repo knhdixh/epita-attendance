@@ -141,7 +141,14 @@ export async function createHomework(env, user, body, appUrl) {
 export async function updateHomework(env, user, id, body, appUrl) {
   const current = await env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
   if (!current) throw new HttpError(404, 'Homework not found.');
-  if (body.done && !current.done && current.recurrence) return completeTask(env, user, id, appUrl);
+  // A change of `done` is a completion or an Undo, whichever way it arrives: the same code as /complete and /uncomplete
+  // (subtasks follow, repeats move on, completions are kept). The other fields in the body are saved first.
+  // done: false on a repeating task that isn't done is an Undo of the last "done" too.
+  if (body.done !== undefined && (Boolean(body.done) !== Boolean(current.done) || (!body.done && current.recurrence))) {
+    const { done, ...rest } = body;
+    if (Object.keys(rest).length) await updateHomework(env, user, id, rest, appUrl);
+    return done ? completeTask(env, user, id, appUrl) : uncompleteTask(env, user, id, appUrl);
+  }
   const input = await homeworkInput(env, user, { ...current, ...body, done: body.done ?? current.done });
   const labels = await labelIds(env, user, body);
   const now = Date.now();
