@@ -21,7 +21,9 @@ object Mutations {
     fun completeTask(id: Long, occurrence: String?, reload: Boolean = false) =
         m("task.complete", "POST", "api/homework/$id/complete", buildJsonObject { occurrence?.let { put("occurrence", it) } }, reload = reload)
     /** A repeating task goes back to the date it was completed for, which only the server knows, so it reloads. */
-    fun uncompleteTask(id: Long, reload: Boolean = false) = m("task.uncomplete", "POST", "api/homework/$id/uncomplete", reload = reload)
+    /** [occurrence]: the due date the task has now, the one it moved on to when it was completed. A retried Undo rewinds once. */
+    fun uncompleteTask(id: Long, occurrence: String? = null, reload: Boolean = false) =
+        m("task.uncomplete", "POST", "api/homework/$id/uncomplete", buildJsonObject { occurrence?.let { put("occurrence", it) } }, reload = reload)
     fun moveTasks(body: JsonObject) = m("task.move", "POST", "api/homework/move", body, reload = true)
 
     // projects, sections, labels, filters

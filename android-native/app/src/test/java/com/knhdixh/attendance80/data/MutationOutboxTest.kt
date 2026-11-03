@@ -223,6 +223,23 @@ class MutationOutboxTest {
         } finally { e.close() }
     }
 
+    @Test fun undoOfARepeatingTaskSendsTheOccurrenceItMovedOnTo() = runBlocking {
+        val e = env()
+        try {
+            val repo = e.repo(); repo.online(e)
+            val h = repo.snapshot.value!!.homework.first()
+            repo.enqueue(Mutations.updateTask(h.id, body("recurrence" to "every day", "due_date" to "2030-03-30", "due_time" to null, "tz" to "Europe/Paris")))
+            repo.enqueue(Mutations.completeTask(h.id, "2030-03-30"))
+            val moved = repo.snapshot.value!!.homework.single { it.id == h.id }.due_date
+            assertEquals("2030-03-31", moved)
+            repo.enqueue(Mutations.uncompleteTask(h.id, moved, reload = true))
+            e.fake.bodies.clear(); e.fake.log.clear()
+            assertTrue(repo.flushQueue())
+            assertTrue(e.fake.log.contains("POST /api/homework/${h.id}/uncomplete"))
+            assertEquals("2030-03-31", e.fake.bodies.last()["occurrence"]!!.jsonPrimitive.content)
+        } finally { e.close() }
+    }
+
     @Test fun signingOutDropsTheQueue() = runBlocking {
         val e = env()
         try {

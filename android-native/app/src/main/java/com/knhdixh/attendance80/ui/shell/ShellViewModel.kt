@@ -187,7 +187,7 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         val row = rows.find { it.id == id }
         val repeats = row?.recurrence != null
         val m = if (done) Mutations.completeTask(id, row?.due_date.takeIf { repeats }, reload = repeats || rows.any { it.parent_id == id })
-        else Mutations.uncompleteTask(id, reload = repeats)
+        else Mutations.uncompleteTask(id, row?.due_date.takeIf { repeats }, reload = repeats)
         queue(owner, m)
     }
 
