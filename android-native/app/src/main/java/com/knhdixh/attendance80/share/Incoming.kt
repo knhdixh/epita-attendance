@@ -17,6 +17,16 @@ sealed interface Incoming {
 private fun Uri.looksLikeIcs() = lastPathSegment?.endsWith(".ics", ignoreCase = true) == true
 
 /**
+ * Whether [readIncoming] has to ask another app's content provider (a name or type query, or the file itself): those can
+ * block, so they must not run on the main thread. Decided from the action and the URIs alone, without touching a provider.
+ */
+fun readsAProvider(intent: Intent): Boolean = when (intent.action) {
+    Intent.ACTION_VIEW -> intent.data?.scheme.let { it == "content" || it == "file" }
+    Intent.ACTION_SEND -> @Suppress("DEPRECATION") intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM) != null
+    else -> false
+}
+
+/**
  * VIEW and SEND of a calendar (`text/calendar` or a name ending `.ics`) open Settings → Calendars; SEND of plain text
  * opens Add homework. Anything else, including the app's own `a80://` and sign-in links, is not ours to handle here.
  */

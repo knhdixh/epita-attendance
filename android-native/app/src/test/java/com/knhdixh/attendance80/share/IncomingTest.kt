@@ -27,6 +27,16 @@ class IncomingTest {
         assertEquals(Incoming.CalendarFile("timetable.ics", ics), readIncoming(intent, resolver))
     }
 
+    @Test fun onlyAProviderBackedIntentIsReadOffTheMainThread() {
+        val f = file("a.ics")
+        assertTrue(readsAProvider(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(f), "text/calendar")))
+        assertTrue(readsAProvider(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("content://x/1"), "text/calendar")))
+        assertTrue(readsAProvider(Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, Uri.parse("content://x/1"))))
+        assertFalse(readsAProvider(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "Buy milk")))
+        assertFalse(readsAProvider(Intent(Intent.ACTION_VIEW, Uri.parse("a80://today"))))
+        assertFalse(readsAProvider(Intent(Intent.ACTION_MAIN)))
+    }
+
     @Test fun anIcsNameWithAGenericTypeIsStillACalendar() {
         val f = file("EPITA S3.ics")
         val intent = Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(f), "application/octet-stream")

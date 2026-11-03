@@ -147,14 +147,25 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    private fun deliver(incoming: com.knhdixh.attendance80.share.Incoming?): Boolean = when (incoming) {
+        is com.knhdixh.attendance80.share.Incoming.CalendarFile -> { pendingRouteViewModel.shareFile(incoming); true }
+        is com.knhdixh.attendance80.share.Incoming.SharedText -> { pendingRouteViewModel.shareText(incoming.text); true }
+        null -> false
+    }
+
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
         // A calendar file or shared text from another app: Settings → Calendars, or Add homework.
-        when (val incoming = com.knhdixh.attendance80.share.readIncoming(intent, contentResolver)) {
-            is com.knhdixh.attendance80.share.Incoming.CalendarFile -> { pendingRouteViewModel.shareFile(incoming); return }
-            is com.knhdixh.attendance80.share.Incoming.SharedText -> { pendingRouteViewModel.shareText(incoming.text); return }
-            null -> Unit
+        if (com.knhdixh.attendance80.share.readsAProvider(intent)) {
+            // The provider may be slow (a file Drive has not downloaded yet): read off the main thread, show nothing new meanwhile.
+            val shared = Intent(intent)
+            lifecycleScope.launch {
+                val incoming = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.knhdixh.attendance80.share.readIncoming(shared, contentResolver) }
+                deliver(incoming)
+            }
+            return
         }
+        if (deliver(com.knhdixh.attendance80.share.readIncoming(intent, contentResolver))) return
         val data = intent.data ?: return
         if (data.scheme == "a80") pendingRouteViewModel.accept(data.toString())
         if (data.scheme == "com.knhdixh.attendance80") {
