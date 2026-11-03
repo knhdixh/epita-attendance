@@ -158,9 +158,12 @@ test('filters: create, update, validate', async () => {
   const { me } = setup();
   bad(await me('POST', '/api/filters', { name: 'x' }), /query/);
   bad(await me('POST', '/api/filters', { name: 'x', query: 'y'.repeat(501) }), /query/);
+  bad(await me('POST', '/api/filters', { name: 'x', query: 'today &' }), /ends too soon/);
+  bad(await me('POST', '/api/filters', { name: 'x', query: 'banana' }), /don't know/);
   const f = ok(await me('POST', '/api/filters', { name: 'Soon', query: 'today | overdue', color: 'orange', favorite: true }));
   assert.deepEqual([f.query, f.favorite], ['today | overdue', 1]);
   assert.equal(ok(await me('PATCH', `/api/filters/${f.id}`, { query: 'p1' })).query, 'p1');
+  bad(await me('PATCH', `/api/filters/${f.id}`, { query: '(p1' }), /Missing/);
   assert.deepEqual((await me('GET', '/api/data')).filters.map((x) => [x.name, x.query, x.favorite]), [['Soon', 'p1', true]]);
   ok(await me('DELETE', `/api/filters/${f.id}`));
 });

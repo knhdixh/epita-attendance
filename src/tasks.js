@@ -5,6 +5,7 @@ import { HttpError } from './http.js';
 import { COLORS } from '../public/habits.js';
 import { CLIENT_ID, taskRow } from './homework-columns.js';
 import { projectTree } from './placement.js';
+import { parseFilter } from '../public/filters.js';
 import { deleteGcalEvent } from './gcal.js';
 
 const MAX = { projects: 300, sections: 100, labels: 500, filters: 150, comments: 500, reminders: 10 };
@@ -108,6 +109,8 @@ const SPECS = {
       if (!partial || 'query' in b) {
         const q = typeof b.query === 'string' ? b.query.trim() : '';
         if (!q || q.length > MAX_QUERY) throw new HttpError(400, `A filter needs a query (max ${MAX_QUERY} characters).`);
+        const parsed = parseFilter(q, { today: new Date().toISOString().slice(0, 10) });
+        if (!parsed.ok) throw new HttpError(400, parsed.error);
         out.query = q;
       }
       if (!partial || 'color' in b) out.color = b.color === undefined ? 'gray' : color(b.color);
