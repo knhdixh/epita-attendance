@@ -1187,3 +1187,112 @@ Branch `native/phase-9`. **The server change (task 2) only takes effect after th
 ### Still deferred (not Phase 9)
 
 Sessions detail pane on tablets, Breaks and Settings on tablets, the 200% screenshots, TalkBack test depth, overrun countdown, swiped-away ongoing notification, the `ContentResolver` leak, `updatePeriodMillis`, folding the action queue into the outbox (Phase 11), moving the three device switches into `notify_settings`, the Optional-session check-in question.
+
+## Phase 10 (server, tasks) (2026-11-03)
+
+Branch `native/phase-10`. Server and `public/` only: no Android source changed, so the Android checks below show the
+Phase 9 app still builds and passes against the new `public/` exports. Stops here for review (data model and migration).
+
+### Items deferred to this phase by earlier reviews
+
+`grep -i 'phase 10' docs/native-android-review-*.md` finds nothing, and no review mentions Phase 10 in its deferred
+list (reviews 4, 5 and 7 defer only to Phases 11 and 13, plus Phase 8). **Done: none. Nothing was deferred to Phase 10.**
+
+### What I did
+
+1. **Migration `0020_tasks.sql`** (`2f89954`). Extends `homework` (`project_id`, `section_id`, `parent_id`, `priority` 1–4
+   default 1, `position`, `recurrence`, `deadline_date`, `completed_at`, `client_id`) and adds `projects`, `sections`,
+   `labels`, `filters`, `task_labels`, `comments`, `task_reminders` (exactly one of `at` / `before_minutes`) and
+   `completions`. All carry `user_id` and `ON DELETE CASCADE`; every table with a client has `client_id` with a unique
+   per-user partial index. Label names are unique per user ignoring case. Existing rows get `project_id` NULL (Inbox)
+   and priority 1. No existing migration touched.
+2. **Endpoints** (`e3685b2`): `src/tasks.js` (projects, sections, labels, filters, comments, reminders, `/api/data`
+   additions), `src/placement.js` (placement checks, subtask trees, `POST /api/homework/move`), `src/homework-columns.js`,
+   and changes to `src/homework-store.js`, `src/worker.js`, `src/tokens.js`.
+   - `POST/PATCH/DELETE /api/{projects,sections,labels,filters}[/id]`, `POST /api/<those>/reorder`,
+     `GET/POST /api/homework/{id}/comments`, `PATCH/DELETE /api/comments/{id}`, `POST /api/homework/{id}/reminders`,
+     `PATCH/DELETE /api/reminders/{id}`, `POST /api/homework/move`, `POST /api/homework/{id}/complete|uncomplete`,
+     `GET /api/completions?since=`.
+   - Every create accepts `client_id`; a repeat returns the first row (tested for all seven kinds, and per user).
+   - `/api/data` adds `projects`, `sections`, `labels`, `filters`, and on each homework row `labels: [ids]`,
+     `comment_count`, `reminders`. `EXPLAIN QUERY PLAN` for the seven queries is asserted in the tests: every one is a
+     `SEARCH ... USING (COVERING) INDEX / PRIMARY KEY`.
+   - Deleting a project, section or task deletes what is below it (foreign keys) and the Google Calendar events of those
+     tasks first. Completing a task completes its open subtasks.
+   - Write-scope API tokens may use move, complete and uncomplete; project/label/filter/comment endpoints stay closed to tokens.
+3. **Repeats** (`4bca02a`): `public/recurrence.js` (`parseRecurrence`, `formatRecurrence`, `nextOccurrence`,
+   `cleanRecurrence`, `parseDay`). Completing a repeating task moves `due_date`/`due_at` (recomputed in the task's time
+   zone, so the clock time survives DST), clears the plan block, opens its subtasks again and adds a `completions` row
+   (with the date it was completed for). Undo (`uncomplete`) puts the date back. A series with `until` that has ended
+   completes the task for good. `recurrence` is stored in canonical form ("every Mon,Wed" becomes "every mon, wed").
+4. **Quick add** (`0cc18d2`): `public/quickadd.js` `parseQuickAdd(text, { today })` returns `{ title, due_date, due_time,
+   recurrence, project, section, labels, priority, deadline, reminder, duration, ranges }`.
+5. **Filters** (`09bca71`): `public/filters.js` `parseFilter` and `runFilter`; the server refuses to save a filter that
+   doesn't parse.
+6. Tests: `test/tasks.test.js` (26 tests: endpoints, isolation between users, `client_id` retries, move and reorder,
+   cascades incl. account deletion, tokens, undated tasks, repeats through the API, EXPLAIN), `test/recurrence.test.js`
+   (129), `test/quickadd.test.js` (94), `test/filters.test.js` (104). Each of the three language suites has well over 40
+   table-driven cases, including DST dates, month ends, leap days and year boundaries.
+
+### Commands and results
+
+- `npm test` (after the last code commit): tests 455, pass 455, fail 0 (106 before this phase).
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`:
+  BUILD SUCCESSFUL, but with nothing under `android-native/` changed 81 of 83 tasks were UP-TO-DATE (lint ran).
+  To get real numbers I then ran `./gradlew testProdDebugUnitTest --rerun verifyRoborazziProdDebug --rerun --no-daemon`:
+  BUILD SUCCESSFUL, both tasks executed. Result XML: 1071 tests, 0 failures, 0 errors, 0 skipped (unchanged from Phase 9).
+  Roborazzi verify passed; no PNG changed.
+- `tools/e2e.sh --smoke`: passed ("Local /api/data verified 48 events … homework, habit logs, countdown, focus and break").
+- `tools/e2e.sh` (full, twice): **FAILED**, both times `LocalServerTest.a_signInAndLiveShell` with a 30 s
+  `ComposeTimeoutException` at `LocalServerTest.kt:248` (waiting for the Calendar to plan a to-do after tapping the
+  grid), and `b_cachedOfflineProcessRestart` fails because it needs `a` to finish first. The 3 other instrumented tests pass.
+  **Not caused by this phase, as far as I can tell:** I ran the same script with the server code (`src/`, `public/`,
+  `migrations/`) from `c3849fb` (the Phase 9 merge, via a temporary worktree and a temporary copy of the script, both
+  removed) and the identical Android build: same two failures at the same line. I did not find the cause. The run was at
+  about 22:00 local time; Phase 9's pass was earlier in the day. That it depends on the time of day is a guess, not
+  something I checked. I did not touch or skip the test. **Needs a look before the next phase that touches the Calendar.**
+
+### Design decisions (the plan left these open)
+
+- **Tasks without a date.** `homework.due_date`, `tz` and `due_at` are `NOT NULL` and SQLite can't relax that without
+  rebuilding the table, which on D1 would fire `ON DELETE SET NULL` on focus sessions and countdowns. So an undated task
+  stores `due_date = '9999-12-31'` (`NO_DATE`); the API shows `due_date`, `due_time`, `due_at` as `null`. Created with
+  `due_date: null` (a *missing* `due_date` is still "Invalid due date", as before). The website's lists (`/api/data`
+  without `?tasks=1`), `/api/plan`, the `.ics` feed and Google Calendar sync leave such rows out, so nothing old sees them.
+  `GET /api/data?tasks=1` includes them. The app in Phase 11 must send `tasks=1`.
+- **Completed repeating tasks** get a `completions` row with an extra column `due_date` (not in the plan) so Undo can restore the date.
+- **A repeat's day.** "every month" from the 29th–31st (and "every year" from 29 Feb) is stored with that day, so it
+  doesn't drift to the 28th. Otherwise it is stored as typed. An overdue task moves on from the day it is completed;
+  one done early moves on from its due date; `every!` always counts from completion.
+- **Move.** `POST /api/homework/move` takes the destination as `project_id`, `section_id`, `parent_id` (anything left
+  out is null: Inbox, no section, top level; leave all three out to reorder in place) and `position`; siblings are renumbered. `PATCH` with
+  any of those four keys goes through the same code.
+- **Filters** show open tasks only, hide tasks in archived projects, and use `next N days` = today up to N days ahead.
+  A `#project` term takes the rest of its piece (spaces allowed, quotes optional). `p1` is the most urgent and is 4 in the data.
+- **Quick-add words** follow `countdowns.js`: a weekday is the next one after today; numeric dates are day/month; `tom`
+  works only in lower case ("Call Tom" stays a title). `reminder` is minutes before due; `duration` is minutes
+  (`effort_minutes`). I exported `MONTHS`, `MONTH_RE`, `WD_RE` from `public/countdowns.js` (no other change there).
+- Relative reminders (`before_minutes`) need a dated task; they are not checked against a due *time*.
+- `/api/data`'s task queries scan the user's homework rows through `homework_user_due`; the Inbox sibling lookup used for
+  `position` does the same (the partial `homework_project` index only serves rows with a project). Fine at hundreds of tasks.
+
+### Deviations
+
+- The plan lists `comments` and `task_reminders` under "CRUD"; reminders and comments have no GET of their own except
+  `GET /api/homework/{id}/comments` (reminders come with each task in `/api/data`).
+- Section 4 of the plan (API reference) was **not** updated with the new endpoints; the list above is the record.
+- The website was not opened in a browser (headless session). "Add, complete and delete homework" is covered through the
+  same endpoints by `test/tasks.test.js` ("the homework endpoints behave as before") and `test/plate.test.js`,
+  which passes unchanged (`/api/plan` reads as before).
+
+### Unverified (needs a real device or a deploy)
+
+- Migration `0020` on the real D1 (`wrangler d1 migrations apply --remote` was not run, by rule); it ran against the
+  `node:sqlite` shim and the local wrangler D1 used by `tools/e2e.sh --smoke`.
+- The website in a browser with the new `/api/data` fields; Google Calendar sync of a task that moves or loses its date (no Google link in tests).
+- The full `tools/e2e.sh` (see above). Nothing in the app uses the new endpoints yet.
+- The Kotlin ports (`recurrence.js`, `quickadd.js`, `filters.js`) are Phase 11.
+
+### Still deferred
+
+Everything in the Phase 9 "Still deferred" list, and the Phase 11/13 items from reviews 4, 5 and 7.
