@@ -1415,3 +1415,28 @@ Nothing from the deferred lists was skipped. The Phase 8 items in review 7 that 
 ### Open questions
 
 - Should a refused change's draft come back? The old forms kept the draft on a refusal; the offline-first flow accepts the change at once, so after a 4xx the form is already free and only the message remains. If you want the draft back, the dropped mutation would have to be kept and offered for editing.
+
+## Review 11 fixes
+
+Branch `native/phase-11`. Findings 1 and 2 were blocking, finding 3 minor; all three are done, one commit each.
+
+1. **A retried DELETE reported a false error** (`b0aa1ee`). `DataRepository.flushQueue`: a 404 on a queued `DELETE` is now treated as done (settled like a 2xx, no message); a 404 on any other method is still a refusal. New test `MutationOutboxTest.aRetriedDeleteThatFindsTheRowGoneIsSettledQuietly`: the first DELETE reaches the server but its answer is lost, the retry gets 404, `error` stays null, 0 pending, the row stays gone.
+2. **Undo of a repeating task wasn't idempotent.**
+   - Server (`68a5b18`, `Server:` commit): `POST /api/homework/:id/uncomplete` and `PATCH {done: false}` take an optional `occurrence`, the due date the client saw after completing. A repeating task is only rewound when that still equals the stored `due_date`; without `occurrence` it behaves as before. No migration. New test in `test/tasks.test.js` ("a repeated undo of a repeating task (same occurrence) rewinds it once"): a daily task completed twice, the same uncomplete sent twice rewinds once (one `completions` row left), `PATCH done: false` is guarded the same way, and the date it moved on to still rewinds.
+   - App (`37f57b9`): `Mutations.uncompleteTask(id, occurrence, reload)` sends `occurrence`; `ShellViewModel.toggleHomework` passes the task's current `due_date` for a repeating task (what the screen shows after completing). New test `MutationOutboxTest.undoOfARepeatingTaskSendsTheOccurrenceItMovedOnTo` (body carries `occurrence`).
+3. **Unicode whitespace** (`f56b60d`). `jsRegex` in `Recurrence.kt` (used by `QuickAdd.kt`, `Filters.kt`, `Recurrence.kt` instead of `Regex(...)`) rewrites `\s` and `\S` to JavaScript's whitespace set (U+00A0, U+1680, U+2000 to U+200A, U+2028/9, U+202F, U+205F, U+3000, U+FEFF and the ASCII ones); `\d`, `\w` and `\b` stay ASCII as in JS. I did not use `UNICODE_CHARACTER_CLASS`, which would also make `\d` match non-ASCII digits and so differ from JS. Golden inputs with U+00A0 added in `extract-tasklang-fixtures.mjs`: two quick-add inputs and two filter queries; `tasklang.json` and the quick-add and filter golden files regenerated from the JS (existing entries unchanged, only additions). With the old Kotlin the new inputs fail `QuickAddGoldenTest.inputs`, `FiltersGoldenTest.queries` and `treesAndErrors`; with the fix they pass.
+
+### Commands and results
+
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL; result XML: 1106 tests, 0 failures, 0 errors, 0 skipped; lint passed; Roborazzi verify passed, no PNG changed.
+- `tools/e2e.sh`: first run FAILED, second run BUILD SUCCESSFUL, 5 tests, 0 failures. The first failure was `LocalServerTest.a_signInAndLiveShell` at `LocalServerTest.kt:258`: `JSONException: Value null at planned_at`, plus `b_cachedOfflineProcessRestart` failing as a consequence ("First test must finish before offline restart"). Cause, read from the test and not reproduced: the test waits for the app's snapshot to show `planned_at` (the optimistic value, since the calendar's plan goes through the online `mutate`) and then reads the server at once, so it can read before the PATCH has landed. That path and test are untouched by this review (I changed none of the calendar code); it passed on the rerun. Not fixed here; a robust version would wait until `dataFromServer()` has the value.
+
+### Not changed
+
+- The note about `AppNavAccountTest.switchingAccountsDiscardsSavedNavigationAndAction`: it did not fail in this session, so it is left alone.
+- Deploy: `0020` and `0021` still need applying to prod (owner's call). The server change in `68a5b18` needs a deploy for Undo's `occurrence` to take effect; an older server ignores the field and behaves as before.
+
+### Unverified
+
+- The 404-on-DELETE and Undo paths against a real tunnel on a device (MockWebServer and the server's own tests only).
