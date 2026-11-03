@@ -32,6 +32,29 @@ class SettingsUiTest {
     private fun scrollToText(text: String) = ui.onNodeWithTag("settings-list").performScrollToNode(hasText(text, substring = true))
     private fun idle(cond: () -> Boolean) = ui.waitUntil(5_000) { org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); cond() }
 
+    @Test fun deviceSwitchesStartOnExceptHomeworkWhileGoogleCalendarIsConnectedAndSaveWhatYouChoose() {
+        val actions = FakeSettingsActions()
+        var asked = 0
+        val data = settingsData()   // Google Calendar connected
+        ui.setContent { Attendance80Theme { SettingsScreen(data, data.events, emptyList(), settingsNow, settingsZone, actions, {}, {}, baseUrl = "https://app.test", onAskNotifications = { asked++ }) } }
+        scrollTo("notify-checkin"); ui.onNodeWithTag("notify-checkin").assertIsOn()
+        scrollTo("notify-exam"); ui.onNodeWithTag("notify-exam").assertIsOn()
+        scrollTo("notify-homework"); ui.onNodeWithTag("notify-homework").assertIsOff()
+        ui.onNodeWithTag("notify-homework").performClick()
+        idle { actions.calls.isNotEmpty() }
+        assertEquals("device NotifyChoices(checkin=true, homework=true, exam=true)", actions.calls.single())
+        assertEquals(1, asked) // asked in context, when a reminder switch is turned on
+        scrollTo("notify-checkin"); ui.onNodeWithTag("notify-checkin").performClick()
+        idle { actions.calls.size == 2 }
+        assertEquals("device NotifyChoices(checkin=false, homework=true, exam=true)", actions.calls.last())
+    }
+
+    @Test fun homeworkRemindersAreOnByDefaultWithoutGoogleCalendar() {
+        val actions = FakeSettingsActions()
+        show(actions, settingsBase())
+        scrollTo("notify-homework"); ui.onNodeWithTag("notify-homework").assertIsOn()
+    }
+
     @Test fun noCalendarOpensTheAddBoxAndAddsALink() {
         val actions = FakeSettingsActions()
         show(actions, settingsBase().copy(calendars = emptyList(), calendarSyncs = emptyList()))

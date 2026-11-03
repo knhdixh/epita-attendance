@@ -63,7 +63,12 @@ class MainActivity : ComponentActivity() {
 
     private val notifications = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
         // Draw the timer notification now that it may be shown.
-        lifecycleScope.launch { (application as App).container.focusController?.restore() }
+        lifecycleScope.launch {
+            val container = (application as App).container
+            container.focusController?.restore()
+            // Reminders that were due while the permission was missing go out now.
+            container.reminders?.run(container.dataRepository.snapshot.value)
+        }
     }
 
     /** Asked in context, the first time a timer starts, and at most once. Never at launch. */

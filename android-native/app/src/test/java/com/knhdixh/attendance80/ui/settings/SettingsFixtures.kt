@@ -27,6 +27,9 @@ internal class FakeSettingsActions(var tokens: List<PersonalTokenDto> = emptyLis
     override suspend fun saveRules(threshold: Double, unit: String) = true.also { calls += "rules $threshold $unit" }
     override suspend fun saveNotify(body: kotlinx.serialization.json.JsonObject) = true.also { calls += "notify $body" }
     override suspend fun addLink(url: String, name: String, from: String?) = true.also { calls += "link $url|$name|$from" }
+    val device = kotlinx.coroutines.flow.MutableStateFlow(com.knhdixh.attendance80.notify.NotifyChoices())
+    override val deviceNotify get() = device
+    override suspend fun saveDeviceNotify(choices: com.knhdixh.attendance80.notify.NotifyChoices) { calls += "device $choices"; device.value = choices }
     override suspend fun uploadFile(ics: String, fileName: String, replaceId: Long?) = true.also { calls += "upload $fileName $replaceId $ics" }
     override suspend fun editCalendar(id: Long, name: String, attendance: Boolean, from: String?) = true.also { calls += "edit $id $name $attendance $from" }
     override suspend fun syncCalendar(id: Long) = true.also { calls += "sync $id" }
