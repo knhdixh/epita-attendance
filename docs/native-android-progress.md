@@ -895,3 +895,44 @@ The one remaining item of the re-review in `docs/native-android-review-5.md`: th
 - `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 867 unit tests, 0 failures, 0 errors, 0 skipped (result XML). Roborazzi verified; no PNG changed (`git status` clean).
 - `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
 - **Unverified:** the migration and exact alarm over a real TWA install with a running timer (needs a device); the deferred items in the review are unchanged.
+
+## Phase 6: widget (2026-11-03)
+
+Branch `native/phase-6`. Server untouched.
+
+### What I did
+
+1. **`WidgetSnapshot` (`677eaf2`).** `widget/WidgetSnapshot.kt`: plain data (signed in, up to 8 upcoming sessions, top 3 *Do next*, the timer). `buildWidgetPlan` uses the same rules as `buildPlan` (tracked courses, no excused or future-absent sessions, no all-day items; *Do next* is `buildPlan(...).todo.take(3)`); `buildWidgetTimer` from `FocusTimer` + settings; `nextWidgetRefresh` for the next redraw. `WidgetStore` writes `filesDir/snapshots/widget.json` (the folder already excluded from backup) atomically; the plan part and the timer part are replaced separately. 14 tests in `WidgetSnapshotTest` (fixture data, in-progress class, hidden sessions, store, refresh time).
+2. **Glance widget and wiring (`d3367d3`; tasks 2 and 3 are one commit because the surfaces call the redraw).**
+   - `FocusGlanceWidget` (Glance 1.1.1, `GlanceTheme` = dynamic colour on Android 12+), `FocusWidgetReceiver`, `focus_widget_info.xml` (4×2 default, resizable to 2×2), manifest receiver. Responsive: 2×2 shows next class and timer; 4×2 and up adds *Do next*. Never touches the network.
+   - Timer: Start / Pause / Resume button runs `FocusController.toggle()` (same as tile and notification). The running countdown is a `Chronometer` through `AndroidRemoteViews`, so the system ticks it with no wake-ups.
+   - Taps: class → `a80://session/{id}`, to-do → `a80://homework/{id}`, timer text → `a80://focus` (existing deep links).
+   - Writers: `FocusController` calls new `FocusSurfaces.timerChanged` on every render (default no-op, so existing fakes are unchanged); `AndroidFocusSurfaces` writes the timer part and redraws. `AppContainer.startData` collects `DataRepository.snapshot` and writes the plan part (skips the empty snapshot before the cache is read).
+   - Redraw: one inexact alarm to `FocusReceiver` (`ACTION_WIDGET_REFRESH`) at the next class boundary, midnight or due time; also the 30 min `updatePeriodMillis`.
+   - Tests: `WidgetTextTest` (6, wording and states), `WidgetRenderTest` (3, real Glance content rendered through Robolectric and read back: 2×2 has no *Do next*, 4×2 has it, signed out), `WidgetTimerWiringTest` (controller → store).
+
+### Checks (after `d3367d3`)
+
+- `npm test`: 104 tests, 104 pass, 0 fail.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. 891 unit tests, 0 failures, 0 errors, 0 skipped (result XML). No PNG changed (`git status` clean).
+- `tools/e2e.sh`: BUILD SUCCESSFUL, "Both local-server instrumented tests passed" (2/2).
+- An earlier full run, on a machine with load average above 15, failed 3 tests (`ShellUiTest.today`, `SessionUiTest.selectionUsesVisibleIdsAndClearsWhenFilterChanges`, `OfflineShellTest.cachedShellStaysVisibleWhileRefreshIsDelayed`). Run alone they passed, and the full run then passed. I did not change them; they look load-dependent (the last is the known deferred one).
+
+### Deviations
+
+- The plan part is written by a collector on `DataRepository.snapshot` in `AppContainer`, not inside `DataRepository`, so the repository is unchanged.
+- The timer opens Focus (plan wording), not the quick-focus sheet the old widget opened.
+- `FocusSurfaces` got `timerChanged` (default no-op) rather than a changed `refresh()`.
+- No Roborazzi screenshot of the widget (the render test reads text instead).
+
+### Unverified (needs a real device)
+
+- Placing the widget, the 2×2 / 4×2 layouts and look at real sizes, dynamic colour on Android 12+.
+- The chronometer ticking, and the button toggling the timer from a cold process.
+- The redraw alarm at class boundaries and midnight, and the redraw after boot or a time-zone change.
+- Taps opening the session, to-do and Focus screens from the launcher.
+- The old TWA widget being replaced on an update (it is not removed or migrated).
+
+### Open questions
+
+None.
