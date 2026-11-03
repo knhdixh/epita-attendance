@@ -4,7 +4,7 @@ import { HttpError } from './http.js';
 import { cleanHabit, isKey, MAX_HABITS } from '../public/habits.js';
 import { CLIENT_ID } from './homework-columns.js';
 
-const COLUMNS = 'id, name, icon, color, schedule, target, unit, remind_at, position, archived, created_at';
+const COLUMNS = 'id, name, icon, color, schedule, target, unit, remind_at, position, archived, client_id, created_at';
 const MAX_COUNT = 999;
 export const LOG_DAYS = 400;   // how far back /api/data and /api/plan load check-ins
 
