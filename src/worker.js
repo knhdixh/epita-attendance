@@ -1,9 +1,14 @@
 import { TAGS, STATUSES } from '../public/stats.js';
-import { buildFeed } from './homework.js';
+import { buildFeed, NO_DATE } from './homework.js';
 import { buildTimetableFeed } from './timetable-feed.js';
 import { GCAL_SCOPE, encrypt, deleteGcalEvent, resync, disconnect } from './gcal.js';
 import { HttpError } from './http.js';
-import { HOMEWORK_COLUMNS, createHomework, updateHomework, planHomework } from './homework-store.js';
+import { HOMEWORK_COLUMNS, createHomework, updateHomework, planHomework, completeTask, uncompleteTask, deleteTask } from './homework-store.js';
+import { moveTasks } from './placement.js';
+import {
+  createRow, updateRow, deleteRow, reorderRows, listComments, createComment, updateComment, deleteComment,
+  createReminder, updateReminder, deleteReminder, taskDataQueries, hydrate, hydrateRows, listCompletions,
+} from './tasks.js';
 import { deleteAccount } from './account.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
@@ -332,7 +337,7 @@ async function handleFeed(env, url) {
   if (m[2] === '/timetable.ics') return timetableFeed(env, url, user);
   const [homework, courses] = await env.DB.batch([
     // Upcoming homework plus the last 60 days, so the feed stays small.
-    env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND due_at > ? ORDER BY due_at`)
+    env.DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND due_date != '${NO_DATE}' AND due_at > ? ORDER BY due_at`)
       .bind(user.id, Date.now() - 60 * 86400000),
     env.DB.prepare('SELECT id, name FROM courses WHERE user_id = ?').bind(user.id),
   ]);
@@ -423,7 +428,7 @@ async function handleApi(request, env, url, user) {
   let m;
 
   if (path === '/api/data' && method === 'GET') {
-    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns, devices] = await DB.batch([
+    const all = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, description, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -439,7 +444,10 @@ async function handleApi(request, env, url, user) {
       ...habitQueries(env, user, logsSince()),
       DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
       DB.prepare('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?').bind(user.id),
+      ...taskDataQueries(env, user),
     ]);
+    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns, devices] = all;
+    const taskData = all.slice(11);
     const gcal = link.results[0];
     return json({
       user: { email: user.email, name: user.name, picture: user.picture, threshold: user.threshold, unit: user.unit },
@@ -447,7 +455,12 @@ async function handleApi(request, env, url, user) {
       courses: courses.results,
       // cals: the calendars (groups) each session is in.
       events: events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals).sort((a, b) => a - b) })),
-      homework: homework.results,
+      // Tasks without a date are left out unless the client asks (?tasks=1), so older clients see what they always did.
+      homework: hydrate(homework.results, taskData, { dated: url.searchParams.get('tasks') !== '1' }),
+      projects: taskData[0].results.map((p) => ({ ...p, favorite: Boolean(p.favorite), archived: Boolean(p.archived) })),
+      sections: taskData[1].results,
+      labels: taskData[2].results.map((l) => ({ ...l, favorite: Boolean(l.favorite) })),
+      filters: taskData[3].results.map((f) => ({ ...f, favorite: Boolean(f.favorite) })),
       breaks: breaks.results.map((b) => ({ ...b, sessions: JSON.parse(b.changes).length, changes: undefined })),
       integrations: {
         feedUrl: `${url.origin}/feed/${await feedToken(env, user)}.ics`,
@@ -474,7 +487,7 @@ async function handleApi(request, env, url, user) {
       DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
         FROM events WHERE user_id = ? AND end_at > ? AND start_at < ? ORDER BY start_at`).bind(user.id, now - 14 * 86400000, now + 21 * 86400000),
-      DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND (done = 0 OR due_at > ?) ORDER BY due_at`).bind(user.id, now - 14 * 86400000),
+      DB.prepare(`SELECT ${HOMEWORK_COLUMNS} FROM homework WHERE user_id = ? AND due_date != ? AND (done = 0 OR due_at > ?) ORDER BY due_at`).bind(user.id, NO_DATE, now - 14 * 86400000),
       DB.prepare('SELECT id, name, attendance FROM calendar_sources WHERE user_id = ? ORDER BY created_at, id').bind(user.id),
       DB.prepare(`SELECT ${FOCUS_COLUMNS} FROM focus_sessions WHERE user_id = ? AND started_at >= ? ORDER BY started_at`)
         .bind(user.id, now - FOCUS_DATA_DAYS * 86400000),
@@ -557,22 +570,53 @@ async function handleApi(request, env, url, user) {
     return json(await removeBreak(env, user, Number(m[1])));
   }
 
+  const task = async (hw) => (await hydrateRows(env, user, [hw]))[0];
+
   if (path === '/api/homework' && method === 'POST') {
-    return json(await createHomework(env, user, await readJson(request), url.origin));
+    return json(await task(await createHomework(env, user, await readJson(request), url.origin)));
   }
 
   if (path === '/api/homework/plan' && method === 'POST') return json(await planHomework(env, user, await readJson(request)));
 
-  if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'PATCH') {
-    return json(await updateHomework(env, user, Number(m[1]), await readJson(request), url.origin));
+  if (path === '/api/homework/move' && method === 'POST') {
+    const r = await moveTasks(env, user, await readJson(request));
+    return json({ homework: await hydrateRows(env, user, r.homework) });
   }
 
-  if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'DELETE') {
-    const hw = await DB.prepare('DELETE FROM homework WHERE id = ? AND user_id = ? RETURNING gcal_event_id')
-      .bind(Number(m[1]), user.id).first();
-    if (!hw) throw new HttpError(404, 'Homework not found.');
-    await deleteGcalEvent(env, user.id, hw.gcal_event_id);
-    return json({ ok: true });
+  if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'PATCH') {
+    return json(await task(await updateHomework(env, user, Number(m[1]), await readJson(request), url.origin)));
+  }
+
+  if ((m = path.match(/^\/api\/homework\/(\d+)\/complete$/)) && method === 'POST') return json(await task(await completeTask(env, user, Number(m[1]), url.origin)));
+  if ((m = path.match(/^\/api\/homework\/(\d+)\/uncomplete$/)) && method === 'POST') return json(await task(await uncompleteTask(env, user, Number(m[1]), url.origin)));
+
+  if ((m = path.match(/^\/api\/homework\/(\d+)$/)) && method === 'DELETE') return json(await deleteTask(env, user, Number(m[1])));
+
+  if ((m = path.match(/^\/api\/homework\/(\d+)\/comments$/))) {
+    if (method === 'GET') return json(await listComments(env, user, Number(m[1])));
+    if (method === 'POST') return json(await createComment(env, user, Number(m[1]), await readJson(request)));
+  }
+  if ((m = path.match(/^\/api\/comments\/(\d+)$/))) {
+    if (method === 'PATCH') return json(await updateComment(env, user, Number(m[1]), await readJson(request)));
+    if (method === 'DELETE') return json(await deleteComment(env, user, Number(m[1])));
+  }
+  if ((m = path.match(/^\/api\/homework\/(\d+)\/reminders$/)) && method === 'POST') return json(await createReminder(env, user, Number(m[1]), await readJson(request)));
+  if ((m = path.match(/^\/api\/reminders\/(\d+)$/))) {
+    if (method === 'PATCH') return json(await updateReminder(env, user, Number(m[1]), await readJson(request)));
+    if (method === 'DELETE') return json(await deleteReminder(env, user, Number(m[1])));
+  }
+
+  if (path === '/api/completions' && method === 'GET') {
+    return json(await listCompletions(env, user, Math.max(Number(url.searchParams.get('since')) || 0, Date.now() - 400 * 86400000)));
+  }
+
+  // Projects, sections, labels and filters share one shape: POST, PATCH /<id>, DELETE /<id>, POST /reorder.
+  if ((m = path.match(/^\/api\/(projects|sections|labels|filters)(?:\/(\d+|reorder))?$/))) {
+    const [, table, rest] = m;
+    if (!rest && method === 'POST') return json(await createRow(env, user, table, await readJson(request)));
+    if (rest === 'reorder' && method === 'POST') return json(await reorderRows(env, user, table, await readJson(request)));
+    if (rest && rest !== 'reorder' && method === 'PATCH') return json(await updateRow(env, user, table, Number(rest), await readJson(request)));
+    if (rest && rest !== 'reorder' && method === 'DELETE') return json(await deleteRow(env, user, table, Number(rest)));
   }
 
   if (path === '/api/gcal/resync' && method === 'POST') {

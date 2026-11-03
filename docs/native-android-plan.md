@@ -477,7 +477,7 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | POST | `/auth/passkey/login/verify` | `{ response }` + `X-A80-App: 1` → `{ ok, token }` |
 | POST | `/auth/logout` | → `{ ok }` |
 | GET | `/api/me` | → `{ user }` |
-| GET | `/api/data` | → `{ user, account, courses, events, homework, breaks, integrations, calendars, calendarSyncs, focus, habits, countdowns, notifications }` |
+| GET | `/api/data` | → `{ user, account, courses, events, homework, projects, sections, labels, filters, breaks, integrations, calendars, calendarSyncs, focus, habits, countdowns, notifications }`. **Send `?tasks=1`** to get tasks without a date too (see "Tasks" below) |
 | GET | `/api/plan?tz=` | → plan for scripts (the app computes its own; not needed) |
 | GET | `/api/focus?since=` | → `{ sessions, since }` (Focus page loads a year) |
 | POST | `/api/focus` | focus log → session row |
@@ -488,9 +488,24 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | PATCH | `/api/courses/{id}` | `{ tracked?, tag?, recording_url? }` → `{ ok }` |
 | POST | `/api/courses/tracked` | `{ updates: [{ id, tracked }] }` → `{ ok }` |
 | POST | `/api/catchups` | `{ event_id, tz }` → homework row (returns existing catch-up for that session if present) |
-| POST | `/api/homework` | homework input → homework row |
-| PATCH | `/api/homework/{id}` | partial input → homework row |
-| DELETE | `/api/homework/{id}` | → `{ ok }` |
+| POST | `/api/homework` | homework input (+ task fields, see "Tasks" below) → task row |
+| PATCH | `/api/homework/{id}` | partial input → task row. A change of `done` goes through complete / uncomplete (below) |
+| DELETE | `/api/homework/{id}` | → `{ ok }` (subtasks, labels, comments, reminders and completions go with it) |
+| POST | `/api/homework/move` | `{ ids, project_id?, section_id?, parent_id?, position? }` → `{ homework: [task rows] }` |
+| POST | `/api/homework/{id}/complete` | → task row |
+| POST | `/api/homework/{id}/uncomplete` | → task row |
+| GET | `/api/homework/{id}/comments` | → `{ comments }` |
+| POST | `/api/homework/{id}/comments` | `{ body, client_id? }` → comment `{ id, homework_id, body, client_id, created_at, updated_at }` |
+| PATCH/DELETE | `/api/comments/{id}` | `{ body }` → comment / `{ ok }` |
+| POST | `/api/homework/{id}/reminders` | `{ at }` (epoch ms) or `{ before_minutes }` (0–40320), `client_id?` → `{ id, homework_id, at, before_minutes, … }` |
+| PATCH/DELETE | `/api/reminders/{id}` | same body as create / → `{ ok }` |
+| POST | `/api/projects` | `{ name, color?, view?: 'list'\|'board', favorite?, archived?, parent_id?, position?, client_id? }` → project row |
+| POST | `/api/sections` | `{ project_id, name, position?, client_id? }` → section row |
+| POST | `/api/labels` | `{ name, color?, favorite?, position?, client_id? }` → label row (name: no spaces, `@` or `#`; unique ignoring case) |
+| POST | `/api/filters` | `{ name, query, color?, favorite?, position?, client_id? }` → filter row (`query` must parse, `public/filters.js`) |
+| PATCH/DELETE | `/api/{projects,sections,labels,filters}/{id}` | partial body as create → the row / `{ ok }` (deleting a project deletes its subprojects, sections and tasks) |
+| POST | `/api/{projects,sections,labels,filters}/reorder` | `{ ids }` → `{ ok }` (positions become the order given) |
+| GET | `/api/completions?since=` | → `{ completions: [{ id, homework_id, completed_at, due_date }] }` (finished occurrences of repeating tasks; `since` up to 400 days back) |
 | POST | `/api/breaks` | `{ from, to, label, tz }` → `{ break, sessions }` |
 | DELETE | `/api/breaks/{id}` | → `{ restored }` |
 | POST | `/api/calendars` | `{ kind: 'link', url, from?, name?, attendance? }` or `{ kind: 'file', ics, fileName?, name?, attendance? }` → `{ calendar: id, ...importSummary }` |
@@ -515,7 +530,35 @@ All JSON. Errors are `{ error: string }` with a 4xx/5xx status. Auth: `Authoriza
 | DELETE | `/api/data` | → `{ ok }` (removes calendars, events, courses and breaks; keeps homework) |
 | DELETE | `/api/account` | `{ confirm: 'DELETE' }` → `{ ok }` |
 
-Field names and types: read the SQL in `src/worker.js` (`/api/data`), `HOMEWORK_COLUMNS` in
+### Tasks (Phase 10)
+
+A task is a homework row. New fields: `project_id` (null = Inbox), `section_id`, `parent_id` (subtask), `priority` (1–4, **4
+is p1**, default 1), `position`, `recurrence` (canonical text such as `every mon, wed`, see `public/recurrence.js`),
+`deadline_date`, `completed_at`, `client_id`. Each row in `/api/data` also has `labels: [label ids]`, `comment_count` and
+`reminders: [{ id, at, before_minutes }]`. Create and update bodies take `label_ids: [ids]` (replaces the set; leave it out to keep it).
+
+- **`client_id`** (8–64 chars of `A-Za-z0-9_-`) is accepted on every create above (tasks, projects, sections, labels, filters,
+  comments, reminders). Sending a `client_id` the user already used returns the existing row with 200, so a retry is safe.
+- **No date.** Send `due_date: null` (a *missing* `due_date` is still "Invalid due date"). The row comes back with `due_date`,
+  `due_time` and `due_at` all `null`; it is stored as `9999-12-31` (`NO_DATE`), which only matters if you read the database.
+  `/api/data` leaves undated tasks out unless the request has `?tasks=1`; `/api/plan`, the `.ics` feed and Google Calendar
+  never show them. **The native app must always send `tasks=1`.** Send `tz` with an undated task: giving it a date later
+  needs a time zone, taken from the PATCH body, else the one it was created with, else the saved notification one, else
+  400 "Send your time zone (tz) when you give an undated task a date." Repeats and `before_minutes` reminders need a date.
+- **Placement.** `POST /api/homework/move` and a `PATCH` that has any of `project_id`, `section_id`, `parent_id`, `position`
+  share one rule: the destination is the three ids given, and **any left out are null** (Inbox, no section, top level); leave
+  all three out to reorder in place (the ids must then share a place). A subtask lives in its parent's project and section; a
+  section fixes the project. The tasks land at `position` among their new siblings, in the order of `ids`, and the siblings are
+  renumbered. A task can't go inside itself (400).
+- **Complete / uncomplete.** `/complete` completes the task and its open subtasks (`done = 1`, `completed_at`). A repeating task
+  moves to its next date instead (`done` stays 0, the plan block is cleared, its subtasks open again) and adds a `completions`
+  row; once its series has ended it is completed for good. `/uncomplete` reopens a completed task, or puts a repeating task
+  back on the date it was completed for (within a day of that); it reopens only that task, not its subtasks. `PATCH { done }`
+  does exactly this (any other fields in the body are saved first), so the website and the app agree.
+- **Token scope.** A personal `write` token (`a80_…`) may call `/api/homework` (create, patch, delete), `plan`, `move`, `complete` and `uncomplete`;
+  project, section, label, filter, comment and reminder endpoints are closed to personal tokens; the app's own token (`a80s_…`) and the website session can use all of them.
+
+Field names and types: read the SQL in `src/worker.js` (`/api/data`), `src/tasks.js`, `HOMEWORK_COLUMNS` in
 `src/homework-store.js`, `FOCUS_COLUMNS` in `src/focus.js`, `listCalendars` in `src/calendars.js` and the
 migrations. Booleans stored as SQLite integers arrive as `0`/`1` (`tracked`, `done`, `completed`,
 `attendance` on courses); write a serializer that accepts both numbers and booleans. Times are epoch ms; dates are
