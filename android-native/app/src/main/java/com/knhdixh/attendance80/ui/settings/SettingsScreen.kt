@@ -93,7 +93,8 @@ fun timetableFeedUrl(feedUrl: String, ids: List<Long>): String {
 fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>, now: Long, zone: ZoneId,
                    actions: SettingsActions, onSignOut: () -> Unit, onNavigate: (String) -> Unit,
                    baseUrl: String = BuildConfig.BASE_URL,
-                   request: com.knhdixh.attendance80.ui.search.PaletteAction.OpenForm? = null, onRequestConsumed: () -> Unit = {}) {
+                   request: com.knhdixh.attendance80.ui.search.PaletteAction.OpenForm? = null, onRequestConsumed: () -> Unit = {},
+                   onAskNotifications: () -> Unit = {}) {
     if (data == null) { Box(Modifier.fillMaxSize().padding(16.dp)) { CircularProgressIndicator() }; return }
     val context = LocalContext.current
     val coroutines = rememberCoroutineScope()
@@ -147,7 +148,12 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
     LazyColumn(Modifier.fillMaxSize().imePadding().testTag("settings-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item("account") { AccountPanel(data.user, onSignOut) }
         item("rules") { RulesPanel(data.user, busy) { t, u -> run { actions.saveRules(t, u) } } }
-        item("notify") { NotifyPanel(data.notifications.settings, busy) { body -> run { actions.saveNotify(body) } } }
+        item("notify") {
+            val device by actions.deviceNotify.collectAsState(com.knhdixh.attendance80.notify.NotifyChoices())
+            NotifyPanel(data.notifications.settings, device, data.integrations.gcal != null, busy,
+                onSave = { body -> run { actions.saveNotify(body) } },
+                onSaveDevice = { choices -> if (choices.checkin || choices.homework == true || choices.exam) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
+        }
         calendarsPanel(data, allEvents ?: data.events, now, zone, busy, editing, adding,
             onEdit = { editing = it }, onAdding = { adding = it },
             onSave = { id, name, attendance, from -> run { if (actions.editCalendar(id, name, attendance, from)) editing = null } },
@@ -271,7 +277,8 @@ private fun RulesPanel(user: UserDto, busy: Boolean, onSave: (Double, String) ->
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotifyPanel(s: NotifySettingsDto, busy: Boolean, onSave: (kotlinx.serialization.json.JsonObject) -> Unit) {
+private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.notify.NotifyChoices, googleConnected: Boolean, busy: Boolean,
+                        onSave: (kotlinx.serialization.json.JsonObject) -> Unit, onSaveDevice: (com.knhdixh.attendance80.notify.NotifyChoices) -> Unit) {
     fun save(classes: Boolean = s.classes, lead: Int = s.classLead, habits: Boolean = s.habits, focus: Boolean = s.focus) =
         onSave(buildJsonObject { put("classes", classes); put("classLead", lead); put("habits", habits); put("focus", focus) })
     Panel("Notifications") {
@@ -293,7 +300,9 @@ private fun NotifyPanel(s: NotifySettingsDto, busy: Boolean, onSave: (kotlinx.se
         }
         toggle("Habit reminders, at the time set on each habit", s.habits, "notify-habits") { save(habits = it) }
         toggle("Focus timer: when a focus or break ends", s.focus, "notify-focus") { save(focus = it) }
-        Hint("Classes are the tracked courses you're going to: sessions marked absent or excused are skipped. These settings are shared with the website; this app will post them itself in a coming update.")
+        toggle("After class: ask if you were there", device.checkin, "notify-checkin") { onSaveDevice(device.copy(checkin = it)) }
+        Hint("A notification when a tracked session ends and is still unmarked, with Present, Absent and Excused buttons.")
+        Hint("The switches above are shared with the website. The app posts them itself, and never registers for web push, so nothing arrives twice. The ones below are for this device only.")
     }
 }
 

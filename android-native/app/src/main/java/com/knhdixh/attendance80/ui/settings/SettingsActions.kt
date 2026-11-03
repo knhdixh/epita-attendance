@@ -12,6 +12,9 @@ import kotlinx.serialization.json.put
 interface SettingsActions {
     suspend fun saveRules(threshold: Double, unit: String): Boolean = false
     suspend fun saveNotify(body: JsonObject): Boolean = false
+    /** The reminder switches that belong to this device, not the account. */
+    val deviceNotify: kotlinx.coroutines.flow.Flow<com.knhdixh.attendance80.notify.NotifyChoices> get() = kotlinx.coroutines.flow.flowOf(com.knhdixh.attendance80.notify.NotifyChoices())
+    suspend fun saveDeviceNotify(choices: com.knhdixh.attendance80.notify.NotifyChoices) {}
     suspend fun addLink(url: String, name: String, from: String?): Boolean = false
     suspend fun uploadFile(ics: String, fileName: String, replaceId: Long?): Boolean = false
     suspend fun editCalendar(id: Long, name: String, attendance: Boolean, from: String?): Boolean = false
@@ -89,6 +92,12 @@ class AccountSettingsActions(private val container: AppContainer, private val ow
         val withTz = JsonObject(body + ("tz" to kotlinx.serialization.json.JsonPrimitive(container.clock.zone().id)))
         return repo.mutate({ it }, { api.saveNotifySettings(withTz) },
             { d, r -> d.copy(notifications = d.notifications.copy(settings = r.settings, devices = r.devices)) }, expectedOwner = owner)
+    }
+
+    override val deviceNotify get() = container.notifyStore?.choices ?: super.deviceNotify
+    override suspend fun saveDeviceNotify(choices: com.knhdixh.attendance80.notify.NotifyChoices) {
+        val store = container.notifyStore ?: return
+        store.setCheckin(choices.checkin); choices.homework?.let { store.setHomework(it) }; store.setExam(choices.exam)
     }
 
     override suspend fun addLink(url: String, name: String, from: String?) =

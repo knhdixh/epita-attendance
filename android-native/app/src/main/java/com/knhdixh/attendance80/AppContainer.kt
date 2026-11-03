@@ -13,12 +13,14 @@ import com.knhdixh.attendance80.data.Scope
 import com.knhdixh.attendance80.net.ApiClient
 import com.knhdixh.attendance80.focus.*
 import com.knhdixh.attendance80.logic.FocusSettings
+import com.knhdixh.attendance80.notify.notifyDataStore
 import com.knhdixh.attendance80.widget.WidgetStore
 import com.knhdixh.attendance80.widget.redrawWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 
 interface AppContainer {
     val context: Context
@@ -32,6 +34,10 @@ interface AppContainer {
     val focusController: FocusController? get() = null
     val focusOutbox: Outbox? get() = null
     val focusStore: FocusStore? get() = null
+    /** Reminders posted by the app itself (Phase 7). Null in tests that don't need them. */
+    val notifyStore: com.knhdixh.attendance80.notify.NotifyStore? get() = null
+    val reminders: com.knhdixh.attendance80.notify.ReminderEngine? get() = null
+    val reminderActions: com.knhdixh.attendance80.notify.ReminderActions? get() = null
     val baseUrl: String get() = BuildConfig.BASE_URL
 }
 
@@ -79,6 +85,22 @@ class DefaultAppContainer(
         )
     }
 
+    override val notifyStore: com.knhdixh.attendance80.notify.NotifyStore by lazy {
+        com.knhdixh.attendance80.notify.NotifyStore(context.notifyDataStore)
+    }
+
+    override val reminders: com.knhdixh.attendance80.notify.ReminderEngine by lazy {
+        com.knhdixh.attendance80.notify.ReminderEngine(clock, notifyStore, com.knhdixh.attendance80.notify.AndroidReminderAlarm(context), reminderNotifier)
+    }
+
+    private val reminderNotifier by lazy { com.knhdixh.attendance80.notify.AndroidReminderNotifier(context) }
+
+    override val reminderActions: com.knhdixh.attendance80.notify.ReminderActions by lazy {
+        com.knhdixh.attendance80.notify.ReminderActions(clock, notifyStore, reminderNotifier,
+            flush = { com.knhdixh.attendance80.notify.WorkActionScheduler(context).requestFlush() },
+            snapshot = { dataRepository.snapshot.value })
+    }
+
     override val focusOutbox: Outbox by lazy {
         Outbox(focusStore, api, recorded = { dataRepository.recordFocus(it) })
     }
@@ -105,6 +127,10 @@ class DefaultAppContainer(
             dataRepository.snapshot.collectLatest { data -> writer.onSnapshot(data) }
         }
         scope.launch {
+            // Reminders follow the snapshot and the three device switches, whoever changed them.
+            dataRepository.snapshot.combine(notifyStore.choices) { data, _ -> data }.collectLatest { data -> reminders.run(data) }
+        }
+        scope.launch {
             focusController.restore() // loads (and so migrates), then finishes what is due or re-arms
         }
         WorkOutboxScheduler(context).requestFlush()
@@ -112,7 +138,7 @@ class DefaultAppContainer(
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
                 // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
-                if (token == null) focusController.signedOut()
+                if (token == null) { focusController.signedOut(); reminders.signedOut() }
                 dataRepository.start()
                 if (token != null) dataRepository.refresh()
             }

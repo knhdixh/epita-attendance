@@ -168,6 +168,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 countdownActions = androidx.compose.runtime.remember(token) { shellViewModel.countdownActions(token) },
                 focusTimer = focusTimer,
                 timerNow = { shellViewModel.clock.now() },
+                onAskNotifications = onAskNotifications,
                 timerActions = androidx.compose.runtime.remember(token, onAskNotifications) { shellViewModel.timerActions?.let { com.knhdixh.attendance80.focus.AskingActions(it, onAskNotifications) } })
         }
     }

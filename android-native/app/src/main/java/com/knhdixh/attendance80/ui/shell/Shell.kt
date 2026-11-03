@@ -107,6 +107,7 @@ fun Shell(
     focusTimer: FocusTimerState? = null,
     timerActions: com.knhdixh.attendance80.ui.focus.TimerActions? = null,
     timerNow: (() -> Long)? = null,
+    onAskNotifications: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -261,7 +262,8 @@ fun Shell(
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
                                     onSignOut = ::signOut, onNavigate = { navigate(it, topLevel = true) },
                                     request = (action as? PaletteAction.OpenForm)?.takeIf { it.form == "calendar" || it.form == "calendar-upload" },
-                                    onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null })
+                                    onRequestConsumed = { backStackEntry.savedStateHandle["paletteAction"] = null },
+                                    onAskNotifications = onAskNotifications)
                             }
                             else if (route == "countdowns" || route.startsWith("countdowns/")) key(accountKey) {
                                 val ui = runCatching { ApiClient.json.decodeFromString<com.knhdixh.attendance80.ui.countdowns.CountdownsUi>(countdownsUi) }.getOrDefault(com.knhdixh.attendance80.ui.countdowns.CountdownsUi())

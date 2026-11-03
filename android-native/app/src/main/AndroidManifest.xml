@@ -72,6 +72,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Reminders posted by the app: the alarm, re-planning after boots and clock changes, and the notification buttons. -->
+        <receiver android:name=".notify.NotifyReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- The tile: start, pause or resume. Long-press opens the quick-focus sheet. -->
         <service
             android:name=".focus.FocusTileService"
