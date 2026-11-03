@@ -62,6 +62,7 @@ fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId
         if (choices.exam) addAll(examWarnings(data, zone))
         // These two follow the account's switches (the website's `classes`, `classLead` and `habits`), as the server's cron does.
         if (data.notifications.settings.classes) addAll(classReminders(data, now, zone))
+        if (data.notifications.settings.habits) addAll(habitReminders(data, now, zone))
     }
     val horizon = planHorizon(now, zone)
     return all.filter { it.at <= horizon && it.at >= now - lateWindow(it.kind) }.sortedWith(compareBy({ it.at }, { it.key }))
@@ -188,5 +189,30 @@ fun classReminders(data: AppData, now: Long, zone: ZoneId): List<Reminder> {
             body = listOfNotNull("${hhmm(e.start_at, zone)}–${hhmm(e.end_at, zone)}", e.location.ifBlank { null }).joinToString(" · "),
             route = "a80://session/${e.id}", ref = e.id,
         )
+    }
+}
+
+/**
+ * At a habit's `remind_at`, today and tomorrow, if `habitStats` says it is due and not done that day (the same test the
+ * server's cron makes). Done fills the day's target. Re-planned whenever the snapshot changes, so a habit you tick before
+ * its time is dropped.
+ */
+fun habitReminders(data: AppData, now: Long, zone: ZoneId): List<Reminder> {
+    val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val counts = data.habits.logs.groupBy { it.habit_id }.mapValues { (_, logs) -> logs.associate { it.day to it.count } }
+    return data.habits.list.filter { !it.archived && !it.remind_at.isNullOrEmpty() }.flatMap { h ->
+        val time = runCatching { java.time.LocalTime.parse(h.remind_at) }.getOrNull() ?: return@flatMap emptyList()
+        val start = com.knhdixh.attendance80.logic.Habits.keyInZone(h.created_at, zone.id)
+        listOf(today, today.plusDays(1)).mapNotNull { date ->
+            val day = date.toString()
+            val stats = com.knhdixh.attendance80.logic.Habits.habitStats(h, counts[h.id].orEmpty(), day, start)
+            if (!stats.due || stats.todayDone) return@mapNotNull null
+            Reminder(
+                // created_at is in the key because ids are reused after a delete.
+                key = "habit:${h.id}:${h.created_at}:$day", kind = Kinds.HABIT, at = date.atTime(time).atZone(zone).toInstant().toEpochMilli(),
+                title = listOfNotNull(h.icon?.ifBlank { null }, h.name).joinToString(" "), body = "Time for your habit. Tap Done when it's done.",
+                route = "a80://today", ref = h.id, actions = listOf(ReminderAction("Done", "habit-done", day, maxOf(h.target, 1))),
+            )
+        }
     }
 }

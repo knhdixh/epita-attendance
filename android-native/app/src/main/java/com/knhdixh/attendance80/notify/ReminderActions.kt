@@ -23,6 +23,7 @@ class ReminderActions(
                 if (status == "absent") offerCatchup(ref, owner)
             }
             "catchup" -> store.addAction(PendingAction(owner, "catchup", ref, tz = clock.zone().id, at = now))
+            "habit-done" -> store.addAction(PendingAction(owner, "habit-done", ref, value, number, at = now))
             "homework-done" -> store.addAction(PendingAction(owner, "homework-done", ref, at = now))
             "homework-focus" -> { focusOn(ref); return }
             else -> return
