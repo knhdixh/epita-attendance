@@ -145,7 +145,7 @@ fun SessionsScreen(data: AppData?, now: Long, zone: ZoneId, filter: SessionFilte
     val allFamilies = groupFamilies(data.courses)
     val families = if (allFamilies.any { f -> f.courses.any { it.tracked } }) emptyList() else allFamilies
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    LazyColumn(Modifier.fillMaxSize().testTag("sessions-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().imePadding().testTag("sessions-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (families.isNotEmpty()) item("groups") { Column { Text("Pick your groups for ${families.joinToString { it.family }}."); TextButton(onClick = { onNavigate("courses") }) { Text("Choose groups") } } }
         item("filters") { Column {
             OutlinedButton(onClick = { menu = true }) { Text(data.courses.find { it.id == course }?.name ?: if (hidden) "All courses" else "All tracked courses") }

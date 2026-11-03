@@ -135,7 +135,7 @@ fun BreaksScreen(data: AppData?, now: Long, zone: ZoneId, pick: BreakPick, onPic
     fun save() { scope.launch { busy = true; if (onSave(pick)) onPick(pick.clear()); busy = false } }
     val list = androidx.compose.foundation.lazy.rememberLazyListState()
 
-    LazyColumn(Modifier.fillMaxSize().testTag("breaks-list"), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize().imePadding().testTag("breaks-list"), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item("calendar") { MonthCard(m, s.base.days, saved, pick, month, minMonth, maxMonth, onPick) }
         item("panel") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

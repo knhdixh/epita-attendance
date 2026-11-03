@@ -6,6 +6,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -101,6 +102,7 @@ fun SignInContent(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             contentAlignment = Alignment.Center,
         ) {
