@@ -1024,3 +1024,28 @@ All code is in `notify/` and `share/`. One planner (`planReminders`, pure: data 
 
 - Should the three device switches move into `notify_settings` (a server change, a migration-free JSON field) so a second device agrees? I left them local.
 - Optional sessions: skip the check-in for them?
+
+## Review 7 fixes (2026-11-03)
+
+Branch `native/phase-7`. No server, migration, secret or `android/` change.
+
+1. **Cold-process buttons (`497ad58`).** `ReminderActions` now takes a suspending snapshot provider. The container's one waits for the token, returns null if signed out, calls `dataRepository.start()` (publishes the cache), then reads the snapshot. So both Absent → catch-up and Focus on this see the data in a fresh process. "Focus on this" looks the homework up in that snapshot, keeps the owner check, and the container applies the loaded focus settings and account (`updateSettings`, `setAccount`) before `focusOn`. The owner check in `offerCatchup` stays. Tests: `focusOnThisWaitsForTheSnapshotAndStartsWithTheAccountsLength` (50 min from a snapshot that loads late; the snapshot is null until a deferred completes), `absentWaitsForTheSnapshotThenOffersTheCatchup`, `focusOnThisIgnoresAnotherAccountsHomework`. Reading `snapshot.value` instead would make the two waiting tests fail, since the provider is the only thing that waits. I did not run that swap by hand.
+2. **Notification permission (`95c7543`).** Settings → Notifications shows a row (`notify-blocked`) with an **Allow** button when the system blocks the app's notifications and any reminder switch is on. The button (`MainActivity.fixNotifications`) asks if the system still will (`canAskNotifications`: before the first ask, or after one denial), otherwise opens `ACTION_APP_NOTIFICATION_SETTINGS`; it is not limited to once. `onResume` and the permission callback recompute the blocked state and re-run the engine (only with a loaded snapshot, so a not-yet-loaded `null` can't cancel the alarm). Turning Classes or Habits on asks, like the device switches. **First in-context ask, chosen:** the first time the Notifications panel is shown while blocked (once, via `askNotificationsOnce`). Tests: three Settings UI tests (blocked row and tap, no row when allowed, Classes on asks / Habits off doesn't) and `CanAskNotificationsTest`.
+3. **Class reminders (`42a924f`).** The alarm is now `setExactAndAllowWhileIdle` (wakeup). Why exact: the app already holds `USE_EXACT_ALARM` for the focus timer, reminders for calendar events are what it is for, and `setWindow` is not exempt from Doze, so it can't bound the delay while idle (the review's suggestion assumed it was). If exact alarms are revoked (Android 12), it falls back to a 10 min `setWindow`. The midnight re-plan is kept. A class reminder is now accepted until the session starts (at least 5 min after its time, so lead 0 keeps "starts now"): new `Reminder.until`. `ClassReminderTest` changed to the new rule (08:56 → "in 4 min"; 09:01 dropped) plus a lead-0 grace test. New `AndroidReminderAlarmTest` (Robolectric): wakeup at the planned time, exact; the fallback has a 10 min window; replace and cancel. The shadow doesn't record "while idle" for the exact call, so that part is **Unverified** by test.
+4. **`.ics` off the main thread (`17fa31a`).** `readsAProvider(intent)` decides from action and URIs without a provider call. For those intents `MainActivity.handleIntent` reads in `lifecycleScope` on `Dispatchers.IO`, then delivers to `PendingRouteViewModel` on the main thread; nothing new shows meanwhile. Plain shared text stays synchronous. 5 MB limit and messages unchanged; `IncomingTest` still tests `readIncoming`, plus a test for `readsAProvider`.
+- **Test setup (`62ec20e`).** `LocalServerTest` grants `POST_NOTIFICATIONS` up front: the new first ask opens a system dialog when Settings opens, which covered the app (first e2e run: both tests failed with "No compose hierarchies"). No assertion changed.
+
+### Checks
+
+- `npm test`: 104 tests, 104 pass.
+- `ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL, 998 unit tests, 0 failures, 0 errors, 0 skipped (result XML); Roborazzi verified with no PNG changed (`git status` clean). It ran before `62ec20e`, which only touches the androidTest source (rebuilt by the e2e run).
+- `tools/e2e.sh`: first run failed 0/2 (dialog above); after `62ec20e`: BUILD SUCCESSFUL, 2/2. One earlier e2e attempt hit the tool's time limit and was killed, then re-run.
+- An `OfflineShellTest` failure appeared once in a partial run under load and passed alone and in the full run.
+
+### Unverified (device, Phase 9 checklist additions from the review)
+
+- Focus on this and Absent → Add catch-up after the process was killed.
+- A fresh install on Android 13+ (the prompt, the Allow row, the system-settings path after two denials).
+- A class reminder after a night in Doze (exact alarm).
+- Opening an `.ics` Drive has not downloaded.
+- Deferred, still open: TWA `app = 1` push subscriptions (Phase 9, server), engine `run(null)` and `NonCancellable`, stale-cache check-ins, the `file` scheme, outbox folding (Phase 11).
