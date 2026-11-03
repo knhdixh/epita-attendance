@@ -1,6 +1,8 @@
 package com.knhdixh.attendance80.notify
 
+import com.knhdixh.attendance80.logic.TAGS
 import com.knhdixh.attendance80.logic.countsAttendance
+import com.knhdixh.attendance80.logic.effectiveTag
 import com.knhdixh.attendance80.net.AppData
 import java.time.Instant
 import java.time.ZoneId
@@ -57,6 +59,7 @@ fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId
     val all = buildList {
         if (choices.checkin) addAll(checkIns(data, zone))
         if (choices.homeworkOn(data.integrations.gcal != null)) addAll(homeworkReminders(data, zone))
+        if (choices.exam) addAll(examWarnings(data, zone))
     }
     val horizon = planHorizon(now, zone)
     return all.filter { it.at <= horizon && it.at >= now - lateWindow(it.kind) }.sortedWith(compareBy({ it.at }, { it.key }))
@@ -128,6 +131,37 @@ fun homeworkReminders(data: AppData, device: ZoneId, locale: java.util.Locale = 
             body = listOfNotNull(due, hw.course_id?.let { courses[it]?.name }).joinToString(" · "),
             route = "a80://homework/${hw.id}", ref = hw.id,
             actions = listOf(ReminderAction("Done", "homework-done"), ReminderAction("Focus on this", "homework-focus")),
+        )
+    }
+}
+
+/** Where the exam and mandatory warning goes each morning. */
+val EXAM_WARNING_TIME: java.time.LocalTime = java.time.LocalTime.of(8, 0)
+
+/**
+ * 08:00 on a day with an exam or a mandatory session you have to be at: tracked courses that count for attendance, not
+ * excused. One notification a day, listing the sessions, so a day with two exams is one warning, not two.
+ */
+fun examWarnings(data: AppData, zone: ZoneId): List<Reminder> {
+    val courses = data.courses.associateBy { it.id }
+    val byDay = data.events.filter { e ->
+        val course = courses[e.course_id]
+        countsAttendance(course) && e.status != "excused" && TAGS[effectiveTag(e, course)]?.mustAttend == true
+    }.groupBy { Instant.ofEpochMilli(it.start_at).atZone(zone).toLocalDate() }
+    return byDay.map { (date, events) ->
+        val sorted = events.sortedBy { it.start_at }
+        val exams = sorted.count { effectiveTag(it, courses[it.course_id]) == "exam" }
+        val lines = sorted.map { e ->
+            val name = courses[e.course_id]?.name ?: e.summary
+            val tag = TAGS.getValue(effectiveTag(e, courses[e.course_id])).label.lowercase()
+            "${hhmm(e.start_at, zone)}–${hhmm(e.end_at, zone)} $name ($tag)" + if (e.location.isNotBlank()) " · ${e.location}" else ""
+        }
+        Reminder(
+            key = "exam:$date", kind = Kinds.EXAM, at = date.atTime(EXAM_WARNING_TIME).atZone(zone).toInstant().toEpochMilli(),
+            title = when { exams > 0 && exams == sorted.size -> if (exams == 1) "Exam today" else "$exams exams today"
+                           exams == 0 -> if (sorted.size == 1) "Mandatory session today" else "${sorted.size} mandatory sessions today"
+                           else -> "${sorted.size} sessions you can't miss today" },
+            body = lines.joinToString("\n"), route = "a80://today",
         )
     }
 }

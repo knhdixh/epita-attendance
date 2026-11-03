@@ -311,12 +311,14 @@ private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.n
         }
         toggle("Habit reminders, at the time set on each habit", s.habits, "notify-habits") { save(habits = it) }
         toggle("Focus timer: when a focus or break ends", s.focus, "notify-focus") { save(focus = it) }
+        Hint("The switches above are shared with the website. The app posts them itself, and never registers for web push, so nothing arrives twice. The ones below are for this device only.")
         toggle("After class: ask if you were there", device.checkin, "notify-checkin") { onSaveDevice(device.copy(checkin = it)) }
         Hint("A notification when a tracked session ends and is still unmarked, with Present, Absent and Excused buttons.")
         toggle("Homework reminders on this device", device.homeworkOn(googleConnected), "notify-homework") { onSaveDevice(device.copy(homework = it)) }
         Hint(if (googleConnected) "Off until you turn it on, because Google Calendar already sends each reminder. Reminders use the time set on each homework item, with Done and Focus on this buttons."
             else "Uses the reminder set on each homework item, with Done and Focus on this buttons. All-day items remind you at 18:00.")
-        Hint("The switches above are shared with the website. The app posts them itself, and never registers for web push, so nothing arrives twice. The ones below are for this device only.")
+        toggle("Exam and mandatory days, at 08:00", device.exam, "notify-exam") { onSaveDevice(device.copy(exam = it)) }
+        Hint("One notification on a day with an exam or a mandatory session at a tracked course, listing them.")
     }
 }
 
