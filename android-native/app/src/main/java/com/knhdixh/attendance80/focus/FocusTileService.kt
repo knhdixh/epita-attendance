@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.knhdixh.attendance80.widget.WidgetStore
 import com.knhdixh.attendance80.widget.buildWidgetTimer
-import com.knhdixh.attendance80.widget.redrawWidget
+import com.knhdixh.attendance80.widget.requestWidgetRedraw
 import java.text.DateFormat
 import java.util.Date
 
@@ -64,5 +64,5 @@ class FocusTileService : TileService() {
 
 class AndroidFocusSurfaces(private val context: Context, private val widget: WidgetStore) : FocusSurfaces {
     override fun timerChanged(timer: FocusTimer, settings: FocusSettings, now: Long) { widget.updateTimer(buildWidgetTimer(timer, settings, now)) }
-    override fun refresh() { FocusTileService.refresh(context); redrawWidget(context) }
+    override fun refresh() { FocusTileService.refresh(context); requestWidgetRedraw(context) }
 }

@@ -11,6 +11,8 @@ import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceRemoteViews
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.nio.file.Files
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,9 +34,11 @@ class WidgetRenderTest {
         timer = WidgetTimer(running = true, phase = "focus", endsAt = now + 600_000, label = "Revise"),
     )
 
-    private fun texts(size: DpSize, s: WidgetSnapshot): List<String> {
+    private fun texts(size: DpSize, s: WidgetSnapshot): List<String> = texts(size) { WidgetContent(s, now) }
+
+    private fun texts(size: DpSize, content: @androidx.compose.runtime.Composable () -> Unit): List<String> {
         val views = runBlocking {
-            GlanceRemoteViews().compose(context, size) { GlanceTheme { WidgetContent(s, now) } }.remoteViews
+            GlanceRemoteViews().compose(context, size) { GlanceTheme { content() } }.remoteViews
         }
         val root = views.apply(context, FrameLayout(context))
         val out = mutableListOf<String>()
@@ -57,5 +61,28 @@ class WidgetRenderTest {
 
     @Test fun signedOutAsksToOpenTheApp() {
         assertTrue("Open the app to sign in" in texts(DpSize(110.dp, 110.dp), WidgetSnapshot()))
+    }
+
+    @Test fun hostDrawsWhatTheStoreHoldsNowNotWhatItHeldWhenTheSessionStarted() {
+        val store = WidgetStore(File(Files.createTempDirectory("widget-host").toFile(), "widget.json"))
+        val alarms = mutableListOf<Long>()
+        val size = DpSize(110.dp, 110.dp)
+        val host = @androidx.compose.runtime.Composable { WidgetFromStore(store, store.revision.value, clock = { now }, schedule = { _, at -> alarms += at }) }
+        store.updatePlan(snapshot)
+        store.updateTimer(snapshot.timer) // start
+        assertTrue("Pause" in texts(size, host))
+        store.updateTimer(WidgetTimer(phase = "focus", running = true, paused = true, leftMs = 300_000, endsAt = 0L)) // pause, seconds later
+        val t = texts(size, host)
+        assertTrue(t.toString(), "Resume" in t && "Pause" !in t)
+        assertTrue("the alarm is set from what is drawn", alarms.isNotEmpty() && alarms.all { it > now })
+    }
+
+    @Test fun everyWriteAndTouchMovesTheRevisionALiveSessionCollects() {
+        val store = WidgetStore(File(Files.createTempDirectory("widget-rev").toFile(), "widget.json"))
+        val r0 = store.revision.value
+        store.updateTimer(WidgetTimer())
+        val r1 = store.revision.value
+        store.touch()
+        assertTrue(r1 > r0 && store.revision.value > r1)
     }
 }

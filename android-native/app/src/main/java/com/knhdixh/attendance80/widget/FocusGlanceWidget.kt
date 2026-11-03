@@ -10,6 +10,10 @@ import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -106,10 +110,9 @@ class FocusGlanceWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Responsive(setOf(SMALL, WIDE))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val snapshot = WidgetStores.get(context).read()
-        val now = System.currentTimeMillis()
-        nextWidgetRefresh(snapshot, now, ZoneId.systemDefault())?.let { scheduleWidgetRefresh(context, it) }
-        provideContent { GlanceTheme { WidgetContent(snapshot, now) } }
+        val store = WidgetStores.get(context)
+        // Nothing is read out here: a session that is still alive does not run provideGlance again, so the content reads the store itself.
+        provideContent { GlanceTheme { WidgetHost(store) } }
     }
 }
 
@@ -126,6 +129,31 @@ class ToggleTimerCallback : ActionCallback {
 
 private fun open(context: Context, uri: String) =
     actionStartActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri), context, MainActivity::class.java))
+
+/**
+ * Reads the store and the clock inside the composition, each time the store changes, and sets the redraw alarm from what
+ * it draws. Glance only recomposes a live session; it does not call provideGlance again.
+ */
+@Composable
+internal fun WidgetHost(store: WidgetStore) {
+    val revision by store.revision.collectAsState()
+    WidgetFromStore(store, revision)
+}
+
+/** The part of the host that reads the store and the clock at composition time; [revision] only says when to read again. */
+@Composable
+internal fun WidgetFromStore(
+    store: WidgetStore,
+    revision: Long,
+    clock: () -> Long = System::currentTimeMillis,
+    schedule: (Context, Long) -> Unit = ::scheduleWidgetRefresh,
+) {
+    val context = LocalContext.current
+    val snapshot = remember(revision) { store.read() }
+    val now = remember(revision) { clock() }
+    SideEffect { nextWidgetRefresh(snapshot, now, ZoneId.systemDefault())?.let { schedule(context, it) } }
+    WidgetContent(snapshot, now)
+}
 
 @Composable
 internal fun WidgetContent(s: WidgetSnapshot, now: Long) {
@@ -197,10 +225,20 @@ private fun dayLabel(ms: Long, now: Long): String = when {
     else -> DateFormat.format("EEE d MMM", ms).toString()
 }
 
-/** Redraws every placed widget from the stored snapshot. Safe to call from anywhere; it does nothing if none is placed. */
-fun redrawWidget(context: Context) {
+/**
+ * Redraws every placed widget from the stored snapshot, and returns once the update is enqueued. A live Glance session picks
+ * the change up from the store's revision; [updateAll] starts a session when there is none. Does nothing if none is placed.
+ */
+suspend fun redrawWidget(context: Context) {
     val app = context.applicationContext
-    CoroutineScope(Dispatchers.Default).launch { runCatching { FocusGlanceWidget().updateAll(app) } }
+    WidgetStores.get(app).touch()
+    runCatching { FocusGlanceWidget().updateAll(app) }
+}
+
+/** For callers that cannot suspend (the controller's surfaces). A live widget redraws at once; a receiver should still await [redrawWidget]. */
+fun requestWidgetRedraw(context: Context) {
+    WidgetStores.get(context).touch()
+    CoroutineScope(Dispatchers.Default).launch { runCatching { FocusGlanceWidget().updateAll(context.applicationContext) } }
 }
 
 /** One inexact alarm for the next time the widget changes by itself (a class starts or ends, midnight, a due time). */
