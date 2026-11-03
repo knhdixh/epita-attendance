@@ -8,6 +8,7 @@
 #   android-native/tools/run-phase.sh 5 --resume   # carry on the last Phase 5 session if it stopped early
 #   android-native/tools/run-phase.sh 5 --fix 4,5  # fix docs/native-android-review-4.md and -5.md on native/phase-5
 #   android-native/tools/run-phase.sh 5 --resume fix  # carry on the last fix session
+#   android-native/tools/run-phase.sh 9 --brief docs/briefs/phase-9-local.md  # a custom task instead of the plan's phase
 #
 # Output: android-native/build/phase-runs/phase-<n>.json (cost, session id) and .log (the run, streamed).
 set -euo pipefail
@@ -40,8 +41,15 @@ deny=(
   "Read(.dev.vars)" "Read(android/keystore.properties)" "Read(android/signing.txt)"
 )
 
-prompt="Implement Phase $phase of docs/native-android-plan.md on the branch $branch (already checked out).
-Read AGENTS.md first, then the plan's sections A, B, 0, 8 and 9 and the whole of Phase $phase, then the end of
+if [[ "$mode" == "--brief" ]]; then
+  brief="${3:?usage: run-phase.sh <phase> --brief <file>}"
+  task="$(cat "$brief")
+Read AGENTS.md first, then the plan's sections A, B, 0, 8 and 9, then the end of"
+else
+  task="Implement Phase $phase of docs/native-android-plan.md on the branch $branch (already checked out).
+Read AGENTS.md first, then the plan's sections A, B, 0, 8 and 9 and the whole of Phase $phase, then the end of"
+fi
+prompt="$task
 docs/native-android-progress.md (the last few entries only; it is long). Earlier reviews defer items to later
 phases: grep docs/native-android-review-*.md for 'Phase $phase' and do every item deferred to this phase too (list them
 in the log and say which you did). Build from the existing code in
