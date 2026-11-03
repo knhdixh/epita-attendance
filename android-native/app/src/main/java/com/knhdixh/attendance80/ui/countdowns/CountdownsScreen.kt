@@ -131,7 +131,7 @@ fun CountdownsScreen(data: AppData?, now: Long, zone: ZoneId, ui: CountdownsUi, 
     fun create(d: Draft, quiet: Boolean = false) = scope.launch {
         actions.create(draftBody(d))?.let { row ->
             onUi(ui.copy(adding = false, editing = null, draft = "", preset = null))
-            if (!quiet) Countdowns.view(row, System.currentTimeMillis(), zone).let { v -> actions.message("Added “${row.title}”: ${v.parts} ${direction(v)}.") }
+            if (!quiet) Countdowns.view(row, at, zone).let { v -> actions.message("Added “${row.title}”: ${v.parts} ${direction(v)}.") }
         }
     }
     @Composable fun item(c: CountdownDto, v: Countdowns.View) {
@@ -172,9 +172,9 @@ fun CountdownsScreen(data: AppData?, now: Long, zone: ZoneId, ui: CountdownsUi, 
                 Text("From your timetable", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     sugg.forEach { (e, title) ->
-                        InputChip(false, { create(Draft(title, e.start_at, false, color = "red", pinned = true, startAt = System.currentTimeMillis(), eventId = e.id)) },
+                        InputChip(false, { create(Draft(title, e.start_at, false, color = "red", pinned = true, startAt = at, eventId = e.id)) },
                             { Text("+ $title · ${whenLabel(e.start_at, false, now, zone)}") },
-                            trailingIcon = { Icon(Icons.Outlined.Close, "Don’t suggest $title", Modifier.size(16.dp).clickable { onUi(ui.copy(dismissed = (ui.dismissed + e.id).takeLast(200))) }) },
+                            trailingIcon = { Icon(Icons.Outlined.Close, "Don’t suggest $title", Modifier.size(16.dp).clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = "Don’t suggest $title") { onUi(ui.copy(dismissed = (ui.dismissed + e.id).takeLast(200))) }) },
                             modifier = Modifier.testTag("countdown-exam-${e.id}"))
                     }
                 }

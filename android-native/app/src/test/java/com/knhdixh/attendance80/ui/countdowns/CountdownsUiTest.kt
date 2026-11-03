@@ -61,6 +61,8 @@ class CountdownsUiTest {
         assertEquals(cdAt("2026-12-12", 9), body["at"]!!.jsonPrimitive.long)
         assertFalse(body["all_day"]!!.jsonPrimitive.boolean)
         assertTrue(actions.messages.last().startsWith("Added “Algo exam”: "))
+        // The wording counts from the shell's clock (cdNow), not the wall clock.
+        assertTrue(actions.messages.last(), actions.messages.last().contains(v.parts))
     }
 
     @Test fun editorFineTunesWithAPreviewAndSaves() {
