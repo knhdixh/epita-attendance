@@ -23,7 +23,7 @@ class TaskReminderTest {
     private fun task(id: Long, title: String, date: String?, time: String? = null, vararg reminders: TaskReminderDto, recurrence: String? = null, done: Boolean = false, tz: String = "Europe/Paris") =
         homework(id, title, date, time, done = done, tz = tz).copy(reminders = reminders.toList(), recurrence = recurrence)
     private fun data(vararg rows: HomeworkDto) = emptyData(homework = rows.toList())
-    private fun plan(d: AppData, now: String, choices: NotifyChoices = NotifyChoices(checkin = false, exam = false), snoozes: Map<Long, Long> = emptyMap()) =
+    private fun plan(d: AppData, now: String, choices: NotifyChoices = NotifyChoices(checkin = false, exam = false), snoozes: Map<Long, TaskSnooze> = emptyMap()) =
         planReminders(d, choices, at(now), PARIS, snoozes)
 
     @Test fun anAbsoluteReminderGoesAtItsTime() {
@@ -95,15 +95,24 @@ class TaskReminderTest {
 
     @Test fun aSnoozedTaskGetsItsOwnReminderAndNotWhenItIsDone() {
         val open = task(1, "Essay", "2026-11-03", "10:00")
-        val snoozed = plan(data(open), "2026-11-02T09:00:00", snoozes = mapOf(1L to at("2026-11-02T09:10:00"))).single()
+        val snoozed = plan(data(open), "2026-11-02T09:00:00", snoozes = mapOf(1L to TaskSnooze(at("2026-11-02T09:10:00"), "2026-11-03"))).single()
         assertEquals(at("2026-11-02T09:10:00"), snoozed.at); assertEquals("Essay", snoozed.title); assertTrue(snoozed.key.startsWith("snooze:1:"))
-        assertTrue(plan(data(open.copy(done = true)), "2026-11-02T09:00:00", snoozes = mapOf(1L to at("2026-11-02T09:10:00"))).isEmpty())
+        assertTrue(plan(data(open.copy(done = true)), "2026-11-02T09:00:00", snoozes = mapOf(1L to TaskSnooze(at("2026-11-02T09:10:00"), "2026-11-03"))).isEmpty())
+    }
+
+    @Test fun aSnoozeIsDroppedOnceTheRepeatingTaskHasMovedOnOrIsGone() {
+        val snooze = mapOf(1L to TaskSnooze(at("2026-11-02T09:10:00"), "2026-11-02"))
+        // Pressed on the 2 Nov occurrence; the task was ticked and now sits on 3 Nov, still open.
+        val moved = task(1, "Pills", "2026-11-03", "09:00", recurrence = "every day")
+        assertTrue(plan(data(moved), "2026-11-02T09:00:00", snoozes = snooze).isEmpty())
+        assertEquals(1, plan(data(moved.copy(due_date = "2026-11-02")), "2026-11-02T09:00:00", snoozes = snooze).size)
+        assertTrue(plan(data(), "2026-11-02T09:00:00", snoozes = snooze).isEmpty())
     }
 
     @Test fun theStoreKeepsSnoozesPerAccountAndForgetsOldOnes() = runBlocking {
         val s = NotifyStore(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("n.preferences_pb") })
-        s.snooze("me@example.com", 1, 5_000); s.snooze("you@example.com", 2, 6_000)
-        assertEquals(mapOf(1L to 5_000L), s.snoozes("me@example.com", 1_000))
+        s.snooze("me@example.com", 1, TaskSnooze(5_000, "2026-11-03")); s.snooze("you@example.com", 2, TaskSnooze(6_000))
+        assertEquals(mapOf(1L to TaskSnooze(5_000, "2026-11-03")), s.snoozes("me@example.com", 1_000))
         assertTrue(s.snoozes("me@example.com", 5_000 + 4 * 24 * 3600_000L).isEmpty())
         s.signedOut(); assertTrue(s.snoozes("me@example.com", 1_000).isEmpty())
     }
@@ -116,7 +125,7 @@ class TaskReminderTest {
         var now = at("2026-11-02T09:00:00")
         val clock = object : com.knhdixh.attendance80.Clock { override fun now() = now; override fun zone() = PARIS }
         val engine = ReminderEngine(clock, store, alarm, notifier)
-        store.snooze("me@example.com", 1, at("2026-11-02T09:10:00"))
+        store.snooze("me@example.com", 1, TaskSnooze(at("2026-11-02T09:10:00"), "2026-11-03"))
         engine.run(d)
         assertTrue(notifier.posted.isEmpty()); assertEquals(at("2026-11-02T09:10:00"), alarm.at)
         now = at("2026-11-02T09:10:00"); engine.run(d); engine.run(d)
@@ -124,7 +133,7 @@ class TaskReminderTest {
     }
 
     @Test fun theSnoozeButtonsStoreTheEndAndTheMenuOffersTheThreeLengths() = runBlocking {
-        val notifier = FakeNotifier(); val snoozed = mutableListOf<Triple<String, Long, Long>>()
+        val notifier = FakeNotifier(); val snoozed = mutableListOf<Triple<String, Long, TaskSnooze>>()
         val loaded = data(task(1, "Essay", "2026-11-03", "10:00"))
         val now = at("2026-11-02T09:00:00")
         val actions = ReminderActions(testClock(now), notifier, { loaded }, { _: QueuedMutation, _: String -> true }, snooze = { o, id, until -> snoozed += Triple(o, id, until) })
@@ -132,9 +141,10 @@ class TaskReminderTest {
         val menu = notifier.posted.single().first
         assertEquals(listOf("10 min", "1 hour", "Tomorrow"), menu.actions.map { it.label })
         assertEquals(listOf("task:1:7:0"), notifier.cancelled)
-        actions.handle("snooze", 1, Snooze.TEN_MIN, null, "me@example.com", menu.key)
-        actions.handle("snooze", 1, Snooze.TOMORROW, null, "me@example.com", menu.key)
-        assertEquals(listOf(now + 600_000, at("2026-11-03T09:00:00")), snoozed.map { it.third })
+        actions.handle("snooze", 1, menu.actions[0].value, null, "me@example.com", menu.key)
+        actions.handle("snooze", 1, menu.actions[2].value, null, "me@example.com", menu.key)
+        assertEquals(listOf(now + 600_000, at("2026-11-03T09:00:00")), snoozed.map { it.third.until })
+        assertEquals(listOf("2026-11-03", "2026-11-03"), snoozed.map { it.third.due })
         // A task that has been done since is not offered a snooze.
         val gone = ReminderActions(testClock(now), FakeNotifier().also { notifier.posted.clear() }, { data(task(1, "Essay", "2026-11-03", "10:00", done = true)) }, { _, _ -> true })
         gone.handle("snooze-menu", 1, null, null, "me@example.com", "k")

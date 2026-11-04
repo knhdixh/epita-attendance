@@ -69,7 +69,7 @@ internal fun hhmm(ms: Long, zone: ZoneId): String = DateTimeFormatter.ofPattern(
  * Everything that may be posted now or later today and tomorrow, soonest first. Pure: the same data, switches, time
  * and zone always give the same list.
  */
-fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId, snoozes: Map<Long, Long> = emptyMap()): List<Reminder> {
+fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId, snoozes: Map<Long, TaskSnooze> = emptyMap()): List<Reminder> {
     val all = buildList {
         if (choices.checkin) addAll(checkIns(data, zone))
         if (choices.homeworkOn(data.integrations.gcal != null)) addAll(homeworkReminders(data, zone))

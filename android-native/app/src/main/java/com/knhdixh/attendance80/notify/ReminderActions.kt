@@ -18,8 +18,8 @@ class ReminderActions(
     private val enqueue: suspend (QueuedMutation, String) -> Boolean,
     /** "Focus on this": starts the timer on that homework, with the loaded snapshot's focus settings and account. */
     private val focusOn: suspend (target: FocusTarget, data: AppData) -> Unit = { _, _ -> },
-    /** Remembers that the reminders of task [Long] go off again at [Long] (this device only). */
-    private val snooze: suspend (owner: String, taskId: Long, until: Long) -> Unit = { _, _, _ -> },
+    /** Remembers that the reminders of task [Long] go off again as [TaskSnooze] (this device only). */
+    private val snooze: suspend (owner: String, taskId: Long, snooze: TaskSnooze) -> Unit = { _, _, _ -> },
 ) {
     suspend fun handle(type: String, ref: Long, value: String?, number: Int?, owner: String, key: String) {
         notifier.cancel(key)
@@ -36,7 +36,7 @@ class ReminderActions(
             "snooze-menu" -> { offerSnooze(ref, owner); return }
             "snooze" -> {
                 val until = Snooze.until(value, clock.now(), clock.zone()) ?: return
-                snooze(owner, ref, until)
+                snooze(owner, ref, TaskSnooze(until, Snooze.dueOf(value).orEmpty()))
             }
             else -> return
         }
@@ -58,9 +58,10 @@ class ReminderActions(
         val data = snapshot() ?: return
         if (data.user.email?.lowercase().orEmpty() != owner) return
         val hw = data.homework.find { it.id == taskId && !it.done } ?: return
+        val due = hw.due_date
         notifier.post(Reminder(
             key = "snooze-menu:$taskId", kind = Kinds.TASK, at = clock.now(), title = hw.title, body = "Remind me again in …", route = "a80://homework/$taskId", ref = taskId,
-            actions = listOf(ReminderAction("10 min", "snooze", Snooze.TEN_MIN), ReminderAction("1 hour", "snooze", Snooze.HOUR), ReminderAction("Tomorrow", "snooze", Snooze.TOMORROW)),
+            actions = listOf(ReminderAction("10 min", "snooze", Snooze.value(Snooze.TEN_MIN, due)), ReminderAction("1 hour", "snooze", Snooze.value(Snooze.HOUR, due)), ReminderAction("Tomorrow", "snooze", Snooze.value(Snooze.TOMORROW, due))),
         ), owner)
     }
 

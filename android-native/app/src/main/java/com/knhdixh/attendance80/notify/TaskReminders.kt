@@ -21,14 +21,21 @@ object Snooze {
     /** Tomorrow morning. */
     val TOMORROW_AT: LocalTime = LocalTime.of(9, 0)
 
+    /** A button's value: the length, and the due date of the occurrence it was pressed on (the snooze is dropped once that moves). */
+    fun value(length: String, due: String?) = "$length@${due.orEmpty()}"
+    fun dueOf(value: String?): String? = value?.substringAfter('@', "")?.ifEmpty { null }
+
     /** When a snooze pressed at [now] ends, in [zone]. Null for a value that isn't one of ours. */
-    fun until(value: String?, now: Long, zone: ZoneId): Long? = when (value) {
+    fun until(value: String?, now: Long, zone: ZoneId): Long? = when (value?.substringBefore('@')) {
         TEN_MIN -> now + 10 * MIN
         HOUR -> now + 60 * MIN
         TOMORROW -> Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1).atTime(TOMORROW_AT).atZone(zone).toInstant().toEpochMilli()
         else -> null
     }
 }
+
+/** A snooze: when it ends, and the task's `due_date` when it was pressed ("" for none). */
+data class TaskSnooze(val until: Long, val due: String = "")
 
 private fun zoneOf(hw: HomeworkDto, device: ZoneId): ZoneId = hw.tz?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: device
 
@@ -46,7 +53,7 @@ private fun dueLine(hw: HomeworkDto, locale: java.util.Locale): String? {
 }
 
 internal fun taskActions(hw: HomeworkDto) = listOf(
-    ReminderAction("Done", "homework-done", value = hw.due_date), ReminderAction("Snooze", "snooze-menu"),
+    ReminderAction("Done", "homework-done", value = hw.due_date), ReminderAction("Snooze", "snooze-menu", value = hw.due_date),
 )
 
 /** What a task's notification shows. The same card is posted for a reminder and for the end of a snooze. */
@@ -64,15 +71,16 @@ private fun taskReminder(hw: HomeworkDto, key: String, at: Long, data: AppData, 
  * The reminders on open tasks (`task_reminders`): an absolute time, or minutes before the due time. A repeating task's
  * relative reminders follow its due date to the next occurrence, so completing it re-plans them; an absolute one is a single
  * moment and stays as it is. A task the user is not asked about again (done, or the snooze already used) is not listed.
- * [snoozes] maps a task id to when its snooze ends.
+ * [snoozes] maps a task id to its snooze, which counts only while the task is open and still on the due date it had then
+ * (a repeating task that was ticked has moved on, and the snooze was about the occurrence before).
  */
-fun taskReminders(data: AppData, device: ZoneId, snoozes: Map<Long, Long> = emptyMap(), locale: java.util.Locale = java.util.Locale.getDefault()): List<Reminder> =
+fun taskReminders(data: AppData, device: ZoneId, snoozes: Map<Long, TaskSnooze> = emptyMap(), locale: java.util.Locale = java.util.Locale.getDefault()): List<Reminder> =
     data.homework.filter { !it.done }.flatMap { hw ->
         val own = hw.reminders.mapNotNull { r ->
             val at = r.at ?: r.before_minutes?.let { m -> dueAnchor(hw, device)?.minus(m * MIN) } ?: return@mapNotNull null
             taskReminder(hw, "task:${hw.id}:${r.id}:$at", at, data, locale)
         }
-        val snoozed = snoozes[hw.id]?.let { at -> listOf(taskReminder(hw, "snooze:${hw.id}:$at", at, data, locale)) }.orEmpty()
+        val snoozed = snoozes[hw.id]?.takeIf { it.due == hw.due_date.orEmpty() }?.let { s -> listOf(taskReminder(hw, "snooze:${hw.id}:${s.until}", s.until, data, locale)) }.orEmpty()
         own + snoozed
     }
 

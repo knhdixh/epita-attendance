@@ -29,7 +29,7 @@ class NotifyStore(private val store: DataStore<Preferences>) {
     private val actionsKey = stringPreferencesKey("actions")
     private val tasksKey = booleanPreferencesKey("tasks")
     private val digestKey = stringPreferencesKey("digest_at")
-    private val snoozeKey = stringPreferencesKey("snoozes")
+    private val snoozeKey = stringPreferencesKey("snoozes_due")
 
     val choices: Flow<NotifyChoices> = store.data.map { p ->
         NotifyChoices(checkin = p[checkinKey] ?: true, homework = p[homeworkKey], exam = p[examKey] ?: true, tasks = p[tasksKey] ?: true, digestAt = p[digestKey])
@@ -42,13 +42,19 @@ class NotifyStore(private val store: DataStore<Preferences>) {
     /** The digest's time (`HH:mm`), or null to turn it off. */
     suspend fun setDigest(at: String?) { store.edit { if (at == null) it.remove(digestKey) else it[digestKey] = at } }
 
-    /** Snoozed task reminders for [owner]: task id to when the snooze ends. Ones that ended long ago are forgotten. */
-    suspend fun snoozes(owner: String, now: Long): Map<Long, Long> =
-        loadSent(store.data.first(), snoozeKey).filter { (k, at) -> at > now - KEEP && k.substringBefore('|') == owner }.mapKeys { it.key.substringAfter('|').toLong() }
+    /** Snoozed task reminders for [owner]: task id to the snooze. Ones that ended long ago are forgotten. */
+    suspend fun snoozes(owner: String, now: Long): Map<Long, TaskSnooze> =
+        loadSnoozes(store.data.first()).mapNotNull { (k, v) ->
+            val until = v.substringBefore('|').toLongOrNull() ?: return@mapNotNull null
+            if (until <= now - KEEP || k.substringBefore('|') != owner) return@mapNotNull null
+            k.substringAfter('|').toLong() to TaskSnooze(until, v.substringAfter('|'))
+        }.toMap()
 
-    suspend fun snooze(owner: String, taskId: Long, until: Long) {
-        store.edit { p -> p[snoozeKey] = json.encodeToString(SENT, loadSent(p, snoozeKey) + ("$owner|$taskId" to until)) }
+    suspend fun snooze(owner: String, taskId: Long, snooze: TaskSnooze) {
+        store.edit { p -> p[snoozeKey] = json.encodeToString(TEXT, loadSnoozes(p) + ("$owner|$taskId" to "${snooze.until}|${snooze.due}")) }
     }
+
+    private fun loadSnoozes(p: Preferences): Map<String, String> = p[snoozeKey]?.let { runCatching { json.decodeFromString(TEXT, it) }.getOrNull() }.orEmpty()
 
     /** Keys of reminders already posted (`<account>|<key>`), forgotten after three days. */
     suspend fun sent(now: Long): Set<String> = loadSent(store.data.first()).filterValues { it > now - KEEP }.keys
@@ -66,6 +72,7 @@ class NotifyStore(private val store: DataStore<Preferences>) {
     companion object {
         private const val KEEP = 3 * 24 * 3600_000L
         private val json = Json { ignoreUnknownKeys = true }
+        private val TEXT = MapSerializer(String.serializer(), String.serializer())
         private val SENT = MapSerializer(String.serializer(), Long.serializer())
     }
 }
