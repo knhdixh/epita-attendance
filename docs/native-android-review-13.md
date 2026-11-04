@@ -38,3 +38,11 @@ Branch `native/phase-13` (`954cd32..248e424`), reviewed 2026-11-04.
 
 Phase 13 is the last phase in section 9. After this merges, the remaining work is the device checklists in the Phase 9
 and Phase 12/13 "Unverified" sections, and a real release (Phase 9 step 4 and the Play Console), both for the owner.
+
+---
+
+# Re-review round 1 (2026-11-04): PASS
+
+Both findings are fixed (`2de281a`, `5b562d7`). I opened `phone411x891_light_settings_notifications_1.png`: "Task reminders" and
+"Daily digest" are on, with "Send it at 8:00 AM" and plain copy under each. Gradle: 1215 tests and 0 failures per the log; e2e passed;
+`npm test` 471/471. **Section 9 (Phases 10–13) is complete.**
