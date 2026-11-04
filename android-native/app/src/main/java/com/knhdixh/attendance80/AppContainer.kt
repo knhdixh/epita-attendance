@@ -164,7 +164,7 @@ class DefaultAppContainer(
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
                 // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
-                if (token == null) { focusController.signedOut(); reminders.signedOut(); dataRepository.signedOut(); notifyStore.signedOut() }
+                if (token == null) { focusController.signedOut(); reminders.signedOut(); dataRepository.signedOut(); notifyStore.signedOut(); com.knhdixh.attendance80.widget.taskWidgetPrefs(context).clear() }
                 dataRepository.start()
                 if (token != null) dataRepository.refresh()
             }

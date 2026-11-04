@@ -150,6 +150,15 @@ class TaskReminderTest {
         assertEquals("2026-11-02", queued.single().body["occurrence"]!!.toString().trim('"'))
     }
 
+    @Test fun aWidgetTickIsTheSameQueuedCompleteAndOnlyAParentOrARepeatReloads() = runBlocking {
+        val queued = mutableListOf<QueuedMutation>()
+        val loaded = data(task(1, "Plain", "2026-11-02"), task(2, "Parent", "2026-11-02"), homework(3, "Child").copy(parent_id = 2L))
+        val actions = ReminderActions(testClock(at("2026-11-02T09:00:00")), FakeNotifier(), { loaded }, { m, _ -> queued += m; true })
+        assertTrue(actions.complete(1, "2026-11-02", "me@example.com")); assertTrue(actions.complete(2, null, "me@example.com"))
+        assertEquals(listOf(false, true), queued.map { it.reload }); assertEquals("api/homework/2/complete", queued[1].path)
+        assertTrue("no occurrence when the widget drew none", queued[1].body.isEmpty())
+    }
+
     // ---- the daily digest
 
     private val digestOn = NotifyChoices(checkin = false, exam = false, tasks = false, digestAt = "07:30")

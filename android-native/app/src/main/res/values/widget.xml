@@ -7,4 +7,6 @@
     <color name="widget_soft">#FFEEF3FD</color>
     <color name="widget_break">#FF058527</color>
     <string name="widget_description">Your next class, what to do next and the focus timer</string>
+    <string name="tasks_widget_description">A list of tasks: Today, the Inbox, a project or a filter. Tick them off without opening the app</string>
+    <string name="quick_add_widget_description">Add a task with quick add</string>
 </resources>

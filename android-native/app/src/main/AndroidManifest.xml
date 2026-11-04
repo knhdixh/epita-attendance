@@ -39,6 +39,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="a80" android:host="today" />
                 <data android:scheme="a80" android:host="add" />
+                <data android:scheme="a80" android:host="inbox" />
+                <data android:scheme="a80" android:host="project" />
+                <data android:scheme="a80" android:host="filter" />
                 <data android:scheme="a80" android:host="focus" />
                 <data android:scheme="a80" android:host="homework" />
                 <data android:scheme="a80" android:host="session" />
@@ -143,6 +146,25 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/focus_widget_info" />
+        </receiver>
+
+        <!-- Task list widget (any project, filter, the Inbox or Today) and the quick-add widget. Both read the app's snapshot and write through the outbox. -->
+        <receiver android:name=".widget.TasksWidgetReceiver" android:exported="true" android:label="Tasks">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/tasks_widget_info" />
+        </receiver>
+        <activity android:name=".widget.TasksWidgetConfigActivity" android:exported="true" android:label="Tasks widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".widget.QuickAddWidgetReceiver" android:exported="true" android:label="Add a task">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/quick_add_widget_info" />
         </receiver>
 
         <!-- Quick-focus sheet: from the tile's long-press and the widget. Its own task, so the app doesn't come up behind it. -->

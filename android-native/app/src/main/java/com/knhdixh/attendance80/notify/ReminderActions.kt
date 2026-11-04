@@ -31,13 +31,7 @@ class ReminderActions(
             }
             "catchup" -> enqueue(Mutations.addCatchup(ref, clock.zone().id), owner)
             "habit-done" -> enqueue(Mutations.logHabit(ref, value.orEmpty(), number ?: 1), owner)
-            "homework-done" -> {
-                // `value` is the due date the notification was posted for: a repeating task whose date has moved on since is left alone.
-                val rows = snapshot()?.homework.orEmpty()
-                val row = rows.find { it.id == ref }
-                val moves = row?.recurrence != null || rows.any { it.parent_id == ref }
-                enqueue(Mutations.completeTask(ref, value?.takeIf { it.isNotEmpty() }, reload = moves), owner)
-            }
+            "homework-done" -> complete(ref, value, owner)
             "homework-focus" -> { focus(ref, owner); return }
             "snooze-menu" -> { offerSnooze(ref, owner); return }
             "snooze" -> {
@@ -49,6 +43,17 @@ class ReminderActions(
     }
 
     /** The three snooze lengths, which don't fit beside Done on one notification (Android shows three buttons). */
+    /**
+     * Ticks a task off, from a notification button or a widget. [occurrence] is the due date the surface drew: a repeating task
+     * whose date has moved on since is left alone (the server checks it too). A task with subtasks or a repeat reloads afterwards.
+     */
+    suspend fun complete(ref: Long, occurrence: String?, owner: String): Boolean {
+        val rows = snapshot()?.homework.orEmpty()
+        val row = rows.find { it.id == ref }
+        val moves = row?.recurrence != null || rows.any { it.parent_id == ref }
+        return enqueue(Mutations.completeTask(ref, occurrence?.takeIf { it.isNotEmpty() }, reload = moves), owner)
+    }
+
     private suspend fun offerSnooze(taskId: Long, owner: String) {
         val data = snapshot() ?: return
         if (data.user.email?.lowercase().orEmpty() != owner) return
