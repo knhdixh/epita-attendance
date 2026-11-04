@@ -57,7 +57,7 @@ fun BrowseScreen(data: AppData?, onNavigate: (String) -> Unit, onNewProject: () 
         if (projects.isEmpty()) item("projects-empty") { Text("Projects keep related tasks together.", Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(projects, key = { "p:" + it.first.id }) { (p, depth) -> row(BrowseRow(p.name, "project/${p.id}", Icons.Outlined.Folder, depth, count(p.id))) }
         item("filters-h") { heading("Filters & Labels") }
-        item("filters-row") { row(BrowseRow("Filters & Labels", "filters", Icons.Outlined.FilterList)) }
+        item("filters-row") { row(BrowseRow("Manage", "filters", Icons.Outlined.FilterList)) }
         items(data?.filters.orEmpty(), key = { "f:" + it.id }) { row(BrowseRow(it.name, "filter/${it.id}", Icons.Outlined.FilterList, 1)) }
         items(data?.labels.orEmpty(), key = { "l:" + it.id }) { row(BrowseRow(it.name, "label/${it.id}", Icons.Outlined.Label, 1)) }
         item("school-h") { heading("School") }
