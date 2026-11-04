@@ -158,6 +158,9 @@ object TaskModel {
         return moveBody(id, t.project_id, t.section_id, t.parent_id, list.indexOfFirst { it.id == t.id } + if (below) 1 else 0)
     }
 
+    /** Moves a subtask to [position] among its siblings (where its parent keeps it). */
+    fun moveWithin(h: HomeworkDto, position: Int) = moveBody(h.id, h.project_id, h.section_id, h.parent_id, position)
+
     /** [roots] followed by their open subtasks, indented by depth. Subtasks of ids in [collapsed] are left out. */
     fun flatten(d: AppData, roots: List<HomeworkDto>, collapsed: Set<Long> = emptySet()): List<TaskEntry> {
         val out = mutableListOf<TaskEntry>()

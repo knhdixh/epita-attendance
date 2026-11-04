@@ -455,6 +455,10 @@ fun Shell(
         com.knhdixh.attendance80.ui.tasks.QuickAddSheet(visibleData, today, zone,
             com.knhdixh.attendance80.ui.tasks.QuickDefaults(projectId = projectId, date = if (route == "today") today else null), taskActions, onDismiss = { showQuickAdd = false })
     }
+    if (detailId != null && taskEnv != null) com.knhdixh.attendance80.ui.tasks.TaskDetailSheet(detailId!!, taskEnv, taskActions,
+        onFocus = { id -> detailId = null; pending(PaletteAction.Focus("target", homeworkId = id), "focus") },
+        onPlan = { h -> detailId = null; pending(PaletteAction.OpenForm("calendar-show", input = (h.planned_at ?: h.due_at ?: now).toString()), "calendar") },
+        onDelete = ::deleteHomework, onOpen = { detailId = it }, onDismiss = { detailId = null })
     scheduling?.let { h ->
         fun set(date: String?) { scope.launch { taskActions.update(h.id, com.knhdixh.attendance80.ui.tasks.dateBody(date, zone)) }; scheduling = null }
         com.knhdixh.attendance80.ui.tasks.ScheduleSheet(h, today, onPick = ::set, onDismiss = { scheduling = null }, onPickDate = {

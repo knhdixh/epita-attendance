@@ -22,6 +22,16 @@ class RecordingActions : TaskActions by NoTaskActions {
     val created = mutableListOf<JsonObject>()
     val entities = mutableListOf<Pair<String, JsonObject>>()
     val reminders = mutableListOf<Pair<Long, JsonObject>>()
+    val updates = mutableListOf<Pair<Long, JsonObject>>()
+    val moves = mutableListOf<JsonObject>()
+    val commentsAdded = mutableListOf<Pair<Long, String>>()
+    val reminderDeletes = mutableListOf<Long>()
+    var existingComments = listOf<CommentDto>()
+    override suspend fun update(id: Long, body: JsonObject): Boolean { updates += id to body; return true }
+    override suspend fun move(body: JsonObject): Boolean { moves += body; return true }
+    override suspend fun addComment(taskId: Long, body: String): Boolean { commentsAdded += taskId to body; return true }
+    override suspend fun deleteReminder(id: Long): Boolean { reminderDeletes += id; return true }
+    override suspend fun comments(taskId: Long) = existingComments
     private var next = -1L
     override suspend fun create(body: JsonObject): Long? { created += body; return next-- }
     override suspend fun createEntity(noun: String, body: JsonObject): Long? { entities += noun to body; return next-- }
