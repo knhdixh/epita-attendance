@@ -164,7 +164,7 @@ abstract class ScreenScreenshotTest {
         if (screen == "dialog") compose.onNode(isDialog()).captureRoboImage(file)
         else compose.onRoot().captureRoboImage(file)
         if (screen == "shell" && scale == 2f && device.startsWith("phone")) {
-            compose.onNodeWithContentDescription("More").performClick()
+            compose.onNodeWithContentDescription("Browse").performClick()
         }
         if (screen == "signin" && scale == 2f) {
             compose.onNodeWithText("Create an account with a passkey").performScrollTo().assertIsDisplayed().performClick()
