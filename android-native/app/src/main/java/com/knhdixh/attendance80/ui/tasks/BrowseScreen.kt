@@ -64,6 +64,6 @@ fun BrowseScreen(data: AppData?, onNavigate: (String) -> Unit, onNewProject: () 
         items(school, key = { "s:" + it.route }) { row(it) }
         item("more-h") { heading("More") }
         items(more, key = { "m:" + it.route }) { row(it) }
-        item("end") { Spacer(Modifier.height(24.dp)) }
+        item("end") { Spacer(Modifier.height(88.dp)) }   // a snackbar sits over the last row otherwise
     }
 }

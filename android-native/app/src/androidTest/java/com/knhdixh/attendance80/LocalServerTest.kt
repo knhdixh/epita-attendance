@@ -187,6 +187,8 @@ class LocalServerTest {
         ui.onNodeWithText("What's due").performTextInput("Device second homework")
         ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().assertIsDisplayed().performClick()
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.title == "Device second homework" } == true }
+        // Saved changes wait in the outbox until the server has them: read the server only once it is empty.
+        ui.waitUntil(30_000) { app.container.dataRepository.pending.value == 0 }
         runBlocking { assertTrue(app.container.dataRepository.refresh()) }
         val created = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device-created homework" } }
         val secondCreated = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device second homework" } }
