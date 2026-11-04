@@ -236,6 +236,8 @@ fun Shell(
     }
     val visibleData = state.data?.let { d -> pendingDelete?.let { p -> d.copy(homework = d.homework.filterNot { it.id == p.item.id }) } ?: d }
     val scope = rememberCoroutineScope()
+    var showQuickAdd by rememberSaveable { mutableStateOf(false) }
+    val addsTasks = route in setOf("inbox", "today", "upcoming") || route.startsWith("project/") || route.startsWith("filter/") || route.startsWith("label/")
     var detailId by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var scheduling by remember { mutableStateOf<com.knhdixh.attendance80.net.HomeworkDto?>(null) }
     // Ticking a task off shows an Undo; for a repeating task Undo takes it back to the date it had.
@@ -283,6 +285,9 @@ fun Shell(
             }
         },
         snackbarHost = { SnackbarHost(snack) },
+        floatingActionButton = {
+            if (addsTasks) FloatingActionButton(onClick = { showQuickAdd = true }, modifier = Modifier.testTag("quick-add-fab")) { Icon(Icons.Outlined.Add, contentDescription = "Add task") }
+        },
         bottomBar = {
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                 phone.forEach { item ->
@@ -445,6 +450,11 @@ fun Shell(
         }
     }
     val context = LocalContext.current
+    if (showQuickAdd && visibleData != null) {
+        val projectId = route.takeIf { it.startsWith("project/") }?.substringAfter('/')?.toLongOrNull()
+        com.knhdixh.attendance80.ui.tasks.QuickAddSheet(visibleData, today, zone,
+            com.knhdixh.attendance80.ui.tasks.QuickDefaults(projectId = projectId, date = if (route == "today") today else null), taskActions, onDismiss = { showQuickAdd = false })
+    }
     scheduling?.let { h ->
         fun set(date: String?) { scope.launch { taskActions.update(h.id, com.knhdixh.attendance80.ui.tasks.dateBody(date, zone)) }; scheduling = null }
         com.knhdixh.attendance80.ui.tasks.ScheduleSheet(h, today, onPick = ::set, onDismiss = { scheduling = null }, onPickDate = {
