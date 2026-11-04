@@ -4,6 +4,8 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.knhdixh.attendance80.net.*
 import com.knhdixh.attendance80.ui.theme.Attendance80Theme
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Rule
@@ -49,6 +51,25 @@ class ProjectScreenTest {
     private fun show(a: RecordingActions, p: ProjectDto = project) {
         val env = TaskEnv(data.copy(projects = data.projects.map { if (it.id == p.id) p else it }), TODAY, taskZone)
         ui.setContent { Attendance80Theme { ProjectScreen(p, env, a, onBack = {}) } }
+    }
+
+    @Test fun sortGroupAndCompletedSurviveANewScreen() {
+        val dir = java.nio.file.Files.createTempDirectory("projprefs").toFile()
+        val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
+        val store = androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("ui.preferences_pb") }
+        val env = TaskEnv(data, TODAY, taskZone)
+        val generation = androidx.compose.runtime.mutableIntStateOf(0)
+        ui.setContent { Attendance80Theme { androidx.compose.runtime.key(generation.intValue) { ProjectScreen(project, env, RecordingActions(), onBack = {}, prefs = com.knhdixh.attendance80.data.UiPrefs(store), owner = "a@example.com") } } }
+        ui.waitForIdle()
+        ui.onNodeWithTag("project-completed").performClick()
+        ui.onNodeWithTag("project-sort").performClick(); ui.onNodeWithTag("project-sort-priority").performClick()
+        ui.waitForIdle()
+        // Wait until the choice is on disk, then build the screen again as a new view model would.
+        ui.waitUntil(10_000) { kotlinx.coroutines.runBlocking { com.knhdixh.attendance80.data.UiPrefs(store).projectView("a@example.com", project.id).first() } == com.knhdixh.attendance80.data.UiPrefs.ProjectView("priority", "none", true) }
+        ui.runOnIdle { generation.intValue++ }
+        ui.waitForIdle()
+        ui.onNodeWithTag("project-list").performScrollToNode(hasText("Old")); ui.onNodeWithText("Old").assertExists()
+        scope.cancel(); dir.deleteRecursively()
     }
 
     @Test fun listShowsSectionsAndOnlyThisProjectsTasks() {

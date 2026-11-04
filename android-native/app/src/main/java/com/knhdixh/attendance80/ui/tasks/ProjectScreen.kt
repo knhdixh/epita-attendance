@@ -29,6 +29,7 @@ import androidx.compose.ui.zIndex
 import com.knhdixh.attendance80.net.HomeworkDto
 import com.knhdixh.attendance80.net.ProjectDto
 import com.knhdixh.attendance80.net.SectionDto
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 
@@ -58,12 +59,23 @@ private val groupNames = listOf("none" to "No grouping", "date" to "Date", "prio
 /** A project: list or board, sections, completed tasks, sorting and grouping, archive. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProjectScreen(project: ProjectDto, env: TaskEnv, actions: TaskActions, onBack: () -> Unit) {
+fun ProjectScreen(project: ProjectDto, env: TaskEnv, actions: TaskActions,
+                  prefs: com.knhdixh.attendance80.data.UiPrefs? = null, owner: String? = null, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var sort by rememberSaveable(project.id) { mutableStateOf("manual") }
     var group by rememberSaveable(project.id) { mutableStateOf("none") }
     var completed by rememberSaveable(project.id) { mutableStateOf(false) }
     var collapsed by rememberSaveable(project.id) { mutableStateOf(listOf<Long>()) }
+    // Sort, group and "show completed" outlive the session, per account and project.
+    var loaded by remember(project.id, owner) { mutableStateOf(prefs == null || owner == null) }
+    LaunchedEffect(project.id, owner, prefs) {
+        if (prefs == null || owner == null) return@LaunchedEffect
+        prefs.projectView(owner, project.id).first()?.let { sort = it.sort; group = it.group; completed = it.completed }
+        loaded = true
+    }
+    LaunchedEffect(loaded, sort, group, completed) {
+        if (loaded && prefs != null && owner != null) prefs.saveProjectView(owner, project.id, com.knhdixh.attendance80.data.UiPrefs.ProjectView(sort, group, completed))
+    }
     var dialog by remember { mutableStateOf<String?>(null) }
     var dialogSection by remember { mutableStateOf<SectionDto?>(null) }
     var menu by remember { mutableStateOf<String?>(null) }

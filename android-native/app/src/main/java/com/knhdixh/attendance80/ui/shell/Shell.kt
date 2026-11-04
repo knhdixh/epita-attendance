@@ -347,7 +347,7 @@ fun Shell(
                             else if (route.startsWith("project/")) key(accountKey) {
                                 val project = visibleData?.projects?.find { it.id == route.substringAfter('/').toLongOrNull() }
                                 if (taskEnv == null || project == null) Text("This project is gone.", Modifier.padding(16.dp))
-                                else com.knhdixh.attendance80.ui.tasks.ProjectScreen(project, taskEnv, taskActions, onBack = { if (!navController.popBackStack()) navigate("browse", topLevel = true) })
+                                else com.knhdixh.attendance80.ui.tasks.ProjectScreen(project, taskEnv, taskActions, onBack = { if (!navController.popBackStack()) navigate("browse", topLevel = true) }, prefs = uiPrefs, owner = prefsOwner)
                             }
                             else if (route.startsWith("filter/")) key(accountKey) {
                                 val filter = visibleData?.filters?.find { it.id == route.substringAfter('/').toLongOrNull() }
