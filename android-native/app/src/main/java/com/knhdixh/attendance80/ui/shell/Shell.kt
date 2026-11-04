@@ -389,7 +389,8 @@ fun Shell(
                                     onSave = { p -> onSaveBreak(p.from, p.to, p.label) }, onRemove = { b -> onRemoveBreak(b.id) })
                             }
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
-                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
+                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending,
+                                taskEnv = taskEnv, onMoveToDay = { h, day -> scope.launch { taskActions.update(h.id, com.knhdixh.attendance80.ui.tasks.dateBody(day, zone)) } }) }
                             else if (route == "homework" || route.startsWith("homework/")) key(accountKey) {
                                 // Wide: the list stays and the edit form opens beside it (selection kept here, so the list keeps its place). "New" is a full page.
                                 var sel by rememberSaveable { mutableStateOf(route.substringAfter("homework/", "").toLongOrNull()) }

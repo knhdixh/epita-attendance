@@ -107,8 +107,9 @@ class ShellUiTest {
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithTag("upcoming-list").performScrollToNode(hasText("Week assignment"))
         compose.onNodeWithText("Week assignment").performClick()
-        compose.onNodeWithTag("shell-title").assertTextEquals("Homework")
-        compose.onNodeWithText("Week assignment").assertExists()
+        // A task opens in its detail sheet now (the edit form is the sheet), not on a page of its own.
+        compose.onNodeWithTag("task-detail").assertExists()
+        compose.onNodeWithTag("detail-title").assert(hasText("Week assignment"))
     }
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
     @Test fun courses() = content("courses", "Add your Zeus link to keep it up to date automatically, or upload an .ics file. You can add more calendars later in Settings.", "Algorithmique")
