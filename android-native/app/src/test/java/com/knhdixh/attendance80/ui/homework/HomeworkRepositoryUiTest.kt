@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.ui.homework
 
+import com.knhdixh.attendance80.ui.openFromBrowse
 import android.content.Context
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
@@ -222,7 +223,7 @@ class HomeworkRepositoryUiTest {
             ui.onNodeWithTag("nav-today").performClick()
             ui.onNodeWithText("Undo").performClick()
             assertNull(server.takeRequest(200, TimeUnit.MILLISECONDS))
-            ui.onNodeWithTag("nav-homework").performClick()
+            ui.openFromBrowse("homework")
             ui.waitUntil(5000) { ui.onAllNodesWithText("Canonical task").fetchSemanticsNodes().isNotEmpty() }
             server.enqueue(MockResponse().setResponseCode(400).setBody("{\"error\":\"Cannot delete\"}"))
             server.enqueue(MockResponse().setBody(ApiClient.json.encodeToString(AppData.serializer(), base.copy(homework = listOf(saved.copy(notes = "Edited draft", sync_error = null))))))

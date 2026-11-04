@@ -108,6 +108,28 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
         override suspend fun delete(id: Long) = q(Mutations.deleteHabit(id)) != null
         override suspend fun order(ids: List<Long>) = q(Mutations.orderHabits(ids)) != null
     }
+    /** Tasks, projects, sections, labels, filters, comments and reminders: queued like every other change. */
+    fun taskActions(owner: String) = object : com.knhdixh.attendance80.ui.tasks.TaskActions {
+        private val repo get() = container.dataRepository
+        override fun message(text: String) = repo.reportMessage(owner, text)
+        private suspend fun q(m: QueuedMutation) = queue(owner, m)
+        override suspend fun create(body: JsonObject) = q(Mutations.createTask(body))?.temp
+        override suspend fun update(id: Long, body: JsonObject) = q(Mutations.updateTask(id, body)) != null
+        override suspend fun move(body: JsonObject) = q(Mutations.moveTasks(body)) != null
+        override suspend fun createEntity(noun: String, body: JsonObject) = q(Mutations.create(noun, body))?.temp
+        override suspend fun updateEntity(noun: String, id: Long, body: JsonObject) = q(Mutations.update(noun, id, body)) != null
+        override suspend fun deleteEntity(noun: String, id: Long) = q(Mutations.delete(noun, id)) != null
+        override suspend fun reorderEntities(noun: String, ids: List<Long>) = q(Mutations.reorder(noun, ids)) != null
+        override suspend fun comments(taskId: Long): List<com.knhdixh.attendance80.net.CommentDto> =
+            if (taskId < 0) emptyList() else runCatching { container.api.comments(taskId).comments }.getOrDefault(emptyList())
+        override suspend fun addComment(taskId: Long, body: String) = q(Mutations.createComment(taskId, body)) != null
+        override suspend fun updateComment(id: Long, body: String) = q(Mutations.updateComment(id, body)) != null
+        override suspend fun deleteComment(id: Long, taskId: Long) = q(Mutations.deleteComment(id, taskId)) != null
+        override suspend fun addReminder(taskId: Long, body: JsonObject) = q(Mutations.createReminder(taskId, body)) != null
+        override suspend fun deleteReminder(id: Long) = q(Mutations.deleteReminder(id)) != null
+        override suspend fun completions(since: Long): List<com.knhdixh.attendance80.net.CompletionDto> =
+            runCatching { container.api.completions(since).completions }.getOrDefault(emptyList())
+    }
     /** Countdowns: create, fine-tune (optimistic, as the web), pin and delete. */
     fun countdownActions(owner: String) = object : com.knhdixh.attendance80.ui.countdowns.CountdownActions {
         private val repo get() = container.dataRepository
@@ -164,6 +186,9 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     private val recentsStore = com.knhdixh.attendance80.data.PaletteRecents(container.context)
     val recents = recentsStore.ids.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun recordRecent(id: String) { viewModelScope.launch { recentsStore.record(id) } }
+    private val searchStore = com.knhdixh.attendance80.data.SearchRecents(container.context)
+    val recentSearches = searchStore.queries.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun recordSearch(query: String) { viewModelScope.launch { searchStore.record(query) } }
 
     val clock get() = container.clock
 

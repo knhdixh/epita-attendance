@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.ui.sessions
 
+import com.knhdixh.attendance80.ui.openFromBrowse
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -28,8 +29,7 @@ class SessionSearchNavigationTest {
         ui.waitUntil(10000) { ui.onAllNodesWithTag("sessions-list").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithText("unusual search").performTextReplacement("new query")
         ui.onNodeWithTag("nav-today").performClick()
-        ui.onNodeWithTag("nav-more").performClick()
-        ui.onNodeWithText("Sessions").performClick()
+        ui.openFromBrowse("sessions")
         ui.waitUntil(10000) { ui.onAllNodesWithText("new query").fetchSemanticsNodes().isNotEmpty() }
         restoration.emulateSavedInstanceStateRestore()
         ui.waitUntil(10000) { ui.onAllNodesWithText("new query").fetchSemanticsNodes().isNotEmpty() }

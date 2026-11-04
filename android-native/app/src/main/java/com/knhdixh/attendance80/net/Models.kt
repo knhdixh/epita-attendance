@@ -159,6 +159,16 @@ data class TaskReminderDto(val id: Long, val at: Long? = null, val before_minute
 data class CommentDto(val id: Long, val homework_id: Long, val body: String, val client_id: String? = null, val created_at: Long = 0, val updated_at: Long = 0)
 
 @Serializable
+data class CommentsResponse(val comments: List<CommentDto> = emptyList())
+
+/** One finished occurrence of a repeating task. */
+@Serializable
+data class CompletionDto(val id: Long, val homework_id: Long, val completed_at: Long, val due_date: String? = null)
+
+@Serializable
+data class CompletionsResponse(val completions: List<CompletionDto> = emptyList())
+
+@Serializable
 data class ProjectDto(
     val id: Long, val parent_id: Long? = null, val name: String, val color: String? = null, val view: String = "list", val position: Int = 0,
     @Serializable(with = IntBooleanSerializer::class) val favorite: Boolean = false,

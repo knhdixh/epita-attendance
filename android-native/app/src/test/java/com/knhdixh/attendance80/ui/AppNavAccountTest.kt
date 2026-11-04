@@ -108,7 +108,7 @@ class AppNavAccountTest {
             compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("today-list").performScrollToNode(hasText("Account B class"))
             compose.onNodeWithText("Account B class").assertExists()
-            compose.onNode(hasText("Focus") and hasClickAction()).performClick()
+            compose.openFromBrowse("focus")
             compose.onNodeWithTag("shell-title").assertTextEquals("Focus")
             compose.onNodeWithText("This action is not available yet.").assertDoesNotExist()
         } finally { storeScope.cancel(); server.shutdown(); dir.deleteRecursively() }

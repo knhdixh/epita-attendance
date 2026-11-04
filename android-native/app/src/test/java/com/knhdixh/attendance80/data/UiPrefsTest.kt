@@ -14,7 +14,8 @@ import java.nio.file.Files
 class UiPrefsTest {
     private val dir = Files.createTempDirectory("uiprefs").toFile()
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val prefs = UiPrefs(PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("ui.preferences_pb") })
+    private val store = PreferenceDataStoreFactory.create(scope = scope) { dir.resolve("ui.preferences_pb") }
+    private val prefs = UiPrefs(store)
     @After fun tearDown() { scope.cancel(); dir.deleteRecursively() }
 
     @Test fun calendarChoicesComeBackPerAccount() = runBlocking {
@@ -32,7 +33,17 @@ class UiPrefsTest {
         assertEquals((51L..250L).toList(), prefs.dismissed("a@example.com").first())
         assertEquals(emptyList<Long>(), prefs.dismissed("b@example.com").first())
     }
-    @Test fun theStoreIsLeftOutOfBackups() {
+    @Test fun projectViewsComeBackPerProjectAndAccount() = runBlocking {
+        assertNull(prefs.projectView("a@example.com", 5).first())
+        prefs.saveProjectView("a@example.com", 5, UiPrefs.ProjectView("date", "label", true))
+        prefs.saveProjectView("a@example.com", 6, UiPrefs.ProjectView("priority", "none", false))
+        // A new UiPrefs on the same store is what a new view model sees.
+        val again = UiPrefs(store)
+        assertEquals(UiPrefs.ProjectView("date", "label", true), again.projectView("A@example.com", 5).first())
+        assertEquals(UiPrefs.ProjectView("priority", "none", false), prefs.projectView("a@example.com", 6).first())
+        assertNull(prefs.projectView("b@example.com", 5).first())
+    }
+    @Test fun theStoreIsLeftOutOutOfBackups() {
         val rules = listOf("src/main/res/xml/backup_rules.xml", "src/main/res/xml/data_extraction_rules.xml").map { java.io.File(it).readText() }
         rules.forEach { assertTrue(it.contains("datastore/ui_prefs.preferences_pb")) }
     }

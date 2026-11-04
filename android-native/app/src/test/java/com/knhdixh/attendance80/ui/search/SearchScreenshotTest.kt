@@ -1,5 +1,7 @@
 package com.knhdixh.attendance80.ui.search
 
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -41,7 +43,7 @@ abstract class SearchScreenshotTest {
                 }
             }
         }
-        compose.onNodeWithContentDescription("Search").performClick()
+        compose.onAllNodesWithContentDescription("Search").onFirst().performClick()
         compose.mainClock.advanceTimeBy(500)
         compose.mainClock.autoAdvance = true; compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }; compose.mainClock.autoAdvance = false
         if (scale == 2f) {

@@ -51,6 +51,8 @@ interface Api {
     suspend fun rawData(@Query("tasks") tasks: Int = 1): ResponseBody
 
     // The outbox sends what it queued: any method and path, with the body the change was made with.
+    @GET("api/homework/{id}/comments") suspend fun comments(@Path("id") id: Long): CommentsResponse
+    @GET("api/completions") suspend fun completions(@Query("since") since: Long): CompletionsResponse
     @POST suspend fun sendPost(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
     @PATCH suspend fun sendPatch(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody
     @PUT suspend fun sendPut(@retrofit2.http.Url path: String, @Body body: JsonObject): ResponseBody

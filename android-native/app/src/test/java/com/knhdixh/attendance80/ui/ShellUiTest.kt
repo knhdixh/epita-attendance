@@ -55,6 +55,19 @@ class ShellUiTest {
         }
         compose.onNodeWithText("Mathématiques").assertExists()
     }
+    /** Review 12: the add button sits over the end of a list unless the list leaves room under it. */
+    private fun lastRowClearsAddButton(route: String, list: String) {
+        compose.setContent { Attendance80Theme { Shell(ShellState(data = populated), {}, {}, {}, initialRoute = route,
+            now = 1793600000000, zone = java.time.ZoneId.of("Europe/Paris")) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag(list).fetchSemanticsNodes().isNotEmpty() }
+        repeat(25) { compose.onNodeWithTag(list).performTouchInput { swipeUp(startY = bottom - 1f, endY = top + 1f) }; compose.waitForIdle() }
+        compose.waitForIdle()
+        val last = compose.onNodeWithTag(list).onChildren().fetchSemanticsNodes().last().boundsInRoot
+        val fab = compose.onNodeWithTag("quick-add-fab").fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue("last row ends at ${last.bottom}, the add button starts at ${fab.top}", last.bottom <= fab.top)
+    }
+    @Test fun todayEndClearsTheAddButton() = lastRowClearsAddButton("today", "today-list")
+    @Test fun upcomingEndClearsTheAddButton() = lastRowClearsAddButton("upcoming", "upcoming-list")
     @Test fun attendance() = content("attendance", "No tracked courses.", "Algorithmique")
     @Test fun homework() = content("homework", "Nothing due. Press Q to add homework.", "Maths Exercise 4")
     @Test fun focus() {
@@ -85,8 +98,7 @@ class ShellUiTest {
         compose.onNodeWithTag("upcoming-next").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("nav-today").performClick()
-        compose.onNodeWithTag("nav-more").performClick()
-        compose.onNodeWithText("Upcoming").performClick()
+        compose.onNodeWithTag("nav-upcoming").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
         restoration.emulateSavedInstanceStateRestore()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
@@ -108,8 +120,9 @@ class ShellUiTest {
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithTag("upcoming-list").performScrollToNode(hasText("Week assignment"))
         compose.onNodeWithText("Week assignment").performClick()
-        compose.onNodeWithTag("shell-title").assertTextEquals("Homework")
-        compose.onNodeWithText("Week assignment").assertExists()
+        // A task opens in its detail sheet now (the edit form is the sheet), not on a page of its own.
+        compose.onNodeWithTag("task-detail").assertExists()
+        compose.onNodeWithTag("detail-title").assert(hasText("Week assignment"))
     }
     @Test fun sessions() = content("sessions", "No sessions match.", "Algorithmique")
     @Test fun courses() = content("courses", "Add your Zeus link to keep it up to date automatically, or upload an .ics file. You can add more calendars later in Settings.", "Algorithmique")
@@ -191,8 +204,7 @@ class ShellUiTest {
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, { selected = it }, { signedOut = true }) } }
         compose.onNodeWithTag("scope-1").performClick()
         compose.runOnIdle { assertEquals("1", selected) }
-        compose.onNodeWithText("More").performClick()
-        compose.onNodeWithText("Settings").performScrollTo().performClick()
+        compose.openFromBrowse("settings")
         compose.onNodeWithText("Sign out").performClick()
         compose.runOnIdle { assertEquals(true, signedOut) }
     }

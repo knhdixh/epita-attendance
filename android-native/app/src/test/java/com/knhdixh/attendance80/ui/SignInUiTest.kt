@@ -79,8 +79,7 @@ class SignInUiTest {
 
     @Test fun authenticatedShellNavigation() {
         compose.setContent { Attendance80Theme { Surface { Shell(ShellState(data = screenshotData()), {}, {}, {}) } } }
-        compose.onNodeWithText("More").performClick()
-        compose.onNodeWithText("Courses").performClick()
-        compose.onNodeWithText("Courses").assertIsDisplayed()
+        compose.openFromBrowse("courses")
+        compose.onNodeWithTag("shell-title").assertTextEquals("Courses")
     }
 }

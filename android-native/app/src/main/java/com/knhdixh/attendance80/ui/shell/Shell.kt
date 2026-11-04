@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -49,11 +50,14 @@ import com.knhdixh.attendance80.logic.Dates
 
 private data class Destination(val route: String, val label: String, val icon: ImageVector)
 private val destinations = listOf(
+    Destination("inbox", "Inbox", Icons.Outlined.Inbox),
     Destination("today", "Today", Icons.Outlined.Today),
+    Destination("upcoming", "Upcoming", Icons.Outlined.DateRange),
+    Destination("search", "Search", Icons.Outlined.Search),
+    Destination("browse", "Browse", Icons.Outlined.GridView),
     Destination("attendance", "Attendance", Icons.Outlined.Assessment),
     Destination("homework", "Homework", Icons.Outlined.Assignment),
     Destination("focus", "Focus", Icons.Outlined.Timer),
-    Destination("upcoming", "Upcoming", Icons.Outlined.DateRange),
     Destination("sessions", "Sessions", Icons.AutoMirrored.Outlined.List),
     Destination("courses", "Courses", Icons.Outlined.School),
     Destination("calendar", "Calendar", Icons.Outlined.CalendarMonth),
@@ -62,8 +66,9 @@ private val destinations = listOf(
     Destination("countdowns", "Countdowns", Icons.Outlined.HourglassBottom),
     Destination("settings", "Settings", Icons.Outlined.Settings),
 )
-private val more = Destination("more", "More", Icons.Outlined.MoreHoriz)
-private val phone = destinations.take(4) + more
+/** The bottom bar: Todoist's five. Everything else is reached through Browse. */
+private val phone = destinations.take(5)
+private val taskTabs = setOf("inbox", "today", "upcoming", "search")
 
 private fun owningRoute(route: String): String = when {
     route.startsWith("session/") -> "sessions"
@@ -71,6 +76,7 @@ private fun owningRoute(route: String): String = when {
     route.startsWith("homework/") -> "homework"
     route.startsWith("habits/") -> "habits"
     route.startsWith("countdowns/") -> "countdowns"
+    route.startsWith("project/") || route.startsWith("filter/") || route.startsWith("label/") || route == "filters" || route == "completed" -> "browse"
     else -> route
 }
 
@@ -90,6 +96,8 @@ fun Shell(
     onAction: (PaletteAction) -> Unit = {},
     recents: List<String> = emptyList(),
     onRecent: (String) -> Unit = {},
+    recentSearches: List<String> = emptyList(),
+    onSearched: (String) -> Unit = {},
     onErrorConsumed: (String) -> Unit = {},
     accountKey: String? = state.session,
     pendingDelete: PendingHomeworkDelete? = null,
@@ -118,6 +126,7 @@ fun Shell(
     sharedText: String? = null,
     onSharedTextHandled: () -> Unit = {},
     uiPrefs: com.knhdixh.attendance80.data.UiPrefs? = null,
+    taskActions: com.knhdixh.attendance80.ui.tasks.TaskActions = com.knhdixh.attendance80.ui.tasks.NoTaskActions,
     navController: NavHostController = rememberNavController(),
 ) {
     val entry by navController.currentBackStackEntryAsState()
@@ -212,7 +221,12 @@ fun Shell(
         route.startsWith("habits/") -> "Habits"
         route == "countdowns/new" -> "New countdown"
         route.startsWith("countdowns/") -> "Countdowns"
-        else -> (destinations + more).find { it.route == route }?.label ?: "Today"
+        route.startsWith("project/") -> state.data?.projects?.find { it.id == route.substringAfter('/').toLongOrNull() }?.name ?: "Project"
+        route.startsWith("filter/") -> state.data?.filters?.find { it.id == route.substringAfter('/').toLongOrNull() }?.name ?: "Filter"
+        route.startsWith("label/") -> state.data?.labels?.find { it.id == route.substringAfter('/').toLongOrNull() }?.name?.let { "@$it" } ?: "Label"
+        route == "filters" -> "Filters & Labels"
+        route == "completed" -> "Completed"
+        else -> destinations.find { it.route == route }?.label ?: "Today"
     }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(state.error) { state.error?.let { snack.showSnackbar(it); onErrorConsumed(it) } }
@@ -223,6 +237,24 @@ fun Shell(
         }
     }
     val visibleData = state.data?.let { d -> pendingDelete?.let { p -> d.copy(homework = d.homework.filterNot { it.id == p.item.id }) } ?: d }
+    val scope = rememberCoroutineScope()
+    var newProject by rememberSaveable { mutableStateOf(false) }
+    var showQuickAdd by rememberSaveable { mutableStateOf(false) }
+    val addsTasks = route in setOf("inbox", "today", "upcoming") || route.startsWith("project/") || route.startsWith("filter/") || route.startsWith("label/")
+    var detailId by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
+    var scheduling by remember { mutableStateOf<com.knhdixh.attendance80.net.HomeworkDto?>(null) }
+    // Ticking a task off shows an Undo; for a repeating task Undo takes it back to the date it had.
+    fun toggleTask(h: com.knhdixh.attendance80.net.HomeworkDto, done: Boolean) {
+        onAction(PaletteAction.ToggleHomework(h.id, done))
+        if (done) scope.launch {
+            snack.currentSnackbarData?.dismiss()
+            if (snack.showSnackbar("Completed.", actionLabel = "Undo", withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed)
+                onAction(PaletteAction.ToggleHomework(h.id, false))
+        }
+    }
+    val today = com.knhdixh.attendance80.ui.tasks.TaskModel.todayKey(now, zone)
+    val taskEnv = visibleData?.let { com.knhdixh.attendance80.ui.tasks.TaskEnv(it, today, zone, onOpen = { id -> detailId = id }, onToggle = ::toggleTask, onSchedule = { h -> scheduling = h }) }
+    fun move(body: kotlinx.serialization.json.JsonObject) { scope.launch { taskActions.move(body) } }
     fun pending(action: PaletteAction, destination: String) {
         navigate(destination)
         navController.currentBackStackEntry?.savedStateHandle?.set("paletteAction", ApiClient.json.encodeToString(action))
@@ -256,10 +288,13 @@ fun Shell(
             }
         },
         snackbarHost = { SnackbarHost(snack) },
+        floatingActionButton = {
+            if (addsTasks) FloatingActionButton(onClick = { showQuickAdd = true }, modifier = Modifier.testTag("quick-add-fab")) { Icon(Icons.Outlined.Add, contentDescription = "Add task") }
+        },
         bottomBar = {
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                 phone.forEach { item ->
-                    val selected = owner == item.route || (item == more && owner in destinations.drop(4).map { it.route })
+                    val selected = owner == item.route || (item.route == "browse" && owner !in taskTabs)
                     NavigationBarItem(selected = selected, onClick = { navigate(item.route, topLevel = true) }, modifier = Modifier.testTag("nav-${item.route}"),
                         icon = { Icon(item.icon, contentDescription = if (largeText) item.label else null) },
                         label = if (largeText) null else {{ Text(item.label) }},
@@ -287,7 +322,7 @@ fun Shell(
             }
             PullToRefreshBox(isRefreshing = state.loading, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxHeight()) {
                 NavHost(navController, startDestination = initialRoute) {
-                    (destinations.map { it.route } + "more" + listOf("homework/new", "habits/new", "countdowns/new", "session/{id}", "course/{id}", "homework/{id}", "habits/{id}", "countdowns/{id}")).forEach { destination ->
+                    (destinations.map { it.route } + listOf("filters", "completed", "project/{id}", "filter/{id}", "label/{id}", "homework/new", "habits/new", "countdowns/new", "session/{id}", "course/{id}", "homework/{id}", "habits/{id}", "countdowns/{id}")).forEach { destination ->
                         composable(destination) { backStackEntry ->
                             val route = backStackEntry.destination.route?.let { pattern ->
                                 if (pattern.contains("{id}")) pattern.replace("{id}", backStackEntry.arguments?.getString("id").orEmpty()) else pattern
@@ -298,7 +333,31 @@ fun Shell(
                                 if (pendingRoute != null) onPendingConsumed()
                                 navController.popBackStack()
                             }
-                            if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending, notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications)
+                            if (route == "inbox") key(accountKey) { if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.InboxScreen(taskEnv, ::move) }
+                            else if (route == "browse") com.knhdixh.attendance80.ui.tasks.BrowseScreen(visibleData, onNavigate = { navigate(it) }, onNewProject = { newProject = true })
+                            else if (route == "search") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.SearchScreen(taskEnv, taskActions, recentSearches, onSearched, onNavigate = { navigate(it) })
+                            }
+                            else if (route == "completed") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.CompletedScreen(taskEnv, taskActions, now)
+                            }
+                            else if (route == "filters") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.FiltersScreen(taskEnv, taskActions, onNavigate = { navigate(it) })
+                            }
+                            else if (route.startsWith("project/")) key(accountKey) {
+                                val project = visibleData?.projects?.find { it.id == route.substringAfter('/').toLongOrNull() }
+                                if (taskEnv == null || project == null) Text("This project is gone.", Modifier.padding(16.dp))
+                                else com.knhdixh.attendance80.ui.tasks.ProjectScreen(project, taskEnv, taskActions, onBack = { if (!navController.popBackStack()) navigate("browse", topLevel = true) }, prefs = uiPrefs, owner = prefsOwner)
+                            }
+                            else if (route.startsWith("filter/")) key(accountKey) {
+                                val filter = visibleData?.filters?.find { it.id == route.substringAfter('/').toLongOrNull() }
+                                if (taskEnv == null || filter == null) Text("This filter is gone.", Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.FilterScreen(filter.query, taskEnv)
+                            }
+                            else if (route.startsWith("label/")) key(accountKey) {
+                                val id = route.substringAfter('/').toLongOrNull()
+                                if (taskEnv == null || id == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.LabelScreen(id, taskEnv)
+                            }
+                            else if (route == "today") com.knhdixh.attendance80.ui.today.TodayScreen(visibleData, now, zone, taskEnv = taskEnv, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending, notificationsBlocked = notificationsBlocked, onFixNotifications = onFixNotifications)
                             else if (route == "focus") com.knhdixh.attendance80.ui.focus.FocusScreen(currentFocusData, currentFocusOwner, currentFocusTime, currentFocusZone, currentFocusHistory, focusListState, focusDraft, { focusDraft = it }, currentHistoryAction, currentSaveFocus, currentDeleteFocus, { snack.showSnackbar(it) }, action as? PaletteAction.Focus, { pending(it, "focus") }, currentSaveFocusList, focusTimer, timerActions, { backStackEntry.savedStateHandle["paletteAction"] = null }, timerNow)
                             else if (route == "settings") key(accountKey) {
                                 com.knhdixh.attendance80.ui.settings.SettingsScreen(state.data, state.allEvents, state.selected, now, zone, settingsActions,
@@ -341,7 +400,8 @@ fun Shell(
                                     onSave = { p -> onSaveBreak(p.from, p.to, p.label) }, onRemove = { b -> onRemoveBreak(b.id) })
                             }
                             else if (route == "attendance") com.knhdixh.attendance80.ui.attendance.AttendanceScreen(visibleData, now, zone, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending)
-                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending) }
+                            else if (route == "upcoming") key(accountKey) { com.knhdixh.attendance80.ui.upcoming.UpcomingScreen(visibleData, now, zone, upcomingWeek, { upcomingWeek = it }, onNavigate = { navigate(it) }, onAction = onAction, allEvents = state.allEvents, onDelete = ::deleteHomework, onPending = ::pending,
+                                taskEnv = taskEnv, onMoveToDay = { h, day -> scope.launch { taskActions.update(h.id, com.knhdixh.attendance80.ui.tasks.dateBody(day, zone)) } }) }
                             else if (route == "homework" || route.startsWith("homework/")) key(accountKey) {
                                 // Wide: the list stays and the edit form opens beside it (selection kept here, so the list keeps its place). "New" is a full page.
                                 var sel by rememberSaveable { mutableStateOf(route.substringAfter("homework/", "").toLongOrNull()) }
@@ -408,6 +468,25 @@ fun Shell(
         }
     }
     val context = LocalContext.current
+    if (newProject) com.knhdixh.attendance80.ui.tasks.NameDialog("New project", confirm = "Add", onDismiss = { newProject = false }, onSave = { n ->
+        scope.launch { taskActions.createEntity("project", kotlinx.serialization.json.buildJsonObject { put("name", kotlinx.serialization.json.JsonPrimitive(n)) }) }
+    })
+    if (showQuickAdd && visibleData != null) {
+        val projectId = route.takeIf { it.startsWith("project/") }?.substringAfter('/')?.toLongOrNull()
+        com.knhdixh.attendance80.ui.tasks.QuickAddSheet(visibleData, today, zone,
+            com.knhdixh.attendance80.ui.tasks.QuickDefaults(projectId = projectId, date = if (route == "today") today else null), taskActions, onDismiss = { showQuickAdd = false })
+    }
+    if (detailId != null && taskEnv != null) com.knhdixh.attendance80.ui.tasks.TaskDetailSheet(detailId!!, taskEnv, taskActions,
+        onFocus = { id -> detailId = null; pending(PaletteAction.Focus("target", homeworkId = id), "focus") },
+        onPlan = { h -> detailId = null; pending(PaletteAction.OpenForm("calendar-show", input = (h.planned_at ?: h.due_at ?: now).toString()), "calendar") },
+        onDelete = ::deleteHomework, onOpen = { detailId = it }, onDismiss = { detailId = null })
+    scheduling?.let { h ->
+        fun set(date: String?) { scope.launch { taskActions.update(h.id, com.knhdixh.attendance80.ui.tasks.dateBody(date, zone)) }; scheduling = null }
+        com.knhdixh.attendance80.ui.tasks.ScheduleSheet(h, today, onPick = ::set, onDismiss = { scheduling = null }, onPickDate = {
+            val base = h.due_date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: LocalDate.parse(today)
+            android.app.DatePickerDialog(context, { _, y, m, d -> set(LocalDate.of(y, m + 1, d).toString()) }, base.year, base.monthValue - 1, base.dayOfMonth).show()
+        })
+    }
     if (showSearch) SearchSheet(state.data, onDismiss = { showSearch = false },
         onRoute = { navigate(it) }, onSignOut = ::signOut, now = now, zone = zone, recents = recents, onRecent = onRecent,
         onAction = { action, destination ->
@@ -435,7 +514,6 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
     val events = data?.events.orEmpty().sortedBy { it.start_at }
     val courses = data?.courses.orEmpty()
     val rows: List<RowData> = when {
-        route == "more" -> destinations.drop(4).map { RowData(it.label, route = it.route) }
         route == "today" -> events.filter { Instant.ofEpochMilli(it.start_at).atZone(zone).toLocalDate() == Instant.ofEpochMilli(now).atZone(zone).toLocalDate() }
             .map { RowData(it.summary, date(it.start_at, zone), "session/${it.id}") }
         route == "attendance" -> courses.filter { it.tracked }.map { RowData(it.name, route = "course/${it.id}") }
@@ -472,7 +550,7 @@ private fun ShellContent(route: String, data: AppData?, now: Long, zone: ZoneId,
         }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (data == null && route != "more") item { CircularProgressIndicator() }
+        if (data == null) item { CircularProgressIndicator() }
         else {
             if (action is PaletteAction.OpenForm || action is PaletteAction.Focus || route in setOf("homework/new", "habits/new", "countdowns/new")) item { Text("This action is not available yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (route == "today") item { Text("Classes", style = MaterialTheme.typography.titleMedium) }

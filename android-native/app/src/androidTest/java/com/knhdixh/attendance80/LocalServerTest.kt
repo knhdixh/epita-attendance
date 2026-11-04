@@ -59,11 +59,14 @@ class LocalServerTest {
     private fun launch() {
         app.startActivity(Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
-    private fun goBottom(label: String) { ui.onNodeWithTag("nav-${label.lowercase()}").performClick() }
-    private fun more(label: String) {
-        goBottom("More")
-        ui.onNodeWithText(label).performScrollTo().performClick()
+    /** Bottom bar: Inbox, Today, Upcoming, Search, Browse. Anything else is a row in Browse. */
+    private fun goBottom(label: String) {
+        if (label in setOf("Inbox", "Today", "Upcoming", "Search", "Browse")) { ui.onNodeWithTag("nav-${label.lowercase()}").performClick(); return }
+        ui.onNodeWithTag("nav-browse").performClick()
+        ui.onNodeWithTag("browse-list").performScrollToNode(hasTestTag("browse-${label.lowercase()}"))
+        ui.onNodeWithTag("browse-${label.lowercase()}").performClick()
     }
+    private fun more(label: String) = goBottom(label)
 
     private fun imeVisible(): Boolean {
         var visible = false
@@ -184,6 +187,8 @@ class LocalServerTest {
         ui.onNodeWithText("What's due").performTextInput("Device second homework")
         ui.onNode(hasText("Add homework") and hasClickAction()).performScrollTo().assertIsDisplayed().performClick()
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.any { it.title == "Device second homework" } == true }
+        // Saved changes wait in the outbox until the server has them: read the server only once it is empty.
+        ui.waitUntil(30_000) { app.container.dataRepository.pending.value == 0 }
         runBlocking { assertTrue(app.container.dataRepository.refresh()) }
         val created = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device-created homework" } }
         val secondCreated = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("title") == "Device second homework" } }
@@ -254,14 +259,16 @@ class LocalServerTest {
         ui.onNodeWithTag("calendar-col-$tomorrow").performTouchInput { click(androidx.compose.ui.geometry.Offset(centerX, y)) }
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == openTodo }?.planned_at != null }
         val plannedAt = app.container.dataRepository.snapshot.value!!.homework.first { it.id == openTodo }.planned_at!!
-        val serverTodo = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }
-        assertEquals(plannedAt, serverTodo.getLong("planned_at"))
+        // The snapshot shows the plan at once (the change is queued); wait until the server has it before reading it.
+        fun serverTodo() = dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }
+        ui.waitUntil(30_000) { !serverTodo().isNull("planned_at") }
+        assertEquals(plannedAt, serverTodo().getLong("planned_at"))
         assertEquals(java.time.LocalDate.now(java.time.ZoneId.systemDefault()).plusDays(1), java.time.Instant.ofEpochMilli(plannedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
         ui.onNodeWithTag("calendar-plan-$openTodo").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         ui.waitUntil(10_000) { ui.onAllNodesWithTag("calendar-plan-unplan").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithTag("calendar-plan-unplan").performClick()
         ui.waitUntil(30_000) { app.container.dataRepository.snapshot.value?.homework?.find { it.id == openTodo }?.planned_at == null }
-        assertTrue(dataFromServer().getJSONArray("homework").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getLong("id") == openTodo }.isNull("planned_at"))
+        ui.waitUntil(30_000) { serverTodo().isNull("planned_at") }
         more("Breaks")
         ui.waitUntil(30_000) { ui.onAllNodesWithTag("breaks-list").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithTag("breaks-list").performScrollToNode(hasText("E2E break", substring = true))

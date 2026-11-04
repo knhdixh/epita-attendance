@@ -1,6 +1,12 @@
 package com.knhdixh.attendance80.ui.upcoming
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -32,38 +38,38 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class UpcomingDay(val date: LocalDate, val past: Boolean, val sessions: List<EventDto>, val homework: List<HomeworkDto>)
-data class UpcomingState(val data: AppData, val today: LocalDate, val zone: ZoneId, val offset: Int, val days: List<UpcomingDay>)
+data class UpcomingState(val data: AppData, val today: LocalDate, val zone: ZoneId, val offset: Int, val days: List<UpcomingDay>, val weeks: Int = 1)
 
 class UpcomingViewModel : ViewModel() {
     private val mutable = MutableStateFlow<UpcomingState?>(null)
     val state = mutable.asStateFlow()
     private var generation = 0
-    fun update(data: AppData?, clock: Clock, zone: ZoneId, offset: Int) {
+    fun update(data: AppData?, clock: Clock, zone: ZoneId, offset: Int, weeks: Int = 1) {
         val today = LocalDate.now(clock.withZone(zone))
         val week = offset.coerceAtLeast(0)
         val version = ++generation
         if (data == null) { mutable.value = null; return }
-        if (mutable.value?.let { it.data == data && it.today == today && it.zone == zone && it.offset == week } == true) return
+        if (mutable.value?.let { it.data == data && it.today == today && it.zone == zone && it.offset == week && it.weeks == weeks } == true) return
         mutable.value = null
         viewModelScope.launch {
-            val result = withContext(Dispatchers.Default) { derive(data, today, zone, week) }
+            val result = withContext(Dispatchers.Default) { derive(data, today, zone, week, weeks) }
             if (generation == version) mutable.value = result
         }
     }
     companion object {
-        fun derive(data: AppData, today: LocalDate, zone: ZoneId, offset: Int): UpcomingState {
+        fun derive(data: AppData, today: LocalDate, zone: ZoneId, offset: Int, weeks: Int = 1): UpcomingState {
             val week = offset.coerceAtLeast(0)
             val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusWeeks(week.toLong())
             val tracked = data.courses.filter { it.tracked }.map { it.id }.toSet()
             val sessions = data.events.filter { it.course_id in tracked }.sortedBy { it.start_at }
-            val days = (0L..6L).map { i ->
+            val days = (0L until 7L * weeks).map { i ->
                 val date = monday.plusDays(i)
                 val start = date.atStartOfDay(zone).toInstant().toEpochMilli()
                 val end = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
                 UpcomingDay(date, date < today, sessions.filter { it.start_at >= start && it.start_at < end },
                     data.homework.filter { !it.done && it.due_at != null && it.due_at >= start && it.due_at < end })
             }
-            return UpcomingState(data, today, zone, week, days)
+            return UpcomingState(data, today, zone, week, days, weeks)
         }
     }
 }
@@ -71,7 +77,8 @@ class UpcomingViewModel : ViewModel() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffset: (Int) -> Unit,
-    onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: UpcomingViewModel = viewModel(), allEvents: List<EventDto>? = null, onDelete: (HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> }) {
+    onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: UpcomingViewModel = viewModel(), allEvents: List<EventDto>? = null, onDelete: (HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> },
+    taskEnv: com.knhdixh.attendance80.ui.tasks.TaskEnv? = null, onMoveToDay: (HomeworkDto, String) -> Unit = { _, _ -> }) {
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var previousOffset by remember { mutableIntStateOf(offset) }
@@ -82,14 +89,17 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
         }
     }
     val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-    LaunchedEffect(data, today, zone, offset) { model.update(data, Clock.fixed(Instant.ofEpochMilli(now), zone), zone, offset) }
+    // The agenda is endless: reaching its end adds another week, up to eight.
+    var extraWeeks by rememberSaveable(offset) { mutableIntStateOf(0) }
+    val weeks = 1 + extraWeeks
+    LaunchedEffect(data, today, zone, offset, weeks) { model.update(data, Clock.fixed(Instant.ofEpochMilli(now), zone), zone, offset, weeks) }
     val state by model.state.collectAsState()
-    val s = state?.takeIf { it.data == data && it.today == today && it.zone == zone && it.offset == offset }
+    val s = state?.takeIf { it.data == data && it.today == today && it.zone == zone && it.offset == offset && it.weeks == weeks }
     if (s == null || data == null) { CircularProgressIndicator(Modifier.padding(16.dp)); return }
     val families = groupFamilies(data.courses).let { fs -> if (fs.any { f -> f.courses.any { it.tracked } }) emptyList() else fs }
     val locale = Locale.getDefault()
     val first = s.days.first().date
-    val last = s.days.last().date
+    val last = s.days[6].date
     val range = if (first.year == last.year && first.month == last.month) first.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
         else if (first.year == last.year) "${first.format(DateTimeFormatter.ofPattern("MMM", locale))} – ${last.format(DateTimeFormatter.ofPattern("MMM yyyy", locale))}"
         else "${first.format(DateTimeFormatter.ofPattern("MMM yyyy", locale))} – ${last.format(DateTimeFormatter.ofPattern("MMM yyyy", locale))}"
@@ -101,7 +111,14 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
         indices[day.date] = itemIndex
         itemIndex += 1 + if (day.sessions.isEmpty() && day.homework.isEmpty()) 1 else day.sessions.size + day.homework.size
     }
-    LazyColumn(Modifier.fillMaxSize().testTag("upcoming-list"), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LaunchedEffect(list, extraWeeks) {
+        snapshotFlow { list.layoutInfo.let { it.visibleItemsInfo.lastOrNull()?.index to it.totalItemsCount } }.collect { (last, total) ->
+            // Only once the list has been scrolled: a short week doesn't pull in the next one by itself.
+            if (last != null && total > 0 && last >= total - 2 && extraWeeks < 7 && list.canScrollBackward) extraWeeks++
+        }
+    }
+    val drag = remember { com.knhdixh.attendance80.ui.tasks.DragState() }
+    LazyColumn(Modifier.fillMaxSize().testTag("upcoming-list"), state = list, contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = com.knhdixh.attendance80.ui.tasks.FabInset), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (families.isNotEmpty()) item("groups") { Column { Text("Pick your groups for ${families.joinToString { it.family }}."); TextButton(onClick = { onNavigate("courses") }) { Text("Choose groups") } } }
         item("header") { Column {
             Text(range, style = MaterialTheme.typography.titleLarge)
@@ -111,7 +128,7 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
                 TextButton(onClick = { onOffset(offset + 1) }, modifier = Modifier.testTag("upcoming-next")) { Text("Next week") }
             }
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                s.days.forEach { day ->
+                s.days.take(7).forEach { day ->
                     val count = day.sessions.size
                     val label = "${day.date.format(DateTimeFormatter.ofPattern("EEEE d MMMM", locale))}: $count ${if (count == 1) "session" else "sessions"}"
                     TextButton(enabled = !day.past, onClick = {
@@ -129,8 +146,33 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
             }
             if (day.sessions.isEmpty() && day.homework.isEmpty()) item("empty:${day.date}") { Text("Nothing scheduled", Modifier.padding(vertical = 8.dp)) }
             day.sessions.forEach { event -> item("session:${event.id}") { SessionRow(event, data, now, zone, onNavigate, onAction) } }
-            day.homework.forEach { hw -> item("homework:${hw.id}") { Box(Modifier.testTag("upcoming-homework-${hw.id}")) { com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, data, allEvents ?: data.events, now, zone, onNavigate, onAction, onDelete, onPending) } } }
+            day.homework.forEach { hw -> item("homework:${hw.id}") {
+                if (taskEnv == null) Box(Modifier.testTag("upcoming-homework-${hw.id}")) { com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, data, allEvents ?: data.events, now, zone, onNavigate, onAction, onDelete, onPending) }
+                else {
+                    // Long-press a task and drag it onto another day: it takes that day's date.
+                    val dragging = drag.id == hw.id
+                    Box(Modifier.testTag("upcoming-homework-${hw.id}").zIndex(if (dragging) 1f else 0f).graphicsLayer { translationY = if (dragging) drag.dy else 0f }
+                        .pointerInput(hw.id, day.date) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { drag.id = hw.id; drag.dx = 0f; drag.dy = 0f },
+                                onDrag = { c, a -> c.consume(); drag.dy += a.y },
+                                onDragEnd = {
+                                    val infos = list.layoutInfo.visibleItemsInfo
+                                    val me = infos.find { it.key == "homework:${hw.id}" }
+                                    val target = me?.let { m -> val y = m.offset + m.size / 2f + drag.dy
+                                        dayUnder(infos.mapNotNull { i -> (i.key as? String)?.takeIf { it.startsWith("day:") }?.removePrefix("day:")?.let { it to i.offset.toFloat() } }, y) }
+                                    drag.id = null; drag.dy = 0f
+                                    if (target != null && target != day.date.toString()) onMoveToDay(hw, target)
+                                },
+                                onDragCancel = { drag.id = null; drag.dy = 0f })
+                        }) { com.knhdixh.attendance80.ui.tasks.TaskRow(hw, taskEnv, showProject = true, swipe = !dragging) }
+                }
+            } }
         }
         item("more") { TextButton(onClick = { onOffset(offset + 1) }, modifier = Modifier.testTag("upcoming-more-next")) { Text("Next week") } }
     }
 }
+
+/** The day a drag ended in: the last day heading (date, top) at or above [y]; the first day if it went above them all. */
+fun dayUnder(tops: List<Pair<String, Float>>, y: Float): String? =
+    tops.sortedBy { it.second }.lastOrNull { it.second <= y }?.first ?: tops.minByOrNull { it.second }?.first
