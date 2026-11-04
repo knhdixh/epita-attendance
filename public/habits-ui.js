@@ -42,6 +42,11 @@ export function dueToday() {
   return active().map((h) => ({ h, s: statsOf(h) })).filter((x) => x.s.due);
 }
 export const leftToday = () => dueToday().filter((x) => !x.s.todayDone).length;
+// The sidebar's habit count: how many are due today and how many of those are done.
+export function todayCounts() {
+  const due = dueToday();
+  return { due: due.length, done: due.filter((x) => x.s.todayDone).length };
+}
 
 // ---------------------------------------------------------------- check-ins
 
