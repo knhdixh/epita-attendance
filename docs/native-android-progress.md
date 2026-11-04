@@ -1440,3 +1440,67 @@ Branch `native/phase-11`. Findings 1 and 2 were blocking, finding 3 minor; all t
 ### Unverified
 
 - The 404-on-DELETE and Undo paths against a real tunnel on a device (MockWebServer and the server's own tests only).
+
+## Phase 12: Todoist screens
+
+Branch `native/phase-12`. Commits `ae13593` … `092a890` (the log entry itself is the last one). No server changes, so no migration and no new server test.
+
+### Deferred items from earlier reviews (grep `Phase 12` in `docs/native-android-review-*.md`)
+
+| From | Item | What I did | Commit |
+|---|---|---|---|
+| Review 11 | `LocalServerTest` read the server right after the snapshot showed `planned_at`, racing the PATCH | **Done.** The test now waits on `dataFromServer()` (`serverTodo()`), both for the plan and the unplan | `ae13593` |
+| Review 11 | Consider moving the Calendar's plan blocks onto the outbox | **Not done.** I tried it (`calendarActions.setPlan` through `Mutations.updateTask(planBody)`) and reverted it: the rewritten `CalendarActionsTest` hung in `flushQueue` waiting on the MockWebServer answer and I could not find why in the time I had. What *is* on the outbox: Upcoming's drag onto another day (`onMoveToDay` sends `Mutations.updateTask` with a date), so that path works offline. The Calendar's `setPlan` and "Plan my week" still use `DataRepository.mutate` (online) as before | — |
+| Review 10 | Why a tap 28 minutes below a block hit it (probably the 48 dp touch target) | **Not done.** It was marked "not blocking". I did not touch the Calendar's grid, so there is nothing new to say; the Phase 11 fix (tap at 85 % of the visible column) is unchanged | — |
+
+### What I did, per task
+
+1. **Navigation** (`836bc45`). Bottom bar is Inbox, Today, Upcoming, Search, Browse (`Shell.kt`); the wide rail lists the same five first, then every old destination. Browse (`ui/tasks/BrowseScreen.kt`): Favourites (projects, filters, labels), Projects nested with open counts and a "+", Filters & Labels, School (Attendance, **Homework**, Courses, Sessions, Calendar, Breaks), More (Focus, Habits, Countdowns, Completed, Settings). The old "More" route is gone. Today keeps the class header and *Do next* and adds "Overdue" and "Today" task lists under it (tasks already shown in *Do next*, free-time fits or planned blocks are left out so nothing appears twice).
+2. **Task rows** (`836bc45`). `TaskModel.kt` (pure: priority names and colours, meta line, grouping, `planMove`, `flatten`), `TaskRow.kt` (ring in the priority colour, markdown title, meta line with due / recurrence / deadline / labels / subtask progress / comment count / course / project; swipe right completes, swipe left opens a Schedule sheet; a completion shows an Undo snackbar, and Undo of a repeating task goes through the existing `toggleHomework`, which sends the `occurrence`), `TaskList.kt` (long-press and drag to reorder through `POST /api/homework/move`, drag more than 48 dp right to nest under the row above, left to unnest). Inbox, a saved filter's page and a label's page use it.
+3. **Quick add** (`85b19d5`). `QuickAddSheet.kt`: live highlighting of every range `QuickAddParser` read, chips for date, priority, labels, reminder and project that edit the line (they replace the token of that kind), the field keeps focus and clears after each add. Saving makes missing labels, project and section first (queued, temporary ids), then the task, then its reminder. A button on Inbox, Today, Upcoming and every project, filter and label page; from a project it defaults to that project, from Today to today.
+4. **Task detail** (`3b57e4a`). A tall bottom sheet (`TaskDetailSheet`): title and description saved when the field loses focus, project and section, date, time, repeat (checked with `Recurrence.cleanRecurrence`, the error is shown under the field), deadline, duration, priority, labels, reminders (add / remove), subtasks (add, move up / down, complete), comments (fetched with `GET /api/homework/{id}/comments`, add and delete), Focus on this, Plan on the Calendar, Delete, created and completed dates.
+5. **Projects** (`6028a96`). `ProjectScreen.kt`: list or board (saved in the project's `view`), sections as headings (add, rename, collapse, move up / down, delete), show completed, sort by manual / date / priority, group by date / priority / label, archive, rename, favourite, delete, new project from Browse. The board has one column per section and a long-press drag between columns.
+6. **Upcoming** (`eb021aa`). The existing week strip stays; tasks are task rows now; the agenda adds another week each time the user scrolls to its end (up to eight); a long-press drag of a task onto another day's heading sets that day's date (through the outbox).
+7. **Filters & Labels** (`b39c01b`). Create, edit, delete, favourite, with a live preview (match count, the first five titles, or the parser's error); labels add / rename / delete / favourite. Favourites show in Browse.
+8. **Search** (`1d1c116`). The Search tab searches tasks (title and description), comments (fetched for tasks that have some, up to 60), projects, labels, courses and sessions; recent searches are kept in a DataStore (`SearchRecents`). The top bar's search icon still opens the old palette.
+9. **Completed** (`1d1c116`). History per day from `completed_at` and `GET /api/completions` (last 90 days); a task that finished its last occurrence is listed once.
+
+Also `e6de95a` (screenshot tests for the new screens: `TasksScreenshotTest`, 21 images; the shell screenshots were re-recorded because the bottom bar, the rail and the add button changed every one) and `092a890` (e2e fixes below).
+
+### Tests added or changed
+
+- New: `TaskModelTest` (8), `TaskRowUiTest` (4: ring, swipe right and left, **drag to reorder**, drag to nest), `QuickAddSheetTest` (5: **typing highlights**, the saved task's fields, keyboard stays up, chips), `TaskDetailTest` (4), `ProjectScreenTest` (7, incl. board drag between columns), `UpcomingTasksTest` (3), `FiltersScreenTest` (3), `SearchCompletedTest` (4), `TasksScreenshotTest` (21).
+- Changed because the contract changed (not weakened): tests that tapped `nav-homework`, `nav-focus`, `nav-more` or the "More" label on a phone now go through Browse (`NavTestSupport.openFromBrowse`); `ChildNavigationTest` expects Browse selected for child routes; `upcomingOpensSharedSessionAndHomeworkDestinations` expects the detail sheet instead of the old Homework page; `SearchScreenshotTest` takes the first "Search" node because at 200 % text the bottom bar's label is also a content description; the Shell and per-screen screenshot tests that clicked "More" click "Browse". The 8 old `*_more_*` PNGs are deleted (the route is now `browse`).
+- Screenshots: 445 PNGs were re-recorded (`recordRoborazziProdDebug`), because every shell screenshot has the new bottom bar or rail. I opened two of the new images (`light_tasks_inbox`, `light_tasks_quickadd`) and looked at them; the rest I did not inspect one by one.
+- `e2e`: `LocalServerTest` navigates with Browse; it also waits for `pending == 0` before reading the created homework from the server (the outbox sends it a moment after the snapshot shows it: `NoSuchElementException` otherwise).
+
+### Commands and results
+
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: **BUILD SUCCESSFUL**. Result XML: **1166 tests, 0 failures, 0 errors, 0 skipped**; lint passed; Roborazzi verify passed. Note: the whole chain takes more than ten minutes the first time (the tests run again under verify), so I ran it in pieces (`testProdDebugUnitTest`; then `lintProdDebug assembleProdDebug assembleProdDebugAndroidTest`; then `verifyRoborazziProdDebug`; each BUILD SUCCESSFUL), then the single command above, which printed BUILD SUCCESSFUL in 8 s because every task was up to date from those runs. One earlier full run of the single command finished BUILD SUCCESSFUL in 13 min 22 s after the shell had moved it to the background (I did not start it in the background; the 10-minute limit did that). That run was on the code before `092a890`.
+- Flaky, not touched: in two full runs one test failed with Compose's "did not get idle after 1 attempts in 60 SECONDS" while the machine was slow (`PhoneBreaksScreenshotTest.darkPicked`, then `AppNavAccountTest.switchingAccountsDiscardsSavedNavigationAndAction`, the one noted in earlier phases). Each passed alone and in the next full run.
+- `tools/e2e.sh`: first two runs failed (the outbox race above; then a snackbar over Browse's last row stopped a tap on Settings, fixed with an 88 dp spacer, which is also better for users). After the last code change: **BUILD SUCCESSFUL, 5 tests, 0 failures** (3 min 26 s, Pixel 6 API 35 managed device). Only this log came after.
+
+### Deviations from the plan
+
+- **Homework row in Browse › School.** The plan's School list is Attendance, Courses, Sessions, Calendar, Breaks. I added "Homework" (the old list and form) because the palette, the Course screen and several flows still go there and nothing else reaches it. It can go when Phase 13 decides what replaces it.
+- **Task detail** opens as a tall sheet (`skipPartiallyExpanded`), not one that grows from half height.
+- **Subtask reorder** in the detail is move up / down buttons; drag to reorder is on the lists (Inbox, projects).
+- **Dialogs for a name** (`NameDialog`, `FilterEditor`) are drawn over the screen rather than as dialog windows: a dialog with a text field never became idle under Robolectric.
+- **Task rows in Today and Upcoming** are the new `TaskRow`, not the old `HomeworkRow`, which is still used by the Homework, Course and Attendance screens. Its "catch-up" badge and recording link are not on `TaskRow`; they show on the old screens only.
+- **Sort and group** (list view) and show completed are per project and only kept while the app is open (`rememberSaveable`), not on the server.
+- The plan asks for Compose UI tests for quick add and drag-to-reorder: both exist (`QuickAddSheetTest`, `TaskRowUiTest`). Drag between board columns is `ProjectScreenTest.boardShows…`.
+
+### Unverified (needs a real device)
+
+- The feel of the gestures on a phone: swipe thresholds, long-press and drag on a long list, drag between board columns with a finger, the drop target while the list scrolls. Tests inject touches in Robolectric only.
+- The keyboard staying up in quick add on a real IME (the field keeps focus in the test; the IME itself is not exercised).
+- Everything offline on a real phone: the new screens write through the outbox, tested through fakes at the screen level and by Phase 11's outbox tests, not in airplane mode.
+- Comments and the completions history need the network (they are read straight from the server); nothing caches them.
+- Search recents are stored per device, not per account, like the palette's recents.
+- TalkBack: rows and the ring have content descriptions ("Done: title, p1"), but I did not run TalkBack.
+
+### Open questions
+
+- Should Homework keep a row in Browse › School, or should "School" become a built-in filter (`school`) now that homework is a kind of task?
+- Should the Calendar's `setPlan` move onto the outbox as review 11 suggested? I could not make its unit test work in the time I had (see above); it needs another look.
