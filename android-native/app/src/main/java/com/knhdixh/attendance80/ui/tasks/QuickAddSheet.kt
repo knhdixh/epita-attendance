@@ -12,6 +12,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.editableText
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -48,6 +50,34 @@ object QuickAddPlan {
             if (r.start in 0 until r.end && r.end <= text.length)
                 addStyle(SpanStyle(color = colors[r.kind] ?: Color.Unspecified, fontWeight = FontWeight.SemiBold), r.start, r.end)
         }
+    }
+
+    /** U+2060 WORD JOINER: no line break either side of it. */
+    const val JOINER = '\u2060'
+
+    /**
+     * What the field shows: [highlight]ed, with a word joiner between the characters of each matched token so a token like
+     * `!30m` never wraps after its `!`. The joiners are in the displayed text only; the offset mapping hides them from the cursor.
+     */
+    fun display(text: String, ranges: List<QuickRange>, colors: Map<String, Color> = kindColors): TransformedText {
+        val joins = ranges.filter { it.start in 0 until it.end && it.end <= text.length }.flatMap { (it.start + 1) until it.end }.distinct().sorted()
+        if (joins.isEmpty()) return TransformedText(highlight(text, ranges, colors), OffsetMapping.Identity)
+        val shown = buildString {
+            text.forEachIndexed { i, c -> if (i in joins) append(JOINER); append(c) }
+        }
+        val styled = buildAnnotatedString {
+            append(shown)
+            fun at(o: Int) = o + joins.count { it < o }
+            ranges.forEach { r ->
+                if (r.start in 0 until r.end && r.end <= text.length)
+                    addStyle(SpanStyle(color = colors[r.kind] ?: Color.Unspecified, fontWeight = FontWeight.SemiBold), at(r.start), at(r.end))
+            }
+        }
+        val mapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int) = offset + joins.count { it < offset }
+            override fun transformedToOriginal(offset: Int) = (offset - joins.withIndex().count { (k, p) -> p + k < offset }).coerceIn(0, text.length)
+        }
+        return TransformedText(styled, mapping)
     }
 
     /** Drops what the parser read for [kind] and puts [token] at the end ("" just drops it): how the chips edit the text. */
@@ -122,9 +152,11 @@ fun QuickAddSheet(data: AppData, today: String, zone: ZoneId, defaults: QuickDef
     }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).imePadding().testTag("quick-add-sheet")) {
-            OutlinedTextField(field, { field = it }, Modifier.fillMaxWidth().focusRequester(focus).testTag("quick-add-input"),
+            OutlinedTextField(field, { field = it }, Modifier.fillMaxWidth().focusRequester(focus).testTag("quick-add-input")
+                // The joiners are for line breaking only: assistive technology and tests read the text as typed.
+                .semantics { editableText = AnnotatedString(field.text) },
                 placeholder = { Text("Buy milk tomorrow p1 #Home @errands") },
-                visualTransformation = { text -> TransformedText(QuickAddPlan.highlight(text.text, q.ranges), OffsetMapping.Identity) },
+                visualTransformation = { text -> QuickAddPlan.display(text.text, q.ranges) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { add() }), maxLines = 3)
             Spacer(Modifier.height(8.dp))
             LazyRow(Modifier.testTag("quick-chips"), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

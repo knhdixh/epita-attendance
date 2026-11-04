@@ -62,6 +62,20 @@ class QuickAddSheetTest {
         assertEquals("Buy milk", q.title)
     }
 
+    @Test fun aTokenNeverWrapsInsideItself() {
+        val text = "Call Sam tomorrow !30m #Home"
+        val q = QuickAddParser.parseQuickAdd(text, TODAY, QuickAddPlan.names(data))
+        assertTrue("the parser reads the reminder", q.ranges.any { text.substring(it.start, it.end) == "!30m" })
+        val shown = QuickAddPlan.display(text, q.ranges)
+        assertEquals("only joiners are added", text, shown.text.text.replace(QuickAddPlan.JOINER.toString(), ""))
+        val bang = shown.text.text.indexOf("!")
+        assertEquals(QuickAddPlan.JOINER, shown.text.text[bang + 1])           // nothing can wrap after the "!"
+        assertEquals("30m", shown.text.text.substring(bang + 2).substringBefore(' ').replace(QuickAddPlan.JOINER.toString(), "").take(3))
+        // The cursor never lands inside the text it can't see: every offset maps there and back.
+        (0..text.length).forEach { o -> assertEquals(o, shown.offsetMapping.transformedToOriginal(shown.offsetMapping.originalToTransformed(o))) }
+        assertEquals(text.length + shown.text.text.count { it == QuickAddPlan.JOINER }, shown.text.length)
+    }
+
     @Test fun chipsEditTheTextByReplacingWhatWasThere() {
         val text = "Read p2 tomorrow"
         val q = QuickAddParser.parseQuickAdd(text, TODAY, QuickAddPlan.names(data))
