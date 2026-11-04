@@ -333,6 +333,9 @@ fun Shell(
                             }
                             if (route == "inbox") key(accountKey) { if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.InboxScreen(taskEnv, ::move) }
                             else if (route == "browse") com.knhdixh.attendance80.ui.tasks.BrowseScreen(visibleData, onNavigate = { navigate(it) }, onNewProject = { newProject = true })
+                            else if (route == "filters") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.FiltersScreen(taskEnv, taskActions, onNavigate = { navigate(it) })
+                            }
                             else if (route.startsWith("project/")) key(accountKey) {
                                 val project = visibleData?.projects?.find { it.id == route.substringAfter('/').toLongOrNull() }
                                 if (taskEnv == null || project == null) Text("This project is gone.", Modifier.padding(16.dp))
