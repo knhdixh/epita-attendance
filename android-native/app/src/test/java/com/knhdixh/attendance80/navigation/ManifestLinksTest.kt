@@ -17,7 +17,7 @@ import org.xmlpull.v1.XmlPullParser
 class ManifestLinksTest {
     @Test fun filtersResolveAndShortcutsPointAtInternalRoutes() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        for (route in listOf("today", "focus", "homework", "homework/new", "session/1", "course/2")) {
+        for (route in listOf("today", "focus", "homework", "homework/new", "session/1", "course/2", "add", "inbox", "project/3", "filter/4")) {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("a80://$route")).addCategory(Intent.CATEGORY_BROWSABLE)
             assertNotNull(route, context.packageManager.resolveActivity(intent, 0))
         }
@@ -28,6 +28,7 @@ class ManifestLinksTest {
                 links += parser.getAttributeValue("http://schemas.android.com/apk/res/android", "data")
             }
         }
-        assertEquals(listOf("a80://focus", "a80://today", "a80://homework", "a80://homework/new"), links)
+        assertEquals(listOf("a80://focus", "a80://today", "a80://homework", "a80://add"), links)
+        links.forEach { assertNotNull(it, internalRoute(it)) }
     }
 }
