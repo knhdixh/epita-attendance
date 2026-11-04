@@ -1590,3 +1590,17 @@ Changed because the contract changed (not weakened): `SettingsUiTest` expected `
 
 - Should the quick-add tile and widget open a small overlay instead of the full app with a sheet over it? The sheet works, but a cold start shows the app behind it.
 - Should snoozes sync (a server field) so a snooze on the phone shows on a tablet? Today it is per device.
+
+## Review 13 fixes
+
+Branch `native/phase-13`.
+
+1. **A snooze outlived the occurrence it was for** — `2de281a`. A snooze is now stored with the task's `due_date` at the time the button was pressed (the Snooze button and the three length buttons carry it; `NotifyStore` keeps `TaskSnooze(until, due)` under a new preference key, so older snoozes in the old format are ignored). `taskReminders` plans a snooze only while the task is open and its `due_date` still matches; a ticked repeating task (moved on), a done task and a deleted task all drop it. New test `aSnoozeIsDroppedOnceTheRepeatingTaskHasMovedOnOrIsGone`; the existing snooze tests were adapted to the new type and also assert the due date is stored.
+2. **Screenshots of the Notifications rows** — `5b562d7`. `SettingsScreenshotTest` gained `notifications` shots (Task reminders on, Daily digest on with its time, scrolled to the time button): light, dark and font 2.0, on phone and tablet (6 new PNGs). No existing PNG changed (`git status` showed only new files). I opened the three phone images (light, dark, font 2.0): both rows are visible and on, "Send it at 8:00 AM" shows. At font 2.0 the hint under the digest is below the fold, which is just the scroll position.
+
+Commands and results:
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: BUILD SUCCESSFUL. Result XML: 1215 tests, 0 failures, 0 errors, 0 skipped.
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5 tests on pixel6Api35, "Both local-server instrumented tests passed."
+
+Unverified: the snooze buttons on a real notification (the due date riding in the button value is unit-tested, not tapped on a device); everything already listed as Unverified in Phase 13 remains.
