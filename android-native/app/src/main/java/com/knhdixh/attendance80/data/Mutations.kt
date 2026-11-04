@@ -25,6 +25,8 @@ object Mutations {
     fun uncompleteTask(id: Long, occurrence: String? = null, reload: Boolean = false) =
         m("task.uncomplete", "POST", "api/homework/$id/uncomplete", buildJsonObject { occurrence?.let { put("occurrence", it) } }, reload = reload)
     fun moveTasks(body: JsonObject) = m("task.move", "POST", "api/homework/move", body, reload = true)
+    /** Several time blocks at once (the Calendar's "Plan my week"): `{ items: [{ id, planned_at, planned_minutes }] }`. */
+    fun planTasks(body: JsonObject) = m("task.plan", "POST", "api/homework/plan", body)
 
     // projects, sections, labels, filters
     private val paths = mapOf("project" to "api/projects", "section" to "api/sections", "label" to "api/labels", "filter" to "api/filters")

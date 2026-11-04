@@ -30,6 +30,10 @@ object LocalEffects {
         "task.complete" -> complete(d, idOf(m), m.at, m.body.str("occurrence"))
         "task.uncomplete" -> uncomplete(d, idOf(m))
         "task.move" -> move(d, m.body)
+        "task.plan" -> {
+            val by = (m.body["items"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }.associateBy { it.long("id") }
+            d.copy(homework = d.homework.map { h -> by[h.id]?.let { h.copy(planned_at = it.long("planned_at"), planned_minutes = it.int("planned_minutes"), updated_at = m.at) } ?: h })
+        }
         "project.create" -> d.copy(projects = d.projects + ProjectDto(m.temp!!, m.body.long("parent_id"), m.body.str("name").orEmpty().trim(), m.body.str("color"),
             m.body.str("view") ?: "list", m.body.int("position") ?: ((d.projects.maxOfOrNull { it.position } ?: -1) + 1), m.body.bool("favorite") ?: false, m.body.bool("archived") ?: false, m.clientId, m.at, m.at))
         "project.update" -> d.copy(projects = d.projects.map { p -> if (p.id != idOf(m)) p else p.copy(
@@ -277,8 +281,8 @@ object LocalEffects {
             else h.copy(created_at = row.created_at, updated_at = row.updated_at, client_id = row.client_id ?: h.client_id, gcal_event_id = row.gcal_event_id, sync_error = row.sync_error)
         }.sortedBy { it.due_at ?: Long.MAX_VALUE })
         return when {
-            m.kind.startsWith("task.") && m.kind != "task.delete" && m.kind != "task.move" -> task(json.decodeFromJsonElement(HomeworkDto.serializer(), answer), d)
-            m.kind == "task.move" -> (answer["homework"] as? JsonArray).orEmpty().fold(d) { acc, e -> task(json.decodeFromJsonElement(HomeworkDto.serializer(), e), acc) }
+            m.kind.startsWith("task.") && m.kind != "task.delete" && m.kind != "task.move" && m.kind != "task.plan" -> task(json.decodeFromJsonElement(HomeworkDto.serializer(), answer), d)
+            m.kind == "task.move" || m.kind == "task.plan" -> (answer["homework"] as? JsonArray).orEmpty().fold(d) { acc, e -> task(json.decodeFromJsonElement(HomeworkDto.serializer(), e), acc) }
             m.kind == "project.create" || m.kind == "project.update" -> json.decodeFromJsonElement(ProjectDto.serializer(), answer).let { r -> d.copy(projects = d.projects.map { if (it.id == r.id && settled(r.id)) r else it }) }
             m.kind == "section.create" || m.kind == "section.update" -> json.decodeFromJsonElement(SectionDto.serializer(), answer).let { r -> d.copy(sections = d.sections.map { if (it.id == r.id && settled(r.id)) r else it }) }
             m.kind == "label.create" || m.kind == "label.update" -> json.decodeFromJsonElement(LabelDto.serializer(), answer).let { r -> d.copy(labels = d.labels.map { if (it.id == r.id && settled(r.id)) r else it }) }
