@@ -1530,3 +1530,63 @@ Deferred items stay deferred (Review 11 Calendar `setPlan` on the outbox is Phas
 
 - The add button's clearance and the word-joiner wrapping on a real device and IME (Robolectric only). A word joiner is not drawn by the default font in the tests; a device font that draws it would show a gap.
 - Project view prefs across a real app restart (tested with a DataStore rebuilt in-process).
+
+## Phase 13: Todoist reminders and surfaces
+
+Branch `native/phase-13`. Read first: AGENTS.md, plan sections A, B, 0, 8, 9, the whole of Phase 13, the last entries of this log.
+
+### Deferred items from earlier reviews (grep `Phase 13` in `docs/native-android-review-*.md`)
+
+| Item | Done? | Where |
+|---|---|---|
+| Review 11 / 12: Calendar `setPlan` and "Plan my week" on the outbox (blocking in Phase 13) | **Done** | task A below |
+| Review 7: revisit the three device switches in `notify_settings` only if the digest needs a server-side time | Checked, **not needed**: the digest's time is a device switch (`NotifyChoices.digestAt`), like the other device ones, so no server change. | task D |
+| Review 12: keep the Homework row in Browse › School; "school" as a built-in filter is not part of Phase 13 | Nothing to do (left as it is) | - |
+
+### Tasks and commits
+
+Plan item numbers are Phase 13's (1 reminders, 2 widgets, 3 tile / shortcut / share, 4 digest). The commits follow the order the code needed, so quick add's `a80://add` link (part of item 3) comes before the widgets that open it.
+
+| Commit | What |
+|---|---|
+| `ac3e679` | **Calendar on the outbox (deferred item).** `setPlan` is now `Mutations.updateTask` (kind `task.update`, which `LocalEffects` already applied) and "Plan my week" / Keep is a new `task.plan` (`POST api/homework/plan`, applied locally, reconciled from the `homework` rows like `task.move`). `QueuedMutation.mentions/remapped` also look inside `items`, so a to-do created offline and planned straight away is sent with its real id. A refusal drops the change, reloads and shows the server's message (the block goes back). **Cause of the hung `CalendarActionsTest`:** `ShellViewModel.queue` calls `flushSoon` in `viewModelScope` (Main.immediate); under Robolectric Main is the thread blocked in `runBlocking`, so the flush ran inline, held `flushMutex` and waited for an OkHttp answer that is dispatched back to Main, which never ran, so the test's own `flushQueue()` waited on the mutex for ever (thread dump showed the main thread parked in `runBlocking`). The test now points `Dispatchers.Main` at `Dispatchers.IO` (`setMain`) and drives the flush itself. App code unchanged by that finding. |
+| `38f199c` | **Items 1 and 4 (reminders and digest).** `notify/TaskReminders.kt`: `taskReminders` (a task's `reminders`: absolute `at`, or `before_minutes` counted back from the due time; a date-only task counts from 09:00 in the task's own zone, see deviations), Done (existing `homework-done`, which moves a repeating task to its next date through the outbox) and **Snooze**: a "Snooze" button re-posts the notification with 10 min / 1 hour / Tomorrow (09:00), because Android shows three buttons at most. `NotifyStore` keeps snoozes per account (forgotten after 3 days, wiped on sign-out); `ReminderEngine` plans them like any reminder; the receiver re-runs the engine after a button so the alarm is set at once. Rescheduling after every snapshot change, boot, time and time-zone change is the existing pipeline (collector plus `NotifyReceiver`). `dailyDigests`: at the chosen time, today's tasks (plus an "N overdue" line), tracked classes and due habits; off by default; Settings › Notifications gets "Task reminders" (on) and "Daily digest" (off, with a time picker, 08:00 when first turned on). `NotifyChoices` gained `tasks` and `digestAt`. |
+| `314a3d4` | **Item 3, share and shortcut.** `a80://add` opens quick add over whatever is showing. Text shared into the app now opens quick add (first line as the text, the rest as the task's notes; replaces 7.4's add-homework form). The launcher shortcut "Add homework" is now "Add task" (`a80://add`). |
+| `52cfe42` | **Item 2, widgets.** Task list widget (`TasksGlanceWidget`): Today, Inbox, any project (with subprojects) or any filter, chosen in `TasksWidgetConfigActivity` when it is placed (reconfigurable). Reads the app's snapshot, so it works offline. A checkbox in the priority colour ticks a task through `ReminderActions.complete` (outbox, then WorkManager), no app opening; the title opens the task; the header opens the list; "+" opens quick add. Which list each widget shows is kept in `snapshots/task_widgets.json` (excluded from backup, cleared on sign-out). Quick-add widget (`QuickAddGlanceWidget`). New links `a80://inbox`, `a80://project/<id>`, `a80://filter/<id>`. The Phase 6 widget is untouched. |
+| `ac3e20e` | **Item 3, tile.** `QuickAddTileService`: a quick-settings tile that opens quick add (collapses the shade; unlocks first). |
+| `2fd1c36` | Settings UI tests for the new switches; `ManifestLinksTest` knows the new shortcut and links; re-recorded the 20 Settings screenshots whose scroll content shifted (the Notifications panel is taller). I opened `phone411x891_light_settings_feeds_1.png`; I did not open the other 19. |
+
+### Tests added
+
+`TaskReminderTest` (absolute, relative, date-only, no-date, spring DST, due time changed, repeating task moved on, done/switch off, snooze lengths and tomorrow across DST, snooze in the engine, snooze menu and buttons, widget tick, digest cases, store), `TaskWidgetTest` (lists for Today / Inbox / project / filter, limit, choices, prefs, links, drawn texts, manifest registration), `QuickAddSurfacesTest` (tile, shortcut, share filter), extended `CalendarActionsTest`, `LocalEffectsTest`, `SharedIntoShellTest` (share → quick add → saved task fields, `a80://add`), `InternalLinkTest`, `PendingRouteTest`, `SettingsUiTest`, `ManifestLinksTest`.
+Changed because the contract changed (not weakened): `SettingsUiTest` expected `NotifyChoices(...)` strings now list the two new fields; `SharedIntoShellTest.sharedTextOpensAddHomework…` became the quick-add version; `PendingRouteTest` expects the route `add`; `ManifestLinksTest` expects `a80://add` for the shortcut; `CalendarActionsTest` now describes the queued behaviour (applied at once, sent by the flush, refusal reloads, offline waits in the queue).
+
+### Commands and results
+
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: **BUILD SUCCESSFUL**. Result XML: **1208 tests, 0 failures, 0 errors, 0 skipped**. Lint, assemble, androidTest assemble and Roborazzi verify passed. (Cold, the chain is over ten minutes, so I ran `testProdDebugUnitTest`, then `lintProdDebug assembleProdDebug assembleProdDebugAndroidTest`, then `verifyRoborazziProdDebug`, then the single command above, which printed BUILD SUCCESSFUL.)
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5 tests on pixel6Api35, 0 failed; "Both local-server instrumented tests passed."
+
+### Deviations from the plan
+
+- **Snooze is two taps.** Android shows three notification buttons; Done plus three snoozes is four. "Snooze" re-posts the notification with 10 min / 1 hour / Tomorrow.
+- **Tomorrow means 09:00 local.** The plan doesn't say; Todoist's own choice isn't documented in the plan.
+- **All-day tasks and "before" reminders.** A relative reminder needs a due time; for a task with a date only I count back from 09:00 on that date (the server's `before_minutes` is "relative to the due time" and doesn't say what an all-day task has). Absolute reminders on a repeating task stay a single moment; relative ones follow the due date to the next occurrence.
+- **Snoozes live on the device only** (not on the server), like the other device switches.
+- **Task list widget** opens a project or filter by link, which needed `a80://inbox`, `a80://project/<id>`, `a80://filter/<id>`; the first two plan items for widgets say nothing about links.
+- Share → quick add also keeps the old `homework/new` form for the palette; only the share path changed.
+- Item 1's "rescheduled after every snapshot change, boot and time zone change" needed no new code: it is Phase 7's engine, and task reminders were added to its plan.
+
+### Unverified (needs a real device)
+
+- Everything about widgets on a launcher: placing the task widget, the configuration screen, the checkbox tick without opening the app, the list scrolling, the sizing at 3x3 and other sizes, the quick-add widget. Tests check the pure list, the drawn header and states, and the manifest; Glance list rows (an adapter) are not in the tested view tree.
+- The tile on a real shade (collapse and unlock on API 34+, label, icon) and the launcher shortcut (needs a long-press on the icon).
+- Notification buttons: the two-step Snooze flow, and that Done on a recurring task moves it; alarms firing on time, across a real reboot, time change or time-zone change; exact-alarm permission denied.
+- The daily digest at its time on a real device, and the time picker.
+- Sharing text from another app into quick add (intent filter resolution is tested, the share sheet is not).
+- Screenshots: no new screenshot for the Notifications panel's new rows or the widgets (a widget is not drawn by Roborazzi here); I looked at one re-recorded Settings image only.
+
+### Open questions
+
+- Should the quick-add tile and widget open a small overlay instead of the full app with a sheet over it? The sheet works, but a cold start shows the app behind it.
+- Should snoozes sync (a server field) so a snooze on the phone shows on a tablet? Today it is per device.
