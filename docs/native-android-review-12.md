@@ -47,3 +47,11 @@ dark browse, and light Today end.
 - Keep the Homework row in Browse › School for now. Once the old Homework screen's last callers (palette, Course screen)
   open task lists instead, it can become the built-in `school` filter. That isn't part of Phase 13.
 - Calendar `setPlan` on the outbox: yes, in Phase 13 (above).
+
+---
+
+# Re-review round 1 (2026-11-04): PASS
+
+All five findings are fixed (`1da7898..63bbaf3`). I opened the re-recorded `phone411x891_light_today_end_font1.png`: the last line
+clears the add button. Gradle: 1171 tests and 0 failures per the log, and `npm test` 471/471. The Calendar `setPlan` outbox item stays
+deferred to Phase 13, where it's blocking.
