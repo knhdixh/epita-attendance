@@ -59,11 +59,14 @@ class LocalServerTest {
     private fun launch() {
         app.startActivity(Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
-    private fun goBottom(label: String) { ui.onNodeWithTag("nav-${label.lowercase()}").performClick() }
-    private fun more(label: String) {
-        goBottom("More")
-        ui.onNodeWithText(label).performScrollTo().performClick()
+    /** Bottom bar: Inbox, Today, Upcoming, Search, Browse. Anything else is a row in Browse. */
+    private fun goBottom(label: String) {
+        if (label in setOf("Inbox", "Today", "Upcoming", "Search", "Browse")) { ui.onNodeWithTag("nav-${label.lowercase()}").performClick(); return }
+        ui.onNodeWithTag("nav-browse").performClick()
+        ui.onNodeWithTag("browse-list").performScrollToNode(hasTestTag("browse-${label.lowercase()}"))
+        ui.onNodeWithTag("browse-${label.lowercase()}").performClick()
     }
+    private fun more(label: String) = goBottom(label)
 
     private fun imeVisible(): Boolean {
         var visible = false

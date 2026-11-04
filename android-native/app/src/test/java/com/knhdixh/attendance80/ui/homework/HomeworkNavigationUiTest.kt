@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.ui.homework
 
+import com.knhdixh.attendance80.ui.openFromBrowse
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -82,7 +83,7 @@ class HomeworkNavigationUiTest {
         ui.runOnIdle { data = data.copy() }
         ui.onNodeWithText("A private draft").assertExists()
         ui.onNodeWithTag("nav-today").performClick()
-        ui.onNodeWithTag("nav-homework").performClick()
+        ui.openFromBrowse("homework")
         ui.waitUntil(10000) { ui.onAllNodesWithTag("homework-list").fetchSemanticsNodes().isNotEmpty() }
         ui.onNode(hasText("Add homework") and hasClickAction()).performClick()
         ui.onNodeWithText("A private draft").assertExists()
@@ -154,7 +155,7 @@ class HomeworkNavigationUiTest {
         restoration.emulateSavedInstanceStateRestore()
         ui.onNodeWithText("Focus request saved for the timer.").assertExists()
         ui.runOnIdle { Assert.assertEquals(PaletteAction.Focus("target", homeworkId = 17), ApiClient.json.decodeFromString<PaletteAction>(controller.currentBackStackEntry!!.savedStateHandle.get<String>("paletteAction")!!)) }
-        ui.onNodeWithTag("nav-homework").performClick()
+        ui.openFromBrowse("homework")
         ui.waitUntil(10000) { ui.onAllNodes(hasText("planned", substring = true) and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
         ui.onNode(hasText("planned", substring = true) and hasClickAction()).performClick()
         ui.onNodeWithTag("shell-title").assertTextEquals("Calendar")

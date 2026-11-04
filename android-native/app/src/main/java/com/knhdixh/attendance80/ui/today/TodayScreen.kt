@@ -27,7 +27,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) -> Unit, onAction: (PaletteAction) -> Unit, model: TodayViewModel = viewModel(), allEvents: List<com.knhdixh.attendance80.net.EventDto>? = null, onDelete: (com.knhdixh.attendance80.net.HomeworkDto) -> Unit = {}, onPending: (PaletteAction, String) -> Unit = { _, _ -> },
-    notificationsBlocked: Boolean = false, onFixNotifications: () -> Unit = {}) {
+    notificationsBlocked: Boolean = false, onFixNotifications: () -> Unit = {},
+    taskEnv: com.knhdixh.attendance80.ui.tasks.TaskEnv? = null) {
     LaunchedEffect(data, now / 60000, zone) { model.update(data, now, zone) }
     val state by model.state.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -89,6 +90,19 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
             s.data.homework.find { it.id == h.id }?.let { hw ->
                 com.knhdixh.attendance80.ui.homework.HomeworkRow(hw, s.data, allEvents ?: s.data.events, now, zone, onNavigate, onAction, onDelete, onPending,
                     "${h.urgency} · start by ${Dates.formatDate(h.latestStart, zone)} ${time(h.latestStart)} · ${h.effort} min")
+            }
+        }
+        if (taskEnv != null) {
+            // Todoist's list under "Do next": what is overdue or due today and not already shown above.
+            val shown = (plan.todo.map { it.id } + plan.gaps.flatMap { g -> g.fits.map { it.id } } + plan.planned.map { it.id }).toSet()
+            val (overdue, dueToday) = com.knhdixh.attendance80.ui.tasks.TaskModel.overdueAndToday(s.data, com.knhdixh.attendance80.ui.tasks.TaskModel.todayKey(now, zone), shown)
+            if (overdue.isNotEmpty()) {
+                item("overdue-heading") { Text("Overdue", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error) }
+                items(overdue, key = { "overdue:${it.id}" }) { com.knhdixh.attendance80.ui.tasks.TaskRow(it, taskEnv, showProject = true) }
+            }
+            if (dueToday.isNotEmpty()) {
+                item("tasks-today-heading") { Text("Today", style = MaterialTheme.typography.titleMedium) }
+                items(dueToday, key = { "due-today:${it.id}" }) { com.knhdixh.attendance80.ui.tasks.TaskRow(it, taskEnv, showProject = true) }
             }
         }
         if (plan.later > 0) item("later") { Text("${plan.later} more due later.") }

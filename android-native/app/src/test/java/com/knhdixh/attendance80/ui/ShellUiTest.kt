@@ -85,8 +85,7 @@ class ShellUiTest {
         compose.onNodeWithTag("upcoming-next").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("nav-today").performClick()
-        compose.onNodeWithTag("nav-more").performClick()
-        compose.onNodeWithText("Upcoming").performClick()
+        compose.onNodeWithTag("nav-upcoming").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
         restoration.emulateSavedInstanceStateRestore()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("upcoming-day-2026-11-09").fetchSemanticsNodes().isNotEmpty() }
@@ -191,8 +190,7 @@ class ShellUiTest {
         compose.setContent { Attendance80Theme { Shell(ShellState(data = data), {}, { selected = it }, { signedOut = true }) } }
         compose.onNodeWithTag("scope-1").performClick()
         compose.runOnIdle { assertEquals("1", selected) }
-        compose.onNodeWithText("More").performClick()
-        compose.onNodeWithText("Settings").performScrollTo().performClick()
+        compose.openFromBrowse("settings")
         compose.onNodeWithText("Sign out").performClick()
         compose.runOnIdle { assertEquals(true, signedOut) }
     }

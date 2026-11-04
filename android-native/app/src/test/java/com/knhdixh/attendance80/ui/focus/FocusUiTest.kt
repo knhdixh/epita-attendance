@@ -1,5 +1,6 @@
 package com.knhdixh.attendance80.ui.focus
 
+import com.knhdixh.attendance80.ui.openFromBrowse
 import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.platform.LocalDensity
@@ -76,7 +77,7 @@ class FocusUiTest {
         ui.runOnIdle { state = ShellState(data = null, session = "a") }
         ui.runOnIdle { state = ShellState(data = data, session = "a") }
         ui.onNodeWithText("Daily goal").assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("3")))
-        ui.onNodeWithTag("nav-homework").performClick(); ui.onNodeWithTag("nav-focus").performClick()
+        ui.onNodeWithTag("nav-today").performClick(); ui.openFromBrowse("focus")
         ui.onNodeWithText("Daily goal").assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("3")))
         ui.runOnIdle { owner = "b"; state = ShellState(data = data, session = "b") }
         ui.onNodeWithTag("focus-list").performScrollToNode(hasText("Daily goal"))

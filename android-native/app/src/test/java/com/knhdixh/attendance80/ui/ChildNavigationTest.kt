@@ -25,7 +25,7 @@ abstract class ChildNavigationTest {
     private fun selected(route: String, parent: String) {
         val restoration = StateRestorationTester(compose)
         restoration.setContent { Attendance80Theme { Shell(ShellState(data = screenshotData()), {}, {}, {}, initialRoute = route) } }
-        val node = if (wide) compose.onNodeWithTag("nav-$parent", useUnmergedTree = true) else compose.onNode(hasText(if (parent == "homework") "Homework" else "More") and hasClickAction())
+        val node = if (wide) compose.onNodeWithTag("nav-$parent", useUnmergedTree = true) else compose.onNode(hasText("Browse") and hasClickAction())
         node.assertIsSelected()
         restoration.emulateSavedInstanceStateRestore()
         node.assertIsSelected()
@@ -50,7 +50,7 @@ abstract class ChildNavigationTest {
         compose.onNodeWithContentDescription("Search").performClick()
         compose.onNodeWithTag("search-query").performTextInput("new habit")
         compose.onNodeWithTag("result-new-habit").performClick()
-        val nav = if (wide) compose.onNodeWithTag("nav-habits", useUnmergedTree = true) else compose.onNodeWithText("More")
+        val nav = if (wide) compose.onNodeWithTag("nav-habits", useUnmergedTree = true) else compose.onNodeWithText("Browse")
         nav.assertIsSelected()
         restoration.emulateSavedInstanceStateRestore()
         nav.assertIsSelected()

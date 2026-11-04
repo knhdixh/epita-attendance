@@ -224,6 +224,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                 onRemoveBreak = { id -> shellViewModel.removeBreak(token, id) },
                 settingsActions = androidx.compose.runtime.remember(token) { shellViewModel.settingsActions(token) },
                 calendarActions = androidx.compose.runtime.remember(token) { shellViewModel.calendarActions(token) },
+                taskActions = androidx.compose.runtime.remember(token) { shellViewModel.taskActions(token) },
                 habitActions = androidx.compose.runtime.remember(token) { shellViewModel.habitActions(token) },
                 countdownActions = androidx.compose.runtime.remember(token) { shellViewModel.countdownActions(token) },
                 focusTimer = focusTimer,
