@@ -118,7 +118,7 @@ fun UpcomingScreen(data: AppData?, now: Long, zone: ZoneId, offset: Int, onOffse
         }
     }
     val drag = remember { com.knhdixh.attendance80.ui.tasks.DragState() }
-    LazyColumn(Modifier.fillMaxSize().testTag("upcoming-list"), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("upcoming-list"), state = list, contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = com.knhdixh.attendance80.ui.tasks.FabInset), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (families.isNotEmpty()) item("groups") { Column { Text("Pick your groups for ${families.joinToString { it.family }}."); TextButton(onClick = { onNavigate("courses") }) { Text("Choose groups") } } }
         item("header") { Column {
             Text(range, style = MaterialTheme.typography.titleLarge)

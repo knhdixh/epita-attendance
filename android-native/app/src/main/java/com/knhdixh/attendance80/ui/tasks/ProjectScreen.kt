@@ -139,7 +139,7 @@ private fun Board(project: ProjectDto, sections: List<SectionDto>, env: TaskEnv,
     val colBounds = remember { mutableStateMapOf<Long?, Rect>() }
     val cardBounds = remember { mutableStateMapOf<Long, Rect>() }
     val drag = remember { DragState() }
-    Row(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(8.dp).testTag("board"), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = FabInset).testTag("board"), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         columns.forEach { (sectionId, name) ->
             val rows = env.data.homework.filter { it.project_id == project.id && it.parent_id == null && it.section_id == sectionId && (!it.done || showCompleted) }.sortedWith(compareBy<HomeworkDto>({ it.done }, { it.position }, { it.id }))
             Column(Modifier.width(280.dp).fillMaxHeight().onGloballyPositioned { colBounds[sectionId] = Rect(it.positionInRoot(), it.size.toSize()) }.testTag("board-col-${sectionId ?: 0}")

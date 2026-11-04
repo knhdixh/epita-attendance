@@ -65,7 +65,7 @@ fun TodayScreen(data: AppData?, now: Long, zone: ZoneId, onNavigate: (String) ->
         if (firstGap != null) add("${if (firstGap.start <= plan.now + 60000) "Now" else "Free from ${time(firstGap.start)}"}: ${firstGap.fits.first().title}.")
         else plan.todo.firstOrNull()?.takeIf { it.urgency == "overdue" }?.let { add("${it.title} is overdue.") }
     }.joinToString(" ")
-    LazyColumn(Modifier.fillMaxSize().testTag("today-list"), listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("today-list"), listState, contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = com.knhdixh.attendance80.ui.tasks.FabInset), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Reminders can't reach a student who never opened Settings: say so here, with the way to fix it.
         if (notificationsBlocked && (plan.todaySessions.isNotEmpty() || s.habits.isNotEmpty())) item("notify-blocked") {
             Row(Modifier.fillMaxWidth().testTag("today-notify-blocked"), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {

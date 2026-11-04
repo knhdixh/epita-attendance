@@ -41,6 +41,9 @@ fun dropTarget(tops: List<Triple<Long, Float, Float>>, id: Long, dx: Float, dy: 
     return Triple(hit?.first, dy > 0, 0)
 }
 
+/** Bottom padding every screen with the add button needs: the button (56 dp) plus its 16 dp margin plus 16 dp of air. */
+val FabInset = 88.dp
+
 /** Task rows with section headings; long-press a row and drag to reorder it, or drag sideways to nest or unnest it. */
 @Composable
 fun TaskLazyList(
@@ -51,7 +54,7 @@ fun TaskLazyList(
     val drag = remember { DragState() }
     val rows = remember(entries) { entries.filterIsInstance<TaskEntry>().map { it.h } }
     val density = LocalDensity.current
-    LazyColumn(modifier.fillMaxSize().testTag(tag), state, contentPadding = PaddingValues(bottom = 88.dp)) {
+    LazyColumn(modifier.fillMaxSize().testTag(tag), state, contentPadding = PaddingValues(bottom = FabInset)) {
         header?.invoke(this)
         if (entries.isEmpty() && emptyText != null) item("empty") { Text(emptyText, Modifier.padding(16.dp).testTag("$tag-empty"), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         entries.forEach { entry ->
