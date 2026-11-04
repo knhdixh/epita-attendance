@@ -63,3 +63,16 @@ test('auto-plan: earliest free slot before the deadline, away from classes, with
   assert.deepEqual(unplaced, [4, 6]);
   assert.equal(atMinutes(at(2, 0), 9 * 60), at(2, 9));
 });
+
+test('Plan my week keeps to your working hours and skips days away', () => {
+  // Thursday is a day away; other days you work 14:00–16:00 only.
+  const windows = (day) => (new Date(day).getDate() === 5 ? [] : [[14 * 60, 16 * 60]]);
+  const { planned, unplaced } = autoPlan({
+    todos: [{ id: 1, due_at: at(7, 12), effort: 60 }, { id: 2, due_at: at(7, 12), effort: 120 }, { id: 3, due_at: at(7, 12), effort: 60 }],
+    now: at(4, 15, 30), until: at(12, 0), windows, buffer: 0,
+  });
+  // Wednesday has 30 min left (15:30–16:00), Thursday is away, so Friday's window takes the two 1 h ones in order; the
+  // 2 h one has no room before it's due (Saturday 12:00, before that day's window).
+  assert.deepEqual(planned.map((p) => [p.id, new Date(p.start).getDate(), new Date(p.start).getHours()]), [[1, 6, 14], [3, 6, 15]]);
+  assert.deepEqual(unplaced, [2]);
+});

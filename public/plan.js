@@ -4,9 +4,13 @@
 // - Sessions are those of tracked courses, minus future ones you plan to skip.
 // - To-dos are open homework and catch-ups, ranked by when you must start them at the latest:
 //   due time minus the effort they need. Overdue ones come first.
-// - Free time is the part of each day between DAY_START and DAY_END with no session, in blocks of 30 min or more,
-//   and the to-dos are fitted into today's blocks in rank order.
+// - Free time is the part of each day inside your working hours (DAY_START to DAY_END unless you set your own, see
+//   timeline.js) with no session, in blocks of 30 min or more, and the to-dos are fitted into today's blocks in rank
+//   order. Days you're away have none. Commitments ("Thesis 10h/week") are counted in the week's load.
 // - A to-do planned on the Calendar (planned_at) takes its block out of the free time, and isn't fitted again.
+
+import { DEFAULT_AVAILABILITY, awayDays, dayWindows, minutesOfDay } from './timeline.js';
+import { keyInZone } from './habits.js';
 
 const MIN = 60000;
 const HOUR = 60 * MIN;
@@ -65,7 +69,13 @@ function urgency(h, now) {
   return h.due_at - now < 3 * DAY ? 'due' : 'soon';
 }
 
-export function buildPlan({ courses, events, homework, now = Date.now(), tz = Intl.DateTimeFormat().resolvedOptions().timeZone }) {
+export function buildPlan({ courses, events, homework, now = Date.now(), tz = Intl.DateTimeFormat().resolvedOptions().timeZone, availability = null, commitments = [] }) {
+  const av = availability || DEFAULT_AVAILABILITY;
+  const away = awayDays(commitments);
+  const keyOf = (midnight) => keyInZone(midnight + 2 * HOUR, tz);
+  // Free blocks of the local day starting at `midnight`, inside its working hours and not before `from`.
+  const freeOn = (midnight, busy, from = 0) => dayWindows(keyOf(midnight), { availability: av, away })
+    .flatMap(([a, b]) => freeBlocks(Math.max(from, atHour(midnight, a / 60, tz)), atHour(midnight, b / 60, tz), busy));
   const byId = Object.fromEntries(courses.map((c) => [c.id, c]));
   const sessions = events
     .filter((e) => byId[e.course_id]?.tracked && !(e.status === 'absent' && e.start_at > now) && e.status !== 'excused')
@@ -97,10 +107,9 @@ export function buildPlan({ courses, events, homework, now = Date.now(), tz = In
   // one that fits; a long to-do that fits nowhere is started in the longest block.
   const blocks = open.map((h) => [h, plannedBlock(h)]).filter(([, b]) => b && b[1] > today && b[0] < today + 8 * DAY);
   const busy = [...timed.map((e) => [e.start_at, e.end_at]), ...blocks.map(([, b]) => b)].sort((a, b) => a[0] - b[0]);
-  const dayFrom = Math.max(now, atHour(today, DAY_START, tz));
   const planned = blocks.filter(([, [s, e]]) => e > now && s < tomorrow)
     .map(([h, [start, end]]) => ({ id: h.id, title: h.title, start, end, minutes: Math.round((end - start) / MIN) }));
-  const gaps = freeBlocks(dayFrom, atHour(today, DAY_END, tz), busy).map((g) => ({ ...g, minutes: Math.round((g.end - g.start) / MIN), fits: [] }));
+  const gaps = freeOn(today, busy, now).map((g) => ({ ...g, minutes: Math.round((g.end - g.start) / MIN), fits: [] }));
   const plannedToday = new Set(planned.map((p) => p.id));
   const pending = todo.filter((h) => !plannedToday.has(h.id));
   for (const g of gaps) {
@@ -125,11 +134,13 @@ export function buildPlan({ courses, events, homework, now = Date.now(), tz = In
   // The next seven days: hours in class, hours of work due, free hours between classes, and clashes
   // (two courses at the same time, e.g. an EPITA and a Tampere session).
   const weekEnd = today + 7 * DAY;
-  const week = { classHours: 0, workHours: 0, freeHours: 0, clashes: [] };
+  const week = { classHours: 0, workHours: 0, commitHours: 0, freeHours: 0, awayDays: 0, clashes: [] };
   for (let d = 0; d < 7; d++) {
     const mid = localMidnight(today + d * DAY + 2 * HOUR, tz);
-    const from = d === 0 ? dayFrom : atHour(mid, DAY_START, tz);
-    week.freeHours += freeBlocks(from, atHour(mid, DAY_END, tz), busy).reduce((n, g) => n + (g.end - g.start) / HOUR, 0);
+    const key = keyOf(mid);
+    if (away.has(key)) week.awayDays++;
+    week.freeHours += freeOn(mid, busy, d === 0 ? now : 0).reduce((n, g) => n + (g.end - g.start) / HOUR, 0);
+    week.commitHours += commitments.reduce((n, c) => n + minutesOfDay(c, key, av, away), 0) / 60;
   }
   const inWeek = upcoming.filter((e) => e.start_at < weekEnd);
   week.classHours = inWeek.reduce((n, e) => n + (e.end_at - e.start_at) / HOUR, 0);
@@ -139,10 +150,11 @@ export function buildPlan({ courses, events, homework, now = Date.now(), tz = In
       if (inWeek[j].course_id !== inWeek[i].course_id) week.clashes.push([inWeek[i].id, inWeek[j].id]);
     }
   }
-  week.load = week.freeHours ? week.workHours / week.freeHours : week.workHours ? Infinity : 0;
+  const asked = week.workHours + week.commitHours;
+  week.load = week.freeHours ? asked / week.freeHours : asked ? Infinity : 0;
 
   return {
-    now, tz, today,
+    now, tz, today, away: away.has(keyOf(today)),
     current: current.map((e) => e.id),
     next: upcoming[0]?.id ?? null,
     todaySessions: todaySessions.map((e) => e.id),

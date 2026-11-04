@@ -92,7 +92,9 @@ function firstFit(taken, from, to, len, snap) {
 // planned (`blocks`), and with at most `cap` minutes of planned work a day. A block is the to-do's effort, up to
 // `maxBlock` minutes (a bigger job gets its first part). Nothing starts before `now` or ends after `until`.
 // Returns { planned: [{ id, start, minutes }], unplaced: [id] }.
-export function autoPlan({ todos, busy = [], blocks = [], now, until, dayStart = 8, dayEnd = 22, buffer = 10, cap = 240, maxBlock = 120, step = 15 }) {
+// `windows(day)`, when given, are the day's working hours as [from, to] minutes after midnight ([] = a day off); it replaces
+// dayStart and dayEnd.
+export function autoPlan({ todos, busy = [], blocks = [], now, until, dayStart = 8, dayEnd = 22, windows = null, buffer = 10, cap = 240, maxBlock = 120, step = 15 }) {
   const grid = step * MIN;
   const snap = (t) => Math.ceil(t / grid) * grid;
   const taken = [...busy.map(([s, e]) => [s - buffer * MIN, e + buffer * MIN]), ...blocks].sort((a, b) => a[0] - b[0]);
@@ -108,7 +110,10 @@ export function autoPlan({ todos, busy = [], blocks = [], now, until, dayStart =
     let start = null;
     for (let day = startOfDay(now); start === null && day < deadline; day = addDays(day, 1)) {
       if ((load.get(day) || 0) + minutes > cap) continue;
-      start = firstFit(taken, Math.max(now, atMinutes(day, dayStart * 60)), Math.min(atMinutes(day, dayEnd * 60), deadline), len, snap);
+      for (const [a, b] of windows ? windows(day) : [[dayStart * 60, dayEnd * 60]]) {
+        start = firstFit(taken, Math.max(now, atMinutes(day, a)), Math.min(atMinutes(day, b), deadline), len, snap);
+        if (start !== null) break;
+      }
     }
     if (start === null) { unplaced.push(h.id); continue; }
     planned.push({ id: h.id, start, minutes });
