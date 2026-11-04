@@ -32,6 +32,12 @@ class RecordingActions : TaskActions by NoTaskActions {
     override suspend fun addComment(taskId: Long, body: String): Boolean { commentsAdded += taskId to body; return true }
     override suspend fun deleteReminder(id: Long): Boolean { reminderDeletes += id; return true }
     override suspend fun comments(taskId: Long) = existingComments
+    val entityUpdates = mutableListOf<Triple<String, Long, JsonObject>>()
+    val entityDeletes = mutableListOf<Pair<String, Long>>()
+    val reorders = mutableListOf<Pair<String, List<Long>>>()
+    override suspend fun updateEntity(noun: String, id: Long, body: JsonObject): Boolean { entityUpdates += Triple(noun, id, body); return true }
+    override suspend fun deleteEntity(noun: String, id: Long): Boolean { entityDeletes += noun to id; return true }
+    override suspend fun reorderEntities(noun: String, ids: List<Long>): Boolean { reorders += noun to ids; return true }
     private var next = -1L
     override suspend fun create(body: JsonObject): Long? { created += body; return next-- }
     override suspend fun createEntity(noun: String, body: JsonObject): Long? { entities += noun to body; return next-- }

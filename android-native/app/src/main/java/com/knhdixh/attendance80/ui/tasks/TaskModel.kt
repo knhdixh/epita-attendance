@@ -171,7 +171,64 @@ object TaskModel {
         roots.forEach { add(it, 0) }
         return out
     }
+
+    /** How a project page orders and groups its tasks. [sort]: manual, date or priority. [group]: none, date, priority or label. */
+    data class ProjectOptions(val sort: String = "manual", val group: String = "none", val completed: Boolean = false)
+
+    private fun comparator(sort: String): Comparator<HomeworkDto> = when (sort) {
+        "date" -> compareBy<HomeworkDto>({ it.due_date ?: "9999" }, { it.due_time ?: "" }, { -it.priority }, { it.position }, { it.id })
+        "priority" -> compareBy<HomeworkDto>({ -it.priority }, { it.due_date ?: "9999" }, { it.position }, { it.id })
+        else -> manual
+    }
+
+    private fun groupKey(h: HomeworkDto, group: String, d: AppData, today: String): Pair<Int, String> = when (group) {
+        "priority" -> (4 - h.priority) to if (h.priority == 1) "No priority" else priorityLabel(h.priority)
+        "date" -> if (h.due_date == null) 9 to "No date" else if (h.due_date < today) 0 to "Overdue" else 1 to ("${h.due_date}" + "|" + dayLabel(h.due_date, today))
+        else -> (h.labels.firstOrNull()?.let { id -> d.labels.indexOfFirst { it.id == id }.takeIf { it >= 0 } } ?: 999) to
+            (h.labels.firstOrNull()?.let { id -> d.labels.find { it.id == id }?.name?.let { "@$it" } } ?: "No label")
+    }
+
+    /**
+     * The rows of a project page. Manual sort with no grouping keeps the sections (id "s<id>", then "s0" for tasks without one);
+     * otherwise the sections give way to groups. Open top-level tasks come first, then, with [ProjectOptions.completed], the done ones.
+     */
+    fun projectEntries(d: AppData, projectId: Long, o: ProjectOptions, today: String, collapsedSections: Set<Long> = emptySet(), collapsedTasks: Set<Long> = emptySet()): List<ListEntry> {
+        val ids = setOf(projectId)
+        val roots = d.homework.filter { it.project_id in ids && it.parent_id == null }
+        val open = roots.filter { !it.done }.sortedWith(comparator(o.sort))
+        val out = mutableListOf<ListEntry>()
+        if (o.group == "none") {
+            val sections = d.sections.filter { it.project_id == projectId }.sortedWith(compareBy({ it.position }, { it.id }))
+            out += flatten(d, open.filter { it.section_id == null }, collapsedTasks)
+            for (s in sections) {
+                val rows = open.filter { it.section_id == s.id }
+                out += HeaderEntry(s.name, "s${s.id}", rows.size)
+                if (s.id !in collapsedSections) out += flatten(d, rows, collapsedTasks)
+            }
+        } else {
+            open.groupBy { groupKey(it, o.group, d, today) }.toSortedMap(compareBy({ it.first }, { it.second })).forEach { (k, rows) ->
+                out += HeaderEntry(k.second.substringAfter('|'), "g${k.first}${k.second}", rows.size)
+                out += flatten(d, rows, collapsedTasks)
+            }
+        }
+        if (o.completed) {
+            val done = roots.filter { it.done }.sortedByDescending { it.completed_at ?: 0L }
+            if (done.isNotEmpty()) { out += HeaderEntry("Completed", "done", done.size); out += done.map { TaskEntry(it) } }
+        }
+        return out
+    }
+
+    /** Which column a card dropped at ([x], [y]) lands in, and where: [columns] are (section id, left, right), [cards] (id, section id, top, height). */
+    fun boardDrop(columns: List<Triple<Long?, Float, Float>>, cards: List<Triple<Long, Long?, Pair<Float, Float>>>, id: Long, x: Float, y: Float): Pair<Long?, Int>? {
+        val col = columns.find { x >= it.second && x < it.third } ?: return null
+        val inCol = cards.filter { it.second == col.first && it.first != id }.sortedBy { it.third.first }
+        val at = inCol.count { it.third.first + it.third.second / 2 < y }
+        return col.first to at
+    }
+
+    fun boardMove(d: AppData, projectId: Long, id: Long, section: Long?, position: Int) = moveBody(id, projectId, section, null, position)
 }
+
 
 sealed interface ListEntry { val key: String }
 data class TaskEntry(val h: HomeworkDto, val depth: Int = 0) : ListEntry { override val key get() = "t${h.id}" }

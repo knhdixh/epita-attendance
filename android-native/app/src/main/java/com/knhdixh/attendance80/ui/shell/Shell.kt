@@ -236,6 +236,7 @@ fun Shell(
     }
     val visibleData = state.data?.let { d -> pendingDelete?.let { p -> d.copy(homework = d.homework.filterNot { it.id == p.item.id }) } ?: d }
     val scope = rememberCoroutineScope()
+    var newProject by rememberSaveable { mutableStateOf(false) }
     var showQuickAdd by rememberSaveable { mutableStateOf(false) }
     val addsTasks = route in setOf("inbox", "today", "upcoming") || route.startsWith("project/") || route.startsWith("filter/") || route.startsWith("label/")
     var detailId by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
@@ -331,7 +332,12 @@ fun Shell(
                                 navController.popBackStack()
                             }
                             if (route == "inbox") key(accountKey) { if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.InboxScreen(taskEnv, ::move) }
-                            else if (route == "browse") com.knhdixh.attendance80.ui.tasks.BrowseScreen(visibleData, onNavigate = { navigate(it) })
+                            else if (route == "browse") com.knhdixh.attendance80.ui.tasks.BrowseScreen(visibleData, onNavigate = { navigate(it) }, onNewProject = { newProject = true })
+                            else if (route.startsWith("project/")) key(accountKey) {
+                                val project = visibleData?.projects?.find { it.id == route.substringAfter('/').toLongOrNull() }
+                                if (taskEnv == null || project == null) Text("This project is gone.", Modifier.padding(16.dp))
+                                else com.knhdixh.attendance80.ui.tasks.ProjectScreen(project, taskEnv, taskActions, onBack = { if (!navController.popBackStack()) navigate("browse", topLevel = true) })
+                            }
                             else if (route.startsWith("filter/")) key(accountKey) {
                                 val filter = visibleData?.filters?.find { it.id == route.substringAfter('/').toLongOrNull() }
                                 if (taskEnv == null || filter == null) Text("This filter is gone.", Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.FilterScreen(filter.query, taskEnv)
@@ -450,6 +456,9 @@ fun Shell(
         }
     }
     val context = LocalContext.current
+    if (newProject) com.knhdixh.attendance80.ui.tasks.NameDialog("New project", confirm = "Add", onDismiss = { newProject = false }, onSave = { n ->
+        scope.launch { taskActions.createEntity("project", kotlinx.serialization.json.buildJsonObject { put("name", kotlinx.serialization.json.JsonPrimitive(n)) }) }
+    })
     if (showQuickAdd && visibleData != null) {
         val projectId = route.takeIf { it.startsWith("project/") }?.substringAfter('/')?.toLongOrNull()
         com.knhdixh.attendance80.ui.tasks.QuickAddSheet(visibleData, today, zone,
