@@ -194,6 +194,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
             val sharedFile by pendingRouteViewModel.sharedFile.collectAsStateWithLifecycle()
             val sharedText by pendingRouteViewModel.sharedText.collectAsStateWithLifecycle()
             val recents by shellViewModel.recents.collectAsStateWithLifecycle()
+            val recentSearches by shellViewModel.recentSearches.collectAsStateWithLifecycle()
             val pendingDelete by shellViewModel.pendingHomeworkDelete.collectAsStateWithLifecycle()
             val now by produceState(initialValue = shellViewModel.clock.now()) {
                 while (true) {
@@ -210,7 +211,7 @@ fun AppNav(token: String?, signInViewModel: SignInViewModel, shellViewModel: She
                     if (shellViewModel.validatePendingSession()) pendingRouteViewModel.clearIfMatches(route)
                 },
                 now = now, zone = shellViewModel.clock.zone(), onAction = { shellViewModel.dispatch(it, token) },
-                recents = recents, onRecent = shellViewModel::recordRecent, onErrorConsumed = { shellViewModel.consumeError(it, token) }, accountKey = token,
+                recents = recents, onRecent = shellViewModel::recordRecent, recentSearches = recentSearches, onSearched = shellViewModel::recordSearch, onErrorConsumed = { shellViewModel.consumeError(it, token) }, accountKey = token,
                 pendingDelete = pendingDelete?.takeIf { it.owner == token },
                 onDeleteHomework = { shellViewModel.deleteHomework(token, it) },
                 onFinishHomeworkDelete = { undo, expected -> shellViewModel.finishHomeworkDelete(undo, expected) },

@@ -96,6 +96,8 @@ fun Shell(
     onAction: (PaletteAction) -> Unit = {},
     recents: List<String> = emptyList(),
     onRecent: (String) -> Unit = {},
+    recentSearches: List<String> = emptyList(),
+    onSearched: (String) -> Unit = {},
     onErrorConsumed: (String) -> Unit = {},
     accountKey: String? = state.session,
     pendingDelete: PendingHomeworkDelete? = null,
@@ -333,6 +335,12 @@ fun Shell(
                             }
                             if (route == "inbox") key(accountKey) { if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.InboxScreen(taskEnv, ::move) }
                             else if (route == "browse") com.knhdixh.attendance80.ui.tasks.BrowseScreen(visibleData, onNavigate = { navigate(it) }, onNewProject = { newProject = true })
+                            else if (route == "search") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.SearchScreen(taskEnv, taskActions, recentSearches, onSearched, onNavigate = { navigate(it) })
+                            }
+                            else if (route == "completed") key(accountKey) {
+                                if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.CompletedScreen(taskEnv, taskActions, now)
+                            }
                             else if (route == "filters") key(accountKey) {
                                 if (taskEnv == null) CircularProgressIndicator(Modifier.padding(16.dp)) else com.knhdixh.attendance80.ui.tasks.FiltersScreen(taskEnv, taskActions, onNavigate = { navigate(it) })
                             }

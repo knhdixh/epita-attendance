@@ -186,6 +186,9 @@ class ShellViewModel(private val container: AppContainer) : ViewModel() {
     private val recentsStore = com.knhdixh.attendance80.data.PaletteRecents(container.context)
     val recents = recentsStore.ids.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun recordRecent(id: String) { viewModelScope.launch { recentsStore.record(id) } }
+    private val searchStore = com.knhdixh.attendance80.data.SearchRecents(container.context)
+    val recentSearches = searchStore.queries.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun recordSearch(query: String) { viewModelScope.launch { searchStore.record(query) } }
 
     val clock get() = container.clock
 
