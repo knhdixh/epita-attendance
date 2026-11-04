@@ -10,6 +10,8 @@ import {
   createReminder, updateReminder, deleteReminder, taskDataQueries, hydrate, hydrateRows, listCompletions,
 } from './tasks.js';
 import { deleteAccount } from './account.js';
+import { COMMITMENT_COLUMNS, commitmentRow, createCommitment, updateCommitment, deleteCommitment, saveAvailability } from './commitments.js';
+import { availabilityOf, weekLoads } from '../public/timeline.js';
 import { saveBreak, removeBreak } from './breaks-store.js';
 import { handlePasskeyAuth, listPasskeys, deletePasskey, isPasskeyOnly } from './passkeys.js';
 import { createCatchup, setRecordingUrl } from './catchups.js';
@@ -444,13 +446,16 @@ async function handleApi(request, env, url, user) {
       ...habitQueries(env, user, logsSince()),
       DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
       DB.prepare('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?').bind(user.id),
+      DB.prepare(`SELECT ${COMMITMENT_COLUMNS} FROM commitments WHERE user_id = ? ORDER BY start_date, id`).bind(user.id),
       ...taskDataQueries(env, user),
     ]);
-    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns, devices] = all;
-    const taskData = all.slice(11);
+    const [courses, events, homework, link, breaks, syncs, focus, habits, habitLogs, countdowns, devices, commitments] = all;
+    const taskData = all.slice(12);
     const gcal = link.results[0];
     return json({
-      user: { email: user.email, name: user.name, picture: user.picture, threshold: user.threshold, unit: user.unit },
+      user: { email: user.email, name: user.name, picture: user.picture, threshold: user.threshold, unit: user.unit,
+        // Working hours (see public/timeline.js); null = the default, 8:00 to 22:00 every day.
+        availability: user.availability ? JSON.parse(user.availability) : null },
       account: { google: !isPasskeyOnly(user), passkeys: await listPasskeys(env, user) },
       courses: courses.results,
       // cals: the calendars (groups) each session is in.
@@ -472,6 +477,7 @@ async function handleApi(request, env, url, user) {
       focus: { settings: focusSettings(user), sessions: focus.results.map(focusRow), since: Date.now() - FOCUS_DATA_DAYS * 86400000 },
       habits: { list: habits.results.map(habitRow), logs: habitLogs.results, since: logsSince() },
       countdowns: countdowns.results,
+      commitments: commitments.results.map(commitmentRow),
       // key: the VAPID public key browsers subscribe with (null: push isn't set up here); devices: subscriptions.
       notifications: { key: pushEnabled(env) ? env.VAPID_PUBLIC_KEY : null, settings: notifySettings(user), devices: devices.results[0].n },
     });
@@ -482,7 +488,7 @@ async function handleApi(request, env, url, user) {
   if (path === '/api/plan' && method === 'GET') {
     const tz = [url.searchParams.get('tz'), request.cf?.timezone, 'Europe/Paris'].find((z) => z && isValidTimeZone(z));
     const now = Date.now();
-    const [courses, events, homework, cals, focus, habits, habitLogs, countdowns] = await DB.batch([
+    const [courses, events, homework, cals, focus, habits, habitLogs, countdowns, commitments] = await DB.batch([
       DB.prepare('SELECT id, name, tracked, tag, attendance, recording_url FROM courses WHERE user_id = ? ORDER BY name').bind(user.id),
       DB.prepare(`SELECT id, course_id, summary, location, start_at, end_at, status, tag, note,
           (SELECT json_group_array(source_id) FROM event_sources WHERE event_id = events.id) AS cals
@@ -493,11 +499,20 @@ async function handleApi(request, env, url, user) {
         .bind(user.id, now - FOCUS_DATA_DAYS * 86400000),
       ...habitQueries(env, user, logsSince()),
       DB.prepare(`SELECT ${COUNTDOWN_COLUMNS} FROM countdowns WHERE user_id = ? ORDER BY at`).bind(user.id),
+      DB.prepare(`SELECT ${COMMITMENT_COLUMNS} FROM commitments WHERE user_id = ? AND end_date >= ? ORDER BY start_date, id`)
+        .bind(user.id, keyInZone(now - 7 * 86400000, tz)),
     ]);
     const evs = events.results.map((e) => ({ ...e, cals: JSON.parse(e.cals) }));
     const hw = homework.results.map(({ gcal_event_id: _, sync_error: __, ...h }) => h);
+    const availability = availabilityOf(user);
+    const cms = commitments.results.map(commitmentRow);
     return json({
-      plan: buildPlan({ courses: courses.results, events: evs, homework: hw, now, tz }),
+      plan: buildPlan({ courses: courses.results, events: evs, homework: hw, now, tz, availability, commitments: cms }),
+      // The Timeline: working hours, commitments, and the next three weeks' load (minutes; see weekLoads in public/timeline.js).
+      timeline: {
+        availability, commitments: cms,
+        weeks: weekLoads({ from: keyInZone(now, tz), count: 3, availability, commitments: cms, courses: courses.results, events: evs, homework: hw, tz, now }),
+      },
       courses: courses.results, calendars: cals.results.map((c) => ({ ...c, attendance: Boolean(c.attendance) })),
       sessions: evs, homework: hw,
       attendance: { threshold: user.threshold, unit: user.unit },
@@ -725,6 +740,11 @@ async function handleApi(request, env, url, user) {
       .bind(user.id, JSON.stringify(updates)).run();
     return json({ ok: true });
   }
+
+  if (path === '/api/commitments' && method === 'POST') return json(await createCommitment(env, user, await readJson(request)));
+  if ((m = path.match(/^\/api\/commitments\/(\d+)$/)) && method === 'PATCH') return json(await updateCommitment(env, user, Number(m[1]), await readJson(request)));
+  if ((m = path.match(/^\/api\/commitments\/(\d+)$/)) && method === 'DELETE') return json(await deleteCommitment(env, user, Number(m[1])));
+  if (path === '/api/availability' && method === 'PUT') return json(await saveAvailability(env, user, await readJson(request)));
 
   if (path === '/api/settings' && method === 'PATCH') {
     const body = await readJson(request);
