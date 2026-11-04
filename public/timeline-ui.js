@@ -162,7 +162,7 @@ export function renderTimeline() {
         ${dateRow(r)}
       </div>
     </div>
-    <p class="muted small tl-legend"><i class="lg cls"></i>classes <i class="lg wrk"></i>commitments <i class="lg due"></i>to-dos due <i class="lg cap"></i>hours available
+    <p class="muted small tl-legend"><i class="lg cls"></i>classes <i class="lg wrk"></i>commitments <i class="lg due"></i>to-dos due <i class="lg cap"></i>hours available (the grey column)
       · ${esc(T.isDefaultAvailability(av()) ? 'Working hours: 8:00–22:00 every day' : `Working hours: ${T.availabilityLabel(av())}`)}</p>`;
 
   if (t.adding) { const q = document.querySelector('#tl-quick [name=q]'); if (q) { q.value = t.draft || ''; q.focus(); chips(); } }
@@ -200,7 +200,7 @@ function loadBars(wk) {
       w.free >= 0 ? `Left: ${hrs(w.free)}` : `Over by ${hrs(-w.free)}`].join('\n');
     return `<button class="tl-load lv-${w.level}" data-tl-week="${w.start}" title="${esc(tip)}" aria-label="${esc(tip.replace(/\n/g, '. '))}">
       <span class="tl-col">
-        <i class="cap" style="bottom:${h(w.available)}"></i>
+        <i class="tl-track" style="height:${h(w.available)}"></i>
         <i class="tl-s cls" style="height:${h(w.classes)}"></i><i class="tl-s wrk" style="height:${h(w.work)}"></i><i class="tl-s due" style="height:${h(w.due)}"></i>
       </span>
       <span class="tl-num">${hrs(w.total).replace(' h', '')}<span class="muted">/${hrs(w.available)}</span></span>
