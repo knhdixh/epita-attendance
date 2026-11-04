@@ -147,7 +147,7 @@ fun ProjectScreen(project: ProjectDto, env: TaskEnv, actions: TaskActions,
 @Composable
 private fun Board(project: ProjectDto, sections: List<SectionDto>, env: TaskEnv, actions: TaskActions, showCompleted: Boolean) {
     val scope = rememberCoroutineScope()
-    val columns = listOf<Pair<Long?, String>>(null to "No section") + sections.map { it.id to it.name }
+    val columns = listOf<Pair<Long?, String>>(null to "(No section)") + sections.map { it.id to it.name }
     val colBounds = remember { mutableStateMapOf<Long?, Rect>() }
     val cardBounds = remember { mutableStateMapOf<Long, Rect>() }
     val drag = remember { DragState() }
@@ -156,7 +156,10 @@ private fun Board(project: ProjectDto, sections: List<SectionDto>, env: TaskEnv,
             val rows = env.data.homework.filter { it.project_id == project.id && it.parent_id == null && it.section_id == sectionId && (!it.done || showCompleted) }.sortedWith(compareBy<HomeworkDto>({ it.done }, { it.position }, { it.id }))
             Column(Modifier.width(280.dp).fillMaxHeight().onGloballyPositioned { colBounds[sectionId] = Rect(it.positionInRoot(), it.size.toSize()) }.testTag("board-col-${sectionId ?: 0}")
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .4f), RoundedCornerShape(12.dp)).padding(8.dp).verticalScroll(rememberScrollState())) {
-                Text("$name ${rows.size}", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                Row(Modifier.padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleSmall)
+                    Text("${rows.size}", Modifier.padding(start = 8.dp).testTag("board-count-${sectionId ?: 0}"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 rows.forEach { h ->
                     val dragging = drag.id == h.id
                     Surface(Modifier.padding(bottom = 8.dp).zIndex(if (dragging) 1f else 0f).graphicsLayer { translationX = if (dragging) drag.dx else 0f; translationY = if (dragging) drag.dy else 0f }
