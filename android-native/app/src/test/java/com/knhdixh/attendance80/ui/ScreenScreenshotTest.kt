@@ -10,6 +10,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -111,6 +113,8 @@ abstract class ScreenScreenshotTest {
         }
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("today-list").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("today-list").performScrollToNode(if (end) hasText("of class,", substring = true) else hasText("Today's sessions"))
+        // "End" means the end: scroll on until the list stops, so the shot shows what sits under the add button (review 12).
+        if (end) repeat(4) { compose.onNodeWithTag("today-list").performTouchInput { swipeUp(startY = bottom - 1f, endY = top + 1f) }; compose.waitForIdle() }
         compose.onRoot().captureRoboImage("src/test/screenshots/${device}_${theme}_today_${if (end) "end" else "lower"}_font${scale.toInt()}.png")
     }
     @Test fun light_signin_font1() = capture("light", "signin", 1f)
