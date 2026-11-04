@@ -18,6 +18,8 @@ class ReminderActions(
     private val enqueue: suspend (QueuedMutation, String) -> Boolean,
     /** "Focus on this": starts the timer on that homework, with the loaded snapshot's focus settings and account. */
     private val focusOn: suspend (target: FocusTarget, data: AppData) -> Unit = { _, _ -> },
+    /** Remembers that the reminders of task [Long] go off again at [Long] (this device only). */
+    private val snooze: suspend (owner: String, taskId: Long, until: Long) -> Unit = { _, _, _ -> },
 ) {
     suspend fun handle(type: String, ref: Long, value: String?, number: Int?, owner: String, key: String) {
         notifier.cancel(key)
@@ -37,8 +39,24 @@ class ReminderActions(
                 enqueue(Mutations.completeTask(ref, value?.takeIf { it.isNotEmpty() }, reload = moves), owner)
             }
             "homework-focus" -> { focus(ref, owner); return }
+            "snooze-menu" -> { offerSnooze(ref, owner); return }
+            "snooze" -> {
+                val until = Snooze.until(value, clock.now(), clock.zone()) ?: return
+                snooze(owner, ref, until)
+            }
             else -> return
         }
+    }
+
+    /** The three snooze lengths, which don't fit beside Done on one notification (Android shows three buttons). */
+    private suspend fun offerSnooze(taskId: Long, owner: String) {
+        val data = snapshot() ?: return
+        if (data.user.email?.lowercase().orEmpty() != owner) return
+        val hw = data.homework.find { it.id == taskId && !it.done } ?: return
+        notifier.post(Reminder(
+            key = "snooze-menu:$taskId", kind = Kinds.TASK, at = clock.now(), title = hw.title, body = "Remind me again in …", route = "a80://homework/$taskId", ref = taskId,
+            actions = listOf(ReminderAction("10 min", "snooze", Snooze.TEN_MIN), ReminderAction("1 hour", "snooze", Snooze.HOUR), ReminderAction("Tomorrow", "snooze", Snooze.TOMORROW)),
+        ), owner)
     }
 
     private suspend fun focus(homeworkId: Long, owner: String) {

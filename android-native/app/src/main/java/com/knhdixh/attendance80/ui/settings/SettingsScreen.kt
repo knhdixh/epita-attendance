@@ -167,7 +167,7 @@ fun SettingsScreen(data: AppData?, allEvents: List<EventDto>?, scope: List<Long>
                 onSave = { body -> if (body["classes"]?.jsonPrimitive?.booleanOrNull == true && !data.notifications.settings.classes ||
                     body["habits"]?.jsonPrimitive?.booleanOrNull == true && !data.notifications.settings.habits) onAskNotifications()
                     run { actions.saveNotify(body) } },
-                onSaveDevice = { choices -> if (choices.checkin || choices.homeworkOn(data.integrations.gcal != null) || choices.exam) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
+                onSaveDevice = { choices -> if (choices.checkin || choices.homeworkOn(data.integrations.gcal != null) || choices.exam || choices.tasks || choices.digestAt != null) onAskNotifications(); run { actions.saveDeviceNotify(choices) } })
         }
         calendarsPanel(data, allEvents ?: data.events, now, zone, busy, editing, adding,
             onEdit = { editing = it }, onAdding = { adding = it },
@@ -303,7 +303,7 @@ private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.n
     // The first in-context ask: the first time Notifications is shown (asked at most once; the row below asks again).
     LaunchedEffect(blocked) { if (blocked) onAsk() }
     Panel("Notifications") {
-        if (blocked && (s.classes || s.habits || s.focus || device.checkin || device.homeworkOn(googleConnected) || device.exam)) {
+        if (blocked && (s.classes || s.habits || s.focus || device.checkin || device.homeworkOn(googleConnected) || device.exam || device.tasks || device.digestAt != null)) {
             Row(Modifier.fillMaxWidth().testTag("notify-blocked"), verticalAlignment = Alignment.CenterVertically) {
                 Text("Notifications are blocked for this app, so no reminder will appear.", Modifier.weight(1f))
                 TextButton(onFix, Modifier.testTag("notify-allow")) { Text("Allow") }
@@ -335,6 +335,18 @@ private fun NotifyPanel(s: NotifySettingsDto, device: com.knhdixh.attendance80.n
             else "Uses the reminder set on each homework item, with Done and Focus on this buttons. All-day items remind you at 18:00.")
         toggle("Exam and mandatory days, at 08:00", device.exam, "notify-exam") { onSaveDevice(device.copy(exam = it)) }
         Hint("One notification on a day with an exam or a mandatory session at a tracked course, listing them.")
+        toggle("Task reminders", device.tasks, "notify-tasks") { onSaveDevice(device.copy(tasks = it)) }
+        Hint("The reminders you set on a task, with Done and Snooze buttons (10 min, 1 hour or tomorrow at 09:00). A task with a date but no time counts back from 09:00.")
+        val context = LocalContext.current
+        val pickerTheme = if (MaterialTheme.colorScheme.background.luminance() < .5f) com.knhdixh.attendance80.R.style.HomeworkPickerDark else com.knhdixh.attendance80.R.style.HomeworkPickerLight
+        toggle("Daily digest", device.digestAt != null, "notify-digest") { on -> onSaveDevice(device.copy(digestAt = if (on) (device.digestAt ?: "08:00") else null)) }
+        if (device.digestAt != null) {
+            val t = runCatching { java.time.LocalTime.parse(device.digestAt) }.getOrDefault(java.time.LocalTime.of(8, 0))
+            OutlinedButton({
+                android.app.TimePickerDialog(context, pickerTheme, { _, hh, mm -> onSaveDevice(device.copy(digestAt = "%02d:%02d".format(hh, mm))) }, t.hour, t.minute, android.text.format.DateFormat.is24HourFormat(context)).show()
+            }, Modifier.testTag("notify-digest-time")) { Text("Send it at ${java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(t)}") }
+        }
+        Hint("Off by default. One notification at that time with the day's tasks, classes and habits.")
     }
 }
 

@@ -44,7 +44,7 @@ class AndroidReminderNotifier(private val context: Context) : ReminderNotifier {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "Reminders", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Check-in after class, homework, classes, habits and exam days"
+                description = "Check-in after class, tasks, homework, classes, habits, exam days and the daily digest"
             })
     }
 

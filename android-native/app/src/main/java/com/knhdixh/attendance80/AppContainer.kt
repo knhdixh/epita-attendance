@@ -114,7 +114,8 @@ class DefaultAppContainer(
                 focusController.updateSettings(data.focus.settings.toLogic())
                 data.user.email?.let { focusController.setAccount(it) }
                 focusController.focusOn(target)
-            })
+            },
+            snooze = { owner, id, until -> notifyStore.snooze(owner, id, until) })
     }
 
     override val focusOutbox: Outbox by lazy {
