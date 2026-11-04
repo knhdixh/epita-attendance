@@ -140,6 +140,18 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
         </service>
 
+        <!-- The tile that opens quick add. -->
+        <service
+            android:name=".QuickAddTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_add"
+            android:label="Add task"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- Home-screen widget. Same component name as the TWA's FocusWidget, so an update keeps a placed widget. The class you are in or the next one, Do next, and the timer. -->
         <receiver android:name=".FocusWidget" android:exported="true" android:label="Attendance80">
             <intent-filter>
