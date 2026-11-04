@@ -1504,3 +1504,29 @@ Also `e6de95a` (screenshot tests for the new screens: `TasksScreenshotTest`, 21 
 
 - Should Homework keep a row in Browse › School, or should "School" become a built-in filter (`school`) now that homework is a kind of task?
 - Should the Calendar's `setPlan` move onto the outbox as review 11 suggested? I could not make its unit test work in the time I had (see above); it needs another look.
+
+## Review 12 fixes
+
+Branch `native/phase-12`. Review: `docs/native-android-review-12.md` (verdict FIX).
+
+| # | Finding | What changed | Commit |
+|---|---|---|---|
+| 1 | **Blocking:** add button covers the end of lists | One constant `FabInset` (88 dp = button 56 + its 16 margin + 16 air) in `TaskList.kt`. Task lists already used it; Today and Upcoming had 16 dp and the project board none, so they now use it too. Filter and label pages and Inbox and project lists go through `TaskLazyList`, which already had it. New tests `ShellUiTest.todayEndClearsTheAddButton` and `upcomingEndClearsTheAddButton` swipe to the end and assert the last row's bottom is above the button's top. I checked the Today test fails without the fix. | `f34f1f8` |
+| 2 | Sort, group, show completed lost on close | `UiPrefs.projectView / saveProjectView` (DataStore, key per account hash and project id). `ProjectScreen` loads them and saves on change; `Shell` passes `uiPrefs` and the account. Tests: `UiPrefsTest.projectViewsComeBackPerProjectAndAccount`, `ProjectScreenTest.sortGroupAndCompletedSurviveANewScreen` (screen rebuilt over the same store). | `954cb0f` |
+| 3 | Browse said "Filters & Labels" twice | Heading kept; the row under it is now "Manage" (same route). | `1da7898` |
+| 4 | Board column "No section 1" | Column is "(No section)"; the count is its own muted `bodySmall` text. | `636d3a6` |
+| 5 | Quick add split `!30m` across lines | `QuickAddPlan.display` puts U+2060 word joiners between the characters of each matched token, in the shown text only, with an `OffsetMapping` so the cursor and the stored text are unchanged; the field's `editableText` semantics stay the typed text. Test `aTokenNeverWrapsInsideItself` (text only gains joiners, nothing breaks after `!`, offsets round-trip). | `68d0ff0` |
+| – | Screenshots | The Today "end" shots only scrolled the last text into view, so at font 1 they still did not show the end. They now keep swiping to the end. Re-recorded because of the changes above: Today end (phone and tablet), tablet Today lower, board, Browse (all shell `*_more*` and `*browse*`), quick add. I opened the phone Today end, board, Browse and quick-add images: the last text clears the button, the board and Browse headings read as intended, `!30m` stays on one line. Other PNGs unchanged. | `5baf2f7` |
+
+Deferred items stay deferred (Review 11 Calendar `setPlan` on the outbox is Phase 13, blocking there).
+
+### Commands and results
+
+- `npm test`: tests 471, pass 471, fail 0.
+- `cd android-native && ANDROID_HOME=/Users/khanh.dang/.bubblewrap/android_sdk ./gradlew testProdDebugUnitTest lintProdDebug assembleProdDebug assembleProdDebugAndroidTest verifyRoborazziProdDebug --no-daemon`: **BUILD SUCCESSFUL**. Result XML: 1171 tests, 0 failures, 0 errors, 0 skipped. Lint and Roborazzi verify passed.
+- `tools/e2e.sh`: BUILD SUCCESSFUL, 5 tests, 0 failed; "Both local-server instrumented tests passed."
+
+### Unverified
+
+- The add button's clearance and the word-joiner wrapping on a real device and IME (Robolectric only). A word joiner is not drawn by the default font in the tests; a device font that draws it would show a gap.
+- Project view prefs across a real app restart (tested with a DataStore rebuilt in-process).
