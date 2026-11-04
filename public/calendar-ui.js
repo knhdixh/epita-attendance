@@ -10,6 +10,7 @@ import * as K from './calendar.js';
 import * as C from './countdowns.js';
 import { dueLabel, homeworkForSession } from './homework-ui.js';
 import { hrs, focusOn } from './focus-ui.js';
+import * as TL from './timeline.js';
 
 const $app = document.getElementById('app');
 const $scroller = document.getElementById('scroller');
@@ -32,6 +33,10 @@ const fmtDay = (ms, o = { weekday: 'short', day: 'numeric', month: 'short' }) =>
 const span = (s, e) => `${fmtTime(s)}–${fmtTime(e)}`;
 const lenLabel = (m) => (m < 60 ? `${m} min` : `${Math.round(m / 30) / 2} h`);
 const hwById = (id) => state.data.homework.find((h) => h.id === id);
+// Working hours and time away (the Timeline).
+const avail = () => TL.availabilityOf(state.data.user);
+const commitments = () => state.data.commitments || [];
+const windowsOf = (day) => TL.dayWindows(localDate(day), { availability: avail(), away: TL.awayDays(commitments()) });
 
 function cal() {
   if (!state.cal) {
@@ -202,7 +207,19 @@ function timeGrid(c, p, d) {
   const empty = (x) => !x.timed.length && !x.blocks.length && !x.ghosts.length && !x.dueTimed.length && !x.allDay.length && !x.dueAllDay.length && !x.cds.length;
   const widths = days.map((x) => (c.view === 'week' && [0, 6].includes(new Date(x.day).getDay()) && x.day !== today && empty(x) ? '.45fr' : '1fr'));
   const tpl = `${isPhone() ? 40 : 52}px ${widths.map((w) => `minmax(0, ${w})`).join(' ')}`;
-  const anyAllDay = days.some((x) => x.allDay.length || x.dueAllDay.length || x.cds.length || x.brks.length);
+  const anyAllDay = days.some((x) => x.allDay.length || x.dueAllDay.length || x.cds.length || x.brks.length) || days.some((x) => commitments().some((c) => c.start_date <= localDate(x.day) && c.end_date >= localDate(x.day)));
+  // Outside your working hours is shaded, once you've set them; a day away is greyed.
+  const own = !TL.isDefaultAvailability(avail());
+  const offBands = (x) => {
+    const ws = windowsOf(x.day);
+    if (!own && ws.length) return '';
+    const out = [];
+    let t = lo * 60;
+    for (const [a, b] of ws) { if (a > t) out.push([t, a]); t = Math.max(t, b); }
+    if (t < hi * 60) out.push([t, hi * 60]);
+    return out.filter(([a, b]) => b > lo * 60 && a < hi * 60)
+      .map(([a, b]) => `<i class="cal-off" style="top:${(Math.max(a, lo * 60) / 60 - lo) * hh}px;height:${(Math.min(b, hi * 60) - Math.max(a, lo * 60)) / 60 * hh}px" aria-hidden="true"></i>`).join('');
+  };
 
   const head = days.map((x) => {
     const classHours = x.timed.reduce((n, e) => n + (Math.min(e.end_at, K.addDays(x.day, 1)) - Math.max(e.start_at, x.day)) / HOUR, 0);
@@ -245,7 +262,7 @@ function timeGrid(c, p, d) {
     }).join('');
     const sel = c.sel && c.sel.day === x.day ? `<div class="cal-sel" style="top:${y(c.sel.start, x.day)}px;height:${Math.max(18, y(c.sel.end, x.day) - y(c.sel.start, x.day))}px"><span>${esc(span(c.sel.start, c.sel.end))}</span></div>` : '';
     const nowLine = x.day === today ? `<div class="cal-now" style="top:${y(now, x.day)}px" aria-hidden="true"></div>` : '';
-    return `<div class="cal-col${x.day === today ? ' today' : ''}${x.day < today ? ' past' : ''}" data-cal-col="${x.day}">${fx}${blocks}${dues}${sel}${nowLine}</div>`;
+    return `<div class="cal-col${x.day === today ? ' today' : ''}${x.day < today ? ' past' : ''}${windowsOf(x.day).length ? '' : ' away'}" data-cal-col="${x.day}">${offBands(x)}${fx}${blocks}${dues}${sel}${nowLine}</div>`;
   }).join('');
 
   const hours = Array.from({ length: hi - lo }, (_, i) => `<span style="top:${i * hh}px">${i ? esc(new Date(2000, 0, 1, lo + i).toLocaleTimeString([], { hour: 'numeric' })) : ''}</span>`).join('');
@@ -263,7 +280,13 @@ function timeGrid(c, p, d) {
 }
 
 function allDayChips(x, d) {
+  const key = localDate(x.day);
+  const away = TL.awayDays(commitments());
+  const committed = commitments().map((c) => [c, TL.minutesOfDay(c, key, avail(), away)]).filter(([, m]) => m > 0);
   const chips = [
+    ...commitments().filter((c) => c.kind === 'away' && c.start_date <= key && c.end_date >= key)
+      .map((c) => `<button class="cal-chip away" data-goto="timeline" title="Time away: ${esc(TL.commitmentLabel(c))}">${esc(c.title)}</button>`),
+    ...(committed.length ? [`<button class="cal-chip commit" data-goto="timeline" title="${esc(committed.map(([c, m]) => `${c.title}: ${lenLabel(Math.round(m))}`).join('\n'))}">${esc(lenLabel(Math.round(committed.reduce((n, [, m]) => n + m, 0) / 15) * 15))} committed</button>`] : []),
     ...x.brks.map((b) => `<button class="cal-chip brk" data-goto="breaks" title="Break${b.label ? `: ${esc(b.label)}` : ''}">${esc(b.label || 'Break')}</button>`),
     ...x.allDay.map((e) => `<button class="cal-chip" style="--cc:var(--c-${d.color(e.course_id)})" data-cal-ev="${e.id}">${esc(e.summary)}</button>`),
     ...x.dueAllDay.map((h) => `<button class="cal-chip due${h.done ? ' done' : h.due_at < Date.now() ? ' over' : ''}" data-hw-open="${h.id}" title="Due ${esc(dueLabel(h))}">Due: ${esc(h.title)}</button>`),
@@ -599,7 +622,7 @@ export function autoPlanNow() {
     toast(unplannedTodos(now).length ? 'Nothing due in the next two weeks needs a time.' : 'Every open to-do already has a time.');
     return;
   }
-  const r = K.autoPlan({ todos, busy, blocks, now, until: K.addDays(K.startOfDay(now), 8), dayStart: DAY_START, dayEnd: DAY_END, maxBlock: MAX_BLOCK });
+  const r = K.autoPlan({ todos, busy, blocks, now, until: K.addDays(K.startOfDay(now), 8), windows: windowsOf, maxBlock: MAX_BLOCK });
   c.proposals = r.planned;
   c.unplaced = r.unplaced;
   c.placing = null; c.pop = null; c.sel = null;

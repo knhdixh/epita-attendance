@@ -5,6 +5,9 @@ import * as hw from './homework-ui.js';
 import { todayPanel } from './focus-ui.js';
 import * as hb from './habits-ui.js';
 import { todayStrip } from './countdowns-ui.js';
+import { availabilityOf, isDefaultAvailability } from './timeline.js';
+import { awayOn } from './timeline-ui.js';
+import { localKey } from './habits.js';
 
 const $app = document.getElementById('app');
 
@@ -30,7 +33,10 @@ function headline(plan, ev, byId) {
 
 export function renderToday() {
   const { courses, events, homework } = state.data;
-  const plan = buildPlan({ courses, events, homework, now: Date.now() });
+  const availability = availabilityOf(state.data.user);
+  const commitments = state.data.commitments || [];
+  const plan = buildPlan({ courses, events, homework, now: Date.now(), availability, commitments });
+  const away = plan.away && awayOn(localKey());
   const evById = new Map(events.map((e) => [e.id, e]));
   const ev = (id) => evById.get(id);
   const byId = courseById();
@@ -43,6 +49,7 @@ export function renderToday() {
 
   $app.innerHTML = `
     <p class="today-line">${headline(plan, ev, byId)}</p>
+    ${away ? `<div class="banner"><span>You're away today: <b>${esc(away.title)}</b>. Nothing is fitted into your day.</span><a href="#timeline" data-goto="timeline">timeline →</a></div>` : ''}
     ${todayStrip()}
 
     ${clash.length ? `<div class="banner warn"><span>${clash.length === 1 ? 'Two sessions overlap' : `${clash.length} overlaps`} this week:
@@ -90,8 +97,8 @@ export function renderToday() {
     </section>
 
     <section class="panel">
-      <h3>Next 7 days</h3>
-      <p class="week-line ${week.load > 0.6 ? 'risk' : ''}">${hours(week.classHours)} of class, ${hours(week.workHours)} of work due,
-        about ${hours(week.freeHours)} free between ${DAY_START}:00 and ${DAY_END}:00.${week.load > 0.6 ? ' That\'s tight: start the biggest item early.' : ''}</p>
+      <h3><span>Next 7 days</span><a href="#timeline" data-goto="timeline">timeline →</a></h3>
+      <p class="week-line ${week.load > 0.6 ? 'risk' : ''}">${hours(week.classHours)} of class, ${hours(week.workHours)} of work due${week.commitHours ? `, ${hours(week.commitHours)} of commitments` : ''};
+        about ${hours(week.freeHours)} free ${isDefaultAvailability(availability) ? `between ${DAY_START}:00 and ${DAY_END}:00` : 'in your working hours'}${week.awayDays ? ` (away ${week.awayDays} day${week.awayDays === 1 ? '' : 's'})` : ''}.${week.load > 1 ? ' That\'s more than you have: move or drop something on the Timeline.' : week.load > 0.6 ? ' That\'s tight: start the biggest item early.' : ''}</p>
     </section>`;
 }
