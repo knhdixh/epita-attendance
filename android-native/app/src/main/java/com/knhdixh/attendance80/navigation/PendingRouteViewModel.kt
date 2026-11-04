@@ -20,9 +20,9 @@ class PendingRouteViewModel(private val saved: SavedStateHandle) : ViewModel() {
     fun shareFile(f: com.knhdixh.attendance80.share.Incoming.CalendarFile) { file.value = f; go("settings") }
     fun fileHandled() { file.value = null }
 
-    /** Text shared into the app, for the add-homework form. */
+    /** Text shared into the app, for quick add (the first line as the task, the rest as its description). */
     val sharedText = saved.getStateFlow<String?>("sharedText", null)
-    fun shareText(text: String) { saved["sharedText"] = text; go("homework/new") }
+    fun shareText(text: String) { saved["sharedText"] = text; go("add") }
     fun textHandled() { saved["sharedText"] = null }
     /**
      * Reads a calendar file or shared text off the main thread and delivers it. It runs in this view model's scope, so a

@@ -10,9 +10,9 @@ fun internalRoute(value: String): String? {
     val host = uri.host ?: return null
     val path = uri.rawPath.orEmpty()
     return when {
-        host in setOf("today", "focus") && path.isEmpty() -> host
+        host in setOf("today", "focus", "add", "inbox") && path.isEmpty() -> host
         host == "homework" && path in setOf("", "/new") -> host + path
-        host in setOf("session", "course", "homework") && path.matches(Regex("/[1-9][0-9]*")) -> host + path
+        host in setOf("session", "course", "homework", "project", "filter") && path.matches(Regex("/[1-9][0-9]*")) -> host + path
         else -> null
     }
 }

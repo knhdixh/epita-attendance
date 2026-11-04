@@ -35,7 +35,11 @@ data class QueuedMutation(
     val creates get() = kind.endsWith(".create")
 
     /** Does this change name the temporary id [id] (in its path or in an id field of its body)? */
-    fun mentions(id: Long): Boolean = path.split('/').any { it == id.toString() } || ID_FIELDS.any { k -> body[k]?.let { idIn(it, id) } == true } || about == id
+    fun mentions(id: Long): Boolean = path.split('/').any { it == id.toString() } || ID_FIELDS.any { k -> body[k]?.let { idIn(it, id) } == true } || about == id ||
+        items().any { (it["id"] as? JsonPrimitive)?.longOrNull == id }
+
+    /** The `items` of a batch change (`task.plan`): objects with an `id`. */
+    private fun items(): List<JsonObject> = (body["items"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
 
     /** The same change with the temporary id [from] replaced by the real [to]. */
     fun remapped(from: Long, to: Long): QueuedMutation {
@@ -47,7 +51,11 @@ data class QueuedMutation(
         }
         return copy(
             path = path.split('/').joinToString("/") { if (it == from.toString()) to.toString() else it },
-            body = JsonObject(body.mapValues { (k, v) -> if (k in ID_FIELDS) swap(v) else v }),
+            body = JsonObject(body.mapValues { (k, v) ->
+                if (k in ID_FIELDS) swap(v)
+                else if (k == "items" && v is JsonArray) JsonArray(v.map { e -> if (e is JsonObject && e["id"]?.let { swap(it) } != e["id"]) JsonObject(e + ("id" to JsonPrimitive(to))) else e })
+                else v
+            }),
             about = if (about == from) to else about,
         )
     }

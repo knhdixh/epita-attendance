@@ -112,9 +112,9 @@ object QuickAddPlan {
 }
 
 /** Creates what the plan needs (new labels, project, section), then the task, then its reminder. @return the task's id. */
-suspend fun saveQuickAdd(q: QuickAdd, d: AppData, zone: ZoneId, defaults: QuickDefaults, actions: TaskActions): Long? {
+suspend fun saveQuickAdd(q: QuickAdd, d: AppData, zone: ZoneId, defaults: QuickDefaults, actions: TaskActions, notes: String = ""): Long? {
     val plan = QuickAddPlan.plan(q, d, zone, defaults)
-    var body = plan.body
+    var body = if (notes.isBlank()) plan.body else JsonObject(plan.body + ("notes" to JsonPrimitive(notes)))
     val labelIds = (body["label_ids"] as? JsonArray).orEmpty().toMutableList()
     for (name in plan.newLabels) actions.createEntity("label", buildJsonObject { put("name", name) })?.let { labelIds += JsonPrimitive(it) }
     val project = plan.newProject?.let { name -> actions.createEntity("project", buildJsonObject { put("name", name) }) }
@@ -133,7 +133,9 @@ suspend fun saveQuickAdd(q: QuickAdd, d: AppData, zone: ZoneId, defaults: QuickD
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun QuickAddSheet(data: AppData, today: String, zone: ZoneId, defaults: QuickDefaults, actions: TaskActions, initial: String = "", onDismiss: () -> Unit) {
+fun QuickAddSheet(data: AppData, today: String, zone: ZoneId, defaults: QuickDefaults, actions: TaskActions, initial: String = "",
+                  /** A description that goes with the first task added (shared text after its first line). */ notes: String = "", onDismiss: () -> Unit) {
+    var pendingNotes by remember { mutableStateOf(notes) }
     var field by remember { mutableStateOf(TextFieldValue(initial, TextRange(initial.length))) }
     val names = remember(data) { QuickAddPlan.names(data) }
     val q = remember(field.text, names, today) { QuickAddParser.parseQuickAdd(field.text, today, names) }
@@ -148,7 +150,8 @@ fun QuickAddSheet(data: AppData, today: String, zone: ZoneId, defaults: QuickDef
         val line = q
         // The keyboard stays up: clear the line and carry on with the next task.
         field = TextFieldValue("")
-        scope.launch { saveQuickAdd(line, data, zone, defaults, actions) }
+        val withNotes = pendingNotes; pendingNotes = ""
+        scope.launch { saveQuickAdd(line, data, zone, defaults, actions, withNotes) }
     }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).imePadding().testTag("quick-add-sheet")) {

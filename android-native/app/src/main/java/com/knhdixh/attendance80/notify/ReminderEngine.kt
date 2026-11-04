@@ -35,7 +35,7 @@ class ReminderEngine(
         val now = clock.now()
         val zone = clock.zone()
         val sent = store.sent(now)
-        val plan = planReminders(data, store.choices.first(), now, zone).filter { "$owner|${it.key}" !in sent }
+        val plan = planReminders(data, store.choices.first(), now, zone, store.snoozes(owner, now)).filter { "$owner|${it.key}" !in sent }
         val due = plan.filter { it.at <= now }
         if (due.isNotEmpty() && notifier.canPost()) {
             // A newer snapshot can cancel this run (collectLatest): finish posting and recording together, or the next run would alert again.

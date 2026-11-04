@@ -81,4 +81,16 @@ class LocalEffectsTest {
         val path = QueuedMutation("d", "task.complete", "POST", "api/homework/-2/complete").remapped(-2, 9)
         assertEquals("api/homework/9/complete", path.path)
     }
+
+    @Test fun aBatchPlanSetsEveryBlockAndNamesTempIdsInItsItems() {
+        val body = buildJsonObject { put("items", JsonArray(listOf(
+            buildJsonObject { put("id", 1L); put("planned_at", 5000L); put("planned_minutes", 30) },
+            buildJsonObject { put("id", -4L); put("planned_at", 9000L); put("planned_minutes", 15) }))) }
+        val plan = QueuedMutation("p", "task.plan", "POST", "api/homework/plan", body, at = 7)
+        val out = LocalEffects.apply(base(task(1), task(-4)), plan, paris)
+        assertEquals(5000L, out.homework.single { it.id == 1L }.planned_at); assertEquals(15, out.homework.single { it.id == -4L }.planned_minutes)
+        assertTrue(plan.mentions(-4)); assertFalse(plan.mentions(-5))
+        val real = plan.remapped(-4, 88)
+        assertEquals(listOf(1L, 88L), (real.body["items"] as JsonArray).map { (it as JsonObject)["id"]!!.jsonPrimitive.long })
+    }
 }

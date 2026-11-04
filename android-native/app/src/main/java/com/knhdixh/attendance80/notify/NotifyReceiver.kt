@@ -27,7 +27,7 @@ class NotifyReceiver : BroadcastReceiver() {
                         type = intent.getStringExtra(EXTRA_TYPE).orEmpty(), ref = intent.getLongExtra(EXTRA_REF, -1),
                         value = intent.getStringExtra(EXTRA_VALUE), number = intent.getIntExtra(EXTRA_NUMBER, -1).takeIf { it >= 0 },
                         owner = intent.getStringExtra(EXTRA_OWNER).orEmpty(), key = intent.getStringExtra(EXTRA_KEY).orEmpty(),
-                    )
+                    ).also { container.reminders?.run(container.dataRepository.snapshot.value) } // a snooze sets the next alarm at once
                     else -> {
                         if (action == Intent.ACTION_TIMEZONE_CHANGED || action == Intent.ACTION_TIME_CHANGED) {
                             container.dataRepository.start()

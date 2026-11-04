@@ -36,7 +36,7 @@ class ReceiveSharedTest {
             read.countDown()
             val until = System.currentTimeMillis() + 5_000
             while (vm.pending.value == null && System.currentTimeMillis() < until) Thread.sleep(10)
-            assertEquals("homework/new", vm.pending.value)
+            assertEquals("add", vm.pending.value)
             assertEquals("Read chapter 3", vm.sharedText.value)
         } finally { kotlinx.coroutines.Dispatchers.resetMain() }
     }

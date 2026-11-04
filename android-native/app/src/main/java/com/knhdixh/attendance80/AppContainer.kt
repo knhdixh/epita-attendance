@@ -114,7 +114,8 @@ class DefaultAppContainer(
                 focusController.updateSettings(data.focus.settings.toLogic())
                 data.user.email?.let { focusController.setAccount(it) }
                 focusController.focusOn(target)
-            })
+            },
+            snooze = { owner, id, s -> notifyStore.snooze(owner, id, s) })
     }
 
     override val focusOutbox: Outbox by lazy {
@@ -163,7 +164,7 @@ class DefaultAppContainer(
             tokenStore.awaitToken()
             tokenStore.token.collectLatest { token ->
                 // Signed out, however it happened (button, 401, account deletion): the timer stops and forgets the account.
-                if (token == null) { focusController.signedOut(); reminders.signedOut(); dataRepository.signedOut(); notifyStore.signedOut() }
+                if (token == null) { focusController.signedOut(); reminders.signedOut(); dataRepository.signedOut(); notifyStore.signedOut(); com.knhdixh.attendance80.widget.taskWidgetPrefs(context).clear() }
                 dataRepository.start()
                 if (token != null) dataRepository.refresh()
             }

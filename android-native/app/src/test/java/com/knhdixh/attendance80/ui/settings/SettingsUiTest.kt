@@ -42,11 +42,28 @@ class SettingsUiTest {
         scrollTo("notify-homework"); ui.onNodeWithTag("notify-homework").assertIsOff()
         ui.onNodeWithTag("notify-homework").performClick()
         idle { actions.calls.isNotEmpty() }
-        assertEquals("device NotifyChoices(checkin=true, homework=true, exam=true)", actions.calls.single())
+        assertEquals("device NotifyChoices(checkin=true, homework=true, exam=true, tasks=true, digestAt=null)", actions.calls.single())
         assertEquals(1, asked) // asked in context, when a reminder switch is turned on
         scrollTo("notify-checkin"); ui.onNodeWithTag("notify-checkin").performClick()
         idle { actions.calls.size == 2 }
-        assertEquals("device NotifyChoices(checkin=false, homework=true, exam=true)", actions.calls.last())
+        assertEquals("device NotifyChoices(checkin=false, homework=true, exam=true, tasks=true, digestAt=null)", actions.calls.last())
+    }
+
+    @Test fun taskRemindersAreOnAndTheDailyDigestIsOffUntilTurnedOnWithItsTime() {
+        val actions = FakeSettingsActions()
+        val data = settingsData()
+        ui.setContent { Attendance80Theme { SettingsScreen(data, data.events, emptyList(), settingsNow, settingsZone, actions, {}, {}, baseUrl = "https://app.test") } }
+        scrollTo("notify-tasks"); ui.onNodeWithTag("notify-tasks").assertIsOn()
+        scrollTo("notify-digest"); ui.onNodeWithTag("notify-digest").assertIsOff()
+        ui.onNodeWithTag("notify-digest-time").assertDoesNotExist()
+        ui.onNodeWithTag("notify-digest").performClick()
+        idle { actions.calls.isNotEmpty() }
+        assertEquals("device NotifyChoices(checkin=true, homework=null, exam=true, tasks=true, digestAt=08:00)", actions.calls.last())
+        idle { actions.device.value.digestAt == "08:00" }
+        scrollTo("notify-digest-time"); ui.onNodeWithTag("notify-digest-time").assertTextContains("8:00", substring = true)
+        scrollTo("notify-tasks"); ui.onNodeWithTag("notify-tasks").performClick()
+        idle { actions.calls.size == 2 }
+        assertEquals("device NotifyChoices(checkin=true, homework=null, exam=true, tasks=false, digestAt=08:00)", actions.calls.last())
     }
 
     private fun showNotifyAsking(actions: SettingsActions, blocked: Boolean, ask: () -> Unit = {}, fix: () -> Unit = {}) {

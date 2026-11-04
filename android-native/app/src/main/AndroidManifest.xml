@@ -38,6 +38,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="a80" android:host="today" />
+                <data android:scheme="a80" android:host="add" />
+                <data android:scheme="a80" android:host="inbox" />
+                <data android:scheme="a80" android:host="project" />
+                <data android:scheme="a80" android:host="filter" />
                 <data android:scheme="a80" android:host="focus" />
                 <data android:scheme="a80" android:host="homework" />
                 <data android:scheme="a80" android:host="session" />
@@ -70,7 +74,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/calendar" />
             </intent-filter>
-            <!-- Share text to the app: it opens Add homework, the first line as the title and the rest as notes. -->
+            <!-- Share text to the app: it opens quick add, the first line as the task and the rest as its description. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -136,12 +140,43 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
         </service>
 
+        <!-- The tile that opens quick add. -->
+        <service
+            android:name=".QuickAddTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_add"
+            android:label="Add task"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- Home-screen widget. Same component name as the TWA's FocusWidget, so an update keeps a placed widget. The class you are in or the next one, Do next, and the timer. -->
         <receiver android:name=".FocusWidget" android:exported="true" android:label="Attendance80">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/focus_widget_info" />
+        </receiver>
+
+        <!-- Task list widget (any project, filter, the Inbox or Today) and the quick-add widget. Both read the app's snapshot and write through the outbox. -->
+        <receiver android:name=".widget.TasksWidgetReceiver" android:exported="true" android:label="Tasks">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/tasks_widget_info" />
+        </receiver>
+        <activity android:name=".widget.TasksWidgetConfigActivity" android:exported="true" android:label="Tasks widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".widget.QuickAddWidgetReceiver" android:exported="true" android:label="Add a task">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/quick_add_widget_info" />
         </receiver>
 
         <!-- Quick-focus sheet: from the tile's long-press and the widget. Its own task, so the app doesn't come up behind it. -->

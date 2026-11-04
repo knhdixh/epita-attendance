@@ -23,7 +23,13 @@ data class Reminder(
 )
 
 /** The device's switches (Settings → Notifications). [homework] null = not chosen yet: on, unless Google Calendar already reminds you. */
-data class NotifyChoices(val checkin: Boolean = true, val homework: Boolean? = null, val exam: Boolean = true) {
+data class NotifyChoices(
+    val checkin: Boolean = true, val homework: Boolean? = null, val exam: Boolean = true,
+    /** Reminders on tasks (the ones set in the task's detail). */
+    val tasks: Boolean = true,
+    /** The daily digest's time (`HH:mm`). Null = off, which is the default. */
+    val digestAt: String? = null,
+) {
     fun homeworkOn(googleConnected: Boolean) = homework ?: !googleConnected
 }
 
@@ -33,6 +39,8 @@ object Kinds {
     const val EXAM = "exam"
     const val CLASS = "class"
     const val HABIT = "habit"
+    const val TASK = "task"
+    const val DIGEST = "digest"
 }
 
 private const val MIN = 60_000L
@@ -61,11 +69,13 @@ internal fun hhmm(ms: Long, zone: ZoneId): String = DateTimeFormatter.ofPattern(
  * Everything that may be posted now or later today and tomorrow, soonest first. Pure: the same data, switches, time
  * and zone always give the same list.
  */
-fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId): List<Reminder> {
+fun planReminders(data: AppData, choices: NotifyChoices, now: Long, zone: ZoneId, snoozes: Map<Long, TaskSnooze> = emptyMap()): List<Reminder> {
     val all = buildList {
         if (choices.checkin) addAll(checkIns(data, zone))
         if (choices.homeworkOn(data.integrations.gcal != null)) addAll(homeworkReminders(data, zone))
         if (choices.exam) addAll(examWarnings(data, zone))
+        if (choices.tasks) addAll(taskReminders(data, zone, snoozes))
+        choices.digestAt?.let { t -> runCatching { java.time.LocalTime.parse(t) }.getOrNull() }?.let { addAll(dailyDigests(data, it, now, zone)) }
         // These two follow the account's switches (the website's `classes`, `classLead` and `habits`), as the server's cron does.
         if (data.notifications.settings.classes) addAll(classReminders(data, now, zone))
         if (data.notifications.settings.habits) addAll(habitReminders(data, now, zone))

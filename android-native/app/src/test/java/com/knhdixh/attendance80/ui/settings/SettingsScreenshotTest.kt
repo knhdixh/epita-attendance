@@ -35,14 +35,20 @@ abstract class SettingsScreenshotTest {
     @Test fun lightDanger() = capture(false, 1f, "danger")
     @Test fun darkDanger() = capture(true, 1f, "danger")
     @Test fun lightDanger2() = capture(false, 2f, "danger")
+    @Test fun lightNotifications() = capture(false, 1f, "notifications")
+    @Test fun darkNotifications() = capture(true, 1f, "notifications")
+    @Test fun lightNotifications2() = capture(false, 2f, "notifications")
     private fun capture(dark: Boolean, scale: Float, kind: String) {
         val data = settingsData()
         val actions = FakeSettingsActions(listOf(PersonalTokenDto(3, "MacBook Claude Code", "write", settingsNow - 86400000L * 3, settingsNow - 3600000)))
+        // Task reminders on, and the daily digest on with its time.
+        if (kind == "notifications") actions.device.value = com.knhdixh.attendance80.notify.NotifyChoices(tasks = true, digestAt = "08:00")
         ui.setContent { val density = LocalDensity.current; CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
             Attendance80Theme(darkTheme = dark) { Shell(ShellState(data = data, session = "test"), {}, {}, {}, initialRoute = "settings", now = settingsNow, zone = settingsZone, settingsActions = actions) }
         } }
         val list = ui.onNodeWithTag("settings-list")
         when (kind) {
+            "notifications" -> list.performScrollToNode(hasTestTag("notify-digest-time"))
             "calendars" -> list.performScrollToNode(hasTestTag("calendar-2"))
             "add" -> { list.performScrollToNode(hasTestTag("calendar-add-open")); ui.onNodeWithTag("calendar-add-open").performClick(); list.performScrollToNode(hasTestTag("calendar-link-url")) }
             "access" -> list.performScrollToNode(hasTestTag("token-3"))
