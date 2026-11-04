@@ -145,13 +145,22 @@ fun Shell(
         if (pendingRoute != null) onPendingConsumed()
         onSignOut()
     }
+    var showQuickAdd by rememberSaveable { mutableStateOf(false) }
+    var quickInitial by rememberSaveable { mutableStateOf("") }
+    var quickNotes by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(pendingRoute, state.session, entry != null) {
         if (pendingRoute != null && entry != null) {
-            if (route != pendingRoute) navController.navigate(pendingRoute) { launchSingleTop = true }
-            // Text shared into the app fills the add-homework form the way the palette's "Add homework" does.
-            if (pendingRoute == "homework/new" && sharedText != null) {
-                navController.currentBackStackEntry?.savedStateHandle?.set("paletteAction", ApiClient.json.encodeToString<PaletteAction>(PaletteAction.OpenForm("homework", input = sharedText)))
-                onSharedTextHandled()
+            if (pendingRoute != "add" && route != pendingRoute) navController.navigate(pendingRoute) { launchSingleTop = true }
+            if (pendingRoute == "add") {
+                // `a80://add` (the widget, the tile, the shortcut) and text shared into the app open quick add over whatever is showing.
+                if (sharedText != null) {
+                    val (first, rest) = com.knhdixh.attendance80.share.splitSharedText(sharedText)
+                    quickInitial = first; quickNotes = rest
+                    onSharedTextHandled()
+                } else { quickInitial = ""; quickNotes = "" }
+                showQuickAdd = true
+                onPendingConsumed()
+                return@LaunchedEffect
             }
             if (state.session != null) onValidatePending(pendingRoute)
         }
@@ -239,7 +248,6 @@ fun Shell(
     val visibleData = state.data?.let { d -> pendingDelete?.let { p -> d.copy(homework = d.homework.filterNot { it.id == p.item.id }) } ?: d }
     val scope = rememberCoroutineScope()
     var newProject by rememberSaveable { mutableStateOf(false) }
-    var showQuickAdd by rememberSaveable { mutableStateOf(false) }
     val addsTasks = route in setOf("inbox", "today", "upcoming") || route.startsWith("project/") || route.startsWith("filter/") || route.startsWith("label/")
     var detailId by rememberSaveable(accountKey) { mutableStateOf<Long?>(null) }
     var scheduling by remember { mutableStateOf<com.knhdixh.attendance80.net.HomeworkDto?>(null) }
@@ -289,7 +297,7 @@ fun Shell(
         },
         snackbarHost = { SnackbarHost(snack) },
         floatingActionButton = {
-            if (addsTasks) FloatingActionButton(onClick = { showQuickAdd = true }, modifier = Modifier.testTag("quick-add-fab")) { Icon(Icons.Outlined.Add, contentDescription = "Add task") }
+            if (addsTasks) FloatingActionButton(onClick = { quickInitial = ""; quickNotes = ""; showQuickAdd = true }, modifier = Modifier.testTag("quick-add-fab")) { Icon(Icons.Outlined.Add, contentDescription = "Add task") }
         },
         bottomBar = {
             if (!wide) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
@@ -474,7 +482,8 @@ fun Shell(
     if (showQuickAdd && visibleData != null) {
         val projectId = route.takeIf { it.startsWith("project/") }?.substringAfter('/')?.toLongOrNull()
         com.knhdixh.attendance80.ui.tasks.QuickAddSheet(visibleData, today, zone,
-            com.knhdixh.attendance80.ui.tasks.QuickDefaults(projectId = projectId, date = if (route == "today") today else null), taskActions, onDismiss = { showQuickAdd = false })
+            com.knhdixh.attendance80.ui.tasks.QuickDefaults(projectId = projectId, date = if (route == "today") today else null), taskActions, initial = quickInitial, notes = quickNotes,
+            onDismiss = { showQuickAdd = false; quickInitial = ""; quickNotes = "" })
     }
     if (detailId != null && taskEnv != null) com.knhdixh.attendance80.ui.tasks.TaskDetailSheet(detailId!!, taskEnv, taskActions,
         onFocus = { id -> detailId = null; pending(PaletteAction.Focus("target", homeworkId = id), "focus") },

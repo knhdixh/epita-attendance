@@ -9,7 +9,7 @@
     <shortcut android:shortcutId="homework" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_homework">
         <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://homework" />
     </shortcut>
-    <shortcut android:shortcutId="add-homework" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_add_homework">
-        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://homework/new" />
+    <shortcut android:shortcutId="add-task" android:enabled="true" android:icon="@mipmap/ic_launcher" android:shortcutShortLabel="@string/shortcut_add_homework" android:shortcutLongLabel="@string/shortcut_add_task_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.knhdixh.attendance80" android:targetClass="com.knhdixh.attendance80.MainActivity" android:data="a80://add" />
     </shortcut>
 </shortcuts>

@@ -28,20 +28,39 @@ class SharedIntoShellTest {
     @get:Rule val ui = createComposeRule()
     private val zone = ZoneId.of("Europe/Paris")
 
-    @Test fun sharedTextOpensAddHomeworkWithTheTitleAndNotes() {
+    @Test fun sharedTextOpensQuickAddWithTheFirstLineAndSavesTheRestAsNotes() {
         val route = PendingRouteViewModel(SavedStateHandle())
-        route.shareText("Read chapter 3\nPages 10-20")
-        assertEquals("homework/new", route.pending.value)
+        route.shareText("Read chapter 3 tomorrow\nPages 10-20")
+        assertEquals("add", route.pending.value)
         var pending by mutableStateOf<String?>(route.pending.value)
         var text by mutableStateOf<String?>(route.sharedText.value)
+        val actions = com.knhdixh.attendance80.ui.tasks.RecordingActions()
         ui.setContent { Attendance80Theme {
             Shell(ShellState(data = screenshotData(), session = "a"), {}, {}, {}, pendingRoute = pending, onPendingConsumed = { route.clear(); pending = null },
-                now = 1793600000000L, zone = zone, sharedText = text, onSharedTextHandled = { route.textHandled(); text = null })
+                now = 1793600000000L, zone = zone, taskActions = actions, sharedText = text, onSharedTextHandled = { route.textHandled(); text = null })
         } }
-        ui.waitUntil(10_000) { ui.onAllNodesWithText("What's due").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("What's due").assertTextContains("Read chapter 3")
-        ui.onNodeWithText("Notes").assertTextContains("Pages 10-20")
-        assertNull(route.sharedText.value) // handled once: coming back to the form later is not refilled
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("quick-add-input").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("quick-add-input").assertTextContains("Read chapter 3 tomorrow")
+        assertNull(route.sharedText.value) // handled once: opening quick add later does not refill it
+        assertNull(route.pending.value)
+        ui.onNodeWithTag("quick-add-input").performImeAction()
+        ui.waitUntil(5_000) { actions.created.isNotEmpty() }
+        val body = actions.created.single()
+        assertEquals("Read chapter 3", body.getValue("title").toString().trim('"'))
+        assertEquals("Pages 10-20", body.getValue("notes").toString().trim('"'))
+        assertTrue("tomorrow was read as the date", body.containsKey("due_date"))
+    }
+
+    @Test fun theAddLinkOpensAnEmptyQuickAddOverTheCurrentScreen() {
+        val route = PendingRouteViewModel(SavedStateHandle())
+        route.accept("a80://add")
+        var pending by mutableStateOf<String?>(route.pending.value)
+        ui.setContent { Attendance80Theme {
+            Shell(ShellState(data = screenshotData(), session = "a"), {}, {}, {}, pendingRoute = pending, onPendingConsumed = { route.clear(); pending = null }, now = 1793600000000L, zone = zone)
+        } }
+        ui.waitUntil(10_000) { ui.onAllNodesWithTag("quick-add-input").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("quick-add-input").assertTextContains("")
+        assertNull(route.pending.value)
     }
 
     @Test fun aSharedCalendarOpensSettingsWithTheFileReadyAndUploadsOnlyWhenAsked() {

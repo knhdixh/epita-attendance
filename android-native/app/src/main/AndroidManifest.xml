@@ -38,6 +38,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="a80" android:host="today" />
+                <data android:scheme="a80" android:host="add" />
                 <data android:scheme="a80" android:host="focus" />
                 <data android:scheme="a80" android:host="homework" />
                 <data android:scheme="a80" android:host="session" />
@@ -70,7 +71,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/calendar" />
             </intent-filter>
-            <!-- Share text to the app: it opens Add homework, the first line as the title and the rest as notes. -->
+            <!-- Share text to the app: it opens quick add, the first line as the task and the rest as its description. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
